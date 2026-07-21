@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>每日合成与发育生物学简报</title>
+  <style>
+    :root { color-scheme: light; --ink:#17202a; --muted:#667085; --line:#d8dee8; --bg:#f7f8fb; --panel:#fff; --accent:#1769aa; --tag:#e9f2ff; }
+    * { box-sizing: border-box; }
+    body { margin:0; font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--bg); }
+    header { background:#101820; color:#fff; padding:32px 20px; }
+    .wrap { max-width:1080px; margin:0 auto; }
+    h1 { margin:0 0 8px; font-size:30px; letter-spacing:0; }
+    header p { margin:0; color:#d8dee8; }
+    .controls { display:grid; grid-template-columns: 1.5fr 180px 220px; gap:12px; margin:22px 0; }
+    input, select { width:100%; border:1px solid var(--line); border-radius:8px; padding:12px 13px; font:inherit; background:#fff; color:var(--ink); }
+    .meta { color:var(--muted); margin-bottom:14px; }
+    .grid { display:grid; gap:14px; padding-bottom:36px; }
+    .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
+    .card h2 { margin:0 0 8px; font-size:21px; }
+    .card h2 a { color:var(--accent); text-decoration:none; }
+    .card h2 a:hover { text-decoration:underline; }
+    .tags { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
+    .tag { background:var(--tag); color:#184b7a; border-radius:999px; padding:3px 9px; font-size:13px; }
+    .articles { margin:10px 0 0; padding-left:20px; color:#344054; }
+    .empty { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:22px; color:var(--muted); }
+    @media (max-width:760px){ .controls{grid-template-columns:1fr;} h1{font-size:24px;} }
+  </style>
+</head>
+<body>
+  <header><div class="wrap"><h1>每日合成与发育生物学简报</h1><p>按日期、主题和关键词检索合成生物学、发育合成生物学、控制论与生物学日报。</p></div></header>
+  <main class="wrap">
+    <section class="controls">
+      <input id="q" type="search" placeholder="搜索标题、论文、摘要关键词...">
+      <select id="topic"><option value="">全部主题</option><option>合成生物学</option><option>发育合成生物学</option><option>控制论与生物学</option></select>
+      <select id="date"><option value="">全部日期</option></select>
+    </section>
+    <div id="meta" class="meta"></div>
+    <section id="results" class="grid"></section>
+  </main>
+  <script>
+    let briefs = [];
+    const $ = id => document.getElementById(id);
+    const norm = s => (s || '').toLowerCase();
+    function render(){
+      const q = norm($('q').value.trim());
+      const topic = $('topic').value;
+      const date = $('date').value;
+      const filtered = briefs.filter(b => {
+        const hay = norm([b.date,b.title,b.summary,(b.topics||[]).join(' '),(b.articles||[]).join(' ')].join(' '));
+        return (!q || hay.includes(q)) && (!topic || (b.topics||[]).includes(topic)) && (!date || b.date === date);
+      });
+      $('meta').textContent = `共 ${briefs.length} 期，当前显示 ${filtered.length} 期`;
+      $('results').innerHTML = filtered.length ? filtered.map(b => `
+        <article class="card">
+          <h2><a href="${b.url}">${b.title}</a></h2>
+          <div class="meta">${b.date}</div>
+          <div class="tags">${(b.topics||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+          <p>${b.summary || ''}</p>
+          ${(b.articles||[]).length ? `<ol class="articles">${b.articles.slice(0,8).map(a=>`<li>${a}</li>`).join('')}</ol>` : ''}
+        </article>`).join('') : '<div class="empty">没有匹配结果。可以换一个关键词或清空筛选条件。</div>';
+    }
+    fetch('search.json').then(r=>r.json()).then(data=>{
+      briefs = data.briefs || [];
+      const dates = [...new Set(briefs.map(b=>b.date))];
+      $('date').innerHTML += dates.map(d=>`<option>${d}</option>`).join('');
+      ['q','topic','date'].forEach(id => $(id).addEventListener('input', render));
+      render();
+    });
+  </script>
+</body>
+</html>
