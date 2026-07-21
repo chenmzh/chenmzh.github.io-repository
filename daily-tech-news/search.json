@@ -1,0 +1,119 @@
+{
+  "updated": "2026-07-21",
+  "briefs": [
+    {
+      "date": "2026-07-21",
+      "title": "每日科技新闻简报｜2026-07-21",
+      "categories": ["AI", "芯片", "软件/云", "机器人", "网络安全/政策"],
+      "items": [
+        "OpenAI long-horizon model safety/alignment post about sandbox circumvention and trajectory-level monitoring",
+        "Microsoft and AMD Azure AI/HPC infrastructure expansion with AMD Helios, EPYC and Pensando DPUs",
+        "Reuters-reported final approval of Anthropic's $1.5B author copyright settlement",
+        "UK AISI open-weight cyber-capability gap analysis",
+        "BleepingComputer/Pillar AI coding-agent sandbox escape findings across Cursor, Codex, Gemini CLI and Antigravity",
+        "Anduril/Archer autonomous aircraft platform"
+      ],
+      "summary": "主线包括 OpenAI 长时程安全/对齐、Microsoft/AMD AI 基础设施扩张、Anthropic 版权和解最终批准、UK AISI 开源权重模型网络能力分析，以及 AI coding agent sandbox escape 风险。",
+      "markdown": "briefs/2026-07-21.md",
+      "url": "reader.html?date=2026-07-21"
+    },
+    {
+      "date": "2026-07-20",
+      "title": "每日科技新闻简报｜2026-07-20",
+      "categories": ["AI", "机器人", "云计算", "网络安全/政策"],
+      "items": [
+        "NVIDIA/Japan/Noetra national physical-AI infrastructure and Cosmos Japan robotics ecosystem",
+        "Current AI / AI Potluck public-interest AI stack and Alpha Chat",
+        "Reuters-reported US data-center protest movement against AI infrastructure buildout",
+        "Netflix $587M InterPositive AI filmmaking acquisition disclosure",
+        "D.C. robotaxi policy fight involving Uber and Waymo",
+        "SharePoint CVE-2026-58644 KEV/NVD/NCSC status"
+      ],
+      "summary": "官方一手消息较少，简报聚焦 NVIDIA 日本 physical AI 基础设施、公共利益 AI stack、美国数据中心抗议、AI 影视并购、Robotaxi 政策和 SharePoint 漏洞。",
+      "markdown": "briefs/2026-07-20.md",
+      "url": "reader.html?date=2026-07-20"
+    },
+    {
+      "date": "2026-07-19",
+      "title": "每日科技新闻简报｜2026-07-19",
+      "categories": ["AI", "芯片", "自动驾驶", "消费电子"],
+      "items": [
+        "Moonshot/Kimi K3 open 2.8T-class model and open-model policy/market debate",
+        "Reported DOJ/TikTok federal-device policy reversal after US joint-venture structure",
+        "Waymo San Francisco one-hour service pause during power outage",
+        "Biomni biomedical AI-agent research context",
+        "MarketWatch profile of CXMT as an AI-memory/DRAM wildcard",
+        "US EV fast-charging reliability improvement"
+      ],
+      "summary": "周末高质量新闻偏少，主线是 Kimi K3 开源模型、TikTok 政策、Waymo 服务暂停、生物医学 AI agent、CXMT AI memory 变量和 EV 充电可靠性。",
+      "markdown": "briefs/2026-07-19.md",
+      "url": "reader.html?date=2026-07-19"
+    },
+    {
+      "date": "2026-07-18",
+      "title": "每日科技新闻简报｜2026-07-18",
+      "categories": ["AI", "芯片", "软件/云", "机器人", "网络安全"],
+      "items": [
+        "OpenAI AI-age scorecard and NVIDIA Vera Rubin intelligence-per-dollar framing",
+        "Reuters-reported AI/chip selloff and semiconductor repricing",
+        "AWS Cost Explorer/estimated billing global data discrepancy",
+        "Databricks $188B valuation round",
+        "GitHub repository-level Copilot usage metrics GA",
+        "Agility Robotics Fremont humanoid training facility",
+        "Zoox software recall"
+      ],
+      "summary": "重点是 AI/chip 估值重估、OpenAI/NVIDIA AI 叙事、AWS billing 数据问题、Databricks 融资、GitHub Copilot metrics、机器人训练设施和 Zoox 召回。",
+      "markdown": "briefs/2026-07-18.md",
+      "url": "reader.html?date=2026-07-18"
+    },
+    {
+      "date": "2026-07-17",
+      "title": "每日科技新闻简报｜2026-07-17",
+      "categories": ["AI", "芯片", "软件/云", "机器人", "网络安全/政策"],
+      "items": [
+        "TSMC additional $100B Arizona/US advanced-chip investment and 2Q26 AI-demand earnings context",
+        "Google Gemini Enterprise Agent Platform adding Parallel Web Search grounding",
+        "Google Cloud/Mandiant AI-assisted vulnerability management guardrails",
+        "Google Vids Gemini Omni personal avatars",
+        "Kawasaki-Fujitsu physical AI healthcare robotics business study",
+        "Black Hat USA 2026 AI/cyber keynotes"
+      ],
+      "summary": "主线包括 TSMC 美国先进芯片投资、Google enterprise agent grounding、Mandiant AI 漏洞管理、视频 avatar、医疗机器人合作和 AI/cyber 大会。",
+      "markdown": "briefs/2026-07-17.md",
+      "url": "reader.html?date=2026-07-17"
+    },
+    {
+      "date": "2026-07-16",
+      "title": "每日科技新闻简报｜2026-07-16",
+      "categories": ["AI", "芯片", "机器人", "网络安全"],
+      "items": [
+        "TSMC 2026Q2 official earnings showing AI-driven advanced-node strength",
+        "OpenAI GPT-Red automated safety red-teaming for prompt-injection robustness",
+        "NVIDIA Jetson Thor T3000/T2000 robotics and edge AI modules",
+        "OpenAI employee donations to Guardrails Alliance reported by WIRED",
+        "NVIDIA Japan AI/robotics ecosystem updates",
+        "GitHub secret scanning and public monitoring improvements"
+      ],
+      "summary": "重点是 TSMC AI 需求驱动财报、OpenAI 自动化安全红队、NVIDIA Jetson Thor、NVIDIA 日本生态和 GitHub secret scanning。",
+      "markdown": "briefs/2026-07-16.md",
+      "url": "reader.html?date=2026-07-16"
+    },
+    {
+      "date": "2026-07-15",
+      "title": "每日科技新闻简报｜2026-07-15",
+      "categories": ["AI", "芯片", "软件/云", "机器人", "网络安全/政策"],
+      "items": [
+        "Demis Hassabis proposal for a US-led frontier AI watchdog",
+        "Microsoft July 2026 Patch Tuesday / Windows 11 KB5101650 and KB5101649",
+        "Barron's report of a slight Nvidia Rubin ramp delay",
+        "Google I/O Connect India 2026 AI/developer/localization initiatives",
+        "China AI/EV-driven trade data",
+        "WSJ report on DFSX DF1000 AI chip",
+        "Oracle leading Japan top-secret cloud bid"
+      ],
+      "summary": "主线是 frontier AI governance、Microsoft Patch Tuesday、NVIDIA Rubin ramp delay、Google India AI/developer updates、中国 AI/EV 贸易数据和日本机密云竞标。",
+      "markdown": "briefs/2026-07-15.md",
+      "url": "reader.html?date=2026-07-15"
+    }
+  ]
+}
