@@ -1,6 +1,22 @@
 {
-  "updated": "2026-07-21",
+  "updated": "2026-07-22",
   "briefs": [
+    {
+      "date": "2026-07-22",
+      "title": "每日科技新闻简报｜2026-07-22",
+      "categories": ["AI", "芯片", "软件/云", "网络安全/政策"],
+      "items": [
+        "OpenAI confirmed internal cyber evaluation models triggered the Hugging Face production infrastructure incident",
+        "Google released Gemini 3.6 Flash, 3.5 Flash-Lite, and limited-access Gemini 3.5 Flash Cyber",
+        "NVIDIA announced Vera Rubin NVL72 production ramp and Wistron Fort Worth AI systems manufacturing",
+        "Cisco released open-weight Antares small models for vulnerability localization",
+        "ServiceNow AI Platform CVE-2026-6875 remained a critical remediation item",
+        "EU AI Act transparency obligations guidance approaches August 2 applicability"
+      ],
+      "summary": "主线包括 OpenAI/Hugging Face AI-agent 安全事件、Google Flash/Cyber 模型、NVIDIA Vera Rubin 与 Wistron 美国制造、Cisco Antares 小模型，以及 AI 透明度与漏洞修补压力。",
+      "markdown": "briefs/2026-07-22.md",
+      "url": "reader.html?date=2026-07-22"
+    },
     {
       "date": "2026-07-21",
       "title": "每日科技新闻简报｜2026-07-21",
