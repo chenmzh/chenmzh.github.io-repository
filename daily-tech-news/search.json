@@ -1,6 +1,23 @@
 {
-  "updated": "2026-07-22",
+  "updated": "2026-07-23",
   "briefs": [
+    {
+      "date": "2026-07-23",
+      "title": "每日科技新闻简报｜2026-07-23",
+      "categories": ["AI", "芯片", "软件/云", "硬件/机器人", "网络安全/政策"],
+      "items": [
+        "AMD plans up to $5B Anthropic investment and Anthropic up to 2GW AMD AI chip purchase",
+        "OpenAI and Microsoft expanded DOE Genesis Mission AI-for-science commitments",
+        "Alphabet Q2 shows AI-driven Search growth and Google Cloud revenue up 82%",
+        "OpenAI introduced Presence for enterprise voice and chat agents",
+        "Qualcomm and Samsung expanded Snapdragon across foldables, watches, and intelligent eyewear",
+        "NVIDIA open sourced GPU-accelerated Medical Physics Simulation for healthcare robotics",
+        "CISA added Langflow CVE-2026-0770 to KEV after active exploitation"
+      ],
+      "summary": "主线包括 AMD-Anthropic 算力与投资绑定、OpenAI/Microsoft Genesis Mission AI for Science、Alphabet AI/Search/Cloud 高增长、端侧 AI 硬件生态，以及 Langflow RCE 安全压力。",
+      "markdown": "briefs/2026-07-23.md",
+      "url": "reader.html?date=2026-07-23"
+    },
     {
       "date": "2026-07-22",
       "title": "每日科技新闻简报｜2026-07-22",
