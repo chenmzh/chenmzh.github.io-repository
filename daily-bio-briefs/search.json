@@ -1,6 +1,30 @@
 {
-  "updated": "2026-07-23",
+  "updated": "2026-07-24",
   "briefs": [
+    {
+      "date": "2026-07-24",
+      "title": "每日合成与发育生物学简报 - 2026-07-24",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Sentinel plants enable quantitative monitoring of bioavailable nitrate in soils and microbial environments",
+        "Engineered probiotic Bifidobacterium for tumor-targeted pancreatic cancer therapy",
+        "Neuromorphic tissues: Soft biomolecular networks for brain-inspired temporal computing",
+        "Towards interoperable modeling of toehold-mediated strand exchange circuits across DNA nanotechnology and engineering biology",
+        "Programming protein shape as an explicit design layer via CAD blueprint-guided diffusion",
+        "Tailoring Precise Genomic Integration Toward Isolate-to-Industry Strain Development for Scalable High-Titer Production of Polyhydroxyalkanoate",
+        "Perturb-seq resolves physiologic programs and bidirectional regulation of non-canonical NF-κB signaling in epidermal organoids",
+        "Genetic coupling of hydathode formation with leaf morphogenesis maintains water homeostasis",
+        "Localised stabilisation of a bistable switch for minimal-kernel phenotype control in a Boolean breast-cancer network",
+        "Local intercellular coupling is sufficient for long-range calcium signaling"
+      ],
+      "summary": "今天的强相关新稿集中在“可工程化生物系统”：工程化植物硝酸盐传感器、肿瘤靶向益生菌、Halomonas 工业级 PHA 生产底盘，以及 DNA strand-exchange circuit 的互操作建模工具都很适合合成生物学读者跟进。 发育与 synthetic morphogenesis 方向出现两类值得注意的文章：一类是在表皮类器官中做 Perturb-seq，把 CRISPR 扰动放进更接近组织分化的模型；另一类是植物 hydathode 形成与叶片水稳态，把形态发生和生理 homeostasis 直接连起来。 控制论/系统生物学方向今天质量不错，但需要严格过滤：可纳入的是 Boolean 癌症网络的最小控制核、细胞间钙波的局部耦合同步模型、昼夜节律 Kuramoto 网络和随机 gene-expression burst network；纯工程控制或 AI benchmark 已排除。 正式期刊页面补查显示 PNAS 和 Science Advances 今天有多篇相关条目；其中部分 PubMed 记录带未来 issue date 或 DOI 元数据异常，因此以下总结以可访问题名、摘要、PubMed/DOI 页面为准。",
+      "markdown": "briefs/2026-07-24.md",
+      "url": "reader.html?date=2026-07-24"
+    },
     {
       "date": "2026-07-23",
       "title": "每日合成与发育生物学简报 - 2026-07-23",
