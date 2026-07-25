@@ -1,6 +1,54 @@
 {
-  "updated": "2026-07-24",
+  "updated": "2026-07-25",
   "briefs": [
+    {
+      "date": "2026-07-25",
+      "title": "每日科技新闻简报｜2026-07-25",
+      "summary": "Anthropic 于 2026-07-24 发布 Claude Opus 5，Reuters 报道称它以 Opus 档价格接近更高端 Fable 5 的能力，重点面向日常办公、复杂编程和企业知识工作；Anthropic 文档显示 Opus 5 支持 100 万 token 上下文、最高 128K 输出，定价为每百万输入 token 5 美元、输出 token 25 美元。GitHub 同日宣布 Claude Opus 5 将进入 Copilot Pro+、Max、Business、Enterprise 等计划，覆盖 VS Code、Visual Studio、Copilot CLI、Copilot cloud agent、GitHub Mobile、JetBrains、Xcode、Eclipse 等入口。重要性在于，前沿模型竞争继续从单独聊天产品扩展到开发者工作流，模型发布后能否快速进入 IDE、云代理和企业策略面板，正在成为模型商业化速度的关键。",
+      "items": [
+        "1. Anthropic 发布 Claude Opus 5，GitHub Copilot 同日接入",
+        "2. OpenAI/Hugging Face 代理安全事件出现更多细节，AI “kill switch” 法案进入美国政策议程",
+        "3. Google 遭欧盟 8.9 亿欧元 DMA 罚款后，美国宣布调查欧盟科技监管",
+        "AWS 与 Google Cloud 同步上架 Claude Opus 5。 AWS 2026-07-24 宣布 Claude Opus 5 可在 Amazon Bedrock 和 Claude Platform on AWS 使用，并强调 Bedrock 默认 zero data retention；Google Cloud 文档显示 Claude Opus 5 在 Gemini Enterprise Agent Platform 中为 GA，支持文本、图像和 PDF 输入，最大输入 100 万 token。来源：AWS Machine Learning Blog、Google Cloud docs",
+        "AI 安全监管从事故通报走向“可关闭能力”。 Reuters 报道的 AI Kill Switch Act 还与独立安全审计提案并行出现，说明美国国会关注点不只在事后报告，也开始要求模型开发者在架构上保留应急控制面。来源：Reuters via Investing.com",
+        "Intel 强劲指引显示 AI 数据中心需求正在外溢到 CPU 与资本开支。 Reuters 于 2026-07-24 报道，Intel 预计三季度收入 158 亿至 168 亿美元，高于 LSEG 统计的分析师平均预期 151 亿美元，并将 2026 年资本开支估计从 180 亿美元上调至 200 亿美元；报道将改善归因于 AI 数据中心建设推动 CPU 需求。来源：Reuters via Investing.com",
+        "HCLTech 与 Sarvam AI 计划在印度 Odisha 建设 14.8 亿美元 AI 数据中心。 Reuters 于 2026-07-24 报道，HCLTech 将在 Odisha 与本土创业公司 Sarvam AI 合作建设其首个 AI 数据中心，投资额 1425.7 亿卢比，项目还包含州政府财政支持。来源：Reuters via MarketScreener",
+        "中国存储芯片厂商在 AI 需求中获得更强议价权。 Reuters 于 2026-07-24 报道称，CXMT、YMTC 等中国存储厂商因 AI 数据中心需求上涨而开始挑选客户、提高价格，同时仍面对美国管制、设备与高端 HBM 差距等限制；该报道发布时间早于本轮核心窗口数小时，但昨日简报未覆盖，且与今天芯片供应链主线高度相关。来源：Reuters via Investing.com",
+        "GitHub Copilot cloud agent for Linear 正式 GA。 GitHub 2026-07-23 的 Changelog 显示，Linear issue 可以直接分配给 Copilot cloud agent；代理会分析 issue、在 GitHub Actions 驱动的临时开发环境中工作、打开 draft PR，并把进度回写到 Linear 活动流。来源：GitHub Changelog",
+        "GitHub 将 Claude Opus 5 纳入多入口模型选择器。 除 IDE 外，GitHub 明确覆盖 github.com、Copilot cloud agent、Copilot app、Mobile 和多种 IDE，管理员还需要在 Business/Enterprise 设置中启用 Claude Opus 5 policy。来源：GitHub Changelog",
+        "AMD Kria AI SOM 与 Robotics Developer Platform 补齐物理 AI 边缘计算叙事。 AMD Advancing AI 2026 页面列出 Kria AI SOMs and Robotics Developer Platform for Physical AI；AMD 产品页称 Kria AI SOM 面向机器人和自主机器，把 CPU、GPU、NPU 与统一内存集成到量产模块，开发平台支持 ROS 2 与 AMD ROCm 软件栈。该项属于 2026-07-23 发布，但昨日简报主要聚焦数据中心 Helios，本次补入机器人方向。来源：AMD Advancing AI、AMD Kria AI Solutions",
+        "Tesla Optimus 的量产叙事继续受到媒体审视。 Business Insider 2026-07-24 汇总称，Tesla 将 Optimus 视为未来核心产品之一，但仍面临世界模型、灵巧手、生产放大和公开演示可信度等挑战；这不是新品发布，更像对人形机器人商业化进度的现实校准。来源：Business Insider"
+      ],
+      "tags": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "markdown": "briefs/2026-07-25.md",
+      "url": "reader.html?date=2026-07-25",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "trend": [
+        "前沿模型发布后正快速进入“工作流入口”：IDE、云代理、工单系统和企业模型策略成为分发主战场。",
+        "AI 代理安全的治理要求在升级：事故披露、沙箱隔离、独立审计和可关闭机制会成为高能力模型上线的共同约束。",
+        "AI 基础设施扩张更分散：印度本土 AI 数据中心、Intel CPU 需求、CXMT/YMTC 存储议价权都说明算力瓶颈不只在 GPU。",
+        "科技监管越来越国际政治化：欧盟 DMA 罚款和美国贸易调查把应用商店、搜索排序、平台费用与关税风险绑在一起。",
+        "物理 AI 仍处早期但硬件平台化加速：AMD Kria、Tesla Optimus 等动态显示机器人叙事正在从实验演示转向“模块、开发平台、量产约束”的讨论。"
+      ]
+    },
     {
       "date": "2026-07-24",
       "title": "每日科技新闻简报｜2026-07-24",
