@@ -1,6 +1,30 @@
 {
-  "updated": "2026-07-24",
+  "updated": "2026-07-25",
   "briefs": [
+    {
+      "date": "2026-07-25",
+      "title": "每日合成与发育生物学简报 - 2026-07-25",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "CRISPR-Cas9-producing probiotic bacteria for editing NOX2/gp91phox and treating inflammatory bowel disease",
+        "Metabolic engineering of Escherichia coli to modulate hydrogen sulfide levels in the mammalian gut",
+        "A genetically encoded sensor of ionic stress links cellular proton dynamics to sleep",
+        "Signaling mechanisms and dynamics governing the myocardial-epicardial fate switch during human cardiogenesis",
+        "Long-term ex ovo culture of Caenorhabditis elegans embryos",
+        "Efficient CRISPR/Cas9-mediated homology independent sequence replacement in vivo and non-dividing primary cells",
+        "Physiological basis of photosynthetic hydrogen production in the cyanobacterium Synechocystis",
+        "Kruppel-like factors KLF5 & KLF8 emerge as master transcriptional regulators of Alzheimers disease, as revealed on cell fate regulomes in human brain organoids",
+        "Microbial growth control: integrating protein abundance and activity",
+        "Dlx5/6 regulate perineuronal net-synapse coupling and stabilize adult cortical Parvalbumin neurons networks"
+      ],
+      "summary": "今天的强相关新稿集中在“可部署的工程生物系统”：工程化益生菌递送 CRISPR、区域靶向调节肠道 H2S、以及面向光合产氢的蓝藻电子流重定向。 发育方向出现多篇以可控模型系统为核心的文章：人多能干细胞心脏谱系分化模型、C. elegans 胚胎 ex ovo 长期培养、Xenopus 肾单位 β-catenin 活体成像，以及脑类器官中的 AD regulome 重建。 控制论/系统生物学方向今天更偏“生物调控层级”：微生物生长控制综述把蛋白丰度控制与活性控制合并讨论，神经网络稳定性条目则把 extracellular matrix homeostasis、突触耦合和 gamma oscillation 放在同一框架下。 medRxiv 今天有新稿，但未发现与合成生物学、发育合成生物学或生物反馈控制高度相关的条目；arXiv q-bio 的可见强相关 7 月 24 日公告条目已在上一期覆盖，本期未重复纳入。",
+      "markdown": "briefs/2026-07-25.md",
+      "url": "reader.html?date=2026-07-25"
+    },
     {
       "date": "2026-07-24",
       "title": "每日合成与发育生物学简报 - 2026-07-24",
