@@ -1,6 +1,30 @@
 {
-  "updated": "2026-07-25",
+  "updated": "2026-07-26",
   "briefs": [
+    {
+      "date": "2026-07-26",
+      "title": "每日合成与发育生物学简报 - 2026-07-26",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Anchoring mechanism-inspired discovery of a bacterial P450 gene conferring resistance to auxin herbicides",
+        "Reporter-based screening identifies small-molecule CBL0137 as an enhancer of CRISPR cytosine base editor and prime editor via p53 activation and NF-κB inhibition",
+        "Characterising complex metabolic responses in an engineered, cross-feeding microbial co-culture using quantitative proteomics",
+        "Combining metabolic engineering and fermentation optimization to achieve cost-effective oil production by Cutaneotrichosporon oleaginosus",
+        "Recent advances in Chlamydomonas reinhardtii as a green factory for sustainable biofuels and bioproduct production",
+        "SynNotch receptors for visualizing immunoreceptor force transmission and downstream signaling in vivo",
+        "Engineering Spatially Organized Hair Peg-like Structures in Human Skin Constructs Using Keratinocyte-Dermal Papilla Fibroblast Spheroids and Micropatterned Dermal Scaffolds",
+        "Live-imaging of endogenous neurofascins reveals glial adhesion shapes developing nodes of Ranvier",
+        "Vascular signals coordinate cerebellar circuitry development",
+        "Imprinted regulatory networks reveal the molecular cross-talk between paternal and maternal genomes in the endosperm of Arabidopsis arenosa"
+      ],
+      "summary": "过去 24 小时强合成生物学新稿不算密集，但正式期刊中出现了几个值得跟进的工程化方向：机制驱动发现细菌 P450 抗除草剂基因、CRISPR 精准编辑效率增强、藻类/酵母细胞工厂和工程化微生物共培养。 发育合成生物学相关内容今天主要来自组织工程和神经发育：人皮肤构建体中的 hair peg-like 结构、内源 neurofascin 活体成像、血管信号调控小脑回路发育，以及植物胚乳 imprinting 调控网络。 控制论与生物学方向以“可测量、可调控的生物系统”为主线：工程化交叉喂养共培养强调稳定性和可控性，SynNotch 预印本把免疫受体力传导和下游信号可视化，神经发育/运动适应论文关注 feedforward 与 feedback 机制的成熟。 arXiv q-bio 在本次窗口内没有新的强相关条目；medRxiv 有若干动态/因果模型文章，但多偏临床或公共卫生，不进入优先阅读。",
+      "markdown": "briefs/2026-07-26.md",
+      "url": "reader.html?date=2026-07-26"
+    },
     {
       "date": "2026-07-25",
       "title": "每日合成与发育生物学简报 - 2026-07-25",
