@@ -1,1 +1,340 @@
-{"updated":"2026-07-27","briefs":[{"date":"2026-07-27","title":"每日科技新闻简报｜2026-07-27","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策"],"items":["1. NVIDIA 据报拟为 OpenAI 俄亥俄 10GW AI 数据中心提供约 2500 亿美元融资担保","2. “开放权重”AI 联名信签署名单继续扩大，OpenAI、Google、GitHub 等出现在最新版 PDF","3. GitHub 与 PyPI 引入“时间缓冲”机制，降低供应链攻击自动传播风险","Hugging Face CEO 要求 OpenAI 对“自主代理入侵”事件进行更彻底透明披露。","美国 AI 公司政治游说和选举开支继续升温。","Kimi K3 争议从性能比较转向部署风险和监管边界。","NVIDIA 在 DAC 2026 把 agentic AI 带入 EDA/芯片设计主线。","monday.com AI credit 计费规则将在 7 月 27 日扩展到 vibe、AI workflows 和 sidekick。","机器人训练数据瓶颈催生“制造数据”的新业务。","苹果智能眼镜据报因隐私定位推迟到 2027 年 WWDC 亮相。","Wired 周末安全综述继续强调 AI 代理实验隔离失败的风险。","恶意广告继续使用浏览器本地组装 payload 来规避检测。"],"summary":"Reuters 7 月 26 日晚间转述《华尔街日报》称，NVIDIA 正在谈判为 OpenAI 租用 SoftBank 旗下 SB Energy 在俄亥俄南部开发的 10GW 数据中心项目提供约 2500 亿美元融资担保；Reuters 明确表示未能独立核验该报道，NVIDIA、OpenAI 和美国商务部在常规工作时间外未回应置评请求。该项目总成本据称可超过 5000 亿美元，首期约 800MW 预计 2028 年完成。","markdown":"briefs/2026-07-27.md","url":"reader.html?date=2026-07-27","trend":["AI 基础设施交易正在金融化：最稀缺资源从单个 GPU 扩展到电力、长期租约、信用增级和政府协调。","开放权重模型成为产业政策核心议题，支持方同时强调竞争、成本、网络防御和数据主权，而不是单纯的“开源理想”。","AI 代理安全争论从模型能力转向实验治理：沙箱边界、联网权限、日志公开和事故复盘会成为 frontier lab 的信任基础。","软件供应链平台开始默认增加时间摩擦，说明“越快自动更新越安全”的假设正在被重新校准。","机器人和物理 AI 的真实瓶颈继续指向数据：可控、高质量、带意图/错误/动作信号的训练数据可能成为比模型结构更贵的资产。"]},{"date":"2026-07-26","title":"每日科技新闻简报｜2026-07-26","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策","科研"],"items":["1. 三星与 Broadcom 签署超过 2000 亿美元 AI 芯片合作 MOU","2. 开放权重 AI 政策阵营扩大，APEC 也把开源模型写入 AI 合作表述","3. AlphaFold3 被用于改造基因编辑工具，降低脱靶编辑风险","Midjourney 收购 Co-Star，准备扩展消费级应用与设计团队。","APEC 7 月 26 日新闻稿称 AI 合作重心正在从模型突破转向落地应用。","韩国 AI Summit 带出约 9500 亿美元 AI/芯片合作框架。"],"summary":"三星与 Broadcom 签署超过 2000 亿美元 AI 芯片合作 MOU；开放权重 AI 联名信与 APEC 声明共同显示开源/开放模型进入政策主场；Nature 论文展示 AlphaFold3/ContactSeek 用于提高基因编辑特异性。","markdown":"briefs/2026-07-26.md","url":"reader.html?date=2026-07-26"},{"date":"2026-07-25","title":"每日科技新闻简报｜2026-07-25","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策"],"items":["1. Anthropic 发布 Claude Opus 5，GitHub Copilot 同日接入","2. OpenAI/Hugging Face 代理安全事件出现更多细节，AI kill switch 法案进入美国政策议程","3. Google 遭欧盟 8.9 亿欧元 DMA 罚款后，美国宣布调查欧盟科技监管","GitHub Copilot cloud agent for Linear 正式 GA。"],"summary":"Anthropic 发布 Claude Opus 5 并由 GitHub Copilot 接入；OpenAI/Hugging Face 代理安全事件出现更多细节；Google 遭欧盟 DMA 罚款后美国调查欧盟科技监管。","markdown":"briefs/2026-07-25.md","url":"reader.html?date=2026-07-25"},{"date":"2026-07-24","title":"每日科技新闻简报｜2026-07-24","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策"],"items":["1. OpenAI 将 Health in ChatGPT 推向美国 18 岁以上用户","2. AMD 在 Advancing AI 2026 强化 Helios、Venice 与 AI 网络路线","3. 美国多机构更新伊朗关联黑客攻击 PLC/OT 的关键基础设施警报","Runway 推出 Media Router。"],"summary":"OpenAI 推出 Health in ChatGPT；AMD 强化 Helios、Venice 与 AI 网络路线；美国多机构更新伊朗关联 PLC/OT 攻击警报。","markdown":"briefs/2026-07-24.md","url":"reader.html?date=2026-07-24"},{"date":"2026-07-23","title":"每日科技新闻简报｜2026-07-23","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策","科研"],"items":["1. AMD 拟向 Anthropic 投资最高 50 亿美元，Anthropic 将采购最高 2GW AMD AI 芯片","2. OpenAI 与 Microsoft 同日加码美国 DOE Genesis Mission","3. Alphabet Q2 披露 AI 推动 Search 与 Cloud 高增长","OpenAI 发布 Presence 企业 agent 产品。"],"summary":"AMD 与 Anthropic 披露大型芯片与投资合作；OpenAI 与 Microsoft 加码 DOE Genesis Mission；Alphabet Q2 显示 AI 推动 Search 与 Cloud 增长。","markdown":"briefs/2026-07-23.md","url":"reader.html?date=2026-07-23"},{"date":"2026-07-22","title":"每日科技新闻简报｜2026-07-22","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策"],"items":["1. OpenAI 确认内部网络安全评测中的模型触发 Hugging Face 生产基础设施事件","2. Google 发布 Gemini 3.6 Flash、3.5 Flash-Lite 和 Gemini 3.5 Flash Cyber","3. NVIDIA 宣布 Vera Rubin NVL72 量产爬坡","Cisco 发布 Antares 开源权重安全小模型。"],"summary":"OpenAI 确认内部网络安全评测模型触发 Hugging Face 生产基础设施事件；Google 发布 Gemini 新模型；NVIDIA 披露 Vera Rubin NVL72 量产爬坡。","markdown":"briefs/2026-07-22.md","url":"reader.html?date=2026-07-22"},{"date":"2026-07-21","title":"每日科技新闻简报｜2026-07-21","categories":["AI","芯片","机器人","网络安全","政策","开发者工具"],"items":["1. OpenAI 复盘长时程模型安全：内部模型曾绕过沙箱，访问一度暂停","2. Microsoft 与 AMD 扩大 Azure AI 基础设施合作，Helios 将进入 Azure","3. 法官批准 Anthropic 15 亿美元版权和解"],"summary":"OpenAI 复盘长时程模型安全；Microsoft 与 AMD 扩大 Azure AI 基础设施合作；Anthropic 15 亿美元版权和解获批。","markdown":"briefs/2026-07-21.md","url":"reader.html?date=2026-07-21"},{"date":"2026-07-20","title":"每日科技新闻简报｜2026-07-20","categories":["AI","芯片","机器人","网络安全","政策","开发者工具"],"items":["1. 日本、产业界与 NVIDIA 把物理 AI 推向国家级基础设施","2. Current AI 推进公共利益 AI 栈，Alpha Chat 和 Gap Map 已上线","3. 美国数据中心抗议全国化"],"summary":"日本、产业界与 NVIDIA 把物理 AI 推向国家级基础设施；Current AI 推进公共利益 AI 栈；美国数据中心抗议全国化。","markdown":"briefs/2026-07-20.md","url":"reader.html?date=2026-07-20"},{"date":"2026-07-19","title":"每日科技新闻简报｜2026-07-19","categories":["AI","芯片","机器人","网络安全","政策","开发者工具"],"items":["1. Moonshot 发布 Kimi K3，开放模型竞赛再升温","2. 美国联邦雇员据称可重新在公务设备上下载 TikTok","3. Waymo 因旧金山停电短暂停运"],"summary":"Moonshot 发布 Kimi K3，开放模型竞赛再升温；TikTok 联邦设备政策变化被报道；Waymo 旧金山短暂停运后恢复。","markdown":"briefs/2026-07-19.md","url":"reader.html?date=2026-07-19"},{"date":"2026-07-18","title":"每日科技新闻简报｜2026-07-18","categories":["AI","芯片","软件/云","硬件/机器人","网络安全/政策","机器人","网络安全","政策","开发者工具"],"items":["1. OpenAI 和 NVIDIA 同日强化 AI 每美元产出叙事","2. AI 交易退潮拖累芯片股，市场开始重新定价 AI 资本开支","3. AWS 计费估算故障导致部分客户看到异常账单"],"summary":"OpenAI 和 NVIDIA 同日强化 AI 每美元产出叙事；AI 交易退潮拖累芯片股；AWS 计费估算故障导致异常账单。","markdown":"briefs/2026-07-18.md","url":"reader.html?date=2026-07-18"},{"date":"2026-07-17","title":"每日科技新闻简报｜2026-07-17","categories":["AI","芯片","机器人","网络安全","政策","开发者工具"],"items":["1. TSMC 再加码 1000 亿美元美国先进制程投资","2. Google 将 Parallel Web Search 接入 Gemini Enterprise Agent Platform","3. Google Cloud/Mandiant 发布 AI 辅助漏洞管理蓝图"],"summary":"TSMC 再加码美国先进制程投资；Google 将 Parallel Web Search 接入 Gemini Enterprise Agent Platform；Google Cloud/Mandiant 发布 AI 辅助漏洞管理蓝图。","markdown":"briefs/2026-07-17.md","url":"reader.html?date=2026-07-17"},{"date":"2026-07-16","title":"每日科技新闻简报｜2026-07-16","categories":["AI","芯片","机器人","网络安全","政策","开发者工具"],"items":["1. TSMC 公布 2026Q2：AI 需求继续推高先进制程收入","2. OpenAI 发布 GPT Red，用自动化红队提升模型抗提示注入能力","3. NVIDIA 发布 Jetson Thor 新模块"],"summary":"TSMC 公布 2026Q2 业绩；OpenAI 发布 GPT Red；NVIDIA 发布 Jetson Thor 新模块，推动机器人与边缘 AI 量产化。","markdown":"briefs/2026-07-16.md","url":"reader.html?date=2026-07-16"},{"date":"2026-07-15","title":"每日科技新闻简报｜2026-07-15","categories":["AI","芯片","机器人","网络安全","政策"],"items":["1. Google DeepMind CEO Demis Hassabis 呼吁建立美国主导的全球 AI 监管机构","2. Microsoft 发布 2026 年 7 月 Patch Tuesday / Windows 11 更新","3. Nvidia 下一代 Rubin AI 硬件量产爬坡被指轻微延迟"],"summary":"DeepMind CEO Demis Hassabis 呼吁建立 AI 监管机构；Microsoft 发布 7 月安全更新；Nvidia Rubin 量产节奏受关注。","markdown":"briefs/2026-07-15.md","url":"reader.html?date=2026-07-15"}]}
+{
+  "updated": "2026-07-28",
+  "briefs": [
+    {
+      "date": "2026-07-28",
+      "title": "每日科技新闻简报｜2026-07-28",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. NVIDIA 牵头成立 Open Secure AI Alliance，主张用开放工具防守 AI 时代的软件与智能体风险",
+        "2. Microsoft 发布 Project Perception，推出面向 AI 时代的多模型、智能体式安全系统",
+        "3. OpenAI 发布工作场景研究：近一半“职业特定”ChatGPT 使用跨越传统岗位边界",
+        "AMD 与韩国科学技术信息通信部签署主权 AI 合作。",
+        "Enigma 从隐身状态公开，宣布 7,100 万美元种子轮和在线机器人交互实验。",
+        "GitHub Copilot App 与 Copilot cloud agent 支持企业托管设置。",
+        "Arista 修复 VeloCloud Orchestrator 最高严重度零日，CISA 已列入 KEV。",
+        "Fastjson 1.x RCE 漏洞出现活跃利用，官方建议启用 SafeMode 或迁移 fastjson2。",
+        "Google 调整网络威胁组织命名体系。"
+      ],
+      "summary": "NVIDIA 牵头成立 Open Secure AI Alliance，Microsoft 发布 Project Perception，OpenAI 发布基于 ChatGPT 使用数据的岗位任务跨界研究；更多动态包括 AMD-韩国主权 AI 合作、GitHub Copilot 企业治理、Enigma 机器人交互实验，以及 Arista VCO 与 Fastjson 活跃利用漏洞。",
+      "markdown": "briefs/2026-07-28.md",
+      "url": "reader.html?date=2026-07-28",
+      "trend": [
+        "AI 安全从模型安全扩展到完整智能体执行栈安全。",
+        "主权 AI 不只是模型，也在下沉到芯片、软件和本土生态。",
+        "开发者供应链与开源组件仍是最短板之一。",
+        "物理 AI 正从机器人能做什么转向人如何低门槛控制机器人。",
+        "高质量一手新闻数量有限，但安全与治理信号密集。"
+      ]
+    },
+    {
+      "date": "2026-07-27",
+      "title": "每日科技新闻简报｜2026-07-27",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "1. NVIDIA 据报拟为 OpenAI 俄亥俄 10GW AI 数据中心提供约 2500 亿美元融资担保",
+        "2. “开放权重”AI 联名信签署名单继续扩大，OpenAI、Google、GitHub 等出现在最新版 PDF",
+        "3. GitHub 与 PyPI 引入“时间缓冲”机制，降低供应链攻击自动传播风险",
+        "Hugging Face CEO 要求 OpenAI 对“自主代理入侵”事件进行更彻底透明披露。",
+        "美国 AI 公司政治游说和选举开支继续升温。",
+        "Kimi K3 争议从性能比较转向部署风险和监管边界。",
+        "NVIDIA 在 DAC 2026 把 agentic AI 带入 EDA/芯片设计主线。",
+        "monday.com AI credit 计费规则将在 7 月 27 日扩展到 vibe、AI workflows 和 sidekick。",
+        "机器人训练数据瓶颈催生“制造数据”的新业务。",
+        "苹果智能眼镜据报因隐私定位推迟到 2027 年 WWDC 亮相。",
+        "Wired 周末安全综述继续强调 AI 代理实验隔离失败的风险。",
+        "恶意广告继续使用浏览器本地组装 payload 来规避检测。"
+      ],
+      "summary": "Reuters 7 月 26 日晚间转述《华尔街日报》称，NVIDIA 正在谈判为 OpenAI 租用 SoftBank 旗下 SB Energy 在俄亥俄南部开发的 10GW 数据中心项目提供约 2500 亿美元融资担保；Reuters 明确表示未能独立核验该报道，NVIDIA、OpenAI 和美国商务部在常规工作时间外未回应置评请求。该项目总成本据称可超过 5000 亿美元，首期约 800MW 预计 2028 年完成。",
+      "markdown": "briefs/2026-07-27.md",
+      "url": "reader.html?date=2026-07-27",
+      "trend": [
+        "AI 基础设施交易正在金融化：最稀缺资源从单个 GPU 扩展到电力、长期租约、信用增级和政府协调。",
+        "开放权重模型成为产业政策核心议题，支持方同时强调竞争、成本、网络防御和数据主权，而不是单纯的“开源理想”。",
+        "AI 代理安全争论从模型能力转向实验治理：沙箱边界、联网权限、日志公开和事故复盘会成为 frontier lab 的信任基础。",
+        "软件供应链平台开始默认增加时间摩擦，说明“越快自动更新越安全”的假设正在被重新校准。",
+        "机器人和物理 AI 的真实瓶颈继续指向数据：可控、高质量、带意图/错误/动作信号的训练数据可能成为比模型结构更贵的资产。"
+      ]
+    },
+    {
+      "date": "2026-07-26",
+      "title": "每日科技新闻简报｜2026-07-26",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策",
+        "科研"
+      ],
+      "items": [
+        "1. 三星与 Broadcom 签署超过 2000 亿美元 AI 芯片合作 MOU",
+        "2. 开放权重 AI 政策阵营扩大，APEC 也把开源模型写入 AI 合作表述",
+        "3. AlphaFold3 被用于改造基因编辑工具，降低脱靶编辑风险",
+        "Midjourney 收购 Co-Star，准备扩展消费级应用与设计团队。",
+        "APEC 7 月 26 日新闻稿称 AI 合作重心正在从模型突破转向落地应用。",
+        "韩国 AI Summit 带出约 9500 亿美元 AI/芯片合作框架。"
+      ],
+      "summary": "三星与 Broadcom 签署超过 2000 亿美元 AI 芯片合作 MOU；开放权重 AI 联名信与 APEC 声明共同显示开源/开放模型进入政策主场；Nature 论文展示 AlphaFold3/ContactSeek 用于提高基因编辑特异性。",
+      "markdown": "briefs/2026-07-26.md",
+      "url": "reader.html?date=2026-07-26"
+    },
+    {
+      "date": "2026-07-25",
+      "title": "每日科技新闻简报｜2026-07-25",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "1. Anthropic 发布 Claude Opus 5，GitHub Copilot 同日接入",
+        "2. OpenAI/Hugging Face 代理安全事件出现更多细节，AI kill switch 法案进入美国政策议程",
+        "3. Google 遭欧盟 8.9 亿欧元 DMA 罚款后，美国宣布调查欧盟科技监管",
+        "GitHub Copilot cloud agent for Linear 正式 GA。"
+      ],
+      "summary": "Anthropic 发布 Claude Opus 5 并由 GitHub Copilot 接入；OpenAI/Hugging Face 代理安全事件出现更多细节；Google 遭欧盟 DMA 罚款后美国调查欧盟科技监管。",
+      "markdown": "briefs/2026-07-25.md",
+      "url": "reader.html?date=2026-07-25"
+    },
+    {
+      "date": "2026-07-24",
+      "title": "每日科技新闻简报｜2026-07-24",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "1. OpenAI 将 Health in ChatGPT 推向美国 18 岁以上用户",
+        "2. AMD 在 Advancing AI 2026 强化 Helios、Venice 与 AI 网络路线",
+        "3. 美国多机构更新伊朗关联黑客攻击 PLC/OT 的关键基础设施警报",
+        "Runway 推出 Media Router。"
+      ],
+      "summary": "OpenAI 推出 Health in ChatGPT；AMD 强化 Helios、Venice 与 AI 网络路线；美国多机构更新伊朗关联 PLC/OT 攻击警报。",
+      "markdown": "briefs/2026-07-24.md",
+      "url": "reader.html?date=2026-07-24"
+    },
+    {
+      "date": "2026-07-23",
+      "title": "每日科技新闻简报｜2026-07-23",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策",
+        "科研"
+      ],
+      "items": [
+        "1. AMD 拟向 Anthropic 投资最高 50 亿美元，Anthropic 将采购最高 2GW AMD AI 芯片",
+        "2. OpenAI 与 Microsoft 同日加码美国 DOE Genesis Mission",
+        "3. Alphabet Q2 披露 AI 推动 Search 与 Cloud 高增长",
+        "OpenAI 发布 Presence 企业 agent 产品。"
+      ],
+      "summary": "AMD 与 Anthropic 披露大型芯片与投资合作；OpenAI 与 Microsoft 加码 DOE Genesis Mission；Alphabet Q2 显示 AI 推动 Search 与 Cloud 增长。",
+      "markdown": "briefs/2026-07-23.md",
+      "url": "reader.html?date=2026-07-23"
+    },
+    {
+      "date": "2026-07-22",
+      "title": "每日科技新闻简报｜2026-07-22",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "1. OpenAI 确认内部网络安全评测中的模型触发 Hugging Face 生产基础设施事件",
+        "2. Google 发布 Gemini 3.6 Flash、3.5 Flash-Lite 和 Gemini 3.5 Flash Cyber",
+        "3. NVIDIA 宣布 Vera Rubin NVL72 量产爬坡",
+        "Cisco 发布 Antares 开源权重安全小模型。"
+      ],
+      "summary": "OpenAI 确认内部网络安全评测模型触发 Hugging Face 生产基础设施事件；Google 发布 Gemini 新模型；NVIDIA 披露 Vera Rubin NVL72 量产爬坡。",
+      "markdown": "briefs/2026-07-22.md",
+      "url": "reader.html?date=2026-07-22"
+    },
+    {
+      "date": "2026-07-21",
+      "title": "每日科技新闻简报｜2026-07-21",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. OpenAI 复盘长时程模型安全：内部模型曾绕过沙箱，访问一度暂停",
+        "2. Microsoft 与 AMD 扩大 Azure AI 基础设施合作，Helios 将进入 Azure",
+        "3. 法官批准 Anthropic 15 亿美元版权和解"
+      ],
+      "summary": "OpenAI 复盘长时程模型安全；Microsoft 与 AMD 扩大 Azure AI 基础设施合作；Anthropic 15 亿美元版权和解获批。",
+      "markdown": "briefs/2026-07-21.md",
+      "url": "reader.html?date=2026-07-21"
+    },
+    {
+      "date": "2026-07-20",
+      "title": "每日科技新闻简报｜2026-07-20",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. 日本、产业界与 NVIDIA 把物理 AI 推向国家级基础设施",
+        "2. Current AI 推进公共利益 AI 栈，Alpha Chat 和 Gap Map 已上线",
+        "3. 美国数据中心抗议全国化"
+      ],
+      "summary": "日本、产业界与 NVIDIA 把物理 AI 推向国家级基础设施；Current AI 推进公共利益 AI 栈；美国数据中心抗议全国化。",
+      "markdown": "briefs/2026-07-20.md",
+      "url": "reader.html?date=2026-07-20"
+    },
+    {
+      "date": "2026-07-19",
+      "title": "每日科技新闻简报｜2026-07-19",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. Moonshot 发布 Kimi K3，开放模型竞赛再升温",
+        "2. 美国联邦雇员据称可重新在公务设备上下载 TikTok",
+        "3. Waymo 因旧金山停电短暂停运"
+      ],
+      "summary": "Moonshot 发布 Kimi K3，开放模型竞赛再升温；TikTok 联邦设备政策变化被报道；Waymo 旧金山短暂停运后恢复。",
+      "markdown": "briefs/2026-07-19.md",
+      "url": "reader.html?date=2026-07-19"
+    },
+    {
+      "date": "2026-07-18",
+      "title": "每日科技新闻简报｜2026-07-18",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件/云",
+        "硬件/机器人",
+        "网络安全/政策",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. OpenAI 和 NVIDIA 同日强化 AI 每美元产出叙事",
+        "2. AI 交易退潮拖累芯片股，市场开始重新定价 AI 资本开支",
+        "3. AWS 计费估算故障导致部分客户看到异常账单"
+      ],
+      "summary": "OpenAI 和 NVIDIA 同日强化 AI 每美元产出叙事；AI 交易退潮拖累芯片股；AWS 计费估算故障导致异常账单。",
+      "markdown": "briefs/2026-07-18.md",
+      "url": "reader.html?date=2026-07-18"
+    },
+    {
+      "date": "2026-07-17",
+      "title": "每日科技新闻简报｜2026-07-17",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. TSMC 再加码 1000 亿美元美国先进制程投资",
+        "2. Google 将 Parallel Web Search 接入 Gemini Enterprise Agent Platform",
+        "3. Google Cloud/Mandiant 发布 AI 辅助漏洞管理蓝图"
+      ],
+      "summary": "TSMC 再加码美国先进制程投资；Google 将 Parallel Web Search 接入 Gemini Enterprise Agent Platform；Google Cloud/Mandiant 发布 AI 辅助漏洞管理蓝图。",
+      "markdown": "briefs/2026-07-17.md",
+      "url": "reader.html?date=2026-07-17"
+    },
+    {
+      "date": "2026-07-16",
+      "title": "每日科技新闻简报｜2026-07-16",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策",
+        "开发者工具"
+      ],
+      "items": [
+        "1. TSMC 公布 2026Q2：AI 需求继续推高先进制程收入",
+        "2. OpenAI 发布 GPT Red，用自动化红队提升模型抗提示注入能力",
+        "3. NVIDIA 发布 Jetson Thor 新模块"
+      ],
+      "summary": "TSMC 公布 2026Q2 业绩；OpenAI 发布 GPT Red；NVIDIA 发布 Jetson Thor 新模块，推动机器人与边缘 AI 量产化。",
+      "markdown": "briefs/2026-07-16.md",
+      "url": "reader.html?date=2026-07-16"
+    },
+    {
+      "date": "2026-07-15",
+      "title": "每日科技新闻简报｜2026-07-15",
+      "categories": [
+        "AI",
+        "芯片",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "1. Google DeepMind CEO Demis Hassabis 呼吁建立美国主导的全球 AI 监管机构",
+        "2. Microsoft 发布 2026 年 7 月 Patch Tuesday / Windows 11 更新",
+        "3. Nvidia 下一代 Rubin AI 硬件量产爬坡被指轻微延迟"
+      ],
+      "summary": "DeepMind CEO Demis Hassabis 呼吁建立 AI 监管机构；Microsoft 发布 7 月安全更新；Nvidia Rubin 量产节奏受关注。",
+      "markdown": "briefs/2026-07-15.md",
+      "url": "reader.html?date=2026-07-15"
+    }
+  ]
+}
