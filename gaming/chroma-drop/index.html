@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#111514" />
+    <meta name="description" content="Chroma Drop — a 3D liquid-metal tilt maze for the browser." />
+    <title>Chroma Drop</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <main class="shell">
+      <header class="masthead">
+        <div class="brand-block">
+          <p class="eyebrow">C·D / 3D LAB SERIES 07</p>
+          <h1>CHROMA<br /><span>DROP</span></h1>
+        </div>
+
+        <div class="status-strip" aria-live="polite">
+          <div class="status-cell chamber-cell">
+            <span class="label">Chamber</span>
+            <strong id="levelReadout">01 / 03</strong>
+          </div>
+          <div class="status-cell">
+            <span class="label">Mass</span>
+            <strong id="massReadout">100%</strong>
+          </div>
+          <div class="status-cell">
+            <span class="label">Time</span>
+            <strong id="timeReadout">00:00.0</strong>
+          </div>
+          <div class="status-cell node-cell">
+            <span class="label">Charge</span>
+            <div id="nodeReadout" class="node-readout" aria-label="0 of 3 charge nodes active">
+              <i></i><i></i><i></i>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="instrument" aria-label="Chroma Drop game board">
+        <div class="corner-mark top-left">+</div>
+        <div class="corner-mark top-right">+</div>
+        <div class="corner-mark bottom-left">+</div>
+        <div class="corner-mark bottom-right">+</div>
+        <div class="board-wrap" id="boardWrap">
+          <canvas id="gameCanvas" width="1000" height="650" aria-label="Playable liquid metal maze"></canvas>
+
+          <div class="overlay visible" id="startOverlay">
+            <div class="overlay-card intro-card">
+              <p class="card-index">INITIALIZATION / 001</p>
+              <h2>Keep it<br />together.</h2>
+              <p>Tilt the chamber. Wake all three charge nodes. Deliver at least 65% of your liquid mass to the open drain.</p>
+              <div class="control-keyline">
+                <span><kbd>WASD</kbd> or <kbd>ARROWS</kbd> to tilt</span>
+                <span><kbd>P</kbd> pause · <kbd>R</kbd> reset</span>
+              </div>
+              <button class="primary-button" id="startButton">ENTER CHAMBER <b>↗</b></button>
+            </div>
+          </div>
+
+          <div class="overlay" id="messageOverlay">
+            <div class="overlay-card result-card">
+              <p class="card-index" id="resultIndex">CHAMBER CLEAR</p>
+              <h2 id="resultTitle">Stable<br />matter.</h2>
+              <p id="resultCopy">The sample arrived intact.</p>
+              <div class="result-stats">
+                <span><small>Mass</small><strong id="resultMass">100%</strong></span>
+                <span><small>Time</small><strong id="resultTime">00:00</strong></span>
+                <span><small>Score</small><strong id="resultScore">0000</strong></span>
+              </div>
+              <button class="primary-button" id="continueButton">NEXT CHAMBER <b>↗</b></button>
+            </div>
+          </div>
+
+          <div class="pause-flag" id="pauseFlag">SUSPENDED</div>
+        </div>
+      </section>
+
+      <footer class="control-deck">
+        <div class="instruction">
+          <span class="instruction-no">01</span>
+          <p><strong>Activate</strong> the three charge nodes to release the drain lock.</p>
+        </div>
+
+        <div class="tilt-pad" id="tiltPad" aria-label="Touch tilt control">
+          <button data-dir="up" aria-label="Tilt up">↑</button>
+          <button data-dir="left" aria-label="Tilt left">←</button>
+          <div class="tilt-core"><i id="tiltIndicator"></i></div>
+          <button data-dir="right" aria-label="Tilt right">→</button>
+          <button data-dir="down" aria-label="Tilt down">↓</button>
+        </div>
+
+        <div class="deck-actions">
+          <button class="text-button" id="soundButton" aria-pressed="true">SOUND: ON</button>
+          <button class="text-button" id="pauseButton">PAUSE</button>
+          <button class="reset-button" id="resetButton">RESET RUN ↻</button>
+        </div>
+      </footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
