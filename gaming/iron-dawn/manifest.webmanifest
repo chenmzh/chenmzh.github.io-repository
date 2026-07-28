@@ -1,0 +1,19 @@
+{
+  "name": "钢铁黎明：零号战区",
+  "short_name": "钢铁黎明",
+  "description": "原创离线单人即时战略游戏",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#071011",
+  "theme_color": "#131d20",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
