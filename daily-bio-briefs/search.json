@@ -1,6 +1,47 @@
 {
-  "updated": "2026-07-27",
+  "updated": "2026-07-28",
   "briefs": [
+    {
+      "date": "2026-07-28",
+      "title": "每日合成与发育生物学简报 - 2026-07-28",
+      "summary": "今天的强信号来自三个层面：PNAS/Nature 系正式发表补入多篇 2026-07-27/28 条目，bioRxiv 新上传中出现 synthetic cells、CRISPR 调控、微生物代谢和发育染色质候选，arXiv q-bio 则集中在形态发生、生态/神经动力学与反馈建模。 合成生物学方向最值得关注的是“自调控代谢线路”和“可编程细胞内隔室”：L-lysine alkaloid 自调控平台、细菌 tocopherol 非经典路径、synthetic-cell condensates、sentinel plants 都带有可复用工程模块意味。 发育合成生物学方向今天偏物理与细胞器控制：epithelial dome 的水力反馈振荡、morphogenetic rods 的 shape memory、peroxisome-ether lipid-线粒体轴调控 cortical neurogenesis，均可给 synthetic morphogenesis 提供设计原则。 控制论与生物学方向的主线很清楚：从 microglia-neuron 正反馈、YAP/TAZ 负反馈式 metastasis dynamics，到植物 NO-melatonin set-point control，反馈、稳态和可控未来状态正在作为生物系统解释框架出现。 medRxiv 本窗口返回不少公共卫生和临床建模条目，但强相关度低于 bioRxiv/PubMed/arXiv 候选；本次只把 measles/dengue/epidemic surveillance 等作为低相关扫读。",
+      "items": [
+        "A dual self-regulatory platform for programmable biosynthesis of L-lysine-derived alkaloids",
+        "Surface-stabilized sub-micron condensates for compartmentalizing synthetic cells and enhanced enzyme kinetics",
+        "A non-classical biosynthetic route enables tocopherol synthesis in bacteria",
+        "Sentinel plants enable quantitative monitoring of bioavailable nitrate in soils and microbial environments",
+        "Shape instabilities of active epithelial domes under hydraulic stress: Growth, collapse, and oscillation",
+        "Growth and remodeling control shape memory in morphogenetic rods",
+        "Peroxisomal ether lipid synthesis regulates cortical neurogenesis and maintains mitochondrial energy homeostasis in radial glial cells",
+        "Gp130 Orchestrates a Bidirectional Neuron-Microglia Circuit for neuroprotection",
+        "Cancer stem cells are hyper-responsive sensors of the tumour microenvironment and regulate metastasis dynamics through YAP/TAZ",
+        "Toward generalizable and interpretable AI in regulatory genomics"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markdown": "briefs/2026-07-28.md",
+      "url": "reader.html?date=2026-07-28",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "A dual self-regulatory platform for programmable biosynthesis of L-lysine-derived alkaloids",
+        "Surface-stabilized sub-micron condensates for compartmentalizing synthetic cells and enhanced enzyme kinetics",
+        "A non-classical biosynthetic route enables tocopherol synthesis in bacteria",
+        "Sentinel plants enable quantitative monitoring of bioavailable nitrate in soils and microbial environments",
+        "Shape instabilities of active epithelial domes under hydraulic stress: Growth, collapse, and oscillation",
+        "Growth and remodeling control shape memory in morphogenetic rods",
+        "Peroxisomal ether lipid synthesis regulates cortical neurogenesis and maintains mitochondrial energy homeostasis in radial glial cells",
+        "Gp130 Orchestrates a Bidirectional Neuron-Microglia Circuit for neuroprotection",
+        "Cancer stem cells are hyper-responsive sensors of the tumour microenvironment and regulate metastasis dynamics through YAP/TAZ",
+        "Toward generalizable and interpretable AI in regulatory genomics"
+      ]
+    },
     {
       "date": "2026-07-27",
       "title": "每日合成与发育生物学简报 - 2026-07-27",
