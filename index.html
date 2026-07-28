@@ -1,1891 +1,408 @@
-<!DOCTYPE html>
-
-
-
-  
-
-
-<html class="theme-next muse use-motion" lang="">
+<!doctype html>
+<html lang="zh-CN">
 <head>
-  <meta charset="UTF-8"/>
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
-<meta name="theme-color" content="#222">
-
-
-
-
-
-
-
-
-
-<meta http-equiv="Cache-Control" content="no-transform" />
-<meta http-equiv="Cache-Control" content="no-siteapp" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
-
-
-
-
-
-
-
-<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
-
-<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
-
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
-
-
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
-
-
-  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
-
-
-
-
-
-  <meta name="keywords" content="Hexo, NexT" />
-
-
-
-
-
-
-
-
-
-
-<meta name="description" content="Dairy and study notes">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Chenmzh&#39;s site">
-<meta property="og:url" content="http://yoursite.com/index.html">
-<meta property="og:site_name" content="Chenmzh&#39;s site">
-<meta property="og:description" content="Dairy and study notes">
-<meta property="og:locale" content="default">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Chenmzh&#39;s site">
-<meta name="twitter:description" content="Dairy and study notes">
-
-
-
-<script type="text/javascript" id="hexo.configurations">
-  var NexT = window.NexT || {};
-  var CONFIG = {
-    root: '/',
-    scheme: 'Muse',
-    version: '5.1.4',
-    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
-    fancybox: true,
-    tabs: true,
-    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
-    duoshuo: {
-      userId: '0',
-      author: 'Author'
-    },
-    algolia: {
-      applicationID: '',
-      apiKey: '',
-      indexName: '',
-      hits: {"per_page":10},
-      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mingzhe Chen 的公开课程、研究简报、项目与文章目录">
+  <meta name="theme-color" content="#f2f0e9">
+  <title>Mingzhe Chen · Public Index</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f2f0e9;
+      --surface: #faf9f5;
+      --ink: #1f2421;
+      --muted: #626963;
+      --line: #cfd3cd;
+      --teal: #2f7561;
+      --blue: #3f718f;
+      --coral: #b85f51;
+      --ochre: #b18132;
+      --forest: #315943;
+      --content: 1120px;
     }
-  };
-</script>
 
+    * { box-sizing: border-box; }
 
+    html { scroll-behavior: smooth; }
 
-  <link rel="canonical" href="http://yoursite.com/"/>
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
 
+    a { color: inherit; }
 
+    .shell {
+      width: min(var(--content), calc(100% - 48px));
+      margin: 0 auto;
+    }
 
+    .masthead {
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
 
+    .masthead-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 56px;
+      min-height: 390px;
+      padding: 42px 0 48px;
+    }
 
-  <title>Chenmzh's site</title>
-  
+    .identity {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-width: 0;
+    }
 
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
 
+    .headline { margin-top: 62px; }
 
+    h1 {
+      max-width: 800px;
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+      font-size: 4.8rem;
+      font-weight: 500;
+      line-height: 0.98;
+      letter-spacing: 0;
+    }
 
+    .lede {
+      max-width: 660px;
+      margin: 24px 0 0;
+      color: var(--muted);
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 1.28rem;
+      line-height: 1.62;
+    }
 
+    .index-mark {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 300px;
+      padding-left: 28px;
+      border-left: 1px solid var(--line);
+    }
 
+    .index-mark strong {
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
 
+    .index-figure {
+      align-self: center;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 6.6rem;
+      font-variant-numeric: tabular-nums;
+      line-height: 0.8;
+    }
 
+    .index-figure span {
+      display: block;
+      margin-top: 16px;
+      color: var(--coral);
+      font-size: 1rem;
+      font-family: "Avenir Next", Avenir, sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .index-mark small {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .catalog { padding: 30px 0 84px; }
+
+    .catalog-section {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 44px;
+      padding: 42px 0 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-label {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .link-list { border-top: 1px solid var(--line); }
+
+    .entry {
+      --entry-accent: var(--teal);
+      display: grid;
+      grid-template-columns: 54px minmax(0, 1fr) auto;
+      gap: 22px;
+      align-items: center;
+      min-height: 108px;
+      padding: 18px 4px 18px 0;
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .entry:last-child { border-bottom: 0; }
+
+    .entry[data-accent="blue"] { --entry-accent: var(--blue); }
+    .entry[data-accent="coral"] { --entry-accent: var(--coral); }
+    .entry[data-accent="ochre"] { --entry-accent: var(--ochre); }
+    .entry[data-accent="forest"] { --entry-accent: var(--forest); }
+
+    .entry-number {
+      color: var(--entry-accent);
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 1.18rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .entry-copy { min-width: 0; }
+
+    .entry-title {
+      display: block;
+      margin-bottom: 7px;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      font-size: 1.42rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    .entry-meta {
+      display: block;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .entry-arrow {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      color: var(--entry-accent);
+      font-size: 1.45rem;
+      transition: transform 160ms ease;
+    }
+
+    .entry:hover .entry-title,
+    .entry:focus-visible .entry-title { color: var(--entry-accent); }
+
+    .entry:hover .entry-arrow { transform: translateX(5px); }
+
+    .entry:focus-visible {
+      outline: 2px solid var(--entry-accent);
+      outline-offset: 5px;
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 26px 0 40px;
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 820px) {
+      .masthead-inner {
+        grid-template-columns: 1fr;
+        gap: 34px;
+        min-height: 0;
+      }
+
+      .index-mark {
+        grid-template-columns: auto 1fr auto;
+        grid-template-rows: 1fr;
+        gap: 24px;
+        align-items: center;
+        min-height: 0;
+        padding: 22px 0 0;
+        border-top: 1px solid var(--line);
+        border-left: 0;
+      }
+
+      .index-figure { font-size: 3rem; }
+      .index-figure span { display: inline; margin: 0 0 0 10px; }
+      .catalog-section { grid-template-columns: 130px minmax(0, 1fr); gap: 28px; }
+    }
+
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 28px, var(--content)); }
+      .masthead-inner { padding-top: 28px; }
+      .topline { flex-direction: column; gap: 6px; }
+      .headline { margin-top: 46px; }
+      h1 { font-size: 3.25rem; }
+      .lede { font-size: 1.08rem; }
+      .index-mark { grid-template-columns: 1fr auto; }
+      .index-mark strong { grid-column: 1 / -1; }
+      .catalog-section { display: block; padding-top: 34px; }
+      .section-label { margin-bottom: 16px; }
+      .entry { grid-template-columns: 42px minmax(0, 1fr) 32px; gap: 12px; }
+      .entry-title { font-size: 1.18rem; }
+      .entry-arrow { width: 32px; height: 32px; }
+      .footer { flex-direction: column; gap: 8px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .entry-arrow { transition: none; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        color-scheme: dark;
+        --paper: #171a18;
+        --surface: #202421;
+        --ink: #eef1ed;
+        --muted: #a8afa9;
+        --line: #39403b;
+        --teal: #78bda6;
+        --blue: #82b2cf;
+        --coral: #e08a7c;
+        --ochre: #d8ad62;
+        --forest: #86b698;
+      }
+    }
+  </style>
 </head>
-
-<body itemscope itemtype="http://schema.org/WebPage" lang="default">
-
-  
-  
-    
-  
-
-  <div class="container sidebar-position-left 
-  page-home">
-    <div class="headband"></div>
-
-    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
-      <div class="header-inner"><div class="site-brand-wrapper">
-  <div class="site-meta ">
-    
-
-    <div class="custom-logo-site-title">
-      <a href="/"  class="brand" rel="start">
-        <span class="logo-line-before"><i></i></span>
-        <span class="site-title">Chenmzh's site</span>
-        <span class="logo-line-after"><i></i></span>
-      </a>
-    </div>
-      
-        <p class="site-subtitle"></p>
-      
-  </div>
-
-  <div class="site-nav-toggle">
-    <button>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-      <span class="btn-bar"></span>
-    </button>
-  </div>
-</div>
-
-<nav class="site-nav">
-  
-
-  
-    <ul id="menu" class="menu">
-      
-        
-        <li class="menu-item menu-item-home">
-          <a href="/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
-            
-            Home
-          </a>
-        </li>
-      
-        
-        <li class="menu-item menu-item-archives">
-          <a href="/archives/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
-            
-            Archives
-          </a>
-        </li>
-      
-
-      
-    </ul>
-  
-
-  
-</nav>
-
-
-
- </div>
-    </header>
-
-    <main id="main" class="main">
-      <div class="main-inner">
-        <div class="content-wrap">
-          <div id="content" class="content">
-            
-  <section id="posts" class="posts-expand">
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/25/Microscopy/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/09/25/Microscopy/" itemprop="url">Untitled</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-09-25T21:52:12+02:00">
-                2020-09-25
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/09/25/Microscopy/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2020/09/25/Microscopy/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+<body>
+  <header class="masthead">
+    <div class="shell masthead-inner">
+      <div class="identity">
+        <div class="topline">
+          <span>Public index · Zurich</span>
+          <span>Research · Teaching · Experiments</span>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <center><br># Microscopy<br><strong>21.9.2020</strong><br><br><strong>Mingzhe Chen </strong><br></center>
-
-<h2 id="Module-3A-Constructing-a-compound-epi-fluorescence-microscope"><a href="#Module-3A-Constructing-a-compound-epi-fluorescence-microscope" class="headerlink" title="Module 3A: Constructing a compound epi-fluorescence microscope"></a>Module 3A: Constructing a compound epi-fluorescence microscope</h2><h3 id="Knowledge-point"><a href="#Knowledge-point" class="headerlink" title="Knowledge point"></a>Knowledge point</h3><p><br></p>
-<h4 id="Refraction"><a href="#Refraction" class="headerlink" title="Refraction:"></a>Refraction:</h4><p>What’s a refraction?<br>Refraction is the change in direction of wave propogation due to a change in its transmission medium</p>
-<p>Snell’s Law:</p>
-<p>  $$ \frac{sin\beta}{sin\alpha} = \frac{n_1}{n_2} $$</p>
-<p>$\beta$ is the angle of refraction and $\alpha$ is the angle of incident light.</p>
-<p>$n_1$ is the refractive index in the side of incident light, and $n_2$ is the refractive index in the side of refracted light</p>
-<p>There will be a reflected light with the same angle of $\alpha$ at the side of $n_1$ medium<br><br></p>
-<h4 id="3-Ray-tracing-laws"><a href="#3-Ray-tracing-laws" class="headerlink" title="3 Ray tracing laws:"></a>3 Ray tracing laws:</h4><ul>
-<li>Parallel incident rays converge at the same point in the back focal plan of the lens</li>
-<li>Rays originating from the same point on the front focal plane exit the lens parallel</li>
-<li>Rays passing the lens center as if unaffected</li>
-</ul>
-<p><br></p>
-<h4 id="Image-Formation"><a href="#Image-Formation" class="headerlink" title="Image Formation"></a>Image Formation</h4><h5 id="One-len-system"><a href="#One-len-system" class="headerlink" title="One len system"></a>One len system</h5><p>Thin lens equation:<br>$$\frac{1}{s_i}+\frac{1}{s_o}=\frac{1}{f}$$</p>
-<p>$s_i$ is the distance of image.<br>$s_o$ is the distance of object.<br>$f$ is the focal distance.</p>
-<p>The single len system is a <em>finite conjugate imaging system</em>(order objectives), and called <em>finite conjugate imaging</em></p>
-<p>Magnification:<br>$$M = -\frac{s_i}{s_o}=\frac{f}{f-s_o}$$</p>
-<h5 id="Two-lens-system"><a href="#Two-lens-system" class="headerlink" title="Two lens system"></a>Two lens system</h5><p>Image formation with multiple lenses: <em>infinite conjugate imaging</em> (modern objective) (compound microscope)</p>
-<p>Magnification:</p>
-<p>$$M = -\frac{s_i}{s_o}=\frac{f_t}{f_o}$$</p>
-<p>$f_t$ is the focal distance of tube len<br>$f_o$ is the focal distance of objective len</p>
-<p><br></p>
-<h4 id="Critical-illumination-and-Kohler-illumination"><a href="#Critical-illumination-and-Kohler-illumination" class="headerlink" title="Critical illumination and Kohler illumination"></a>Critical illumination and Kohler illumination</h4><h5 id="Critical-illumination"><a href="#Critical-illumination" class="headerlink" title="Critical illumination:"></a>Critical illumination:</h5><p>Light source plane is conjugated with the object plane. Which made the image of light source overlap with the object.</p>
-<p>Structure:</p>
-<p>Source plane - collective lens - aperture iris - condenser lens - object plane - objective lens - objective back focal plane - tube lens - final image plane</p>
-<p>Pros: </p>
-<ul>
-<li>Maximum possible light intensity at sample</li>
-</ul>
-<p>Cons:</p>
-<ul>
-<li>Light source image overlap with the object.</li>
-</ul>
-<h5 id="Kohler-illumination"><a href="#Kohler-illumination" class="headerlink" title="Kohler illumination"></a>Kohler illumination</h5><p>Light source is conjugated with the aperture iris plane and the light is spread evenly over the object plane</p>
-<p>Structure:</p>
-<p>Source plane - collective lens - field iris - field lens - aperture iris -  condenser lens - object plane - objective lens - objective back focal plane - tube lens - final image plane</p>
-<p>Pros:</p>
-<ul>
-<li>No image overlap</li>
-</ul>
-<p>Cons:</p>
-<ul>
-<li>The strength of light will be lower</li>
-</ul>
-<p><br></p>
-<h4 id="Objective-lens"><a href="#Objective-lens" class="headerlink" title="Objective lens"></a>Objective lens</h4><h5 id="Important-Parameters"><a href="#Important-Parameters" class="headerlink" title="Important Parameters:"></a>Important Parameters:</h5><p>NA: Numerical Aperture</p>
-<p>$$NA = n_{media} * sin(\theta)$$</p>
-<ul>
-<li>Higher NA, Maximum intensity in an image of a point object is more sensitive to the thickness error of coverslip</li>
-<li>Generally, higher NA has shorter Working Distance and Wider lens </li>
-</ul>
-<p>By changing the $n_{media}$, NA can reach ~1.5. $sin(\theta)$ can reach 0.95</p>
-<p>$$\infty/0.14  \quad  WD \: 0.21$$</p>
-<p>$\infty$ is the tube length</p>
-<p>$0.14$ is the coverslip thickness, means 0.14 mm</p>
-<p>$WD \: 0.21$ is the working distance from the top of the object length to the sample. <strong>Working Distance is Not the focal distance</strong>. Unit: mm</p>
-<p>WD corresponds to the maximum imaging depth possible.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/18/Notebook for Uri Alon A Introduction to Systems Biology/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/04/18/Notebook for Uri Alon A Introduction to Systems Biology/" itemprop="url">Notebook for Uri Alon A Introduction to Systems Biology--Design principle of Biological Circuits</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-18T22:42:40+02:00">
-                2020-04-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/04/18/Notebook for Uri Alon A Introduction to Systems Biology/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2020/04/18/Notebook for Uri Alon A Introduction to Systems Biology/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
+        <div class="headline">
+          <h1>Mingzhe Chen</h1>
+          <p class="lede">课程讲义、研究简报、技术实验与长期文章的公开目录。</p>
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><strong>Uri Alon: 系统生物学导论–生物线路的设计原则 笔记</strong></p>
-<p>###Chapter 1 Introduction</p>
-<p>我第一次阅读生物的教材的时候，那种感觉就像是在看一本扣人心弦的惊险小说。每一页都能带给我新的刺激。作为一个物理学家，我已习惯于研究符合精确到的数学定律的物质(<em>matter</em>)。但是细胞是一种会“翩翩起舞”的物质(<em>matter</em>)。结构自发地形成以执行复杂的生化功能，并且在他们的任务完成后，毫不费力地消失。尽管被强烈的热力学噪声所扰动，身处在一碗密集的“分子汤”中，这些分子仍能够几乎毫不出错地编码和处理着信息。这是怎么实现的？在这些生物系统上是否有着某种特别的自然法则，来帮助我们理解为何他们不同于无生命的物质？</p>
-<p>我们渴望找到自然的法则，致力于简化原理(<em>principle</em>)，但是生物的复杂程度是如此地令人震惊。每一步生化相互作用就像是早已被大自然精致地安排好，而且细胞内部包含着由上千个这样的相互作用所组成的网络。</p>
-<p>(<em>Every biochemical interaction is exquisitely crafted, and cells contain networks of thousands of such interactions:这里用的是biochemical interaction，而不是biochemical reaction</em>)</p>
-<p>这些网络是通过随机突变和自然选择压力下生物体进化的结果。因此，这些被进化筛选出来的网络结构，在某种程度上，依赖于历史的机遇 (historical chance)，同时充斥着生化反应的细节，在每一个案例中，都需要对这些生化反应进行特别的描述。</p>
-<p>尽管如此复杂，科学家们已经尝试去分辨出一些在生物学的历史上都能适用的原理。这项搜索工作仍然在进行并且远远没有完成。实验技术的进步所提供的新的细节以及关于生物相互作用网络的综合性的信息使得这成为可能。</p>
-<p>这些研究导向规则的发现：使研究人员可以确实地公式化适用于生物网络的通用规则。(<em>formulate general laws that apply for biological networks</em> ) 因为生物网络已经被进化出去行使某种功能，因此很难说它是随机形成的或者是杂乱无章的。它有着定义良好的，能让整个系统顺利运转的特征。尽管进化是通过随机的修修补补来发挥作用的，但是通过一次又一次的进化，最终能收敛到一个被清晰定义的回路元件的集合，而这个集合符合某种通用的设计原则。</p>
-<p>这本书的目的是强调生物系统设计的几个原则，并且提供一个数学的框架来使用这些原则理解生物网络。关键点在于，生物系统蕴含着内在的简洁性。尽管进化的目的是为了行使功能，而使人理解，但这些简化的原则却可以使生物学设计变得易于理解。(<em>这里讲的是自然界鬼斧神差的设计，但是我们也可以运用这些原理巧夺天工来创造新的回路</em>)</p>
-<p>这本书是为有一定数学基础的学生写作的。尽管我们会提及一些已经被充分研究过的生物学系统，来论证关键的原理，但我们会避免提及一些特定的术语和基因的名称。这本书提供了一种通过基于数学原理来研究系统生物学的思路，而不强调实验技术。这些例子是作者所熟悉的。其他的思路可以在本书每一章节末尾所列出的出处，和本书末尾的延伸读物中找到。</p>
-<p>在这本书中数学模型的目的不是为了精确地复现实验数据，而是为了提供一种对通用原则的直觉性的理解。这是物理学中“理想模型”的艺术：一种用简单的等式就能抓住自然现象的某种本质的信念。 因此这本书中的数学描述是被简化了的，以便于能够在黑板上或者在不大的纸张上解决。我们将会看到这样一种相当有效的问法, “为什么系统是被设计成这种样子的”，并且尝试利用简化的模型去回答这个问题。</p>
-<p>让我们通过对各个章节的总览来总结下导论部分。这本书的第一部分是解决转录调控网络。网络的各个元件和他们的动力学模型将会被描述。我们将会看到这些网络是由一个个重复出现的简单的图样(<em>repeating recurrences of simple patterns</em>)所组成的，这些图样被叫做网络模体(<em>network motif</em>)。这些组建模块回路在不同系统中被进化一次又一次地重新发现。在其他生物网络中更多网路模体，例如信号传导网络和神经元网络，也会被讨论到。关键点在于，生物系统展现出某种内在的简化性，他们都在使用或者组合一些相当小的基础的建筑模块回路来完成特定的计算任务。</p>
-<p>本书的第二部分聚焦在鲁棒性原理上：生物回路被设计成其基本的功能应当对在回路内部元件上的自然出现的扰动不敏感。尽管许多回路设计在文章中可以表现得很好，但是我们将看到只有很少的系统可以在细胞形式功能时有良好的鲁棒性。这些鲁棒的回路很少是非泛型和特殊的，大部分在美学上是令人愉悦的。我们将会使用鲁棒性原理来理解设计良好的回路的细节，包括细菌的趋化性和果蝇发育过程中的图案形成。</p>
-<p>最后一部分章节描述了有现实的进化优化如何被用来理解优化回路设计，以及动力学检查如何可以最小化生物信息处理过程中制造的错误。</p>
-<p>这些生物系统的特征，小的网络模体几何的重复使用，对元件容忍度的鲁棒性，以及限制性的优化设计，也可以在一个完全不同的语境中找到：人类工程师设计的系统。生物系统与工程化系统有着额外的相同的特征，比如模块性和层次性设计。这些相似性暗示着他们可以在一个更深的层次上统一我们对于进化和理性设计的理解。(<em>These features of biological systems, reuse of a small set of network motifs, robustness to component tolerances, and constrained optimal design, are also found in a completely different context: systems designed by human engineers. Biological systems have additional features in a common with engineered systems, such as modularity and hierarchical design. These similarities hits at a deeper theory that can unify our understanding of evolved and designed systems.</em>)</p>
-<p>这就是导论部分的内容。一个专业术语的词汇表附在了本书的最后，并且在每一章的内容之后，我们提供了一些带解答的练习题，其中有更多的没有在正文部分讨论的细节。我希望你们能够享受阅读这本书的过程。</p>
-<blockquote>
-<p>Future reading</p>
-<p>Fall.C., Maryland F,., Wagner., and Tyson J.(2005). Computational Cell Biology, Springer.</p>
-<p>Fell, D., (1996). Understanding the Control of Metabolism. Portland Press.</p>
-<p>Heinrich, R. and Schuster, S. (1996). The Regulation of Cellular Systems. Kluwer Academic Publishers.</p>
-<p>Klipp, E., Herwig, R., Kowald, A., Wierling, C., and Leharch, H.(2005). Systems Biology in Practice: Concepts Implementation and Application. Wiley.</p>
-<p>Kriete, A. and Eils, R. (2005). Computational Systems Biology. Academic Press.</p>
-<p>Palsson, B.O. (2006). Systems Biology: Properties of Reconstructed Networks. Cambridge University Press.</p>
-<p>Savageau. M.A. (1976). Biochemical Systems Analysis: A Study of Function and Design in Molecular Biology. Addison Wesley.</p>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/17/数学分析/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/04/17/数学分析/" itemprop="url">数学分析</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-17T13:26:54+02:00">
-                2020-04-17
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/04/17/数学分析/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2020/04/17/数学分析/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/04/13/C-Language-Notebook/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/04/13/C-Language-Notebook/" itemprop="url">C learning note</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-04-13T11:15:37+02:00">
-                2020-04-13
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2020/04/13/C-Language-Notebook/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2020/04/13/C-Language-Notebook/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="Notebook"><a href="#Notebook" class="headerlink" title="Notebook"></a>Notebook</h1><p>添加使得计算机程序执行后不立刻退出</p>
-<p><code>getchar()；</code></p>
-<p>定义一个常数。使用预处理器，在编译时将所有的x替换为“define a constant”</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> x <span class="meta-string">"define a constant"</span></span></span><br></pre></td></tr></table></figure>
-<p>限定变量为只读，即可以使用和打印x的值，但是无法更改x的值</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">const int x = 10086</span><br></pre></td></tr></table></figure>
-<p>转换说明</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/C Language/转换说明.jpg" alt="转换说明"></p>
-<p>修饰符说明</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/C Language/修饰符.jpg" alt="修饰符"></p>
-<p>标记</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/C Language/标记.jpg" alt="标记"></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/10/08/Application field in BE Synthetic biology/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/10/08/Application field in BE Synthetic biology/" itemprop="url">Application field in BE Synthetic biology</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-10-08T00:00:00+02:00">
-                2018-10-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/10/08/Application field in BE Synthetic biology/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2018/10/08/Application field in BE Synthetic biology/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Biological Engineering is dedicated to dealing with problems concerning real big problems like health, environment, fuels and agriculture problems from a comprehensive perspective. It’s a new cross-discipline , like a surfactant that connect existing engineering disciplines and the modern molecular life science, and synthetic biology is one of the field containing notions from EECS and materials from molecular biology. Briefly speaking, synthetic biologists consider organisms as a programmable machine, and we can use molecular technologies to engineer this machine for our specific purposes.</p>
-<p>There are several pioneer’s works which settled the foundation of synthetic biology at the beginning of the new millennium. In 2000 Michael B. Elowitz and Stanislas Leibler published their work named “A synthetic oscillatory network of transcriptional regulators” which is seen as one of the most initial attempts applying synthetic biological notions. And the work of James Collins about toggle switch has been considered as another classical design of synthetic biology.</p>
-<p>In Elowitz’s paper, they gave a quantitative description of the oscillator network designed by their hand from scratch. This network, which they termed “Repressilator”, can show the behavior of oscillation by using GFP as the reporter protein. However, it is composed of three transcriptional repressor systems unrelated to the natural biological clock. Through modeling this system, determining the functional range of key parameters and finally choosing the genes favored the oscillation, they optimized the performance of this network by using stronger promoters and efficient RBS sites with low leakiness and comparable protein and RNA decay rates. This method they used is what we called design-build-test loop nowadays, and the wonderful results showed that we have had the ability to rationally design desired genetic circuits to perform certain behavior using basic elements unrelated to the natural biological behavior.[1]</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/Application%20in%20BE%20field/MingzheChenDevEssay2.jpg" alt="Figure 1: Network Diagram of Repressilator"></p>
-<center><strong>Figure 1: Network Diagram of Repressilator</strong></center>
-
-
-
-<p>Almost 20 years have passed after the publication of their work. Nowadays, the genetic circuits we can construct is becoming much more complex, and one tendency is that the object people can engineer is from simple single-cell prokaryotic system to complicated multi-cell eukaryotic system. Even in prokaryotic cells like <em>E.coli</em>, cutting-edge molecular technologies like CRISPR are used in synthetic biology to execute more complicated functions.</p>
-<p>In 2006, Prof Christopher A. Voigt published a work to engineering <em>Escherichia coli</em> to see light. His group reconstructed the phytochrome system which can react to light inside <em>E.coli</em>, the model organism that has no photoreceptors. The membrane-bound part of phytochrome system can be inactivated by the red light and activated when it is dark. But this system cannot activate gene expression directly, so they fused the membrane-bound domain with well-studied <em>E.coli</em> intracellular histidine kinase domain to regulate the expression of the reporter gene. In this way, once the engineered <em>E.coli</em> in a film sense “dark”, it would activate the expression of pigment generator-LacZ, and function as a photographic film, which they termed “bacterial photography”.[2]</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/Application%20in%20BE%20field/MingzheChenDevEssay2-1.jpg" alt="Figure 1"></p>
-<center><strong>Figure 2: Principle and Illumination of Bacterial Photography</strong></center>
-
-
-
-<p>In 2009, Chris Voigt continued to use photoreceptor to program a group of edge-detection <em>E.coli</em>.</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/Application%20in%20BE%20field/MingzheChenDevEssay2-3.jpg" alt="https://ars.els-cdn.com/content/image/1-s2.0-S0092867409005091-gr1.jpg"></p>
-<center><strong>Figure 3: Principle of Edge-Detection Cells</strong></center>
-
-
-
-<p>Basically, if the bacteria cannot sense light when the neighboring cells are under illumination, it indicates the light-dark edges. So Voigt programmed the cells in the light to produce the diffusible cell-to-cell communication signal molecule—3-oxohexanoyl-homoserine lactone (AHL), and if its neighbors in the dark sense the signal, they would know that they are near the edge, and then produce the reporter pigment. In this way, this logic gate inside the cells generates the pigment can be signified as ”(No light) AND (AHL)”. In general, they successfully combined the photoreceptor with the cell-to-cell communication systems to construct the much more complex regulatory circuits. Besides, the in vivo experiments results are well fitted with in silicon results, demonstrating that our understandings of these process are correct.[3]</p>
-<p>In his 2017’s paper, it seems that Prof. Voigt made an update for his 2006’s work: from black and white copy to RGB color copy. However, this time the scale and complexity of this circuit are unprecedented. By using 3 orthogonal photoreceptors, they successfully controlled the generation of 3 corresponding pigments respectively. The wavelengths of input lights are quite near the absorption band of output pigment, so the bacteria-film could record “what they see” with fidelity.</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/image/Application%20in%20BE%20field/MingzheChenDevEssay2-4.jpg" alt="Figure 1"></p>
-<center><strong>Figure 4: The Illustration of RBG Photography System</strong></center>
-
-
-
-<p>The generation of corresponding pigments is regulated by T7 RNAP core. By combining with different sigma factor, T7 RNAP core can transcript different kinds of pigment-generation proteins, then “photograph” the corresponding image.</p>
-<p>This system along with CRISPRi can be used to control the arbitrary combined expressions of target genes, which widely broadens the application of this system. In the same paper, Prof Voigt applied it to redirect the flux of the bacteria metabolism by designing targeting gRNA binding with the locus of 3 enzymes in glycolysis, to produce less acetate, which is usually an unwanted chemical during bioprocess. [4]</p>
-<p>The series of works done by Prof Voigt gives synthetic biologists a handle to manipulate several parameters of biological process non-invasively and observe the behavior of bacteria instantly. Apart from research purposes, this system can also be produced as tools to deal with realistic problems. For example, if it is combined with Cell-Free Protein Synthesis (CFPS) system, we could design a tunable network which could be delivered to the environment and for more widespread applications.</p>
-<p>Reference:</p>
-<p>[1] Elowitz, M. B., &amp; Leibler, S. (2000). A synthetic oscillatory network of transcriptional regulators. Nature, 403(6767), 335.</p>
-<p>[2] Levskaya, A., Chevalier, A. A., Tabor, J. J., Simpson, Z. B., Lavery, L. A., Levy, M., … &amp; Voigt, C. A. (2005). Synthetic biology: engineering Escherichia coli to see light. Nature, 438(7067), 441.</p>
-<p>[3] Tabor, J. J., Salis, H. M., Simpson, Z. B., Chevalier, A. A., Levskaya, A., Marcotte, E. M., … &amp; Ellington, A. D. (2009). A synthetic genetic edge detection program. Cell, 137(7), 1272-1281.</p>
-<p>[4] Fernandez-Rodriguez, J., Moser, F., Song, M., &amp; Voigt, C. A. (2017). Engineering RGB color vision into Escherichia coli. Nature chemical biology, 13(7), 706.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/06/14/国史大纲/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/06/14/国史大纲/" itemprop="url">从国史大纲到李约瑟之问：为何中国古代没有科学？</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-06-14T13:05:03+02:00">
-                2018-06-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/06/14/国史大纲/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2018/06/14/国史大纲/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p><strong>摘要</strong>：钱穆所著《国史大纲》，力在通过梳理历史，整理中华文化之发展脉络，以树立一种文化之自信观。然而八十年之后，在科学领域，人们似乎仍然抱有一种对传统中国的偏见，一如钱穆八十年前国史大纲序言中所写。时人以当今西方科学发展的范式去套用古代中国的技术发展，由此而生一种对中国传统文化的鄙夷或自卑，不得不让人感到痛心。故此，有必要厘清中西科学文化发展之差异，解释清楚李约瑟之问之始末。</p>
-<p><strong>关键词</strong>：李约瑟之问 国史大纲 科学</p>
-<h3 id="为什么要回答李约瑟之问"><a href="#为什么要回答李约瑟之问" class="headerlink" title="为什么要回答李约瑟之问"></a>为什么要回答李约瑟之问</h3><p>回顾中国自19世纪开始的被侵略被殖民的历史，后人称之“屈辱的近代史”，而时人则痛心疾首，研究西方历史之发展进程，与中国之进程前后比较印证，力图救亡图存。时至今日，在回首这段历史的时候，自然有一部分知识分子会忍不住发问 ”为何中国没有发展出类似于西方的社会文化形态，是什么使得造成了两方文化之差异，使得中国被西方侵略，而非反之？“。</p>
-<p>1939年，作为历史学家的钱穆避战乱于滇南西山岩泉下寺，历时一年，作《国史大纲》。是时，列强围伺，敌国环绕，威胁着中华民族的生死存亡。回顾过往二十年学界文化思想之变动，德先生和赛先生的口号尚且回荡耳边，延续数千年的王朝秩序刚刚破灭，旧秩序已被打破，而新秩序尚未建立，列强已张开其爪牙，大举入侵中国。在过去与西方的接触中，无论是坚船利炮的硬碰硬，还是文化社会之软实力的碰撞，其结果也悲壮，其影响对于当时的中国社会也不啻于一场大地震。诸多中国知识分子开始反思本国文化是否真有其难除之弊病，忧虑民族之未来命运。在此危机存亡之际，有人生发对本国文化的不自信，将今日的失败诿卸古人，而吹捧西方的一套思想文化，自然也就在预料之中。然而，在国史大纲的序言之中，钱穆从史学家的角度，坚定地指出，当今中国之文化，不是说不如西方，而是两种截然不同的文化传统，各自有其不同的“精神内核”，“常见此时彼升而我降，他时彼降而我升，只横切一点论之，万难得其真相”，如果不了解中华之历史，全盘西化，轻言改革，则改革过程中的种种文化冲突之弊病也可预料。</p>
-<p>八十年来，时过境迁，尽管近年来随着改革开放与经济发展，我们不再面临当时那种严重的民族危机，但是那种对传统文化的不自信，至今并未消解。这种不自信，尤其是在当代华人科学家中，仍是一种相当普遍的思想，而其中相当有代表性的就是上世纪中叶提出的”李约瑟之问“，即：为何中国古代没有发展出类似于现代西方的科学思想？这一问题直到今天还常常被人用作指摘中国传统文化之”落后“之把手。因此作为科技大学的学生，在了解一部分中国史与科学史之后，有必要在此廓清事实，就这一问题给出解释。</p>
-<h3 id="横向比较：一种回答范式"><a href="#横向比较：一种回答范式" class="headerlink" title="横向比较：一种回答范式"></a>横向比较：一种回答范式</h3><p>历史事实就在此处，而我们对其如何解读取决于我们透过怎样的棱镜进行观察。自然我们可以通过比较经济学，地理学与比较历史学的角度强行进行分析。贾雷德·戴蒙德在其著作《枪炮、病菌与钢铁》中，曾经提出一个类似的问题：为何美洲没有发展出欧洲的文明？换句话说，为何是欧洲征服了美洲，而不是反过来美洲征服欧洲。两个大陆可供采集的野生动物和植物提供了最初狩猎采集人民生存的基础资源，而可驯化的动植物则成为了农业文明（此处为广义的农业，即包括种植业与畜牧业）发展的重要因素：两个大陆的差异即在于此，美洲可供驯化的动植物稀少，欧洲可供驯化的动植物相对较多。在不同的大陆气候下， 不同民族对于新技术的可接受性，以及农业发展和人口的相对增长比例，都影响着不同文明的发展进程。美洲在可驯化的动植物资源上落后一步，其地理环境也阻碍了农业的扩散与技术的扩散，因此其发展速度相对较慢。</p>
-<p>自然我们也可以依据此回答范式来分析中国与欧洲的差异：为何古代中国没有发展出类似于西方文化的社会经济基础，从而发展出西方的科学精神？我们可以说因为欧洲地理环境破碎，种植业难以发展，畜牧业较为发达，因此推动了经济与文化的交流。山峦交错的地理环境形成了希腊及希腊前小国寡民的地理环境，而曲折的海岸线形成了优良的港湾，发达的船运进一步推动经济文化的交流。而中华水文资源丰富，较早就驯化了种植业相关的植物，文明又发源于长江与黄河形成的辽阔冲击平原上，自然农业发达。基于大规模水利工程形成的部落，更倾向于发展出一种集体化的社会环境，也教易于形成大规模的集群部落，而“马尔萨斯陷阱”：即缓慢增长的农业效率与迅速增长的人口之间的矛盾，最终可能会导致经济增长的”内卷化“，陷入经济总量缓慢增长，而人均生活水平无显著上甚至下降的情况（这可以为清朝末年的经济发展与农民生存状况作一注脚）。</p>
-<p>但此种分析范式，会过分地强调地理环境的差异，而最终导向地理决定论，就像是说“为什么欧洲能发展出科学是因为其身处欧洲，而中华没有发展出科学是因为其身处另外一种地理环境”，此种分析尽管对于比较经济学来讲比较有借鉴价值，但是对于救亡图存的知识分子来讲，此种分析只能让人去愤慨命运的不公与无情。</p>
-<p>然而，事实上，倘若让我们沿着欧洲史或者世界史一探科学精神在西方兴起的过程，以及孕育此种精神所需之土壤，我们可能就会发现，科学精神并非是随着文明发展到一定阶段，自然而然兴起的概念。相反，若想要从文化中孕育出此种观念，则需要在满足一系列的前置条件。了解了这一点以后，我们可能就不会对中国古代没有兴起科学精神而感到诧异，而是反之对于西方能够孕育出此种科学精神而感到惊奇。在了解清楚科学精神之来源后，对自我文化之自卑也就能随之消解，也能让我们更好地向前前行。</p>
-<h3 id="西方科学精神的起源与发展"><a href="#西方科学精神的起源与发展" class="headerlink" title="西方科学精神的起源与发展"></a>西方科学精神的起源与发展</h3><p>要说西方科学精神的种子，那还是在希腊时萌发。希腊小国寡民的社会环境与工商业的经济基础，使得其涌现出各式的政治统治形态与相异的文化传统。而在这些不同的城邦“政治实验”中，有几处的政治与社会环境，培养出大批的思想家与哲学家，雅典便是这些城邦中的一颗明珠。此为科学生发的社会环境，回到科学一词，古希腊人所追求的，是某种“理念”（idea），他们追求的是永恒的真，是不随事实改变而改变的存在。他们对于知识的追求，而非是出于某种实用目的，而是为了在此过程中去实践人生的意义。希腊人认为，获得知识本身即获得自由，求知即成了哲学家们最高的目标。在这样的思想氛围下，希腊人获得了对世界的最初的认知，例如毕达哥拉斯的数学学派和欧几里得的《几何原本》，以及苏格拉底，柏拉图和亚里士多德所建立的政治学，伦理学，物理学，生物学，奠定了基础的科学范式与以真理为追求的精神内核。</p>
-<p>这些希腊经典，有的已经散佚而不可寻，而有一些文本，通过基督徒的代代手抄，得以流传后世。自11世纪起，大学与经院哲学的兴起，不仅重新回过头来对希腊古典学进行解读，而且通过这种对古典学的重新研究，一种名为“唯名论”的学说从经院哲学中兴起，引发了人们对于上帝位置的大辩论。这种学说虽然源起于基督徒之中，但其实质上却确立了以人为中心的观念。唯名论认为：共相是不存在的，我们真正能把握的只有殊相，而上帝作为全知全能的存在，是难以通过理性的链条来进行把握的。因此在人世间，我们所能依赖的只有自己的力量。这种学说实质上将上帝抛在一边，强调人类必须也有能力，通过自己的力量，来把握世界和改造世界。</p>
-<p>在这种唯名论的驱动下，人们不再向上帝祈求神迹，而是尝试通过实验去把握自然规律。这种科学被称之为“培根科学”，即为现代科学的雏形。此种科学的思想基础有二，其一为“求力意志”，即人类要依靠自我的力量，在这个混乱的世界中保护自己，其二为“世界图景”，即世界是可以被机械化，被公式化，故而可以被我们所理解的。前者揭示了我们必须要去怎么做，而后者则为我们行为的可行性提供了理论基础。</p>
-<p>由此我们可以看出，西方科学精神的兴起，由古典希腊的求真精神，经由经院哲学与唯名论的推动，发展为人们的求力意志与世界图景，最终建立起以实验科学为基础的西方科学传统。古希腊与基督教，此二者可谓是科学精神兴起的重要因素。</p>
-<h3 id="如何回答“李约瑟之问”"><a href="#如何回答“李约瑟之问”" class="headerlink" title="如何回答“李约瑟之问”"></a>如何回答“李约瑟之问”</h3><p>首先，倘若我们严格地对科学与技术进行定义的话，中国古代的数学，天文学等，都不能被称为真正的科学。例如中国天文学，其最终目的是为了“察时变”，基于天人感应的学说，从天象中寻求启示，来整顿地上的政治与伦理，而绝非古典希腊中追求纯粹的知识与真理。其数学演算，如《九章算术》，从其算题编排也可以看出，其目的是解决现实生活中遇到的实际问题，故古代中国有着很高超的数学技巧，但是却无一套类似于《几何原本》那样抽象而完整的数学理论体系。古代中国的“科技发展”大多如此，有着及其实际的目的，服务于明确的对象，故我们可称之为“技术发展”，却很难称其为“科学精神”。其技术发展始终未能跳脱出实用的框架，服务于伦理纲常与日常生活。</p>
-<p>在古希腊，人们有对于“真”的追求，而科学革命之后欧洲产生了人与自然两分的思想，利用人力去认识与改造自然的求力意志，科学本身就作为人们追求的最终目的与认识世界的工具。但是在中国，对于“真”的追求与对于自然的认识都非人们学习的最终目的，中国人追求的是“如何成为一个人”，如何在“仁”与“礼”的框架下，安身立命，处理好自己与自己，自己与他人的关系。相较于基督从探寻上帝的存在至最后唯名论的发展，是一个由天上转到地上的过程，而中国，自一开始，就着眼于地上的事物，从未以科学本身为其最终目的，因此其未能发展出西方的一套科学理论，自然也不足为奇。</p>
-<p>李约瑟在编撰《中国科学技术史》之时，采用所谓“辉格史”式的编撰方法，从现代的角度去审视古代中国技术的发展。然而我们从先前的分析中可以看到，古代中国既无古希腊那般对真理的追求，也没有树立以人为核心的对待世界的态度。既没有可以生根发芽的种子，也缺乏该种子生长的土壤。更何况科学精神本身就是极为奢侈珍贵的文化产物，得以偶然出现于某一文明之中，又以其强大的生命力迅速传递开来，但并不代表所有的文明发展到最后，都会自发涌现出科学的精神。四大轴心文明：中国，印度，希腊，中东之中，也只有希腊文明孕育了科学的种子。那么从命题本身到命题背后所蕴含的意义，也都自然而然消解开来。</p>
-<p>但是这是否就代表中国古代的“技术发展”，抑或古人对于自然与人类关系的认知，就毫无意义呢？这也未必。在我们的前辈看来，这个世界并非混乱而毫无秩序，也非冷冰冰的机械，而人类也并非是拥有对自然的无限权利，相反，人类与世界无时无刻不在发生联系。天象的变化可能预示着农业的丰收抑或饥荒，日蚀与月蚀可能说明君王德行密切相关。自然界中的每一件事情都有其背后的寓意，人与自然的联系也由此而得以构建。通过这种方式，人们得以规避如今许多现代化所带来的疑难杂症。正如钱穆作《国史大纲》来梳理中国历史一般，我们或许也需要一部中国古代的科技文化发展史，从古人对于人类与自然的认知中，获得启迪，举一反三，来解决在当今社会中，一对世界的疏离感与人生的虚无感等诸多现代化所带来的问题。</p>
-<p><strong>参考书目：</strong></p>
-<p>[1] 钱穆 国史大纲[M]  商务印书馆</p>
-<p>[2] 贾雷德 戴蒙德 枪炮、病菌与钢铁[M]  上海译文出版社</p>
-<p>[3] 吴国盛 什么是科学[M]  广东人民出版社</p>
-<p>[4] 王国斌(美) 转变的中国 –历史变迁与欧洲经验的局限[M]  江苏人民出版社</p>
-<p>​                                                </p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/18/autism/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/18/autism/" itemprop="url">Autism</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-18T23:45:35+02:00">
-                2018-05-18
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/05/18/autism/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2018/05/18/autism/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="Environmental-factors-which-related-to-autism（孤独症与环境）"><a href="#Environmental-factors-which-related-to-autism（孤独症与环境）" class="headerlink" title="Environmental factors which related to autism（孤独症与环境）"></a>Environmental factors which related to autism（孤独症与环境）</h1><h3 id="孤独症与环境有联系吗？"><a href="#孤独症与环境有联系吗？" class="headerlink" title="孤独症与环境有联系吗？"></a>孤独症与环境有联系吗？</h3><p>我们要探讨孤独症与环境之前的关联，抑或是环境对孤独症的影响的时候，首先需要抛出一个问题：环境对孤独症是否有影响？抑或这种影响是否大到足以引起我们的讨论和重视？</p>
-<p>要知道，自从上世纪90年代起，遗传一直被认为是孤独症发病的重要诱因，当时人们通过双生子实验来判断孤独症的影响因素，通过对36组同卵双胞胎（concordance rate of 72%）和30组异卵双胞胎（concordance rate of 0%）的统计<sup>[1]</sup>，人们认为遗传因素可以说是孤独症发病的决定性因素，在某些实验统计中，基因所占据的因素甚至可以达到90%<sup>[1]</sup>。</p>
-<blockquote>
-<p>双生子实验，即通过统计同卵双胞胎和异卵双胞胎的表型数据来估量基因和环境对该表型出现的影响，例如在该实验中，研究人员统计，在一方有ASD（autism spectrum disorder）的情况下，同卵双胞胎与异卵双胞胎出现ASD的概率，来分析遗传和环境因素对该表型出现的影响。</p>
-<blockquote>
-<p>这里的环境因素，即可以认为是“非遗传因素”，即不属于遗传因素的都属于环境因素</p>
-</blockquote>
-</blockquote>
-<p>但是他们当时的实验仍然存在诸多不足之处：例如电话随访的方式，缺乏细致的观察和诊断，以及孤独症判断量表的不甚完善，都可能造成对遗传率的估计产生偏差。但先前在调查中得到的在异卵双胞胎中0%的相关率是很值得怀疑的，于是研究人员在加州运用最新的孤独症量表，在诊断上采取家长随访和实际观察的方式，尝试重新估计孤独症的遗传率。</p>
-<p>研究人员首先通过Department of developmental services（DDS，发展服务部门），来获得加州孤独症患者的记录。DDS为加州的21个区域孤独症或者其他精神障碍患者提供发展性的服务，其电子档案与California Center for Autism and Developmental Disabilities Research and Epidemiology (CADDRE)相连接来获得患者的出生日期等数据。他们筛选了1987至2004年出生，并且有一方被诊断为孤独症的的双生儿，分别统计同卵双胞胎与异卵双胞胎与其患孤独症的关联性，同时对性别进行了相关性分析。最后他们发现，先前的遗传率确实被高估了，对于狭义的孤独症，同卵双胞胎的孤独症的遗传相关性大约为60%，即有一方为孤独症患者的话，其同卵双胞胎患病的概率大约为60%，而异卵双胞胎的遗传相关性大约为30%<sup>[2]</sup> .</p>
-<h3 id="母系影响"><a href="#母系影响" class="headerlink" title="母系影响"></a>母系影响</h3><p>对于孤独症患者患病率相关的环境影响因素，由于我们往往无法像实验室里一样，调整某种变量，观察结果的变化，而只能调查被某种特定环境影响的人群，与未暴露于该特定环境中的人群相比，我们感兴趣的性状的表现率是否存在显著性的差异。根据这种数据分析得出的结论，往往只是关联性分析，而不能导向因果性的分析，而且关于样本的选择是否本身就存在某种偏差性也值得讨论。很多研究人员研究了怀孕期间环境对孩子造成的影响，他们发现，母亲在怀孕期间服用丙戊酸<sup>[3]</sup>，反应停以及某些抗抑郁类药物，尤其是在怀孕的前三周服用这些药物，与其孩子患孤独症存在一定的关联性，但是也有人认为，可能是由于其母亲本身就携带孤独症相关的基因，因此其服用神经类药物的可能性更大，因此研究只能说明其具有关联性，而不能说明其因果性。</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/neuro/Valproate.png" alt="Aaron Swartz"></p>
-<blockquote>
-<p>在服用Valproate的母亲中，其孩子患有孤独症的比例是未曾服用该药物的4.9倍</p>
-</blockquote>
-<p>另外也有研究指出，某些农药具有神经毒性，并且通过食物链的富集，作用于人体。暴露于某些杀虫剂，PCB，和PBDE等物质，可能会增加患者的易感性<sup>[4]</sup>。此外，父母的生育年龄异常地高<sup>[5,6]</sup>，也可能会增加孩子的易感性；暴露于环境污染中，包括重金属，含氯溶剂，臭氧，柴油，微小颗粒等也都可能与增加得孤独症的风险相关<sup>[7,8]</sup>。</p>
-<h3 id="免疫影响"><a href="#免疫影响" class="headerlink" title="免疫影响"></a>免疫影响</h3><p>许多孤独症患者都或多或少发现存在一系列的免疫问题，在针对脑部进行ELISA等免疫组化分析后，研究人员发现，孤独症患者的脑部免疫系统存在异与常人的激活，而这可能是对其大脑发育产生影响的原因<sup>[9]</sup>。</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/neuro/brain%20immune%20response.png" alt="Aaron Swartz"></p>
-<blockquote>
-<p>对孤独症患者和正常人的脑脊液样品进行的免疫组化分析</p>
-</blockquote>
-<p>研究人员使用恒河猴模型，研究了母猴怀孕期间染上流感对小猴子大脑发育的影响<sup>[10]</sup>。实验结果表明，怀孕期间感染过H3N2的母猴，在幼年时期大脑发育会落后于没有感染病毒的母猴的后代，特别是在扣带皮层和顶叶发育上。在行为学上，实验组的小猴子相较于控制组更早地表现出独立性的行为，能更早地脱离母亲，在解剖学上，其灰质和白质体积均小于对照组。但是这是否说明怀孕期间感染流感会诱发孤独症？我们或许还不能够下结论，但是这似乎确实能对大脑发育产生一定的影响。</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/neuro/brain.png" alt="Aaron Swartz"></p>
-<blockquote>
-<p>实验组的cingulate(扣带皮层)和parietal(顶叶)相较于控制组而言，体积有显著性的减小</p>
-</blockquote>
-<p>另外一项公共卫生研究表示：怀孕期间感染细菌或者流感等，其子女得孤独症的概率，与未感染人群相比，并不存在显著差异。</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/neuro/bacteria%20infection%202.png" alt="Aaron Swartz"></p>
-<blockquote>
-<p>单纯感染数据分析，怀孕期间感染与孤独症并无显著关联性</p>
-</blockquote>
-<p>但是如果是在住院期间发生感染这一事件，确实与子女的孤独症表型存在一定的相关性<sup>[11]</sup>。</p>
-<p><img src="https://raw.githubusercontent.com/chenmzh/chenmzh.github.io/master/neuro/bacteria%20infection.png" alt="Aaron Swartz"></p>
-<blockquote>
-<p>但是住院期间感染事件与孤独症存在显著性的关联</p>
-</blockquote>
-<p>以上公共卫生的研究，也都只能说明易感性与我们的研究对象之间的关联性，比如到底是因为住院期间感染造成子女得孤独症的概率上升，还是由于携带孤独症基因的患者，在免疫系统方面存在一些缺陷，因此更容易在住院期间被感染，这一点我们还不得而知。</p>
-<p>[1]: A, Le Couteur A, Gottesman I, Bolton P, Simonoff E, Yuzda E, Rutter M. Autism as a strongly genetic disorder: evidence from a British twin study. Psychol Med. 1995; 25(1):63–77. [PubMed: 7792363]</p>
-<p>[2]: Hallmayer, J., Cleveland, S., Torres, A., Phillips, J., Cohen, B., Torigoe, T., … Risch, N. (2015). HHS Public Access, 68(11), 1095–1102. <a href="https://doi.org/10.1001/archgenpsychiatry.2011.76.Genetic" target="_blank" rel="noopener">https://doi.org/10.1001/archgenpsychiatry.2011.76.Genetic</a><br>(Hallmayer et al., 2015)</p>
-<p>[3]: Christensen, J., Grønborg, T. K., Sørensen, M. J., Schendel, D., Parner, E. T., Pedersen, L. H., &amp; Vestergaard, M. (2013). Prenatal valproate exposure and risk of autism spectrum disorders and childhood autism. <em>Jama</em>, <em>309</em>(16), 1696-1703.</p>
-<p>[4]: Ewschaffer CJ, Croen LA, Daniels J, Giarelli E, Grether JK, Levy SE, et al. The epidemiology of autism spectrum disorders. Annu Rev Public Health. 2007; 28:235–258. [PubMed: 17367287]</p>
-<p>[5]: Grabrucker AM. Environmental factors in autism. Front psychiatry. 2012; 3:118. [PubMed: 23346059]</p>
-<p>[6]: Sandin, S., Schendel, D., Magnusson, P., Hultman, C., Suren, P., Susser, E., et al. Autism risk associated with parental age and with increasing difference in age between the parents, advance online publication. Mol Psychiatry. Jun 9. 2015 <a href="http://dx.doi.org/10.1038/mp.2015.70" target="_blank" rel="noopener">http://dx.doi.org/10.1038/mp.2015.70</a> [Epub ahead of print]</p>
-<p>[7]:Lyall K, Schmidt RJ, Hertz-Picciotto I. The environment in autism spectrum disorders. 2013:203– 214.</p>
-<p>[8]:Ornoy A, Weinstein-Fudim L, Ergaz Z. Prenatal factors associated with autism spectrum disorder (ASD). Reprod Toxicol. 2015; 56:155–169. [PubMed: 26021712]</p>
-<p>[9]: VARGAS, Diana L., et al. Neuroglial activation and neuroinflammation in the brain of patients with autism. <em>Annals of neurology</em>, 2005, 57.1: 67-81.</p>
-<p>[10]: SHORT, Sarah J., et al. Maternal influenza infection during pregnancy impacts postnatal brain development in the rhesus monkey. <em>Biological psychiatry</em>, 2010, 67.10: 965-973.</p>
-<p>[11]: ZERBO, Ousseny, et al. Maternal infection during pregnancy and autism spectrum disorders. <em>Journal of autism and developmental disorders</em>, 2015, 45.12: 4015-4025</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/14/new-doc/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/14/new-doc/" itemprop="url">new doc</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-14T19:45:53+02:00">
-                2018-05-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/05/14/new-doc/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2018/05/14/new-doc/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Welcome to CMZ’s home page.</p>
-<p>This is my first trial to build an blog.</p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/05/14/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Chenmzh's site">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/14/hello-world/" itemprop="url">Hello World</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-05-14T12:02:25+02:00">
-                2018-05-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-
-          
-            
-              <span class="post-comments-count">
-                <span class="post-meta-divider">|</span>
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-comment-o"></i>
-                </span>
-                <a href="/2018/05/14/hello-world/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count disqus-comment-count"
-                        data-disqus-identifier="2018/05/14/hello-world/" itemprop="commentCount"></span>
-                </a>
-              </span>
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>Welcome to <a href="https://hexo.io/" target="_blank" rel="noopener">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/" target="_blank" rel="noopener">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html" target="_blank" rel="noopener">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues" target="_blank" rel="noopener">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">"My New Post"</span></span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/writing.html" target="_blank" rel="noopener">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/server.html" target="_blank" rel="noopener">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/generating.html" target="_blank" rel="noopener">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-<p>More info: <a href="https://hexo.io/docs/deployment.html" target="_blank" rel="noopener">Deployment</a></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ ShanghaiTech</span><br></pre></td></tr></table></figure>
-<p>More information: <a href="http://www.shanghaitech.edu.cn/" target="_blank" rel="noopener">Shanghaitech</a></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-  </section>
-
-  
-
-
-          </div>
-          
-
-
-          
-
-        </div>
-        
-          
-  
-  <div class="sidebar-toggle">
-    <div class="sidebar-toggle-line-wrap">
-      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
-      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
-    </div>
-  </div>
-
-  <aside id="sidebar" class="sidebar">
-    
-    <div class="sidebar-inner">
-
-      
-
-      
-
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
-        <div class="site-overview">
-          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
-            
-              <p class="site-author-name" itemprop="name"></p>
-              <p class="site-description motion-element" itemprop="description">Dairy and study notes</p>
-          </div>
-
-          <nav class="site-state motion-element">
-
-            
-              <div class="site-state-item site-state-posts">
-              
-                <a href="/archives/">
-              
-                  <span class="site-state-item-count">9</span>
-                  <span class="site-state-item-name">posts</span>
-                </a>
-              </div>
-            
-
-            
-
-            
-              
-              
-              <div class="site-state-item site-state-tags">
-                
-                  <span class="site-state-item-count">1</span>
-                  <span class="site-state-item-name">tags</span>
-                
-              </div>
-            
-
-          </nav>
-
-          
-
-          
-
-          
-          
-
-          
-          
-
-          
-
-        </div>
-      </section>
-
-      
-
-      
-
-    </div>
-  </aside>
-
-
-        
       </div>
-    </main>
+      <aside class="index-mark" aria-label="目录摘要">
+        <strong>Open collection</strong>
+        <div class="index-figure">09<span>entries</span></div>
+        <small>Updated July 2026<br>Static and openly accessible</small>
+      </aside>
+    </div>
+  </header>
 
-    <footer id="footer" class="footer">
-      <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
-  <span class="with-love">
-    <i class="fa fa-user"></i>
-  </span>
-  <span class="author" itemprop="copyrightHolder"></span>
-
-  
-</div>
-
-
-  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
-
-
-
-  <span class="post-meta-divider">|</span>
-
-
-
-  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
-
-
-
-
-        
-
-
-
-
-
-
-
-        
+  <main class="shell catalog">
+    <section class="catalog-section" aria-labelledby="work-label">
+      <h2 class="section-label" id="work-label">Featured work</h2>
+      <div class="link-list">
+        <a class="entry" href="./lecture/">
+          <span class="entry-number">01</span>
+          <span class="entry-copy">
+            <span class="entry-title">Lecture Archive</span>
+            <span class="entry-meta">课程讲义、公式推导、例题答案与交互演示</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" data-accent="coral" href="./gaming/">
+          <span class="entry-number">02</span>
+          <span class="entry-copy">
+            <span class="entry-title">Gaming Lab</span>
+            <span class="entry-meta">可直接在浏览器运行的独立游戏与交互实验</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" data-accent="ochre" href="./wenqi-gu/">
+          <span class="entry-number">03</span>
+          <span class="entry-copy">
+            <span class="entry-title">Wenqi Gu · Guzheng</span>
+            <span class="entry-meta">古筝演奏家顾文麒的作品、经历与演出资料</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
       </div>
+    </section>
+
+    <section class="catalog-section" aria-labelledby="briefs-label">
+      <h2 class="section-label" id="briefs-label">Daily briefs</h2>
+      <div class="link-list">
+        <a class="entry" data-accent="forest" href="./daily-bio-briefs/">
+          <span class="entry-number">04</span>
+          <span class="entry-copy">
+            <span class="entry-title">Synthetic &amp; Developmental Biology</span>
+            <span class="entry-meta">合成生物学与发育生物学每日研究简报</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" data-accent="blue" href="./daily-tech-news/">
+          <span class="entry-number">05</span>
+          <span class="entry-copy">
+            <span class="entry-title">Technology News</span>
+            <span class="entry-meta">人工智能、计算与前沿科技每日更新</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" data-accent="ochre" href="./daily-market-briefs/">
+          <span class="entry-number">06</span>
+          <span class="entry-copy">
+            <span class="entry-title">Market Briefs</span>
+            <span class="entry-meta">股票市场动态、数据观察与每日摘要</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="catalog-section" aria-labelledby="archive-label">
+      <h2 class="section-label" id="archive-label">Archive &amp; tools</h2>
+      <div class="link-list">
+        <a class="entry" data-accent="blue" href="./archives/">
+          <span class="entry-number">07</span>
+          <span class="entry-copy">
+            <span class="entry-title">Article Archive</span>
+            <span class="entry-meta">2018-2020 年发布的学习笔记与长文目录</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" data-accent="coral" href="./archived/">
+          <span class="entry-number">08</span>
+          <span class="entry-copy">
+            <span class="entry-title">Archived Homepage</span>
+            <span class="entry-meta">改版前的完整主页快照</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+        <a class="entry" href="./downloads/skills/">
+          <span class="entry-number">09</span>
+          <span class="entry-copy">
+            <span class="entry-title">Downloads &amp; Skills</span>
+            <span class="entry-meta">可复用的自动化工具、技能包与校验文件</span>
+          </span>
+          <span class="entry-arrow" aria-hidden="true">&#8594;</span>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>Mingzhe Chen · Public Index</span>
+      <span>Built as a static archive</span>
     </footer>
-
-    
-      <div class="back-to-top">
-        <i class="fa fa-arrow-up"></i>
-        
-      </div>
-    
-
-    
-
-  </div>
-
-  
-
-<script type="text/javascript">
-  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
-    window.Promise = null;
-  }
-</script>
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
-  
-
-  
-  
-    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
-  
-
-
-  
-
-
-  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
-
-  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
-
-
-
-  
-  
-
-  
-
-  
-
-
-  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
-
-
-
-  
-
-
-  
-
-    
-      <script id="dsq-count-scr" src="https://chenmzh.disqus.com/count.js" async></script>
-    
-
-    
-
-  
-
-
-
-
-	
-
-
-
-
-
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-
-
-
-
-
-  
-
-  
-
-  
-
-  
-  
-
-  
-
-  
-
-  
-
+  </main>
 </body>
 </html>
