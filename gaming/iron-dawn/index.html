@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d171c">
+  <meta name="description" content="《钢铁黎明：零号战区》是一款拥有陆空联合作战与丰沛晶矿的原创明亮科幻俯视角浏览器即时战略游戏。" data-i18n-content="app.description">
+  <title data-i18n="app.title">钢铁黎明：零号战区 · Iron Dawn</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=20260722.1">
+  <link rel="manifest" href="manifest.webmanifest">
+</head>
+<body>
+  <a class="skip-link" href="#game-canvas" data-i18n="a11y.skipToBattlefield">跳到战场</a>
+
+  <main id="game-shell" class="game-shell" aria-label="钢铁黎明：零号战区战术控制台" data-i18n-aria-label="a11y.gameShell">
+    <section id="battlefield-viewport" class="battlefield-viewport" aria-label="零号战区主战场视口" data-i18n-aria-label="a11y.battlefieldViewport">
+      <canvas
+        id="game-canvas"
+        width="1600"
+        height="900"
+        tabindex="0"
+        aria-label="即时战略主战场。拖拽框选单位，右键下达移动或攻击命令。"
+        data-i18n="error.canvasUnsupported"
+        data-i18n-aria-label="a11y.battlefieldCanvas"
+      >你的浏览器不支持 Canvas，无法运行《钢铁黎明：零号战区》。</canvas>
+
+      <div class="battlefield-glass" aria-hidden="true"></div>
+    </section>
+
+    <header class="hud top-rail" aria-label="战场状态" data-i18n-aria-label="a11y.battleStatus">
+      <div class="operation-mark" aria-label="行动代号：晨线" data-i18n-aria-label="hud.operation.aria">
+        <span class="operation-mark__index">07</span>
+        <span class="operation-mark__copy">
+          <b data-i18n="hud.operation.name">晨线行动</b>
+          <small>ZERO SECTOR / LIVE</small>
+        </span>
+      </div>
+
+      <section class="objective-module" aria-labelledby="objective-label">
+        <span id="objective-label" class="eyebrow" data-i18n="hud.objective.label">当前指令</span>
+        <strong id="objective" data-i18n="hud.objective.initial">建立前沿基地，摧毁赤砂军团指挥核心</strong>
+      </section>
+
+      <section class="telemetry-bank" aria-label="资源与战况" data-i18n-aria-label="a11y.telemetry">
+        <div class="telemetry-cell telemetry-cell--credits">
+          <span data-i18n="hud.credits">补给</span>
+          <output id="credits" aria-label="当前补给" data-i18n-aria-label="hud.creditsAria">2400</output>
+        </div>
+        <div class="telemetry-cell">
+          <span data-i18n="hud.power">电力</span>
+          <output id="power" aria-label="当前电力" data-i18n-aria-label="hud.powerAria">40 / 80</output>
+        </div>
+        <div class="telemetry-cell">
+          <span data-i18n="hud.population">人口</span>
+          <output id="population" aria-label="当前人口" data-i18n-aria-label="hud.populationAria">4 / 24</output>
+        </div>
+        <div class="telemetry-cell telemetry-cell--compact">
+          <span data-i18n="hud.wave">波次</span>
+          <output id="wave" aria-label="当前波次" data-i18n-aria-label="hud.waveAria">0 / 5</output>
+        </div>
+        <div class="telemetry-cell telemetry-cell--compact">
+          <span data-i18n="hud.timer">计时</span>
+          <output id="timer" aria-label="任务计时" data-i18n-aria-label="hud.timerAria">00:00</output>
+        </div>
+      </section>
+
+      <nav class="system-controls" aria-label="系统控制" data-i18n-aria-label="a11y.systemControls">
+        <div class="language-switch language-switch--hud" data-language-switch role="group" aria-label="界面语言" data-i18n-aria-label="a11y.language">
+          <span class="language-switch__label" aria-hidden="true">LANG</span>
+          <button type="button" data-language="zh-CN" lang="zh-CN" aria-pressed="true">中</button>
+          <button type="button" data-language="en" lang="en" aria-pressed="false">EN</button>
+        </div>
+        <button id="pause-button" class="icon-button" type="button" title="暂停" aria-label="暂停游戏" data-i18n-title="controls.pause" data-i18n-aria-label="controls.pauseAria">
+          <span class="pause-glyph" aria-hidden="true"></span>
+        </button>
+        <button id="sound-button" class="icon-button" type="button" title="声音" aria-label="关闭声音" aria-pressed="false" data-i18n-title="controls.sound" data-i18n-aria-label="controls.soundDisableAria">
+          <span class="sound-glyph" aria-hidden="true"></span>
+        </button>
+        <button id="help-button" class="icon-button" type="button" title="帮助" aria-label="打开操作帮助" aria-expanded="false" aria-controls="help-panel" data-i18n-title="controls.help" data-i18n-aria-label="controls.helpOpenAria">
+          <span aria-hidden="true">?</span>
+        </button>
+      </nav>
+    </header>
+
+    <aside class="hud command-rack" aria-label="生产与战术控制" data-i18n-aria-label="a11y.commandRack">
+      <div class="rack-heading">
+        <span>CTRL RACK</span>
+        <span class="signal-lamp" aria-label="控制台在线" data-i18n-aria-label="a11y.consoleOnline"></span>
+      </div>
+
+      <section class="rack-section rack-section--queue" aria-labelledby="queue-title">
+        <div class="section-heading">
+          <h2 id="queue-title" data-i18n="rack.queue">生产队列</h2>
+          <span>CH-01</span>
+        </div>
+        <div id="production-queue" class="production-queue" aria-live="polite">
+          <p class="empty-state"><span data-i18n="queue.standby">待机</span><i data-i18n="queue.noTasks">尚无生产任务</i></p>
+        </div>
+      </section>
+
+      <section class="rack-section" aria-labelledby="build-title">
+        <div class="section-heading">
+          <h2 id="build-title" data-i18n="rack.build">基地设施</h2>
+          <span>BUILD</span>
+        </div>
+        <div id="build-grid" class="control-grid control-grid--build">
+          <button class="control-tile" type="button" data-build="powerPlant">
+            <span class="tile-symbol tile-symbol--power" aria-hidden="true">P</span>
+            <span class="tile-copy"><b data-i18n="entity.building.powerPlant.name">裂变电厂</b><small><span data-cost>450</span> · <i data-i18n="build.role.powerPlant">+电力</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-build="refinery">
+            <span class="tile-symbol tile-symbol--refinery" aria-hidden="true">R</span>
+            <span class="tile-copy"><b data-i18n="entity.building.refinery.name">晶矿精炼站</b><small><span data-cost>1400</span> · <i data-i18n="build.role.refinery">+补给</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-build="barracks">
+            <span class="tile-symbol tile-symbol--barracks" aria-hidden="true">B</span>
+            <span class="tile-copy"><b data-i18n="entity.building.barracks.name">前线兵营</b><small><span data-cost>500</span> · <i data-i18n="build.role.barracks">步兵</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-build="factory">
+            <span class="tile-symbol tile-symbol--factory" aria-hidden="true">F</span>
+            <span class="tile-copy"><b data-i18n="entity.building.factory.name">战车工厂</b><small><span data-cost>1200</span> · <i data-i18n="build.role.factory">载具</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-build="airfield">
+            <span class="tile-symbol tile-symbol--airfield" aria-hidden="true">AF</span>
+            <span class="tile-copy"><b data-i18n="entity.building.airfield.name">天穹空军基地</b><small><span data-cost>1500</span> · <i data-i18n="build.role.airfield">空军</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-build="turret">
+            <span class="tile-symbol tile-symbol--turret" aria-hidden="true">T</span>
+            <span class="tile-copy"><b data-i18n="entity.building.turret.name">哨戒机炮塔</b><small><span data-cost>700</span> · <i data-i18n="build.role.turret">防御</i></small></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="rack-section" aria-labelledby="unit-title">
+        <div class="section-heading">
+          <h2 id="unit-title" data-i18n="rack.units">作战编制</h2>
+          <span>DEPLOY</span>
+        </div>
+        <div id="unit-grid" class="control-grid control-grid--units">
+          <button class="control-tile" type="button" data-unit="rifle">
+            <span class="tile-symbol tile-symbol--rifle" aria-hidden="true">RF</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.rifle.name">突击步兵</b><small><span data-cost>100</span> · <i data-i18n="unit.role.rifle">反步兵</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-unit="rocket">
+            <span class="tile-symbol tile-symbol--rocket" aria-hidden="true">RK</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.rocket.name">反装甲兵</b><small><span data-cost>260</span> · <i data-i18n="unit.role.rocket">反装甲</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-unit="scout">
+            <span class="tile-symbol tile-symbol--scout" aria-hidden="true">SC</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.scout.name">猎犬侦察车</b><small><span data-cost>450</span> · <i data-i18n="unit.role.scout">高机动</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-unit="tank">
+            <span class="tile-symbol tile-symbol--tank" aria-hidden="true">TK</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.tank.name">堡垒主战坦克</b><small><span data-cost>850</span> · <i data-i18n="unit.role.tank">重装甲</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-unit="fighter">
+            <span class="tile-symbol tile-symbol--fighter" aria-hidden="true">INT</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.fighter.name">曙光截击机</b><small><span data-cost>900</span> · <i data-i18n="unit.role.fighter">空地制空</i></small></span>
+          </button>
+          <button class="control-tile" type="button" data-unit="harvester">
+            <span class="tile-symbol tile-symbol--harvester" aria-hidden="true">HV</span>
+            <span class="tile-copy"><b data-i18n="entity.unit.harvester.name">晶矿采集车</b><small><span data-cost>800</span> · <i data-i18n="unit.role.harvester">经济</i></small></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="rack-section rack-section--log" aria-labelledby="event-title">
+        <div class="section-heading">
+          <h2 id="event-title" data-i18n="rack.events">战术纸带</h2>
+          <span>LOG</span>
+        </div>
+        <div id="event-log" class="event-log" role="log" aria-live="polite" aria-relevant="additions">
+          <p><time>00:00</time><span data-i18n="event.connected">控制链路已建立</span></p>
+          <p><time>00:00</time><span data-i18n="event.awaitAuthorization">等待行动授权</span></p>
+        </div>
+      </section>
+    </aside>
+
+    <section class="hud minimap-module" aria-labelledby="minimap-title">
+      <div class="section-heading">
+        <h2 id="minimap-title" data-i18n="minimap.title">区域测绘</h2>
+        <span>GRID 7C</span>
+      </div>
+      <div class="minimap-bezel">
+        <canvas id="minimap-canvas" width="448" height="296" aria-label="战术小地图" data-i18n="minimap.fallback" data-i18n-aria-label="a11y.minimap">战术小地图</canvas>
+        <span class="minimap-reticle" aria-hidden="true"></span>
+      </div>
+      <div class="map-scale" aria-hidden="true"><i></i><span>2 KM</span><i></i></div>
+    </section>
+
+    <section class="hud control-group-rail" aria-labelledby="control-groups-title">
+      <div class="control-group-rail__heading">
+        <h2 id="control-groups-title" data-i18n="groups.title">战术编队</h2>
+        <span data-i18n="groups.hint">Ctrl/Cmd + 数字保存 · 双击聚焦</span>
+      </div>
+      <div id="control-groups" class="control-groups" role="list" aria-label="战术编队 1 至 9" data-i18n-aria-label="a11y.controlGroups">
+        <button class="group-slot" type="button" role="listitem" data-control-group="1" aria-label="编队 1，空"><span class="group-slot__number">1</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="2" aria-label="编队 2，空"><span class="group-slot__number">2</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="3" aria-label="编队 3，空"><span class="group-slot__number">3</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="4" aria-label="编队 4，空"><span class="group-slot__number">4</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="5" aria-label="编队 5，空"><span class="group-slot__number">5</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="6" aria-label="编队 6，空"><span class="group-slot__number">6</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="7" aria-label="编队 7，空"><span class="group-slot__number">7</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="8" aria-label="编队 8，空"><span class="group-slot__number">8</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+        <button class="group-slot" type="button" role="listitem" data-control-group="9" aria-label="编队 9，空"><span class="group-slot__number">9</span><span class="group-slot__count" aria-hidden="true">—</span></button>
+      </div>
+    </section>
+
+    <footer class="hud order-deck" aria-label="单位与命令控制" data-i18n-aria-label="a11y.orderDeck">
+      <section class="selection-module" aria-labelledby="selection-title">
+        <div class="section-heading">
+          <h2 id="selection-title" data-i18n="selection.title">当前编队</h2>
+          <span>SEL</span>
+        </div>
+        <div id="selection-info" class="selection-info" aria-live="polite">
+          <span class="selection-sigil" aria-hidden="true">Ø</span>
+          <div><strong data-i18n="selection.none">未选择单位</strong><small data-i18n="selection.noneUnitHint">拖拽框选，或单击一个单位</small></div>
+        </div>
+      </section>
+
+      <section class="command-module" aria-labelledby="command-title">
+        <div class="section-heading">
+          <h2 id="command-title" data-i18n="commands.title">指令回波</h2>
+          <span>ORDER</span>
+        </div>
+        <div class="command-grid">
+          <button class="command-button" type="button" data-command="move">
+            <span class="command-code">MV</span>
+            <span data-i18n="commands.move">移动</span>
+            <kbd>M</kbd>
+          </button>
+          <button class="command-button" type="button" data-command="attackMove">
+            <span class="command-code">AT</span>
+            <span data-i18n="commands.attackMove">攻击移动</span>
+            <kbd>A</kbd>
+          </button>
+          <button class="command-button" type="button" data-command="patrol">
+            <span class="command-code">PT</span>
+            <span data-i18n="commands.patrol">巡逻</span>
+            <kbd>P</kbd>
+          </button>
+          <button class="command-button" type="button" data-command="hold" data-command-action="immediate">
+            <span class="command-code">HD</span>
+            <span data-i18n="commands.hold">原地防守</span>
+            <kbd>H</kbd>
+          </button>
+          <button class="command-button" type="button" data-command="rally">
+            <span class="command-code">RP</span>
+            <span data-i18n="commands.rally">设置集结点</span>
+            <kbd>R</kbd>
+          </button>
+          <button class="command-button command-button--stop" type="button" data-command="stop" data-command-action="immediate">
+            <span class="command-code">ST</span>
+            <span data-i18n="commands.stop">停止</span>
+            <kbd>S</kbd>
+          </button>
+        </div>
+      </section>
+
+      <div class="deck-status" aria-hidden="true">
+        <span>UPLINK</span>
+        <div><i></i><i></i><i></i><i></i><i></i></div>
+        <small>COMMAND BUS NOMINAL</small>
+      </div>
+    </footer>
+
+    <section id="start-screen" class="screen-overlay start-screen" role="dialog" aria-modal="true" aria-labelledby="start-title">
+      <div class="screen-grid" aria-hidden="true"></div>
+      <div class="briefing-card">
+        <header class="briefing-hero">
+          <div class="briefing-kicker">
+            <span data-i18n="briefing.archive">行动档案 07—C</span>
+            <div class="briefing-kicker__meta">
+              <span data-i18n="briefing.clearance">授权等级：战地</span>
+              <div class="language-switch language-switch--briefing" data-language-switch role="group" aria-label="界面语言" data-i18n-aria-label="a11y.language">
+                <span class="language-switch__label" aria-hidden="true">LANG</span>
+                <button type="button" data-language="zh-CN" lang="zh-CN" aria-pressed="true">中</button>
+                <button type="button" data-language="en" lang="en" aria-pressed="false">EN</button>
+              </div>
+            </div>
+          </div>
+          <p class="title-index">ID / 1983.284</p>
+          <h1 id="start-title"><span>IRON</span> DAWN</h1>
+          <p class="title-zh" data-i18n="briefing.localizedTitle">钢铁黎明：零号战区</p>
+          <p class="briefing-lead" data-i18n="briefing.lead">旧世界的线路沉默了。向零号战区推进，在赤砂军团封锁全境前切断它的指挥链。</p>
+          <div class="signal-rule" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </header>
+
+        <div class="briefing-body">
+          <section class="mission-copy" aria-labelledby="brief-title">
+            <div class="section-heading section-heading--light">
+              <h2 id="brief-title" data-i18n="briefing.title">任务简报</h2>
+              <span>READ / 01</span>
+            </div>
+            <p data-i18n-html="briefing.story1">1983 年，北纬工业走廊在一夜之间与外界失联。<strong>赤砂军团</strong>正沿废弃输电网推进，并以零号战区的装甲指挥核心封锁全境信号。</p>
+            <p data-i18n-html="briefing.story2">你是第七码头最后一名战术调度员。开发扩容后的晶矿藏，建立陆空生产链，以装甲与截击机突破敌军防线并摧毁赤砂军团指挥核心；若我方指挥核心先被摧毁，这座城市也将永久熄灯。</p>
+
+            <div class="mission-stamps" aria-label="任务要点" data-i18n-aria-label="a11y.missionPoints">
+              <span><b>01</b><i data-i18n="briefing.point1">建设电力与精炼设施</i></span>
+              <span><b>02</b><i data-i18n="briefing.point2">编制陆军及空中力量</i></span>
+              <span><b>03</b><i data-i18n="briefing.point3">摧毁敌方指挥核心</i></span>
+            </div>
+
+            <div class="controls-brief">
+              <h3 data-i18n="briefing.controls">基本操作</h3>
+              <ul>
+                <li><kbd data-i18n="briefing.selectKey">左键</kbd><span data-i18n="briefing.select">点选单位；拖拽可框选编队</span></li>
+                <li><kbd data-i18n="briefing.commandKey">右键</kbd><span data-i18n="briefing.command">移动；点中敌军时自动攻击</span></li>
+                <li><kbd>← ↑ ↓ →</kbd><span data-i18n="briefing.camera">移动战场镜头</span></li>
+                <li><kbd>M / A / S</kbd><span data-i18n="briefing.commandKeys">移动 / 攻击移动 / 停止</span></li>
+                <li><kbd>P / H / R</kbd><span data-i18n="briefing.tacticalKeys">巡逻 / 原地防守 / 集结点</span></li>
+                <li><kbd>Ctrl/Cmd + 1–9</kbd><span data-i18n="briefing.groups">保存编队；双击数字聚焦</span></li>
+                <li><kbd>Shift</kbd><span data-i18n="briefing.queueCommands">追加最多 16 条移动或攻击指令</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="authorization-panel" aria-labelledby="difficulty-title">
+            <div class="section-heading section-heading--light">
+              <h2 id="difficulty-title" data-i18n="difficulty.title">选择授权等级</h2>
+              <span>SELECT / 02</span>
+            </div>
+            <fieldset class="difficulty-selector">
+              <legend class="visually-hidden" data-i18n="a11y.difficulty">游戏难度</legend>
+              <label class="difficulty-option">
+                <input type="radio" name="difficulty" value="easy">
+                <span class="difficulty-card">
+                  <span class="difficulty-code">C</span>
+                  <span><b data-i18n="difficulty.easy.name">新兵</b><small data-i18n="difficulty.easy.description">敌军较少，经济宽裕</small></span>
+                  <i aria-hidden="true"></i>
+                </span>
+              </label>
+              <label class="difficulty-option">
+                <input type="radio" name="difficulty" value="normal" checked>
+                <span class="difficulty-card">
+                  <span class="difficulty-code">O</span>
+                  <span><b data-i18n="difficulty.normal.name">指挥官</b><small data-i18n="difficulty.normal.description">标准攻势与资源配置</small></span>
+                  <i aria-hidden="true"></i>
+                </span>
+              </label>
+              <label class="difficulty-option">
+                <input type="radio" name="difficulty" value="hard">
+                <span class="difficulty-card">
+                  <span class="difficulty-code">V</span>
+                  <span><b data-i18n="difficulty.hard.name">老兵</b><small data-i18n="difficulty.hard.description">更强敌军，更短准备时间</small></span>
+                  <i aria-hidden="true"></i>
+                </span>
+              </label>
+            </fieldset>
+
+            <div class="authorization-note">
+              <span class="signal-lamp"></span>
+              <p><b data-i18n="briefing.encrypted">链路已加密</b><small data-i18n="briefing.localOnly">本次行动在你的浏览器本地运行，无需联网。</small></p>
+            </div>
+
+            <button id="start-button" class="primary-button" type="button" disabled aria-busy="true">
+              <span id="start-button-label" data-i18n="assets.preparing">准备资源清单</span>
+              <small id="start-button-status" data-i18n="assets.status.uplink">资源链路同步中</small>
+              <i aria-hidden="true">→</i>
+            </button>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause-screen" class="screen-overlay compact-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title" hidden>
+      <div class="compact-card">
+        <p class="modal-code">SYS / HOLD</p>
+        <h2 id="pause-title" data-i18n="pause.title">战术链路已冻结</h2>
+        <p data-i18n="pause.copy">所有单位与生产计时均已暂停。战场信号仍保留在缓冲区中。</p>
+        <div class="signal-rule signal-rule--short" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <button id="resume-button" class="primary-button" type="button">
+          <span data-i18n="pause.resume">恢复行动</span><small>RESUME</small><i aria-hidden="true">→</i>
+        </button>
+      </div>
+    </section>
+
+    <section id="result-screen" class="screen-overlay compact-overlay result-screen" role="dialog" aria-modal="true" aria-labelledby="result-title" hidden>
+      <div class="compact-card result-card">
+        <p class="modal-code">AFTER ACTION / 07—C</p>
+        <h2 id="result-title" data-i18n="result.defaultTitle">零号战区已肃清</h2>
+        <p id="result-copy" data-i18n="result.defaultCopy">赤砂军团指挥核心已经熄灭。城市上空重新亮起了第一条航标线。</p>
+        <div id="result-stats" class="result-stats" aria-label="行动统计" data-i18n-aria-label="a11y.resultStats">
+          <div><span data-i18n="result.duration">坚持时间</span><strong>00:00</strong></div>
+          <div><span data-i18n="result.kills">击毁目标</span><strong>0</strong></div>
+          <div><span data-i18n="result.losses">损失单位</span><strong>0</strong></div>
+        </div>
+        <button id="restart-button" class="primary-button" type="button">
+          <span data-i18n="result.restart">重新部署</span><small>RESTART</small><i aria-hidden="true">↻</i>
+        </button>
+      </div>
+    </section>
+
+    <aside id="help-panel" class="help-panel" role="dialog" aria-modal="false" aria-labelledby="help-title" hidden>
+      <header>
+        <div>
+          <p class="modal-code">FIELD MANUAL / 01</p>
+          <h2 id="help-title" data-i18n="help.title">控制台操作</h2>
+        </div>
+        <button id="close-help-button" class="icon-button" type="button" aria-label="关闭帮助" data-i18n-aria-label="help.closeAria">×</button>
+      </header>
+      <div class="help-columns">
+        <section>
+          <h3 data-i18n="help.selection">选择与命令</h3>
+          <dl>
+            <div><dt><kbd data-i18n="help.selectKey">左键</kbd></dt><dd data-i18n="help.select">选择单位或建筑</dd></div>
+            <div><dt><kbd data-i18n="help.dragKey">拖拽</kbd></dt><dd data-i18n="help.drag">框选多个单位</dd></div>
+            <div><dt><kbd data-i18n="help.commandKey">右键</kbd></dt><dd data-i18n="help.command">移动或攻击目标</dd></div>
+            <div><dt><kbd>Shift</kbd></dt><dd data-i18n="help.queue">将移动、攻击或攻击移动追加到指令队列</dd></div>
+            <div><dt><kbd>M</kbd></dt><dd data-i18n="help.moveMode">进入移动指令模式</dd></div>
+            <div><dt><kbd>A</kbd></dt><dd data-i18n="help.attackMode">进入攻击移动模式</dd></div>
+            <div><dt><kbd>P</kbd></dt><dd data-i18n="help.patrol">设置往返巡逻路线</dd></div>
+            <div><dt><kbd>H</kbd></dt><dd data-i18n="help.hold">原地防守，不追击射程外目标</dd></div>
+            <div><dt><kbd>R</kbd></dt><dd data-i18n="help.rally">为兵营、战车工厂或机场设置集结点</dd></div>
+            <div><dt><kbd>S</kbd></dt><dd data-i18n="help.stop">停止并清空指令队列</dd></div>
+            <div><dt><kbd>Ctrl/Cmd + 1–9</kbd></dt><dd data-i18n="help.groups">保存编队；按数字召回，连续按两次聚焦</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3 data-i18n="help.camera">镜头与系统</h3>
+          <dl>
+            <div><dt><kbd>← ↑ ↓ →</kbd></dt><dd data-i18n="help.pan">平移镜头；屏幕边缘也可滚动</dd></div>
+            <div><dt><kbd>B</kbd></dt><dd data-i18n="help.home">镜头返回我方基地</dd></div>
+            <div><dt><kbd>Space</kbd></dt><dd data-i18n="help.focusSelection">镜头聚焦当前选择</dd></div>
+            <div><dt><kbd data-i18n="help.minimapKey">小地图</kbd></dt><dd data-i18n="help.minimap">点击快速定位</dd></div>
+            <div><dt><kbd>Esc</kbd></dt><dd data-i18n="help.pause">取消当前模式；无模式时暂停或继续</dd></div>
+            <div><dt><kbd>/</kbd></dt><dd data-i18n="help.manual">打开本操作手册</dd></div>
+          </dl>
+        </section>
+      </div>
+      <p class="help-tip"><span data-i18n="help.tip">提示</span><i data-i18n="help.tipCopy">晶矿藏储量再次提升。地面部队会绕开建筑与矿堆；稳定经济后建设机场，截击机可快速支援战线。</i></p>
+    </aside>
+  </main>
+
+  <script src="js/i18n.js?v=20260722.1"></script>
+  <script src="js/core.js?v=20260722.1"></script>
+  <script src="js/data.js?v=20260722.1"></script>
+  <script src="js/assets.js?v=20260722.1"></script>
+  <script src="js/animation.js?v=20260722.1"></script>
+  <script src="js/renderer.js?v=20260722.1"></script>
+  <script src="js/ai.js?v=20260722.1"></script>
+  <script src="js/game.js?v=20260722.1"></script>
+  <script src="js/ui.js?v=20260722.1"></script>
+</body>
+</html>
