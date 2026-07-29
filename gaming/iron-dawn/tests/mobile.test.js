@@ -14,6 +14,7 @@ test('mobile HUD exposes production, minimap, focus, and dismiss controls', () =
     'mobile-action-bar',
     'mobile-build-button',
     'mobile-map-button',
+    'mobile-pan-button',
     'mobile-focus-button',
     'mobile-rack-close',
     'mobile-map-close',
@@ -33,6 +34,8 @@ test('responsive CSS removes desktop minimums and respects touch and safe areas'
   assert.match(css, /min-height:\s*44px/);
   assert.match(css, /is-mobile-rack-open/);
   assert.match(css, /is-mobile-map-open/);
+  assert.match(css, /grid-template-columns:\s*repeat\(4,/);
+  assert.match(css, /aria-pressed="true"/);
 });
 
 test('mobile drawer controller keeps classes and expanded state synchronized', () => {
@@ -43,6 +46,8 @@ test('mobile drawer controller keeps classes and expanded state synchronized', (
   assert.match(ui, /classList\.toggle\('is-mobile-map-open', mapOpen\)/);
   assert.match(ui, /setAttribute\('aria-expanded', String\(rackOpen\)\)/);
   assert.match(ui, /setAttribute\('aria-expanded', String\(mapOpen\)\)/);
+  assert.match(ui, /updateTouchPanState/);
+  assert.match(ui, /setTouchPanMode/);
 });
 
 test('touch input uses Pointer Events and the installable app allows portrait', () => {
@@ -61,6 +66,9 @@ test('mobile control translations have exact Chinese and English parity', () => 
     'mobile.controls',
     'mobile.production',
     'mobile.minimap',
+    'mobile.pan',
+    'mobile.panEnableAria',
+    'mobile.panDisableAria',
     'mobile.focus',
     'mobile.closeProduction',
     'mobile.closeMinimap',

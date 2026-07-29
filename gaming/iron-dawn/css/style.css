@@ -495,7 +495,8 @@ input:focus-visible + * {
 .mobile-action-bar,
 .mobile-panel-backdrop,
 .mobile-panel-close,
-.mobile-touch-hint {
+.mobile-touch-hint,
+.touch-only {
   display: none;
 }
 
@@ -2769,7 +2770,7 @@ kbd {
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     height: calc(var(--mobile-bar) + env(safe-area-inset-bottom, 0px));
     padding: 5px max(8px, env(safe-area-inset-right, 0px)) calc(5px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
     border-top: 1px solid var(--line);
@@ -2780,10 +2781,10 @@ kbd {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     min-height: 44px;
-    padding: 0 8px;
+    padding: 0 4px;
     color: var(--text-bright);
     border: 1px solid var(--line);
     border-right: 0;
@@ -2799,6 +2800,7 @@ kbd {
   }
 
   .mobile-action-bar > button[aria-expanded="true"],
+  .mobile-action-bar > button[aria-pressed="true"],
   .mobile-action-bar > button:active {
     color: var(--void);
     border-color: var(--command);
@@ -2819,8 +2821,21 @@ kbd {
   }
 
   .mobile-action-bar > button[aria-expanded="true"] .mobile-action-code,
+  .mobile-action-bar > button[aria-pressed="true"] .mobile-action-code,
   .mobile-action-bar > button:active .mobile-action-code {
     color: var(--void);
+  }
+
+  .is-touch-pan-mode #game-canvas {
+    cursor: grab;
+  }
+
+  #game-canvas.is-camera-panning {
+    cursor: grabbing;
+  }
+
+  .touch-only {
+    display: grid;
   }
 
   .mobile-touch-hint {

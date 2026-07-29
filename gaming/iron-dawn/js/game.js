@@ -35,6 +35,8 @@
       this.drag = null;
       this.activePointerId = null;
       this.lastTouchTap = { at: -Infinity, x: 0, y: 0 };
+      this.touchPanMode = typeof root.matchMedia === 'function'
+        ? root.matchMedia('(max-width: 1024px)').matches : false;
       this.audioEnabled = true;
       this.audioContext = null;
       this.loop = this.loop.bind(this);
@@ -46,6 +48,7 @@
 
     attachUI(ui) {
       this.ui = ui;
+      if (typeof this.ui.updateTouchPanState === 'function') this.ui.updateTouchPanState(this.touchPanMode);
       this.ui.update(this, true);
     }
 
@@ -1897,6 +1900,7 @@
           try { this.canvas.setPointerCapture(event.pointerId); } catch (error) { /* Capture is optional. */ }
         }
         this.drag = {
+          mode: this.touchPanMode && !event.shiftKey ? 'camera' : 'select',
           startScreenX: this.mouse.screenX,
           startScreenY: this.mouse.screenY,
           startWorldX: world.x,
@@ -1905,6 +1909,9 @@
           currentWorldY: world.y,
           additive: event.shiftKey,
           pointerType: event.pointerType || 'mouse',
+          lastScreenX: this.mouse.screenX,
+          lastScreenY: this.mouse.screenY,
+          cameraMoved: false,
         };
       });
       window.addEventListener('pointermove', (event) => {
@@ -1915,8 +1922,24 @@
           this.mouse.edgePanArmed = true;
         }
         if (this.drag) {
-          this.drag.currentWorldX = this.mouse.worldX;
-          this.drag.currentWorldY = this.mouse.worldY;
+          const deltaX = this.mouse.screenX - this.drag.lastScreenX;
+          const deltaY = this.mouse.screenY - this.drag.lastScreenY;
+          this.drag.lastScreenX = this.mouse.screenX;
+          this.drag.lastScreenY = this.mouse.screenY;
+          if (this.drag.mode === 'camera') {
+            const distance = Math.hypot(
+              this.mouse.screenX - this.drag.startScreenX,
+              this.mouse.screenY - this.drag.startScreenY,
+            );
+            if (distance > 7) this.drag.cameraMoved = true;
+            if (this.drag.cameraMoved) {
+              this.panCameraBy(deltaX, deltaY);
+              if (this.canvas.classList) this.canvas.classList.add('is-camera-panning');
+            }
+          } else {
+            this.drag.currentWorldX = this.mouse.worldX;
+            this.drag.currentWorldY = this.mouse.worldY;
+          }
         }
       });
       window.addEventListener('pointerup', (event) => {
@@ -1926,11 +1949,18 @@
         const drag = this.drag;
         this.drag = null;
         this.activePointerId = null;
+        if (this.canvas.classList) this.canvas.classList.remove('is-camera-panning');
         if (typeof this.canvas.releasePointerCapture === 'function') {
           try { this.canvas.releasePointerCapture(event.pointerId); } catch (error) { /* Capture may already be released. */ }
         }
         const moved = Math.hypot(this.mouse.screenX - drag.startScreenX, this.mouse.screenY - drag.startScreenY);
-        if (moved > 7) {
+        if (drag.mode === 'camera' && moved > 7) {
+          if (!drag.cameraMoved) {
+            this.panCameraBy(this.mouse.screenX - drag.lastScreenX, this.mouse.screenY - drag.lastScreenY);
+          }
+          return;
+        }
+        if (drag.mode === 'select' && moved > 7) {
           this.selectRect(Core.normalizeRect(
             { x: drag.startWorldX, y: drag.startWorldY },
             { x: this.mouse.worldX, y: this.mouse.worldY },
@@ -1955,6 +1985,7 @@
         this.drag = null;
         this.activePointerId = null;
         this.mouse.edgePanArmed = false;
+        if (this.canvas.classList) this.canvas.classList.remove('is-camera-panning');
       });
       this.canvas.addEventListener('dblclick', (event) => {
         if (this.state !== 'running' || this.placementType || this.commandMode) return;
@@ -1980,6 +2011,7 @@
         this.keys.clear();
         this.drag = null;
         this.activePointerId = null;
+        if (this.canvas.classList) this.canvas.classList.remove('is-camera-panning');
       });
       if (typeof document.addEventListener === 'function') {
         document.addEventListener('visibilitychange', () => {
@@ -2010,6 +2042,25 @@
       this.renderer.resize();
       this.clampCamera();
       this.refreshMouseWorld();
+    }
+
+    setTouchPanMode(force) {
+      this.touchPanMode = typeof force === 'boolean' ? force : !this.touchPanMode;
+      this.drag = null;
+      this.activePointerId = null;
+      if (this.canvas.classList) this.canvas.classList.remove('is-camera-panning');
+      if (this.ui && typeof this.ui.updateTouchPanState === 'function') {
+        this.ui.updateTouchPanState(this.touchPanMode);
+      }
+      return this.touchPanMode;
+    }
+
+    panCameraBy(screenDeltaX, screenDeltaY) {
+      this.camera.x -= Number(screenDeltaX) || 0;
+      this.camera.y -= Number(screenDeltaY) || 0;
+      this.clampCamera();
+      this.refreshMouseWorld();
+      return { x: this.camera.x, y: this.camera.y };
     }
 
     centerCameraOn(x, y) {
@@ -2119,7 +2170,7 @@
           units: visibleEntities.filter((entity) => entity.kind === 'unit').length,
           ids: visibleEntities.map((entity) => entity.id),
         },
-        navigation: {
+            navigation: {
           revision: this.navigationRevision,
           pathingUnits: this.entities.filter((entity) => entity.kind === 'unit'
             && entity.hp > 0 && Array.isArray(entity.navigationPath)
@@ -2130,7 +2181,10 @@
             entity.kind === 'unit' && Array.isArray(entity.navigationPath)
               ? sum + Math.max(0, entity.navigationPath.length - entity.navigationIndex) : sum
           ), 0),
-        },
+            },
+            input: {
+              touchPanMode: this.touchPanMode,
+            },
         minerals: {
           nodes: this.minerals.length,
           remaining: this.minerals.reduce((sum, mine) => sum + Math.max(0, mine.amount), 0),
