@@ -252,6 +252,16 @@ kbd { padding: 2px 5px; color: var(--paper); background: #2a332f; border: 1px so
 .deck-actions { display: flex; justify-content: flex-end; align-items: center; gap: 18px; }
 .text-button, .reset-button { color: #89918c; background: transparent; border: 0; font-size: 10px; letter-spacing: .15em; cursor: pointer; }
 .text-button:hover { color: var(--paper); }
+.sensor-button {
+  min-width: 88px;
+  padding: 10px 12px;
+  color: var(--cyan);
+  border: 1px solid rgba(95,246,227,.35);
+}
+.sensor-button[aria-pressed="true"] { color: #07100e; background: var(--cyan); border-color: var(--cyan); }
+.sensor-button:disabled { color: #626a66; border-color: #343b38; cursor: not-allowed; }
+.sensor-button[hidden], .gyro-status[hidden] { display: none !important; }
+.gyro-status { color: var(--amber); font-size: 8px; letter-spacing: .13em; }
 .reset-button { padding: 12px 14px; color: var(--paper); border: 1px solid #3a4540; }
 .reset-button:hover { border-color: var(--amber); color: var(--amber); }
 
@@ -266,6 +276,8 @@ kbd { padding: 2px 5px; color: var(--paper); background: #2a332f; border: 1px so
   .instruction { display: none; }
   .deck-actions { gap: 8px; }
   .text-button { display: none; }
+  .sensor-button:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; }
+  .gyro-status:not([hidden]) { display: inline; }
   .control-keyline { display: none; }
 }
 
