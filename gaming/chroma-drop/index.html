@@ -95,6 +95,11 @@
         <div class="deck-actions">
           <button class="text-button sensor-button" id="gyroButton" aria-pressed="false" hidden>GYRO: OFF</button>
           <span class="gyro-status" id="gyroStatus" hidden>AVAILABLE</span>
+          <label class="sensitivity-control" id="sensitivityControl" for="sensitivitySlider" hidden>
+            <span>ACCEL</span>
+            <input id="sensitivitySlider" type="range" min="0.5" max="2" step="0.1" value="1" />
+            <output id="sensitivityValue" for="sensitivitySlider">1.0×</output>
+          </label>
           <button class="text-button" id="soundButton" aria-pressed="true">SOUND: ON</button>
           <button class="text-button" id="pauseButton">PAUSE</button>
           <button class="reset-button" id="resetButton">RESET RUN ↻</button>
