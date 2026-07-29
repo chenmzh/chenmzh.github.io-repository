@@ -1,0 +1,232 @@
+/* ==========================================================================
+   site-shell.css — 站点共享外壳（命名空间 .ss-*，不污染页面既有样式）
+   视觉基准：根主页 index.html 的淡蓝极简设计
+   ========================================================================== */
+
+/* ---------- 返回顶栏（静态，置于页面顶部） ---------- */
+
+.ss-backbar {
+  background: #ffffff;
+  border-bottom: 1px solid #dbe6f2;
+  font-family: "Avenir Next", Avenir, "Noto Sans SC", "PingFang SC", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ss-backbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: min(1080px, calc(100% - 48px));
+  min-height: 52px;
+  margin-inline: auto;
+}
+
+.ss-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  color: #2f6fb4;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.ss-back:hover { background: #e3eef9; }
+
+.ss-back:focus-visible {
+  outline: 2px solid #2f6fb4;
+  outline-offset: 2px;
+}
+
+.ss-crumb {
+  margin-left: auto;
+  overflow: hidden;
+  color: #8496aa;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---------- 悬浮返回按钮（全屏应用/游戏/SPA 用） ---------- */
+
+.ss-backfab {
+  position: fixed;
+  z-index: 9000;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  color: #2f6fb4;
+  background: #ffffff;
+  border: 1px solid #dbe6f2;
+  border-radius: 8px;
+  font: 600 0.85rem/1 "Avenir Next", Avenir, "Noto Sans SC", "PingFang SC", "Helvetica Neue", sans-serif;
+  text-decoration: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.ss-backfab:hover { background: #e3eef9; }
+
+.ss-backfab:focus-visible {
+  outline: 2px solid #2f6fb4;
+  outline-offset: 2px;
+}
+
+/* Iron Dawn 等带有固定顶部 HUD 的全屏应用：悬浮钮下移避开顶栏 */
+.ss-backfab--below-rail {
+  top: calc(var(--top-rail, 52px) + env(safe-area-inset-top, 0px) + 10px);
+}
+
+/* SPA 人物页：置于右下，避开左上角站点标识 */
+.ss-backfab--br {
+  top: auto;
+  left: auto;
+  right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+@media (max-width: 640px) {
+  .ss-backbar-inner { width: min(100% - 40px, 1080px); }
+  .ss-crumb { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-back, .ss-backfab { transition: none !important; }
+}
+
+/* ==========================================================================
+   Hexo/NexT 遗产页面重肤（仅作用于显式加 class="ss-hexo" 的页面）
+   目标：淡蓝画布 + 白色表面 + 单一蓝色强调，不改动布局与脚本
+   ========================================================================== */
+
+body.ss-hexo {
+  color: #1e2f42;
+  background: #eef4fb;
+  font-family: "Avenir Next", Avenir, "Noto Sans SC", "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+body.ss-hexo .headband { background: #2f6fb4; }
+
+body.ss-hexo .header {
+  background: #ffffff;
+  border-bottom: 1px solid #dbe6f2;
+}
+
+body.ss-hexo .site-meta {
+  color: #1e2f42;
+  background: #ffffff;
+}
+
+body.ss-hexo .site-meta .brand {
+  color: #1e2f42;
+  background: #ffffff;
+}
+
+body.ss-hexo .site-meta .brand:hover { color: #2f6fb4; }
+
+body.ss-hexo .site-meta .site-title { color: #1e2f42; }
+
+body.ss-hexo .logo-line-before i,
+body.ss-hexo .logo-line-after i { background: #2f6fb4; }
+
+body.ss-hexo .site-subtitle { color: #8496aa; }
+
+body.ss-hexo .site-nav-toggle .btn-bar { background: #5c6f84; }
+
+body.ss-hexo .menu .menu-item a {
+  color: #5c6f84;
+  transition: color 160ms ease;
+}
+
+body.ss-hexo .menu .menu-item a:hover,
+body.ss-hexo .menu .menu-item-active a {
+  color: #2f6fb4;
+  background: none;
+  border-bottom-color: #2f6fb4;
+}
+
+body.ss-hexo .main { background: #eef4fb; }
+
+body.ss-hexo .post-block,
+body.ss-hexo .posts-collapse,
+body.ss-hexo .comments,
+body.ss-hexo .post-nav {
+  background: #ffffff;
+  border: 1px solid #dbe6f2;
+  border-radius: 8px;
+}
+
+body.ss-hexo .posts-collapse { margin-bottom: 20px; }
+
+body.ss-hexo .post-block + .post-block,
+body.ss-hexo .post-block + .posts-collapse { border-top: 1px solid #dbe6f2; }
+
+body.ss-hexo h1, body.ss-hexo h2, body.ss-hexo h3,
+body.ss-hexo h4, body.ss-hexo h5, body.ss-hexo h6 { color: #1e2f42; }
+
+body.ss-hexo .posts-expand .post-title,
+body.ss-hexo .posts-expand .post-title-link { color: #1e2f42; }
+
+body.ss-hexo .posts-expand .post-title-link:hover,
+body.ss-hexo .post-body a { color: #2f6fb4; }
+
+body.ss-hexo .post-meta,
+body.ss-hexo .post-meta time,
+body.ss-hexo .post-meta-item-text { color: #8496aa; }
+
+body.ss-hexo .posts-collapse .post-title a,
+body.ss-hexo .posts-collapse .collection-title { color: #1e2f42; }
+
+body.ss-hexo .posts-collapse .post-title a:hover,
+body.ss-hexo .posts-collapse .post-header:hover .post-title a { color: #2f6fb4; }
+
+body.ss-hexo .posts-collapse .post-meta,
+body.ss-hexo .collection-year { color: #8496aa; }
+
+body.ss-hexo .posts-collapse::before { background: #dbe6f2; }
+
+body.ss-hexo .posts-collapse .post-header::before { background: #2f6fb4; }
+
+body.ss-hexo .sidebar {
+  background: #ffffff;
+  border-left: 1px solid #dbe6f2;
+}
+
+body.ss-hexo .sidebar a,
+body.ss-hexo .site-state-item-name,
+body.ss-hexo .links-of-author a { color: #2f6fb4; }
+
+body.ss-hexo .site-author-name,
+body.ss-hexo .sidebar .sidebar-inner { color: #1e2f42; }
+
+body.ss-hexo .site-description,
+body.ss-hexo .site-state-item-count { color: #5c6f84; }
+
+body.ss-hexo .footer {
+  color: #8496aa;
+  background: #ffffff;
+  border-top: 1px solid #dbe6f2;
+}
+
+body.ss-hexo .footer a { color: #2f6fb4; }
+
+body.ss-hexo .back-to-top {
+  color: #ffffff;
+  background: #2f6fb4;
+}
+
+body.ss-hexo a:focus-visible,
+body.ss-hexo button:focus-visible {
+  outline: 2px solid #2f6fb4;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.ss-hexo .menu .menu-item a { transition: none !important; }
+}

@@ -10,8 +10,15 @@
     <meta name="description" content="Chroma Drop — a 3D liquid-metal tilt maze for the browser." />
     <title>Chroma Drop</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="../../assets/site-shell.css" />
+    <style>
+      /* 返回顶栏钉在视口顶部：页面自动滚动到游戏区后仍然可见；
+         z-index 需高于移动端全屏开局遮罩（fixed, z-index:50） */
+      .ss-backbar { position: sticky; top: 0; z-index: 60; }
+    </style>
   </head>
   <body>
+    <nav class="ss-backbar" aria-label="站点导航"><div class="ss-backbar-inner"><a class="ss-back" href="../">← 返回上一级</a><span class="ss-crumb">Gaming Lab · Chroma Drop</span></div></nav>
     <div class="grain" aria-hidden="true"></div>
     <main class="shell">
       <header class="masthead">

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
+  <link rel="stylesheet" href="../../assets/site-shell.css">
   <title>IML 第 01-10 讲完整离线讲义</title>
   <style>
     :root {
@@ -183,7 +184,7 @@
       position: relative;
       z-index: 10;
       display: grid;
-      grid-template-columns: minmax(120px, 1fr) minmax(190px, 360px) auto;
+      grid-template-columns: auto minmax(120px, 1fr) minmax(190px, 360px) auto;
       gap: 10px;
       align-items: center;
       min-width: 0;
@@ -524,7 +525,7 @@
       }
       body.sidebar-open .sidebar-scrim { display: block; }
       .toolbar {
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
         gap: 7px;
         padding: 8px 9px;
       }
@@ -563,6 +564,27 @@
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* 站点返回入口（工具栏适配，结构来自 assets/site-shell.css） */
+    .ss-back--tool {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 10px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 700;
+      white-space: nowrap;
+      text-decoration: none;
+      border-radius: 4px;
+    }
+
+    .ss-back--tool:hover { background: var(--accent-soft); }
+
+    .ss-back--tool:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
     }
   </style>
 </head>
@@ -636,6 +658,7 @@
 
     <main class="workspace">
       <header class="toolbar">
+        <a class="ss-back ss-back--tool" href="../">← 返回上一级</a>
         <button class="icon-button menu-button" id="menu-button" type="button" aria-label="打开课程导航" title="课程导航">☰</button>
         <div class="toolbar-title" id="toolbar-title">第 01 讲</div>
         <div class="search-wrap">

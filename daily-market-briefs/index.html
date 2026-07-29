@@ -3,31 +3,36 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eef4fb">
   <title>每日股票市场简报</title>
+  <link rel="stylesheet" href="../assets/site-shell.css">
   <style>
-    :root { color-scheme: light; --ink:#17202a; --muted:#667085; --line:#d8dee8; --bg:#f7f8fb; --panel:#fff; --accent:#1769aa; --tag:#e9f2ff; }
+    :root { color-scheme: light; --ink:#1e2f42; --muted:#5c6f84; --faint:#8496aa; --line:#dbe6f2; --bg:#eef4fb; --panel:#fff; --accent:#2f6fb4; --tag:#e3eef9; }
     * { box-sizing: border-box; }
-    body { margin:0; font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--ink); background:var(--bg); }
-    header { background:#101820; color:#fff; padding:32px 20px; }
+    body { margin:0; font:16px/1.55 "Avenir Next",Avenir,"Noto Sans SC","PingFang SC","Helvetica Neue",sans-serif; color:var(--ink); background:var(--bg); }
+    header { background:#fff; color:var(--ink); padding:36px 20px; border-bottom:1px solid var(--line); }
     .wrap { max-width:1080px; margin:0 auto; }
-    h1 { margin:0 0 8px; font-size:30px; letter-spacing:0; }
-    header p { margin:0; color:#d8dee8; }
+    h1 { margin:0 0 8px; font-size:30px; font-weight:600; letter-spacing:-0.01em; }
+    header p { margin:0; color:var(--muted); }
     .controls { display:grid; grid-template-columns: 1.5fr 200px 200px; gap:12px; margin:22px 0; }
     input, select { width:100%; border:1px solid var(--line); border-radius:8px; padding:12px 13px; font:inherit; background:#fff; color:var(--ink); }
-    .meta { color:var(--muted); margin-bottom:14px; }
+    input:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+    .meta { color:var(--faint); margin-bottom:14px; }
     .grid { display:grid; gap:14px; padding-bottom:36px; }
     .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
     .card h2 { margin:0 0 8px; font-size:21px; }
     .card h2 a { color:var(--accent); text-decoration:none; }
     .card h2 a:hover { text-decoration:underline; }
+    .card h2 a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     .tags { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
-    .tag { background:var(--tag); color:#184b7a; border-radius:999px; padding:3px 9px; font-size:13px; }
-    .items { margin:10px 0 0; padding-left:20px; color:#344054; }
+    .tag { background:var(--tag); color:#2f6fb4; border-radius:999px; padding:3px 9px; font-size:13px; }
+    .items { margin:10px 0 0; padding-left:20px; color:#5c6f84; }
     .empty { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:22px; color:var(--muted); }
     @media (max-width:760px){ .controls{grid-template-columns:1fr;} h1{font-size:24px;} }
   </style>
 </head>
 <body>
+  <nav class="ss-backbar" aria-label="站点导航"><div class="ss-backbar-inner"><a class="ss-back" href="../">← 返回上一级</a><span class="ss-crumb">Daily Market Briefs</span></div></nav>
   <header><div class="wrap"><h1>每日股票市场简报</h1><p>按日期、市场/板块/股票代码和关键词检索股票市场日报。</p></div></header>
   <main class="wrap">
     <section class="controls">
