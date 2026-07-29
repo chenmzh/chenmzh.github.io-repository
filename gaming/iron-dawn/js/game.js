@@ -33,6 +33,8 @@
         screenX: 0, screenY: 0, worldX: 0, worldY: 0, inside: false, edgePanArmed: false,
       };
       this.drag = null;
+      this.activePointerId = null;
+      this.lastTouchTap = { at: -Infinity, x: 0, y: 0 };
       this.audioEnabled = true;
       this.audioContext = null;
       this.loop = this.loop.bind(this);
@@ -1872,10 +1874,13 @@
           { append: event.shiftKey },
         );
       });
-      this.canvas.addEventListener('mousedown', (event) => {
+      this.canvas.addEventListener('pointerdown', (event) => {
         if (this.state !== 'running') return;
+        if (event.isPrimary === false) return;
+        if (event.pointerType === 'touch') event.preventDefault();
         this.ensureAudio();
         this.updateMouseFromEvent(event);
+        this.mouse.inside = true;
         const world = { x: this.mouse.worldX, y: this.mouse.worldY };
         if (event.button !== 0) return;
         if (event.ctrlKey) return;
@@ -1887,6 +1892,10 @@
           this.executeCommandMode(world, { append: event.shiftKey });
           return;
         }
+        this.activePointerId = event.pointerId;
+        if (typeof this.canvas.setPointerCapture === 'function') {
+          try { this.canvas.setPointerCapture(event.pointerId); } catch (error) { /* Capture is optional. */ }
+        }
         this.drag = {
           startScreenX: this.mouse.screenX,
           startScreenY: this.mouse.screenY,
@@ -1895,38 +1904,66 @@
           currentWorldX: world.x,
           currentWorldY: world.y,
           additive: event.shiftKey,
+          pointerType: event.pointerType || 'mouse',
         };
       });
-      window.addEventListener('mousemove', (event) => {
+      window.addEventListener('pointermove', (event) => {
+        if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+        if (event.pointerType === 'touch' && this.drag) event.preventDefault();
         this.updateMouseFromEvent(event);
-        if (this.state === 'running' && this.mouse.inside) this.mouse.edgePanArmed = true;
+        if (this.state === 'running' && this.mouse.inside && event.pointerType !== 'touch') {
+          this.mouse.edgePanArmed = true;
+        }
         if (this.drag) {
           this.drag.currentWorldX = this.mouse.worldX;
           this.drag.currentWorldY = this.mouse.worldY;
         }
       });
-      window.addEventListener('mouseup', (event) => {
-        if (event.button !== 0 || !this.drag) return;
+      window.addEventListener('pointerup', (event) => {
+        if (event.button !== 0 || !this.drag || (this.activePointerId !== null && event.pointerId !== this.activePointerId)) return;
+        if (event.pointerType === 'touch') event.preventDefault();
         this.updateMouseFromEvent(event);
         const drag = this.drag;
         this.drag = null;
+        this.activePointerId = null;
+        if (typeof this.canvas.releasePointerCapture === 'function') {
+          try { this.canvas.releasePointerCapture(event.pointerId); } catch (error) { /* Capture may already be released. */ }
+        }
         const moved = Math.hypot(this.mouse.screenX - drag.startScreenX, this.mouse.screenY - drag.startScreenY);
         if (moved > 7) {
           this.selectRect(Core.normalizeRect(
             { x: drag.startWorldX, y: drag.startWorldY },
             { x: this.mouse.worldX, y: this.mouse.worldY },
           ), drag.additive);
+        } else if (drag.pointerType === 'touch') {
+          const now = performance.now();
+          const repeated = now - this.lastTouchTap.at < 350
+            && Math.hypot(this.mouse.screenX - this.lastTouchTap.x, this.mouse.screenY - this.lastTouchTap.y) < 24;
+          if (repeated) {
+            this.selectSameTypeAt({ x: this.mouse.worldX, y: this.mouse.worldY });
+            this.lastTouchTap.at = -Infinity;
+          } else {
+            this.selectAt({ x: this.mouse.worldX, y: this.mouse.worldY }, drag.additive);
+            this.lastTouchTap = { at: now, x: this.mouse.screenX, y: this.mouse.screenY };
+          }
         } else {
           this.selectAt({ x: this.mouse.worldX, y: this.mouse.worldY }, drag.additive);
         }
+      });
+      window.addEventListener('pointercancel', (event) => {
+        if (this.activePointerId !== null && event.pointerId !== this.activePointerId) return;
+        this.drag = null;
+        this.activePointerId = null;
+        this.mouse.edgePanArmed = false;
       });
       this.canvas.addEventListener('dblclick', (event) => {
         if (this.state !== 'running' || this.placementType || this.commandMode) return;
         this.updateMouseFromEvent(event);
         this.selectSameTypeAt({ x: this.mouse.worldX, y: this.mouse.worldY });
       });
-      this.canvas.addEventListener('mouseenter', () => { this.mouse.inside = true; });
-      this.canvas.addEventListener('mouseleave', () => {
+      this.canvas.addEventListener('pointerenter', () => { this.mouse.inside = true; });
+      this.canvas.addEventListener('pointerleave', (event) => {
+        if (event.pointerType === 'touch' && this.drag) return;
         this.mouse.inside = false;
         this.mouse.edgePanArmed = false;
       });
@@ -1942,6 +1979,7 @@
       window.addEventListener('blur', () => {
         this.keys.clear();
         this.drag = null;
+        this.activePointerId = null;
       });
       if (typeof document.addEventListener === 'function') {
         document.addEventListener('visibilitychange', () => {
