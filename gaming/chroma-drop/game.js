@@ -14,6 +14,8 @@
   const THREE = window.THREE;
   const boardWrap = document.getElementById("boardWrap");
   const startOverlay = document.getElementById("startOverlay");
+  const introPanel = document.getElementById("introPanel");
+  const mobileOptionsPanel = document.getElementById("mobileOptionsPanel");
   const messageOverlay = document.getElementById("messageOverlay");
   const startButton = document.getElementById("startButton");
   const continueButton = document.getElementById("continueButton");
@@ -22,9 +24,18 @@
   const soundButton = document.getElementById("soundButton");
   const gyroButton = document.getElementById("gyroButton");
   const gyroStatus = document.getElementById("gyroStatus");
+  const overlayGyroButton = document.getElementById("overlayGyroButton");
+  const overlayGyroStatus = document.getElementById("overlayGyroStatus");
   const sensitivityControl = document.getElementById("sensitivityControl");
   const sensitivitySlider = document.getElementById("sensitivitySlider");
   const sensitivityValue = document.getElementById("sensitivityValue");
+  const overlaySensitivityControl = document.getElementById("overlaySensitivityControl");
+  const overlaySensitivitySlider = document.getElementById("overlaySensitivitySlider");
+  const overlaySensitivityValue = document.getElementById("overlaySensitivityValue");
+  const fullscreenButton = document.getElementById("fullscreenButton");
+  const fullscreenStatus = document.getElementById("fullscreenStatus");
+  const optionsButton = document.getElementById("optionsButton");
+  const closeOptionsButton = document.getElementById("closeOptionsButton");
   const pauseFlag = document.getElementById("pauseFlag");
   const levelReadout = document.getElementById("levelReadout");
   const massReadout = document.getElementById("massReadout");
@@ -270,6 +281,9 @@
     gyroButton.textContent = `GYRO: ${label}`;
     gyroButton.setAttribute("aria-pressed", String(pressed));
     gyroStatus.textContent = status;
+    overlayGyroButton.textContent = `GYRO: ${label}`;
+    overlayGyroButton.setAttribute("aria-pressed", String(pressed));
+    overlayGyroStatus.textContent = status;
   }
 
   function setGyroSensitivity(value, persist = true) {
@@ -278,15 +292,24 @@
     sensitivitySlider.value = formatted;
     sensitivityValue.textContent = `${formatted}×`;
     sensitivitySlider.setAttribute("aria-valuetext", `${formatted} times gyro acceleration`);
+    overlaySensitivitySlider.value = formatted;
+    overlaySensitivityValue.textContent = `${formatted}×`;
+    overlaySensitivitySlider.setAttribute("aria-valuetext", `${formatted} times gyro acceleration`);
     const fill = (state.gyro.sensitivity - .5) / 1.5 * 100;
     sensitivityControl.style.setProperty("--sensitivity-fill", `${fill}%`);
+    overlaySensitivityControl.style.setProperty("--sensitivity-fill", `${fill}%`);
     if (persist) {
       try { localStorage.setItem("chroma-drop-gyro-sensitivity", formatted); } catch (_) { /* Storage can be unavailable in private contexts. */ }
     }
   }
 
   function initGyroOption() {
-    if (!state.gyro.supported) return;
+    if (!state.gyro.supported) {
+      overlayGyroButton.disabled = true;
+      overlaySensitivitySlider.disabled = true;
+      setGyroUi("OFF", "UNAVAILABLE", false);
+      return;
+    }
     gyroButton.hidden = false;
     gyroStatus.hidden = false;
     sensitivityControl.hidden = false;
@@ -299,6 +322,51 @@
       return;
     }
     setGyroUi("OFF", "AVAILABLE", false);
+  }
+
+  function currentFullscreenElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || null;
+  }
+
+  function setFullscreenUi(active, status = active ? "FULLSCREEN ACTIVE" : "DISPLAY READY") {
+    fullscreenButton.textContent = active ? "EXIT FULLSCREEN  ×" : "FULLSCREEN  ⛶";
+    fullscreenButton.setAttribute("aria-pressed", String(active));
+    fullscreenStatus.textContent = status;
+  }
+
+  async function toggleFullscreen() {
+    const activeElement = currentFullscreenElement();
+    try {
+      if (activeElement) {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) await exit.call(document);
+        document.body.classList.remove("focus-mode");
+        setFullscreenUi(false);
+        return;
+      }
+      if (document.body.classList.contains("focus-mode")) {
+        document.body.classList.remove("focus-mode");
+        setFullscreenUi(false);
+        return;
+      }
+      const root = document.documentElement;
+      const request = root.requestFullscreen || root.webkitRequestFullscreen;
+      if (!request) throw new Error("Fullscreen API unavailable");
+      await request.call(root, { navigationUI: "hide" });
+      setFullscreenUi(true);
+    } catch (_) {
+      document.body.classList.add("focus-mode");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      setFullscreenUi(true, "FOCUS MODE · BROWSER UI MAY REMAIN");
+      setupCanvas();
+    }
+  }
+
+  function showMobileOptions(show) {
+    introPanel.hidden = show;
+    mobileOptionsPanel.hidden = !show;
+    optionsButton.setAttribute("aria-expanded", String(show));
+    (show ? overlayGyroButton : optionsButton).focus({ preventScroll: true });
   }
 
   function calibrateGyro() {
@@ -1192,7 +1260,12 @@
   resetButton.addEventListener("click", resetLevel);
   pauseButton.addEventListener("click", togglePause);
   gyroButton.addEventListener("click", toggleGyro);
+  overlayGyroButton.addEventListener("click", toggleGyro);
   sensitivitySlider.addEventListener("input", event => setGyroSensitivity(event.target.value));
+  overlaySensitivitySlider.addEventListener("input", event => setGyroSensitivity(event.target.value));
+  fullscreenButton.addEventListener("click", toggleFullscreen);
+  optionsButton.addEventListener("click", () => showMobileOptions(true));
+  closeOptionsButton.addEventListener("click", () => showMobileOptions(false));
   soundButton.addEventListener("click", () => {
     state.sound = !state.sound;
     soundButton.textContent = `SOUND: ${state.sound ? "ON" : "OFF"}`;
@@ -1201,6 +1274,17 @@
   });
 
   window.addEventListener("resize", setupCanvas);
+  document.addEventListener("fullscreenchange", () => {
+    const active = Boolean(currentFullscreenElement());
+    if (!active) document.body.classList.remove("focus-mode");
+    setFullscreenUi(active);
+    setupCanvas();
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    const active = Boolean(currentFullscreenElement());
+    setFullscreenUi(active);
+    setupCanvas();
+  });
   init3D();
   initGyroOption();
   loadLevel(0);
@@ -1232,6 +1316,9 @@
       }
     }),
     setGyroSensitivity: value => setGyroSensitivity(value),
+    toggleFullscreen: () => toggleFullscreen(),
+    showMobileOptions: show => showMobileOptions(show),
+    getDisplay: () => ({ fullscreen: Boolean(currentFullscreenElement()), focusMode: document.body.classList.contains("focus-mode"), optionsOpen: !mobileOptionsPanel.hidden }),
     simulateGyro: (beta, gamma) => {
       state.gyro.enabled = true;
       handleOrientation({ beta, gamma });
