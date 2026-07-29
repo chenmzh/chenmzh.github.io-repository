@@ -1,6 +1,47 @@
 {
-  "updated": "2026-07-28",
+  "updated": "2026-07-29",
   "briefs": [
+    {
+      "date": "2026-07-29",
+      "title": "每日合成与发育生物学简报 - 2026-07-29",
+      "summary": "过去 24 小时最强的交叉信号来自“工程化组织自形变”和“发育力学”：bioRxiv 新稿中 4D cell-strand bioprinting、上皮内陷 actomyosin 重分布、细胞-基质机械锚定都直接指向 synthetic morphogenesis 的可设计原则。 合成生物学方向今天偏可复用工具和细胞治疗模块：CRISPR/Cas13 表面检测、TCR-T 共刺激受体工程、噬菌体 crlRNA 反防御机制、Cell 的 DRT3 反转录酶免疫系统都值得跟进。 控制论与生物学方向以“反馈、同步、多稳态、群体动力学”为主：arXiv 出现 Goldbeter-Koshland 级联多稳态、蛋白翻译周期同步成本、Lotka-Volterra trait-structured dynamics，PNAS 则把细胞分裂定义为上皮集体流几何的调控变量。 正式期刊中新模型平台值得注意：Nature Protocols 的 Core2Edge 将人源 glioblastoma organoid 与人脑切片共培养，用于追踪从肿瘤核心到单细胞分散的浸润和转录异质性。 medRxiv 本窗口有 50 条记录、37 篇新稿，但多数偏临床、公共卫生或医学 AI；仅把主动适应管理、疾病传播动态等作为低相关扫读，没有放入优先阅读。",
+      "items": [
+        "Self-Actuating 4D Cell-Strand Bioprinting",
+        "Engineering antigen-driven co-stimulation and T helper cell activity into TCR-T cells with CD8-41BB fusion receptors enhances anti-tumor activity",
+        "Coordinated RNA- and protein-templated synthesis of double-stranded DNA by a dual reverse transcriptase immune system",
+        "Phage CRISPR-like regulatory RNAs silence multilayered bacterial immune systems",
+        "Bead-based RNA Detection with Cas13a: Multi-scale Design and Validation",
+        "Environmental and cell-cell signaling shape developmental trajectories across morphogenetic landscapes",
+        "Bidirectional redistribution of actomyosin drives epithelial invagination in ascidian siphon tube morphogenesis",
+        "Opposing mechanical anchorage drives collective cell-matrix interaction",
+        "Cell division sets a universal flow geometry in cell layers",
+        "Core2Edge: a human glioblastoma organoid-brain slice model capturing infiltration and transcriptional heterogeneity from core to single-cell dispersion"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markdown": "briefs/2026-07-29.md",
+      "url": "reader.html?date=2026-07-29",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Self-Actuating 4D Cell-Strand Bioprinting",
+        "Engineering antigen-driven co-stimulation and T helper cell activity into TCR-T cells with CD8-41BB fusion receptors enhances anti-tumor activity",
+        "Coordinated RNA- and protein-templated synthesis of double-stranded DNA by a dual reverse transcriptase immune system",
+        "Phage CRISPR-like regulatory RNAs silence multilayered bacterial immune systems",
+        "Bead-based RNA Detection with Cas13a: Multi-scale Design and Validation",
+        "Environmental and cell-cell signaling shape developmental trajectories across morphogenetic landscapes",
+        "Bidirectional redistribution of actomyosin drives epithelial invagination in ascidian siphon tube morphogenesis",
+        "Opposing mechanical anchorage drives collective cell-matrix interaction",
+        "Cell division sets a universal flow geometry in cell layers",
+        "Core2Edge: a human glioblastoma organoid-brain slice model capturing infiltration and transcriptional heterogeneity from core to single-cell dispersion"
+      ]
+    },
     {
       "date": "2026-07-28",
       "title": "每日合成与发育生物学简报 - 2026-07-28",
