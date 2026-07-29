@@ -11,6 +11,9 @@
       this.helpOpen = false;
       this.lastAssetStatus = null;
       this.groupClickTimers = new Map();
+      this.mobilePanel = null;
+      this.mobileLayoutQuery = typeof root.matchMedia === 'function'
+        ? root.matchMedia('(max-width: 1024px)') : null;
       this.elements = {
         shell: document.getElementById('game-shell'),
         start: document.getElementById('start-screen'),
@@ -35,6 +38,9 @@
         startButtonLabel: document.getElementById('start-button-label'),
         startButtonStatus: document.getElementById('start-button-status'),
         controlGroups: document.getElementById('control-groups'),
+        mobileBuildButton: document.getElementById('mobile-build-button'),
+        mobileMapButton: document.getElementById('mobile-map-button'),
+        mobileBackdrop: document.getElementById('mobile-panel-backdrop'),
       };
       this.bind();
       this.unsubscribeLanguage = this.i18n && typeof this.i18n.subscribe === 'function'
@@ -74,6 +80,7 @@
       };
       on('start-button', 'click', () => {
         const checked = document.querySelector('input[name="difficulty"]:checked');
+        this.closeMobilePanels();
         this.game.start(checked ? checked.value : Data.BALANCE.defaultDifficulty);
       });
       on('restart-button', 'click', () => this.game.restart());
@@ -90,7 +97,10 @@
         this.updateSoundButton(enabled);
       });
       document.querySelectorAll('[data-build]').forEach((button) => {
-        button.addEventListener('click', () => this.game.beginBuildingPlacement(button.dataset.build));
+        button.addEventListener('click', () => {
+          this.game.beginBuildingPlacement(button.dataset.build);
+          this.closeMobilePanels();
+        });
       });
       document.querySelectorAll('[data-unit]').forEach((button) => {
         button.addEventListener('click', () => this.game.queueUnit(button.dataset.unit, 'player'));
@@ -104,9 +114,21 @@
             this.game.holdSelected();
           } else if (typeof this.game.setCommandMode === 'function') {
             this.game.setCommandMode(command);
+            this.closeMobilePanels();
           }
         });
       });
+      on('mobile-build-button', 'click', () => this.toggleMobilePanel('rack'));
+      on('mobile-map-button', 'click', () => this.toggleMobilePanel('map'));
+      on('mobile-focus-button', 'click', () => {
+        if (this.game.getSelected().length > 0) this.game.centerSelection();
+        else this.game.centerCameraOnBase();
+        this.closeMobilePanels();
+      });
+      on('mobile-rack-close', 'click', () => this.closeMobilePanels());
+      on('mobile-map-close', 'click', () => this.closeMobilePanels());
+      on('mobile-panel-backdrop', 'click', () => this.closeMobilePanels());
+      on('minimap-canvas', 'click', () => this.closeMobilePanels());
       document.querySelectorAll('[data-control-group]').forEach((button) => {
         const slot = String(button.dataset.controlGroup);
         button.addEventListener('click', (event) => {
@@ -127,11 +149,53 @@
         });
       });
       window.addEventListener('keydown', (event) => {
+        if (event.code === 'Escape' && this.mobilePanel) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.closeMobilePanels();
+          return;
+        }
         if (event.code === 'Slash' && !event.metaKey && !event.ctrlKey) {
           event.preventDefault();
           this.toggleHelp();
         }
-      });
+      }, true);
+      const closeIfDesktop = () => {
+        if (this.mobileLayoutQuery && !this.mobileLayoutQuery.matches) this.closeMobilePanels();
+      };
+      window.addEventListener('resize', closeIfDesktop, { passive: true });
+      if (this.mobileLayoutQuery && typeof this.mobileLayoutQuery.addEventListener === 'function') {
+        this.mobileLayoutQuery.addEventListener('change', closeIfDesktop);
+      }
+    }
+
+    toggleMobilePanel(panel) {
+      const next = this.mobilePanel === panel ? null : panel;
+      this.setMobilePanel(next);
+    }
+
+    closeMobilePanels() {
+      this.setMobilePanel(null);
+    }
+
+    setMobilePanel(panel) {
+      this.mobilePanel = panel === 'rack' || panel === 'map' ? panel : null;
+      const rackOpen = this.mobilePanel === 'rack';
+      const mapOpen = this.mobilePanel === 'map';
+      if (this.elements.shell) {
+        this.elements.shell.classList.toggle('is-mobile-rack-open', rackOpen);
+        this.elements.shell.classList.toggle('is-mobile-map-open', mapOpen);
+      }
+      if (this.elements.mobileBuildButton) {
+        this.elements.mobileBuildButton.setAttribute('aria-expanded', String(rackOpen));
+      }
+      if (this.elements.mobileMapButton) {
+        this.elements.mobileMapButton.setAttribute('aria-expanded', String(mapOpen));
+      }
+      if (this.elements.mobileBackdrop) {
+        this.elements.mobileBackdrop.setAttribute('aria-hidden', String(!this.mobilePanel));
+        this.elements.mobileBackdrop.tabIndex = this.mobilePanel ? 0 : -1;
+      }
     }
 
     toggleHelp(force) {
@@ -200,6 +264,7 @@
     onStateChange(game) {
       document.body.dataset.gameState = game.state;
       if (this.elements.shell) this.elements.shell.dataset.gameState = game.state;
+      if (game.state !== 'running' && this.mobilePanel) this.closeMobilePanels();
       this.setOverlay(this.elements.start, game.state === 'menu');
       this.setOverlay(this.elements.pause, game.state === 'paused');
       this.setOverlay(this.elements.result, game.state === 'won' || game.state === 'lost');

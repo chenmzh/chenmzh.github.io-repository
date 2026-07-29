@@ -7,7 +7,7 @@
   <meta name="description" content="《钢铁黎明：零号战区》是一款拥有陆空联合作战与丰沛晶矿的原创明亮科幻俯视角浏览器即时战略游戏。" data-i18n-content="app.description">
   <title data-i18n="app.title">钢铁黎明：零号战区 · Iron Dawn</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=20260722.1">
+  <link rel="stylesheet" href="css/style.css?v=20260729.1">
   <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
@@ -26,7 +26,22 @@
       >你的浏览器不支持 Canvas，无法运行《钢铁黎明：零号战区》。</canvas>
 
       <div class="battlefield-glass" aria-hidden="true"></div>
+      <p class="mobile-touch-hint" data-i18n="mobile.touchHint">轻点选择 · 拖动框选 · 先选底部命令，再点战场下令</p>
     </section>
+
+    <button id="mobile-panel-backdrop" class="mobile-panel-backdrop" type="button" aria-label="关闭战术面板" data-i18n-aria-label="mobile.closePanels"></button>
+
+    <nav id="mobile-action-bar" class="mobile-action-bar hud" aria-label="触控战术控制" data-i18n-aria-label="mobile.controls">
+      <button id="mobile-build-button" type="button" aria-controls="command-rack" aria-expanded="false">
+        <span class="mobile-action-code" aria-hidden="true">＋</span><b data-i18n="mobile.production">生产</b>
+      </button>
+      <button id="mobile-map-button" type="button" aria-controls="minimap-module" aria-expanded="false">
+        <span class="mobile-action-code mobile-action-code--map" aria-hidden="true">⌖</span><b data-i18n="mobile.minimap">地图</b>
+      </button>
+      <button id="mobile-focus-button" type="button">
+        <span class="mobile-action-code" aria-hidden="true">◎</span><b data-i18n="mobile.focus">聚焦</b>
+      </button>
+    </nav>
 
     <header class="hud top-rail" aria-label="战场状态" data-i18n-aria-label="a11y.battleStatus">
       <div class="operation-mark" aria-label="行动代号：晨线" data-i18n-aria-label="hud.operation.aria">
@@ -83,10 +98,13 @@
       </nav>
     </header>
 
-    <aside class="hud command-rack" aria-label="生产与战术控制" data-i18n-aria-label="a11y.commandRack">
+    <aside id="command-rack" class="hud command-rack" aria-label="生产与战术控制" data-i18n-aria-label="a11y.commandRack">
       <div class="rack-heading">
         <span>CTRL RACK</span>
-        <span class="signal-lamp" aria-label="控制台在线" data-i18n-aria-label="a11y.consoleOnline"></span>
+        <span class="rack-heading__actions">
+          <span class="signal-lamp" aria-label="控制台在线" data-i18n-aria-label="a11y.consoleOnline"></span>
+          <button id="mobile-rack-close" class="mobile-panel-close" type="button" aria-label="关闭生产面板" data-i18n-aria-label="mobile.closeProduction">×</button>
+        </span>
       </div>
 
       <section class="rack-section rack-section--queue" aria-labelledby="queue-title">
@@ -177,10 +195,10 @@
       </section>
     </aside>
 
-    <section class="hud minimap-module" aria-labelledby="minimap-title">
+    <section id="minimap-module" class="hud minimap-module" aria-labelledby="minimap-title">
       <div class="section-heading">
         <h2 id="minimap-title" data-i18n="minimap.title">区域测绘</h2>
-        <span>GRID 7C</span>
+        <span class="minimap-heading__actions"><i>GRID 7C</i><button id="mobile-map-close" class="mobile-panel-close" type="button" aria-label="关闭小地图" data-i18n-aria-label="mobile.closeMinimap">×</button></span>
       </div>
       <div class="minimap-bezel">
         <canvas id="minimap-canvas" width="448" height="296" aria-label="战术小地图" data-i18n="minimap.fallback" data-i18n-aria-label="a11y.minimap">战术小地图</canvas>
@@ -433,14 +451,14 @@
     </aside>
   </main>
 
-  <script src="js/i18n.js?v=20260722.1"></script>
-  <script src="js/core.js?v=20260722.1"></script>
-  <script src="js/data.js?v=20260722.1"></script>
-  <script src="js/assets.js?v=20260722.1"></script>
-  <script src="js/animation.js?v=20260722.1"></script>
-  <script src="js/renderer.js?v=20260722.1"></script>
-  <script src="js/ai.js?v=20260722.1"></script>
-  <script src="js/game.js?v=20260722.1"></script>
-  <script src="js/ui.js?v=20260722.1"></script>
+  <script src="js/i18n.js?v=20260729.1"></script>
+  <script src="js/core.js?v=20260729.1"></script>
+  <script src="js/data.js?v=20260729.1"></script>
+  <script src="js/assets.js?v=20260729.1"></script>
+  <script src="js/animation.js?v=20260729.1"></script>
+  <script src="js/renderer.js?v=20260729.1"></script>
+  <script src="js/ai.js?v=20260729.1"></script>
+  <script src="js/game.js?v=20260729.1"></script>
+  <script src="js/ui.js?v=20260729.1"></script>
 </body>
 </html>

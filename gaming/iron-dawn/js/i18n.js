@@ -63,6 +63,15 @@
     'controls.help': '帮助',
     'controls.helpOpenAria': '打开操作帮助',
 
+    'mobile.controls': '触控战术控制',
+    'mobile.production': '生产',
+    'mobile.minimap': '地图',
+    'mobile.focus': '聚焦',
+    'mobile.closeProduction': '关闭生产面板',
+    'mobile.closeMinimap': '关闭小地图',
+    'mobile.closePanels': '关闭战术面板',
+    'mobile.touchHint': '轻点选择 · 拖动框选 · 先选底部命令，再点战场下令',
+
     'rack.queue': '生产队列',
     'rack.build': '基地设施',
     'rack.units': '作战编制',
@@ -342,6 +351,15 @@
     'controls.soundDisabled': 'Sound disabled',
     'controls.help': 'Help',
     'controls.helpOpenAria': 'Open field manual',
+
+    'mobile.controls': 'Touch tactical controls',
+    'mobile.production': 'BUILD',
+    'mobile.minimap': 'MAP',
+    'mobile.focus': 'FOCUS',
+    'mobile.closeProduction': 'Close production panel',
+    'mobile.closeMinimap': 'Close minimap',
+    'mobile.closePanels': 'Close tactical panels',
+    'mobile.touchHint': 'Tap to select · Drag to box-select · Choose an order below, then tap the battlefield',
 
     'rack.queue': 'PRODUCTION QUEUE',
     'rack.build': 'BASE FACILITIES',
