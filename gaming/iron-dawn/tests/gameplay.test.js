@@ -118,6 +118,26 @@ test('public diagnostics include renderer performance even when timing is unavai
   assert.equal(diagnostics.navigation.revision > 0, true);
 });
 
+test('mobile camera pan follows the finger, clamps to the map, and can be toggled', () => {
+  const game = createGame(390, 620);
+  assert.equal(game.touchPanMode, false);
+  assert.equal(game.setTouchPanMode(true), true);
+
+  game.camera.x = 500;
+  game.camera.y = 500;
+  game.panCameraBy(80, -50);
+  assert.equal(game.camera.x, 420);
+  assert.equal(game.camera.y, 550);
+
+  game.camera.x = 5;
+  game.camera.y = 5;
+  game.panCameraBy(100, 100);
+  assert.equal(game.camera.x, 0);
+  assert.equal(game.camera.y, 0);
+
+  assert.equal(game.setTouchPanMode(false), false);
+});
+
 test('hotkeys ignore editable targets and modified non-number commands', () => {
   const game = createGame();
   const rifle = game.entities.find((entity) => entity.kind === 'unit' && entity.team === 'player');

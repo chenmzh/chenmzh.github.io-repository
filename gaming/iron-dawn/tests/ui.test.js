@@ -147,7 +147,7 @@ test('index cache-busts every local stylesheet and script with the mobile releas
     .map((match) => match[1]);
 
   assert.equal(versionedResources.length, 10);
-  assert.deepEqual([...new Set(versionedResources)], ['20260729.1']);
+  assert.deepEqual([...new Set(versionedResources)], ['20260729.2']);
   assert.doesNotMatch(html, /20260716\.4/);
 });
 

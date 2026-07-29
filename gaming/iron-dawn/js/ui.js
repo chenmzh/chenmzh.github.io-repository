@@ -40,12 +40,14 @@
         controlGroups: document.getElementById('control-groups'),
         mobileBuildButton: document.getElementById('mobile-build-button'),
         mobileMapButton: document.getElementById('mobile-map-button'),
+        mobilePanButton: document.getElementById('mobile-pan-button'),
         mobileBackdrop: document.getElementById('mobile-panel-backdrop'),
       };
       this.bind();
       this.unsubscribeLanguage = this.i18n && typeof this.i18n.subscribe === 'function'
         ? this.i18n.subscribe(() => this.onLanguageChange()) : null;
       this.updateSoundButton(game.audioEnabled);
+      this.updateTouchPanState(game.touchPanMode);
       this.onStateChange(game);
     }
 
@@ -69,6 +71,7 @@
     onLanguageChange() {
       if (this.lastAssetStatus) this.updateAssetProgress(this.lastAssetStatus);
       this.updateSoundButton(this.game.audioEnabled);
+      this.updateTouchPanState(this.game.touchPanMode);
       this.onStateChange(this.game);
       if (this.game.renderer) this.game.renderer.render(this.game);
     }
@@ -120,6 +123,10 @@
       });
       on('mobile-build-button', 'click', () => this.toggleMobilePanel('rack'));
       on('mobile-map-button', 'click', () => this.toggleMobilePanel('map'));
+      on('mobile-pan-button', 'click', () => {
+        if (typeof this.game.setTouchPanMode === 'function') this.game.setTouchPanMode();
+        this.closeMobilePanels();
+      });
       on('mobile-focus-button', 'click', () => {
         if (this.game.getSelected().length > 0) this.game.centerSelection();
         else this.game.centerCameraOnBase();
@@ -165,7 +172,10 @@
       };
       window.addEventListener('resize', closeIfDesktop, { passive: true });
       if (this.mobileLayoutQuery && typeof this.mobileLayoutQuery.addEventListener === 'function') {
-        this.mobileLayoutQuery.addEventListener('change', closeIfDesktop);
+        this.mobileLayoutQuery.addEventListener('change', (event) => {
+          closeIfDesktop();
+          if (typeof this.game.setTouchPanMode === 'function') this.game.setTouchPanMode(event.matches);
+        });
       }
     }
 
@@ -196,6 +206,16 @@
         this.elements.mobileBackdrop.setAttribute('aria-hidden', String(!this.mobilePanel));
         this.elements.mobileBackdrop.tabIndex = this.mobilePanel ? 0 : -1;
       }
+    }
+
+    updateTouchPanState(active) {
+      const enabled = Boolean(active);
+      if (this.elements.shell) this.elements.shell.classList.toggle('is-touch-pan-mode', enabled);
+      if (!this.elements.mobilePanButton) return;
+      this.elements.mobilePanButton.setAttribute('aria-pressed', String(enabled));
+      const label = this.t(enabled ? 'mobile.panDisableAria' : 'mobile.panEnableAria');
+      this.elements.mobilePanButton.setAttribute('aria-label', label);
+      this.elements.mobilePanButton.title = label;
     }
 
     toggleHelp(force) {
@@ -588,6 +608,8 @@
       spawnUnit: (type, team, x, y) => game.addUnit(type, team, x, y),
       damageEntity: (id, amount) => game.applyDamage(game.getEntity(id), amount, 0),
       reset: () => game.restart(),
+      touchPanMode: () => game.touchPanMode,
+      setTouchPanMode: (enabled) => game.setTouchPanMode(enabled),
       language: () => i18n ? i18n.getLocale() : 'zh-CN',
       setLanguage: (locale) => i18n ? i18n.setLocale(locale) : 'zh-CN',
     });
