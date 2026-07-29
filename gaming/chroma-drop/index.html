@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#111514" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="description" content="Chroma Drop — a 3D liquid-metal tilt maze for the browser." />
     <title>Chroma Drop</title>
     <link rel="stylesheet" href="style.css" />
@@ -49,14 +52,36 @@
 
           <div class="overlay visible" id="startOverlay">
             <div class="overlay-card intro-card">
-              <p class="card-index">INITIALIZATION / 001</p>
-              <h2>Keep it<br />together.</h2>
-              <p>Tilt the chamber. Wake all three charge nodes. Deliver at least 65% of your liquid mass to the open drain.</p>
-              <div class="control-keyline">
-                <span><kbd>WASD</kbd> or <kbd>ARROWS</kbd> to tilt</span>
-                <span><kbd>P</kbd> pause · <kbd>R</kbd> reset</span>
+              <div id="introPanel">
+                <p class="card-index">INITIALIZATION / 001</p>
+                <h2>Keep it<br />together.</h2>
+                <p>Tilt the chamber. Wake all three charge nodes. Deliver at least 65% of your liquid mass to the open drain.</p>
+                <div class="control-keyline">
+                  <span><kbd>WASD</kbd> or <kbd>ARROWS</kbd> to tilt</span>
+                  <span><kbd>P</kbd> pause · <kbd>R</kbd> reset</span>
+                </div>
+                <button class="primary-button" id="startButton">ENTER CHAMBER <b>↗</b></button>
+                <div class="mobile-launch-actions">
+                  <button class="overlay-tool-button" id="fullscreenButton" aria-pressed="false">FULLSCREEN <b>⛶</b></button>
+                  <button class="overlay-tool-button" id="optionsButton" aria-expanded="false" aria-controls="mobileOptionsPanel">OPTIONS <b>⌁</b></button>
+                </div>
+                <p class="fullscreen-status" id="fullscreenStatus" aria-live="polite">DISPLAY READY</p>
               </div>
-              <button class="primary-button" id="startButton">ENTER CHAMBER <b>↗</b></button>
+
+              <div class="mobile-options-panel" id="mobileOptionsPanel" hidden>
+                <p class="card-index">FIELD SETUP / MOBILE</p>
+                <h2>Set your<br />balance.</h2>
+                <div class="mobile-option-row">
+                  <span><strong>Gyroscope</strong><small id="overlayGyroStatus">CHECKING</small></span>
+                  <button class="overlay-switch" id="overlayGyroButton" aria-pressed="false">GYRO: OFF</button>
+                </div>
+                <label class="overlay-sensitivity" id="overlaySensitivityControl" for="overlaySensitivitySlider">
+                  <span><strong>Acceleration</strong><small>GYRO RESPONSE</small></span>
+                  <input id="overlaySensitivitySlider" type="range" min="0.5" max="2" step="0.1" value="1" />
+                  <output id="overlaySensitivityValue" for="overlaySensitivitySlider">1.0×</output>
+                </label>
+                <button class="overlay-tool-button options-back" id="closeOptionsButton">← BACK TO START</button>
+              </div>
             </div>
           </div>
 
