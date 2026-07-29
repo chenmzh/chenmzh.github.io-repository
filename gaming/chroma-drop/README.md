@@ -10,5 +10,6 @@ Open `index.html` in a modern browser.
 - Pause: P or Space
 - Restart chamber: R
 - Touch: Use the on-screen directional pad
+- Gyroscope: On supported HTTPS devices, select `GYRO: OFF` and approve motion access. Your current holding angle becomes the neutral position.
 
 Activate all three charge nodes, preserve at least 65% mass, and move most of the droplet into the open drain.
