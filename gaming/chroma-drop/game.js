@@ -22,6 +22,9 @@
   const soundButton = document.getElementById("soundButton");
   const gyroButton = document.getElementById("gyroButton");
   const gyroStatus = document.getElementById("gyroStatus");
+  const sensitivityControl = document.getElementById("sensitivityControl");
+  const sensitivitySlider = document.getElementById("sensitivitySlider");
+  const sensitivityValue = document.getElementById("sensitivityValue");
   const pauseFlag = document.getElementById("pauseFlag");
   const levelReadout = document.getElementById("levelReadout");
   const massReadout = document.getElementById("massReadout");
@@ -168,6 +171,7 @@
       gammaZero: null,
       x: 0,
       y: 0,
+      sensitivity: 1,
       timeout: null
     }
   };
@@ -268,10 +272,27 @@
     gyroStatus.textContent = status;
   }
 
+  function setGyroSensitivity(value, persist = true) {
+    state.gyro.sensitivity = clamp(Number(value) || 1, .5, 2);
+    const formatted = state.gyro.sensitivity.toFixed(1);
+    sensitivitySlider.value = formatted;
+    sensitivityValue.textContent = `${formatted}×`;
+    sensitivitySlider.setAttribute("aria-valuetext", `${formatted} times gyro acceleration`);
+    const fill = (state.gyro.sensitivity - .5) / 1.5 * 100;
+    sensitivityControl.style.setProperty("--sensitivity-fill", `${fill}%`);
+    if (persist) {
+      try { localStorage.setItem("chroma-drop-gyro-sensitivity", formatted); } catch (_) { /* Storage can be unavailable in private contexts. */ }
+    }
+  }
+
   function initGyroOption() {
     if (!state.gyro.supported) return;
     gyroButton.hidden = false;
     gyroStatus.hidden = false;
+    sensitivityControl.hidden = false;
+    let savedSensitivity = 1;
+    try { savedSensitivity = localStorage.getItem("chroma-drop-gyro-sensitivity") || 1; } catch (_) { /* Keep the default. */ }
+    setGyroSensitivity(savedSensitivity, false);
     if (!window.isSecureContext) {
       gyroButton.disabled = true;
       setGyroUi("OFF", "HTTPS ONLY", false);
@@ -320,8 +341,8 @@
     else if (angle === 180) { horizontal = -gammaDelta; vertical = -betaDelta; }
     else if (angle === 270) { horizontal = -betaDelta; vertical = gammaDelta; }
 
-    const targetX = applyDeadZone(clamp(horizontal / 26, -1, 1));
-    const targetY = applyDeadZone(clamp(vertical / 26, -1, 1));
+    const targetX = applyDeadZone(clamp(horizontal / 26 * state.gyro.sensitivity, -1, 1));
+    const targetY = applyDeadZone(clamp(vertical / 26 * state.gyro.sensitivity, -1, 1));
     state.gyro.x += (targetX - state.gyro.x) * .18;
     state.gyro.y += (targetY - state.gyro.y) * .18;
     setGyroUi("ON", `${Math.round(Math.hypot(state.gyro.x, state.gyro.y) * 100)}%`, true);
@@ -1171,6 +1192,7 @@
   resetButton.addEventListener("click", resetLevel);
   pauseButton.addEventListener("click", togglePause);
   gyroButton.addEventListener("click", toggleGyro);
+  sensitivitySlider.addEventListener("input", event => setGyroSensitivity(event.target.value));
   soundButton.addEventListener("click", () => {
     state.sound = !state.sound;
     soundButton.textContent = `SOUND: ${state.sound ? "ON" : "OFF"}`;
@@ -1205,9 +1227,11 @@
         enabled: state.gyro.enabled,
         active: state.gyro.active,
         x: state.gyro.x,
-        y: state.gyro.y
+        y: state.gyro.y,
+        sensitivity: state.gyro.sensitivity
       }
     }),
+    setGyroSensitivity: value => setGyroSensitivity(value),
     simulateGyro: (beta, gamma) => {
       state.gyro.enabled = true;
       handleOrientation({ beta, gamma });
