@@ -260,8 +260,58 @@ kbd { padding: 2px 5px; color: var(--paper); background: #2a332f; border: 1px so
 }
 .sensor-button[aria-pressed="true"] { color: #07100e; background: var(--cyan); border-color: var(--cyan); }
 .sensor-button:disabled { color: #626a66; border-color: #343b38; cursor: not-allowed; }
-.sensor-button[hidden], .gyro-status[hidden] { display: none !important; }
+.sensor-button[hidden], .gyro-status[hidden], .sensitivity-control[hidden] { display: none !important; }
 .gyro-status { color: var(--amber); font-size: 8px; letter-spacing: .13em; }
+.sensitivity-control {
+  --sensitivity-fill: 33.333%;
+  min-width: 174px;
+  padding: 7px 9px;
+  display: grid;
+  grid-template-columns: auto minmax(76px, 1fr) 34px;
+  align-items: center;
+  gap: 8px;
+  color: #89918c;
+  border-block: 1px solid rgba(232, 224, 206, .14);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .15em;
+  cursor: ew-resize;
+}
+.sensitivity-control output { color: var(--cyan); text-align: right; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.sensitivity-control input {
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+.sensitivity-control input::-webkit-slider-runnable-track {
+  height: 3px;
+  background: linear-gradient(90deg, var(--cyan) 0 var(--sensitivity-fill), #39423e var(--sensitivity-fill) 100%);
+}
+.sensitivity-control input::-moz-range-track { height: 3px; background: #39423e; border: 0; }
+.sensitivity-control input::-moz-range-progress { height: 3px; background: var(--cyan); }
+.sensitivity-control input::-webkit-slider-thumb {
+  width: 12px;
+  height: 20px;
+  margin-top: -8px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--paper);
+  border: 2px solid #111714;
+  box-shadow: 0 0 0 1px var(--cyan), 0 0 10px rgba(95, 246, 227, .34);
+}
+.sensitivity-control input::-moz-range-thumb {
+  width: 10px;
+  height: 18px;
+  border-radius: 0;
+  background: var(--paper);
+  border: 1px solid var(--cyan);
+}
+.sensitivity-control input:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
 .reset-button { padding: 12px 14px; color: var(--paper); border: 1px solid #3a4540; }
 .reset-button:hover { border-color: var(--amber); color: var(--amber); }
 
@@ -274,10 +324,12 @@ kbd { padding: 2px 5px; color: var(--paper); background: #2a332f; border: 1px so
   .instrument { padding: 9px; }
   .control-deck { grid-template-columns: 1fr auto; gap: 10px; }
   .instruction { display: none; }
-  .deck-actions { gap: 8px; }
+  .deck-actions { width: min(210px, 100%); display: grid; grid-template-columns: auto 1fr; gap: 6px 8px; }
   .text-button { display: none; }
   .sensor-button:not([hidden]) { display: inline-flex; align-items: center; justify-content: center; }
   .gyro-status:not([hidden]) { display: inline; }
+  .sensitivity-control:not([hidden]) { grid-column: 1 / -1; min-width: 0; }
+  .deck-actions .reset-button { grid-column: 1 / -1; }
   .control-keyline { display: none; }
 }
 
@@ -299,7 +351,7 @@ kbd { padding: 2px 5px; color: var(--paper); background: #2a332f; border: 1px so
   .overlay-card { width: calc(100vw - 44px); max-width: 430px; margin: auto; padding: 28px; }
   .overlay-card h2 { margin: 8px 0 13px; }
   .overlay-card > p:not(.card-index) { font-size: 12px; }
-  .control-deck { min-height: 106px; }
+  .control-deck { min-height: 148px; align-items: center; }
   .reset-button { padding: 9px; font-size: 9px; }
 }
 
