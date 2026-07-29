@@ -12,5 +12,6 @@ Open `index.html` in a modern browser.
 - Touch: Use the on-screen directional pad
 - Gyroscope: On supported HTTPS devices, select `GYRO: OFF` and approve motion access. Your current holding angle becomes the neutral position.
 - Acceleration: Drag the `ACCEL` bar from `0.5×` to `2.0×` to tune gyroscope response. The setting is saved on the device.
+- Mobile launch overlay: Use `FULLSCREEN` for an immersive display and `OPTIONS` to configure gyroscope and acceleration before entering the chamber. Browsers without the Fullscreen API use a focused page layout.
 
 Activate all three charge nodes, preserve at least 65% mass, and move most of the droplet into the open drain.
