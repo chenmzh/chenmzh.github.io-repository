@@ -20,6 +20,8 @@
   const resetButton = document.getElementById("resetButton");
   const pauseButton = document.getElementById("pauseButton");
   const soundButton = document.getElementById("soundButton");
+  const gyroButton = document.getElementById("gyroButton");
+  const gyroStatus = document.getElementById("gyroStatus");
   const pauseFlag = document.getElementById("pauseFlag");
   const levelReadout = document.getElementById("levelReadout");
   const massReadout = document.getElementById("massReadout");
@@ -156,7 +158,18 @@
     audio: null,
     lastTime: performance.now(),
     accumulator: 0,
-    trailTime: 0
+    trailTime: 0,
+    gyro: {
+      supported: "DeviceOrientationEvent" in window,
+      enabled: false,
+      active: false,
+      waiting: false,
+      betaZero: null,
+      gammaZero: null,
+      x: 0,
+      y: 0,
+      timeout: null
+    }
   };
 
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
@@ -249,6 +262,115 @@
     osc.stop(now + duration);
   }
 
+  function setGyroUi(label, status, pressed = state.gyro.enabled) {
+    gyroButton.textContent = `GYRO: ${label}`;
+    gyroButton.setAttribute("aria-pressed", String(pressed));
+    gyroStatus.textContent = status;
+  }
+
+  function initGyroOption() {
+    if (!state.gyro.supported) return;
+    gyroButton.hidden = false;
+    gyroStatus.hidden = false;
+    if (!window.isSecureContext) {
+      gyroButton.disabled = true;
+      setGyroUi("OFF", "HTTPS ONLY", false);
+      return;
+    }
+    setGyroUi("OFF", "AVAILABLE", false);
+  }
+
+  function calibrateGyro() {
+    state.gyro.betaZero = null;
+    state.gyro.gammaZero = null;
+    state.gyro.x = 0;
+    state.gyro.y = 0;
+    if (state.gyro.enabled) setGyroUi("ON", "CENTERING", true);
+  }
+
+  function screenAngle() {
+    const angle = screen.orientation?.angle ?? window.orientation ?? 0;
+    return ((Number(angle) % 360) + 360) % 360;
+  }
+
+  function applyDeadZone(value) {
+    const absolute = Math.abs(value);
+    if (absolute < .055) return 0;
+    return Math.sign(value) * (absolute - .055) / .945;
+  }
+
+  function handleOrientation(event) {
+    if (!state.gyro.enabled || !Number.isFinite(event.beta) || !Number.isFinite(event.gamma)) return;
+    if (state.gyro.betaZero === null || state.gyro.gammaZero === null) {
+      state.gyro.betaZero = event.beta;
+      state.gyro.gammaZero = event.gamma;
+      state.gyro.active = true;
+      state.gyro.waiting = false;
+      clearTimeout(state.gyro.timeout);
+      setGyroUi("ON", "CENTERED", true);
+      return;
+    }
+
+    const betaDelta = ((event.beta - state.gyro.betaZero + 540) % 360) - 180;
+    const gammaDelta = event.gamma - state.gyro.gammaZero;
+    let horizontal = gammaDelta;
+    let vertical = betaDelta;
+    const angle = screenAngle();
+    if (angle === 90) { horizontal = betaDelta; vertical = -gammaDelta; }
+    else if (angle === 180) { horizontal = -gammaDelta; vertical = -betaDelta; }
+    else if (angle === 270) { horizontal = -betaDelta; vertical = gammaDelta; }
+
+    const targetX = applyDeadZone(clamp(horizontal / 26, -1, 1));
+    const targetY = applyDeadZone(clamp(vertical / 26, -1, 1));
+    state.gyro.x += (targetX - state.gyro.x) * .18;
+    state.gyro.y += (targetY - state.gyro.y) * .18;
+    setGyroUi("ON", `${Math.round(Math.hypot(state.gyro.x, state.gyro.y) * 100)}%`, true);
+  }
+
+  function disableGyro(status = "AVAILABLE") {
+    window.removeEventListener("deviceorientation", handleOrientation);
+    clearTimeout(state.gyro.timeout);
+    Object.assign(state.gyro, {
+      enabled: false,
+      active: false,
+      waiting: false,
+      betaZero: null,
+      gammaZero: null,
+      x: 0,
+      y: 0,
+      timeout: null
+    });
+    setGyroUi("OFF", status, false);
+  }
+
+  async function toggleGyro() {
+    if (state.gyro.enabled) return disableGyro();
+    if (!window.isSecureContext) return setGyroUi("OFF", "HTTPS ONLY", false);
+    state.gyro.waiting = true;
+    setGyroUi("…", "REQUESTING", false);
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function") {
+        const permission = await DeviceOrientationEvent.requestPermission();
+        if (permission !== "granted") {
+          state.gyro.waiting = false;
+          setGyroUi("OFF", "DENIED", false);
+          return;
+        }
+      }
+      state.gyro.enabled = true;
+      state.gyro.active = false;
+      state.gyro.waiting = true;
+      calibrateGyro();
+      window.addEventListener("deviceorientation", handleOrientation);
+      state.gyro.timeout = setTimeout(() => {
+        if (!state.gyro.active) disableGyro("NO SENSOR");
+      }, 1900);
+    } catch (error) {
+      state.gyro.waiting = false;
+      setGyroUi("OFF", error?.name === "NotAllowedError" ? "DENIED" : "UNAVAILABLE", false);
+    }
+  }
+
   function inputVector() {
     let x = 0;
     let y = 0;
@@ -256,8 +378,17 @@
     if (state.keys.has("ArrowRight") || state.keys.has("KeyD") || state.touchDirs.has("right")) x++;
     if (state.keys.has("ArrowUp") || state.keys.has("KeyW") || state.touchDirs.has("up")) y--;
     if (state.keys.has("ArrowDown") || state.keys.has("KeyS") || state.touchDirs.has("down")) y++;
-    const length = Math.hypot(x, y) || 1;
-    const result = { x: x / length, y: y / length };
+    const manualLength = Math.hypot(x, y);
+    let result;
+    if (manualLength > 0) {
+      result = { x: x / manualLength, y: y / manualLength };
+    } else if (state.gyro.enabled && state.gyro.active) {
+      const gyroLength = Math.hypot(state.gyro.x, state.gyro.y);
+      const scale = gyroLength > 1 ? 1 / gyroLength : 1;
+      result = { x: state.gyro.x * scale, y: state.gyro.y * scale };
+    } else {
+      result = { x: 0, y: 0 };
+    }
     visualTilt.x = result.x;
     visualTilt.y = result.y;
     tiltIndicator.style.transform = `translate(${result.x * 8}px, ${result.y * 8}px)`;
@@ -1020,8 +1151,10 @@
   window.addEventListener("blur", () => {
     state.keys.clear();
     state.touchDirs.clear();
-    if (state.mode === "playing") togglePause();
+    if (state.mode === "playing" && !state.gyro.waiting) togglePause();
   });
+  window.addEventListener("orientationchange", calibrateGyro);
+  screen.orientation?.addEventListener?.("change", calibrateGyro);
 
   document.querySelectorAll(".tilt-pad button").forEach(button => {
     const dir = button.dataset.dir;
@@ -1037,6 +1170,7 @@
   continueButton.addEventListener("click", continueGame);
   resetButton.addEventListener("click", resetLevel);
   pauseButton.addEventListener("click", togglePause);
+  gyroButton.addEventListener("click", toggleGyro);
   soundButton.addEventListener("click", () => {
     state.sound = !state.sound;
     soundButton.textContent = `SOUND: ${state.sound ? "ON" : "OFF"}`;
@@ -1046,6 +1180,7 @@
 
   window.addEventListener("resize", setupCanvas);
   init3D();
+  initGyroOption();
   loadLevel(0);
   requestAnimationFrame(frame);
 
@@ -1064,6 +1199,20 @@
       nodes: [...state.nodes],
       particles: state.particles.length
     }),
+    getControls: () => ({
+      gyro: {
+        supported: state.gyro.supported,
+        enabled: state.gyro.enabled,
+        active: state.gyro.active,
+        x: state.gyro.x,
+        y: state.gyro.y
+      }
+    }),
+    simulateGyro: (beta, gamma) => {
+      state.gyro.enabled = true;
+      handleOrientation({ beta, gamma });
+    },
+    disableGyro: () => disableGyro(),
     activateAllNodes: () => { state.nodes = [true, true, true]; updateHud(); },
     moveToGoal: () => {
       const goal = levels[state.levelIndex].goal;
