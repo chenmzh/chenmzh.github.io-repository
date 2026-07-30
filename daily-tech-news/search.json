@@ -1,6 +1,52 @@
 {
-  "updated": "2026-07-29",
+  "updated": "2026-07-30",
   "briefs": [
+    {
+      "date": "2026-07-30",
+      "title": "每日科技新闻简报｜2026-07-30",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策",
+        "科研"
+      ],
+      "items": [
+        "1. 微软与 Meta 财报把 AI 支出回报问题推到台前：Azure 破 1000 亿美元年收入，但 Meta 自由现金流大幅压缩",
+        "2. 三星 Q2 创纪录：AI 服务器内存、HBM4 和 HBM4E 成为半导体周期核心驱动",
+        "3. Anthropic 称 Claude Mythos Preview 发现密码算法弱点，AI 已能参与高端密码分析研究",
+        "OpenAI 向学术研究者提供免费 ChatGPT 前沿模型访问",
+        "Google 推出 Lyria 3.5，将音乐生成模型接入 Flow Music",
+        "Lilian Weng 离开 Thinking Machines 后据报回到 OpenAI",
+        "Arm 报告 AI 数据中心推动 Neoverse 与数据中心 royalty 增长",
+        "Qualcomm 公布 FY26 Q3 业绩，手机与 Apple 收入下滑压力仍在",
+        "美国能源部宣布 Paducah AI/HPC 数据中心与能源项目",
+        "GitHub Models 将在 7 月 30 日完全退役",
+        "Waymo 恢复高速路 robotaxi 路线，先从 Phoenix 开始",
+        "美国“外国先进机器人设备”禁令继续发酵，覆盖范围据报包括部分机器人吸尘器",
+        "Onyx Security 融资 1.13 亿美元，主打企业 AI agent 控制平面",
+        "英国 CMA 调查 Microsoft 365 订阅营销，焦点是 Copilot 加价与续订选择",
+        "Pangram 发布 Pangram 4 并融资 900 万美元，AI 内容检测继续升温"
+      ],
+      "summary": "7 月 29 日，微软公布截至 6 月 30 日的 FY26 Q4 业绩：季度收入 900 亿美元，同比增长 18%；Azure 与其他云服务收入增长 43%；微软称 Azure 年收入首次超过 1000 亿美元，Microsoft 365 Copilot 付费席位超过 3000 万。微软官方财报还披露，商业剩余履约义务增长 84% 至 6780 亿美元。几乎同一时间，Meta 官方财报显示 Q2 收入增长 28% 至 608 亿美元，但成本费用增长 55%，自由现金流降至 7.84 亿美元，资本开支含融资租赁本金达 310.8 亿美元。",
+      "markdown": "briefs/2026-07-30.md",
+      "url": "reader.html?date=2026-07-30",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策",
+        "科研"
+      ]
+    },
     {
       "date": "2026-07-29",
       "title": "每日科技新闻简报｜2026-07-29",
