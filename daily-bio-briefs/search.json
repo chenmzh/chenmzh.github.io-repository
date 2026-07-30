@@ -1,6 +1,47 @@
 {
-  "updated": "2026-07-29",
+  "updated": "2026-07-30",
   "briefs": [
+    {
+      "date": "2026-07-30",
+      "title": "每日合成与发育生物学简报 - 2026-07-30",
+      "summary": "今天最强的信号集中在“发育系统如何编码和切换细胞命运”：Nature 的肠道干细胞分裂计数、bioRxiv 的序列脉冲信号模型、Current Biology 的植物表面力学线索，都把发育看成带状态记忆和反馈约束的动态系统。 形态发生方向同时出现了材料工程和力学推断两条线：4D 梯度水凝胶尝试把可编程形变做成组织工程支架，Kalman-filter force inference 和 epithelial necking 模型则加强了从时序影像反推组织力学的工具箱。 控制论与生物学方向有几个很干净的生物语境条目：arXiv 的细胞导航信息环、果蝇呼吸的神经-代谢耦合、Myxococcus 生物膜发育中的 histidine kinase 控制，都不是泛控制理论误报。 合成生物学今天偏“平台化”：iPSC 前列腺类器官的可操控系统、老年肿瘤 T 细胞 CRISPR screen、可编程微生物工厂的时空代谢调控综述，以及 Lactiplantibacillus 的 CRISPR/Cas9 编辑平台，都是可复用工具或 chassis 层面的进展。 medRxiv 在本窗口内有 74 条记录、65 篇新稿，但强相关条目不足；主要候选偏临床影像、卒中康复或血管类器官，未进入优先阅读。",
+      "items": [
+        "Intestinal stem cells count self-renewal divisions to switch multipotency",
+        "Directing hierarchical cell fate decisions through sequential pulses of minimal signaling alphabets",
+        "4D Biomimetic Morphing Hydrogel Scaffold via Biaxial Gradient Programming",
+        "Navigation driven by bidirectional information transmission between sensing and actuation",
+        "Neural control of respiration in Drosophila",
+        "A xeno-free human iPSC-derived prostate organoid platform for multilineage differentiation and genetic manipulation",
+        "Kalman-filter force inference: an estimation framework for cellular forces from temporal evolution of epithelial morphogenesis",
+        "Plant cells at the organ surface use mechanical cues to activate a specific growth-control program",
+        "CRISPR screens identify targets to rescue age-related T cell dysfunction in cancer",
+        "Spatiotemporal Metabolic Regulation for Programmable Microbial Cell Factories"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markdown": "briefs/2026-07-30.md",
+      "url": "reader.html?date=2026-07-30",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Intestinal stem cells count self-renewal divisions to switch multipotency",
+        "Directing hierarchical cell fate decisions through sequential pulses of minimal signaling alphabets",
+        "4D Biomimetic Morphing Hydrogel Scaffold via Biaxial Gradient Programming",
+        "Navigation driven by bidirectional information transmission between sensing and actuation",
+        "Neural control of respiration in Drosophila",
+        "A xeno-free human iPSC-derived prostate organoid platform for multilineage differentiation and genetic manipulation",
+        "Kalman-filter force inference: an estimation framework for cellular forces from temporal evolution of epithelial morphogenesis",
+        "Plant cells at the organ surface use mechanical cues to activate a specific growth-control program",
+        "CRISPR screens identify targets to rescue age-related T cell dysfunction in cancer",
+        "Spatiotemporal Metabolic Regulation for Programmable Microbial Cell Factories"
+      ]
+    },
     {
       "date": "2026-07-29",
       "title": "每日合成与发育生物学简报 - 2026-07-29",
