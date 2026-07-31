@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Mingzhe Chen 的公开工具与下载目录">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>Tools · Mingzhe Chen</title>
+  <link rel="stylesheet" href="../assets/site-shell.css">
+</head>
+<body class="ss-page">
+  <a class="ss-skip" href="#tools">跳到工具列表</a>
+
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="主导航">
+      <a class="ss-brand" href="../" aria-label="返回 Mingzhe Chen 首页">
+        <span class="ss-brand-mark" aria-hidden="true"></span>
+        <span>Mingzhe Chen</span>
+      </a>
+      <div class="ss-nav-links">
+        <a href="../#briefs">Briefs</a>
+        <a href="../lecture/">Learning</a>
+        <a href="../gaming/">Play</a>
+        <a href="./" aria-current="page">Tools</a>
+      </div>
+    </nav>
+  </header>
+
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div>
+        <p class="ss-kicker">Utility shelf / 03 releases</p>
+        <h1 class="ss-page-title">Small tools for <em>real work.</em></h1>
+        <p class="ss-lede">三个面向日常研究与计算工作流的实用工具：自动发布信息简报、在 Chrome 中调用 Codex 解释文本，以及可靠地搬运大型文件夹。</p>
+      </div>
+      <aside class="ss-signal-panel" aria-label="工具目录概况">
+        <span class="ss-signal-label">Tool index</span>
+        <dl class="ss-signal-list">
+          <div><dt>Automation</dt><dd>01 Codex skill</dd></div>
+          <div><dt>Browser</dt><dd>01 extension</dd></div>
+          <div><dt>Desktop</dt><dd>01 macOS app</dd></div>
+          <div><dt>License</dt><dd>See repositories</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <main class="ss-shell ss-main" id="tools">
+    <section class="ss-section" aria-labelledby="tools-title">
+      <div class="ss-section-head">
+        <div>
+          <span class="ss-section-index">Available now</span>
+          <h2 class="ss-section-title" id="tools-title">Three tools, one shelf</h2>
+        </div>
+        <p class="ss-section-note">下载包保留校验信息；开源项目链接到各自的 GitHub 仓库。</p>
+      </div>
+
+      <div class="ss-card-grid">
+        <article class="ss-card ss-tool-card" style="--card-accent:#e8edfd">
+          <span class="ss-card-number">TOOL 01 · CODEX AUTOMATION</span>
+          <h3 class="ss-card-title">daily-brief-publisher</h3>
+          <p class="ss-card-copy">用于定时生成 Markdown 简报、邮件投递、GitHub Pages 发布、可检索索引与历史回填的 Codex Skill。</p>
+          <ul class="ss-tool-specs">
+            <li>Format · ZIP · 8.5 KB</li>
+            <li><a href="../downloads/skills/daily-brief-publisher.zip.sha256" title="c20702e837d34f876a1fd7ce08d31e04d0b38a0690de9a0c8d365da958db0dd2">SHA-256 · c20702e837d3…</a></li>
+            <li>Workflow · Markdown · Email · Pages</li>
+          </ul>
+          <div class="ss-tool-footer">
+            <div class="ss-actions"><a class="ss-button" href="../downloads/skills/daily-brief-publisher.zip" download>下载 .zip</a></div>
+          </div>
+        </article>
+
+        <article class="ss-card ss-tool-card" style="--card-accent:#d8f8ef">
+          <span class="ss-card-number">TOOL 02 · CHROME EXTENSION</span>
+          <h3 class="ss-card-title">GPT Explain for Chrome</h3>
+          <p class="ss-card-copy">选中文字后调用本机 Codex 与 ChatGPT 订阅生成解释，支持独立窗口、多轮追问、公式、Markdown 与多语言。</p>
+          <ul class="ss-tool-specs">
+            <li>Platform · Chrome</li>
+            <li>Runtime · Local Codex</li>
+            <li>Source · Open repository</li>
+          </ul>
+          <div class="ss-tool-footer">
+            <div class="ss-actions"><a class="ss-button" href="https://github.com/chenmzh/gpt-explain-chrome">GitHub ↗</a></div>
+          </div>
+        </article>
+
+        <article class="ss-card ss-tool-card" style="--card-accent:#fff0dc">
+          <span class="ss-card-number">TOOL 03 · MACOS DESKTOP</span>
+          <h3 class="ss-card-title">Resumable Folder Copy</h3>
+          <p class="ss-card-copy">面向多源与大容量数据的文件夹复制工具，提供断点续传、实时速度、ETA、进度跟踪与逐内容校验。</p>
+          <ul class="ss-tool-specs">
+            <li>Platform · macOS</li>
+            <li>Transfer · Pause + resume</li>
+            <li>Integrity · Checksum verification</li>
+          </ul>
+          <div class="ss-tool-footer">
+            <div class="ss-actions"><a class="ss-button" href="https://github.com/chenmzh/resumable-folder-copy-macos">GitHub ↗</a></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="principles-title">
+      <div class="ss-section-head">
+        <div>
+          <span class="ss-section-index">Build principles</span>
+          <h2 class="ss-section-title" id="principles-title">Local-first by default</h2>
+        </div>
+      </div>
+      <div class="ss-index-list">
+        <div class="ss-index-row">
+          <span class="ss-row-number">A</span>
+          <span><span class="ss-row-title">Visible state</span><span class="ss-row-copy">进度、错误与恢复位置应当清楚可见，而不是藏在不可检查的黑箱里。</span></span>
+          <span class="ss-row-kind">Inspectable</span><span class="ss-row-arrow" aria-hidden="true">•</span>
+        </div>
+        <div class="ss-index-row">
+          <span class="ss-row-number">B</span>
+          <span><span class="ss-row-title">Recoverable work</span><span class="ss-row-copy">长任务要能继续，发布与复制流程要能验证，失败不应抹掉已经完成的工作。</span></span>
+          <span class="ss-row-kind">Resumable</span><span class="ss-row-arrow" aria-hidden="true">•</span>
+        </div>
+      </div>
+    </section>
+
+    <footer class="ss-footer">
+      <span>Mingzhe Chen · Tools</span>
+      <span>03 public utilities</span>
+    </footer>
+  </main>
+</body>
+</html>
