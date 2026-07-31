@@ -3,79 +3,64 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#eef4fb">
-  <title>每日股票市场简报</title>
+  <meta name="theme-color" content="#f2f5f3">
+  <meta name="description" content="每日股票市场、行业与公司动态简报">
+  <title>每日股票市场简报 · Mingzhe Chen</title>
   <link rel="stylesheet" href="../assets/site-shell.css">
-  <style>
-    :root { color-scheme: light; --ink:#1e2f42; --muted:#5c6f84; --faint:#8496aa; --line:#dbe6f2; --bg:#eef4fb; --panel:#fff; --accent:#2f6fb4; --tag:#e3eef9; }
-    * { box-sizing: border-box; }
-    body { margin:0; font:16px/1.55 "Avenir Next",Avenir,"Noto Sans SC","PingFang SC","Helvetica Neue",sans-serif; color:var(--ink); background:var(--bg); }
-    header { background:#fff; color:var(--ink); padding:36px 20px; border-bottom:1px solid var(--line); }
-    .wrap { max-width:1080px; margin:0 auto; }
-    h1 { margin:0 0 8px; font-size:30px; font-weight:600; letter-spacing:-0.01em; }
-    header p { margin:0; color:var(--muted); }
-    .controls { display:grid; grid-template-columns: 1.5fr 200px 200px; gap:12px; margin:22px 0; }
-    input, select { width:100%; border:1px solid var(--line); border-radius:8px; padding:12px 13px; font:inherit; background:#fff; color:var(--ink); }
-    input:focus-visible, select:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
-    .meta { color:var(--faint); margin-bottom:14px; }
-    .grid { display:grid; gap:14px; padding-bottom:36px; }
-    .card { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:18px; }
-    .card h2 { margin:0 0 8px; font-size:21px; }
-    .card h2 a { color:var(--accent); text-decoration:none; }
-    .card h2 a:hover { text-decoration:underline; }
-    .card h2 a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-    .tags { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0; }
-    .tag { background:var(--tag); color:#2f6fb4; border-radius:999px; padding:3px 9px; font-size:13px; }
-    .items { margin:10px 0 0; padding-left:20px; color:#5c6f84; }
-    .empty { background:#fff; border:1px dashed var(--line); border-radius:8px; padding:22px; color:var(--muted); }
-    @media (max-width:760px){ .controls{grid-template-columns:1fr;} h1{font-size:24px;} }
-  </style>
 </head>
-<body>
-  <nav class="ss-backbar" aria-label="站点导航"><div class="ss-backbar-inner"><a class="ss-back" href="../">← 返回上一级</a><span class="ss-crumb">Daily Market Briefs</span></div></nav>
-  <header><div class="wrap"><h1>每日股票市场简报</h1><p>按日期、市场/板块/股票代码和关键词检索股票市场日报。</p></div></header>
-  <main class="wrap">
-    <section class="controls">
-      <input id="q" type="search" placeholder="搜索股票代码、行业、摘要、关键词...">
-      <select id="tag"><option value="">全部标签</option></select>
-      <select id="date"><option value="">全部日期</option></select>
+<body class="ss-page">
+  <a class="ss-skip" href="#brief-list">跳到简报列表</a>
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="主导航">
+      <a class="ss-brand" href="../" aria-label="返回 Mingzhe Chen 首页"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
+      <div class="ss-nav-links"><a href="./" aria-current="page">Briefs</a><a href="../lecture/">Learning</a><a href="../gaming/">Play</a><a href="../tools/">Tools</a></div>
+    </nav>
+  </header>
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div><p class="ss-kicker">Daily feed / Markets</p><h1 class="ss-page-title">Market <em>briefs.</em></h1><p class="ss-lede">股票市场动态、行业结构、公司信号与观察名单的每日数据摘要。</p></div>
+      <aside class="ss-signal-panel" aria-label="简报说明"><span class="ss-signal-label">Market stream</span><dl class="ss-signal-list"><div><dt>Cadence</dt><dd>Daily</dd></div><div><dt>Format</dt><dd>Markdown</dd></div><div><dt>Browse by</dt><dd>Date + Ticker</dd></div><div><dt>Archive</dt><dd id="issue-count">Loading</dd></div></dl></aside>
+    </div>
+  </section>
+  <main class="ss-shell ss-main" id="brief-list">
+    <section class="ss-section" aria-labelledby="browse-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">01 / Search the archive</span><h2 class="ss-section-title" id="browse-title">Browse briefs</h2></div><p class="ss-section-note">按日期、市场、行业、股票代码或关键词检索。</p></div>
+      <div class="ss-filter-bar">
+        <input class="ss-input" id="q" type="search" placeholder="搜索股票代码、行业、摘要或关键词" aria-label="搜索简报">
+        <select class="ss-select" id="tag" aria-label="按市场或股票代码筛选"><option value="">全部标签</option></select>
+        <select class="ss-select" id="date" aria-label="按日期筛选"><option value="">全部日期</option></select>
+      </div>
+      <p class="ss-results-meta" id="meta" aria-live="polite"></p>
+      <div id="results" class="ss-brief-grid"></div>
     </section>
-    <div id="meta" class="meta"></div>
-    <section id="results" class="grid"></section>
+    <footer class="ss-footer"><span>Mingzhe Chen · Daily Market Briefs</span><span>Market stream</span></footer>
   </main>
   <script>
     let briefs = [];
     const $ = id => document.getElementById(id);
-    const norm = s => (s || '').toLowerCase();
-    function allTags(b){ return [...(b.markets||[]), ...(b.tickers||[])]; }
-    function render(){
-      const q = norm($('q').value.trim());
-      const tag = $('tag').value;
-      const date = $('date').value;
-      const filtered = briefs.filter(b => {
+    const norm = s => String(s || '').toLowerCase();
+    const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const allTags = b => [...(b.markets || []), ...(b.tickers || [])];
+    function render() {
+      const needle = norm($('q').value.trim());
+      const rows = briefs.filter(b => {
         const tags = allTags(b);
         const hay = norm([b.date,b.title,b.summary,tags.join(' '),(b.items||[]).join(' ')].join(' '));
-        return (!q || hay.includes(q)) && (!tag || tags.includes(tag)) && (!date || b.date === date);
+        return (!needle || hay.includes(needle)) && (!$('tag').value || tags.includes($('tag').value)) && (!$('date').value || b.date === $('date').value);
       });
-      $('meta').textContent = `共 ${briefs.length} 期，当前显示 ${filtered.length} 期`;
-      $('results').innerHTML = filtered.length ? filtered.map(b => `
-        <article class="card">
-          <h2><a href="${b.url}">${b.title}</a></h2>
-          <div class="meta">${b.date}</div>
-          <div class="tags">${allTags(b).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-          <p>${b.summary || ''}</p>
-          ${(b.items||[]).length ? `<ol class="items">${b.items.slice(0,8).map(a=>`<li>${a}</li>`).join('')}</ol>` : ''}
-        </article>`).join('') : '<div class="empty">没有匹配结果。可以换一个关键词或清空筛选条件。</div>';
+      $('meta').textContent = `共 ${briefs.length} 期 · 当前显示 ${rows.length} 期`;
+      $('results').innerHTML = rows.map(b => `<a class="ss-brief-card" href="${esc(b.url)}"><span class="ss-brief-date">${esc(b.date)}</span><span><strong class="ss-brief-title">${esc(b.title)}</strong><p class="ss-brief-copy">${esc(b.summary || '')}</p><span class="ss-tags">${allTags(b).map(t => `<span class="ss-tag">${esc(t)}</span>`).join('')}</span></span><span class="ss-row-arrow" aria-hidden="true">↗</span></a>`).join('') || '<div class="ss-empty">没有匹配结果。可以换一个关键词或清空筛选条件。</div>';
     }
-    fetch('search.json').then(r=>r.json()).then(data=>{
+    fetch('search.json').then(r => r.json()).then(data => {
       briefs = data.briefs || [];
-      const dates = [...new Set(briefs.map(b=>b.date))];
+      $('issue-count').textContent = `${briefs.length} issues`;
+      const dates = [...new Set(briefs.map(b => b.date))];
       const tags = [...new Set(briefs.flatMap(allTags))].sort();
-      $('date').innerHTML += dates.map(d=>`<option>${d}</option>`).join('');
-      $('tag').innerHTML += tags.map(t=>`<option>${t}</option>`).join('');
+      $('date').innerHTML += dates.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+      $('tag').innerHTML += tags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
       ['q','tag','date'].forEach(id => $(id).addEventListener('input', render));
       render();
-    });
+    }).catch(() => { $('results').innerHTML = '<div class="ss-empty">简报索引暂时无法加载。</div>'; });
   </script>
 </body>
 </html>

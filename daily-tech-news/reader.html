@@ -3,40 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#eef4fb">
+  <meta name="theme-color" content="#f2f5f3">
   <title>每日科技新闻简报</title>
   <link rel="stylesheet" href="../assets/site-shell.css">
-  <style>
-    body { margin:0; font:17px/1.68 "Avenir Next",Avenir,"Noto Sans SC","PingFang SC","Helvetica Neue",sans-serif; color:#1e2f42; background:#eef4fb; }
-    main { max-width:900px; margin:0 auto; padding:32px 18px 56px; }
-    article { background:#fff; border:1px solid #dbe6f2; border-radius:8px; padding:26px; }
-    a { color:#2f6fb4; } h1 { line-height:1.2; } h2 { margin-top:32px; border-top:1px solid #dbe6f2; padding-top:20px; }
-    code { background:#e3eef9; padding:2px 5px; border-radius:4px; } pre { overflow:auto; background:#e3eef9; padding:12px; border-radius:6px; }
-    @media (max-width:680px) { article{padding:18px;} body{font-size:16px;} }
-  </style>
 </head>
-<body>
-<nav class="ss-backbar" aria-label="站点导航"><div class="ss-backbar-inner"><a class="ss-back" href="index.html">← 返回上一级</a><span class="ss-crumb">Daily Tech News</span></div></nav>
-<main>
-  <article id="content">加载中...</article>
-</main>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script>
-const date = new URLSearchParams(location.search).get('date');
-const content = document.getElementById('content');
-if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-  content.textContent = '缺少有效日期。';
-} else {
-  fetch(`briefs/${date}.md`).then(r => {
-    if (!r.ok) throw new Error('not found');
-    return r.text();
-  }).then(md => {
-    document.title = `每日科技新闻简报 ${date}`;
-    content.innerHTML = marked.parse(md);
-  }).catch(() => {
-    content.textContent = '没有找到这一天的简报 Markdown。';
-  });
-}
-</script>
+<body class="ss-page">
+  <header class="ss-site-header"><nav class="ss-site-nav ss-shell" aria-label="主导航"><a class="ss-brand" href="index.html"><span class="ss-brand-mark" aria-hidden="true"></span><span>Tech News</span></a><div class="ss-nav-links"><a href="index.html" aria-current="page">返回简报目录</a><a href="../">Home</a></div></nav></header>
+  <main class="ss-reader-wrap"><article class="ss-reader" id="content" aria-live="polite">加载中...</article></main>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    const date = new URLSearchParams(location.search).get('date');
+    const content = document.getElementById('content');
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      content.textContent = '缺少有效日期。';
+    } else {
+      fetch(`briefs/${date}.md`).then(r => { if (!r.ok) throw new Error('not found'); return r.text(); }).then(md => {
+        document.title = `每日科技新闻简报｜${date}`;
+        content.innerHTML = marked.parse(md);
+      }).catch(() => { content.textContent = '没有找到这一天的简报 Markdown。'; });
+    }
+  </script>
 </body>
 </html>

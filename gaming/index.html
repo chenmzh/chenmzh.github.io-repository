@@ -2,64 +2,67 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0d1110">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Two original browser games from Chenmzh: Chroma Drop 3D and Iron Dawn RTS.">
-  <title>Gaming Lab · Two Browser Games</title>
-  <style>
-    :root{color-scheme:dark;--ink:#0d1110;--paper:#e8e0ce;--muted:#9da59f;--line:#46504b;--panel:#151b19}
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:var(--ink);color:var(--paper);font-family:"Arial Narrow","Avenir Next Condensed",sans-serif}
-    body{display:grid;place-items:center;padding:clamp(24px,5vw,64px);background:radial-gradient(circle at 18% 8%,#183029 0,transparent 35rem),radial-gradient(circle at 88% 82%,#19243b 0,transparent 32rem),var(--ink)}
-    main{width:min(1120px,100%)}
-    small{color:#ffb84d;letter-spacing:.22em;font-weight:800}
-    h1{font-family:Didot,Georgia,serif;font-weight:400;font-size:clamp(54px,11vw,118px);line-height:.8;letter-spacing:-.06em;margin:28px 0 20px}
-    .intro{max-width:660px;margin:0 0 48px;color:var(--muted);font-size:17px;line-height:1.6}
-    .games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px}
-    .game-card{--accent:#5ff6e3;min-height:340px;display:flex;flex-direction:column;position:relative;overflow:hidden;border:1px solid var(--line);padding:30px;background:linear-gradient(145deg,rgba(255,255,255,.035),transparent 52%),var(--panel);box-shadow:14px 14px 0 #080a09}
-    .game-card::after{content:"";position:absolute;inset:auto -12% -38% 35%;height:220px;border-radius:50%;background:var(--accent);filter:blur(90px);opacity:.12;pointer-events:none}
-    .iron-dawn{--accent:#25d9ff}
-    .card-top{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
-    .genre{color:var(--accent);font-size:11px;letter-spacing:.18em;text-transform:uppercase}
-    h2{font-family:Didot,Georgia,serif;font-size:clamp(36px,5vw,54px);line-height:.95;font-weight:400;margin:30px 0 14px}
-    p{margin:0;color:var(--muted);line-height:1.65}
-    .features{margin:20px 0 28px;padding:0;display:flex;flex-wrap:wrap;gap:8px;list-style:none}
-    .features li{padding:6px 9px;border:1px solid rgba(232,224,206,.18);color:#bdc4bf;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
-    a{position:relative;z-index:1;margin-top:auto;display:flex;justify-content:space-between;padding:18px;background:var(--accent);color:#07100e;text-decoration:none;font-weight:900;letter-spacing:.12em;transition:transform .2s,filter .2s}
-    a:hover{transform:translateY(-2px);filter:brightness(1.12)}
-    a:focus-visible{outline:3px solid var(--paper);outline-offset:4px}
-    footer{margin-top:42px;color:#68716c;font-size:11px;letter-spacing:.15em;text-transform:uppercase}
-    @media(max-width:760px){.games{grid-template-columns:1fr}.game-card{min-height:310px}h1{margin-bottom:18px}.intro{margin-bottom:34px}}
-  </style>
+  <meta name="theme-color" content="#f2f5f3">
+  <title>Gaming Lab · Mingzhe Chen</title>
   <link rel="stylesheet" href="../assets/site-shell.css">
-  <style>
-    body{padding-top:calc(clamp(24px,5vw,64px) + 53px)}
-    .ss-backbar{position:absolute;top:0;left:0;right:0}
-  </style>
 </head>
-<body>
-  <nav class="ss-backbar" aria-label="站点导航"><div class="ss-backbar-inner"><a class="ss-back" href="../">← 返回上一级</a><span class="ss-crumb">Gaming Lab</span></div></nav>
-  <main>
-    <small>CHENMZH / INTERACTIVE ARCHIVE</small>
-    <h1>Gaming<br>Lab.</h1>
-    <p class="intro">Two separate browser games, two different battlefields. Choose a precision-focused 3D physics maze or command a full combined-arms RTS.</p>
-    <section class="games" aria-label="Available games">
-      <article class="game-card chroma-drop">
-        <div class="card-top"><small>GAME 001</small><span class="genre">3D physics maze</span></div>
-        <h2>Chroma Drop</h2>
-        <p>Tilt a three-dimensional liquid-metal chamber, activate every charge node and preserve enough mass to reach the drain.</p>
-        <ul class="features"><li>WebGL</li><li>Physics</li><li>Keyboard + Touch</li></ul>
-        <a href="./chroma-drop/" aria-label="Play Chroma Drop 3D">PLAY CHROMA DROP <span>↗</span></a>
-      </article>
-      <article class="game-card iron-dawn">
-        <div class="card-top"><small>GAME 002</small><span class="genre">Sci-fi RTS</span></div>
-        <h2>Iron Dawn</h2>
-        <p>Harvest crystal fields, build a bright sci-fi base, command ground and air forces, and destroy the enemy headquarters.</p>
-        <ul class="features"><li>Canvas RTS</li><li>Land + Air</li><li>中文 + English</li></ul>
-        <a href="./iron-dawn/" aria-label="Play Iron Dawn RTS">PLAY IRON DAWN <span>↗</span></a>
-      </article>
+<body class="ss-page">
+  <a class="ss-skip" href="#games">Skip to games</a>
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="Main navigation">
+      <a class="ss-brand" href="../" aria-label="Back to Mingzhe Chen home"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
+      <div class="ss-nav-links">
+        <a href="../#briefs">Briefs</a>
+        <a href="../lecture/">Learning</a>
+        <a href="./" aria-current="page">Play</a>
+        <a href="../tools/">Tools</a>
+      </div>
+    </nav>
+  </header>
+
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div>
+        <p class="ss-kicker">Interactive archive / Browser native</p>
+        <h1 class="ss-page-title">Gaming <em>Lab.</em></h1>
+        <p class="ss-lede">Two separate games, two different control problems: preserve a shifting body of matter, or command a combined-arms battlefield.</p>
+      </div>
+      <aside class="ss-signal-panel" aria-label="Lab status">
+        <span class="ss-signal-label">Play signal</span>
+        <dl class="ss-signal-list">
+          <div><dt>Games</dt><dd>02 playable</dd></div>
+          <div><dt>Runtime</dt><dd>Browser only</dd></div>
+          <div><dt>Input</dt><dd>Keys + Touch</dd></div>
+          <div><dt>Account</dt><dd>Not required</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <main class="ss-shell ss-main" id="games">
+    <section class="ss-section" aria-labelledby="games-title">
+      <div class="ss-section-head">
+        <div><span class="ss-section-index">01 / Choose a system</span><h2 class="ss-section-title" id="games-title">Available games</h2></div>
+        <p class="ss-section-note">The games keep their own purpose-built interfaces; their entry points now share the site system.</p>
+      </div>
+      <div class="ss-card-grid ss-card-grid--two">
+        <a class="ss-card" href="./chroma-drop/" style="--card-accent:#d8f8ef">
+          <span class="ss-card-number">GAME 01 / PHYSICS</span>
+          <span class="ss-card-title">Chroma Drop</span>
+          <span class="ss-card-copy">Tilt a three-dimensional liquid-metal chamber, activate every charge node and preserve enough mass to reach the drain.</span>
+          <span class="ss-card-meta">WebGL / Precision / Touch</span>
+        </a>
+        <a class="ss-card" href="./iron-dawn/" style="--card-accent:#e7ecff">
+          <span class="ss-card-number">GAME 02 / STRATEGY</span>
+          <span class="ss-card-title">Iron Dawn</span>
+          <span class="ss-card-copy">Harvest crystal fields, build a bright sci-fi base, command ground and air forces, and destroy the enemy headquarters.</span>
+          <span class="ss-card-meta">Canvas RTS / Land + Air / Bilingual</span>
+        </a>
+      </div>
     </section>
-    <footer>Browser-native · No account required · Free to play</footer>
+    <footer class="ss-footer"><span>Mingzhe Chen · Gaming Lab</span><span>Browser-native · Free to play</span></footer>
   </main>
 </body>
 </html>
