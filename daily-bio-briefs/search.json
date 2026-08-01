@@ -1,6 +1,47 @@
 {
-  "updated": "2026-07-31",
+  "updated": "2026-08-01",
   "briefs": [
+    {
+      "date": "2026-08-01",
+      "title": "每日合成与发育生物学简报 - 2026-08-01",
+      "summary": "今天的合成生物学重点明显偏向“可部署控制系统”：植物中可由农用化学品触发的 Cas9/Cre 表达控制、植物驱动的非天然氨基酸-细菌活性控制、PAM-independent TIGR-Tas 酵母编辑工具都直接面向可编程调控。 多微生物系统和工程活体材料继续升温：Advanced Science 的多微生物合成生物学框架强调 communication、temporal regulation、ecological structuring 与 spatial organization；Advanced Materials 的 ELM 工作把天然蛋白挖掘、计算建模和细菌 curli machinery 连接起来。 发育合成生物学今天更多是“测量与模型基础设施”：Spatial Hi-C-RNA 同时读取组织内 3D genome architecture 和 transcriptome，肠道微生物空间生态图谱把 colon maturation 看成宿主-微生物空间协调过程。 控制论与生物学方向以 signaling dynamics、homeostasis 和机制模型为主；bioRxiv 的 MAPK deep mechanistic model 试图把 representation learning 与 ODE pathway model 接起来。 medRxiv 当天有 93 条去重记录，但强相关性偏弱；主要是临床预测、影像、公共卫生和疾病建模，只有少数 transmission/optimal control 文章列入低相关文章。",
+      "items": [
+        "Agrochemical-responsive gene expression control systems for modulating plant development and metabolism",
+        "Genetic code expansion enables plant-directed control of bacterial activity",
+        "ATP-Free Fatty Aldehyde Biosynthesis Enables an Autonomous Lux-Based Bioluminescence System",
+        "Multiplex genome engineering in yeast using the TIGR-Tas system",
+        "From Circuits to Symphonies: A Systems-Engineering Blueprint for Multimicrobial Synthetic Biology",
+        "De Novo Autogenic Engineered Living Functional Materials",
+        "Integrative spatial profiling of 3D genome organization and gene expression in tissue",
+        "Deep Mechanistic Models reveal pathway-extrinsic drivers of mammary MAPK signalling heterogeneity",
+        "Microbial colonization establishes stratified radial niches that coordinate host epithelial and immune maturation in the colon",
+        "CRISPR activation screen uncovers MARCKSL1 as a gauge for extracellular vesicle secretion"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markdown": "briefs/2026-08-01.md",
+      "url": "reader.html?date=2026-08-01",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Agrochemical-responsive gene expression control systems for modulating plant development and metabolism",
+        "Genetic code expansion enables plant-directed control of bacterial activity",
+        "ATP-Free Fatty Aldehyde Biosynthesis Enables an Autonomous Lux-Based Bioluminescence System",
+        "Multiplex genome engineering in yeast using the TIGR-Tas system",
+        "From Circuits to Symphonies: A Systems-Engineering Blueprint for Multimicrobial Synthetic Biology",
+        "De Novo Autogenic Engineered Living Functional Materials",
+        "Integrative spatial profiling of 3D genome organization and gene expression in tissue",
+        "Deep Mechanistic Models reveal pathway-extrinsic drivers of mammary MAPK signalling heterogeneity",
+        "Microbial colonization establishes stratified radial niches that coordinate host epithelial and immune maturation in the colon",
+        "CRISPR activation screen uncovers MARCKSL1 as a gauge for extracellular vesicle secretion"
+      ]
+    },
     {
       "date": "2026-07-31",
       "title": "每日合成与发育生物学简报 - 2026-07-31",
