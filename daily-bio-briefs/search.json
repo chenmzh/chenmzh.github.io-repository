@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-02",
+  "updated": "2026-08-03",
   "briefs": [
+    {
+      "date": "2026-08-03",
+      "title": "每日合成与发育生物学简报 - 2026-08-03",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Increased tolerance to biomass-derived inhibitors by deletion of the transcriptional regulator mraZ in Cupriavidus necator H16",
+        "Establishment of a BRET-based fusion protein expression system to detect benzo[a]pyrene among polycyclic aromatic hydrocarbons",
+        "Naturally cysteine-less LOV domains from halophilic archaea exhibit magnetic field effects on their fluorescence",
+        "A MYB-WRKY feedback module activates MdAAT2-like to regulate aromatic ester biosynthesis during apple ripening",
+        "Two stress-responsive kinases suppress ferroptosis by activating antioxidant programs under mild oxidative stress",
+        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
+        "Reconstructing whole-organism cell phylogenies with resolved ancestral transcriptional states",
+        "Progressive mitochondrial and autophagic dysfunction during RGC development driven by a LHON-associated mitochondrial tRNAThr mutation",
+        "Autonomous intranasal delivery systems for central nervous system therapeutics",
+        "MreB is dispensable for viability but critical for rod shape, motility and biofilm fitness in Pseudomonas aeruginosa"
+      ],
+      "summary": "今天最清晰的主线是“把细胞状态、形态和产量当作可调系统来设计”：Cupriavidus necator 的 mraZ 删除提高抑制物耐受与 PHB 生产，BRET/细胞自由体系把蛋白互作变成可读出的生物传感器，天然 LOV 蛋白则提供了可移植的磁/光响应元件。 控制论与生物学方向出现两个层次的反馈例子：苹果成熟中的 MYB–WRKY 正反馈放大芳香酯合成；SMG1/DNA-PK–NRF2 轴则像一个按氧化应激强度切换的细胞命运控制器，在轻度应激下维持抗氧化适应，强应激下转向铁死亡。 发育合成生物学的重点偏向“先读懂状态空间，再谈工程化”：斑马鱼全胚胎谱系与祖先转录状态重建、线虫诱导大豆根合胞体的单细胞多组学，以及 LHON 突变 iPSC 向视网膜神经节细胞分化的渐进性线粒体缺陷，分别覆盖谱系、空间重编程和发育时序。 bioRxiv 本窗口新稿数量不多但有几篇直接贴近工程设计；medRxiv 和 arXiv q-bio 未发现足够强的新增主题条目。纯机器人、纯电机控制和纯 AI benchmark 均未纳入优先阅读。 今日优先阅读共 10 篇，其中包括 1 篇合成生物学相关综述；综述用于补足“可编程递送系统”的热点背景，原始研究仍按新发表/新上传优先排序。",
+      "markdown": "briefs/2026-08-03.md",
+      "url": "reader.html?date=2026-08-03",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Increased tolerance to biomass-derived inhibitors by deletion of the transcriptional regulator mraZ in Cupriavidus necator H16",
+        "Establishment of a BRET-based fusion protein expression system to detect benzo[a]pyrene among polycyclic aromatic hydrocarbons",
+        "Naturally cysteine-less LOV domains from halophilic archaea exhibit magnetic field effects on their fluorescence",
+        "A MYB-WRKY feedback module activates MdAAT2-like to regulate aromatic ester biosynthesis during apple ripening",
+        "Two stress-responsive kinases suppress ferroptosis by activating antioxidant programs under mild oxidative stress",
+        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
+        "Reconstructing whole-organism cell phylogenies with resolved ancestral transcriptional states",
+        "Progressive mitochondrial and autophagic dysfunction during RGC development driven by a LHON-associated mitochondrial tRNAThr mutation",
+        "Autonomous intranasal delivery systems for central nervous system therapeutics",
+        "MreB is dispensable for viability but critical for rod shape, motility and biofilm fitness in Pseudomonas aeruginosa"
+      ]
+    },
     {
       "date": "2026-08-02",
       "title": "每日合成与发育生物学简报 - 2026-08-02",
