@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-03",
+  "updated": "2026-08-04",
   "briefs": [
+    {
+      "date": "2026-08-04",
+      "title": "每日合成与发育生物学简报 - 2026-08-04",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Mechanism underlying the high regulatory performance of the doxycycline riboswitch G12",
+        "Systematic Metabolic Engineering of Escherichia coli for High-Level Production of trans-4-Hydroxy-L-proline",
+        "Discovery of a taxusin-mediated route to baccatin III enables its complete biosynthesis in engineered microbes",
+        "A sequence-to-function model to predict T7 transcription rates and redesign T7 expression systems with lowered production of immunogenic RNA byproducts",
+        "Reverse Engineering the Programming Logic of Cytoskeletal Dynamics",
+        "Developmental growth rates adapt to enable self-correction of organ morphology after injury",
+        "Coupling fibroblast mechanotransduction signaling to tissue growth in a multiscale model of skin expansion",
+        "The mechanosensitive protein Zyxin influences Hippo signaling and tissue growth via adherens junctions and basal spot junctions in Drosophila",
+        "Bistability Analysis of a Hybrid Notch-Delta Signaling Model in a Single Cell Interacting with Fixed External Proteins",
+        "A curvature-based criterion for harmonic circadian waveforms"
+      ],
+      "summary": "今天最清晰的合成生物学主线是“动态调控与可设计性”：doxycycline riboswitch G12、E. coli 代谢工程中的生长—产物切换、T7 启动子序列到功能模型，分别从 RNA 结构、代谢资源分配和转录起始三个层面提高可控性。 复杂生物合成继续从“找酶”走向“重建模块”：bioRxiv 的 taxusin-mediated baccatin III 工作把植物天然产物路径拆成可在酵母和 E. coli 中部署的工程模块；细胞自由 ActiveDROPS 则把 kinesin 结构域组合映射为可调的微管流动状态。 发育与形态发生方向的共同语言是反馈和力学耦合：损伤后的器官面积自校正、成纤维细胞机械转导—皮肤生长多尺度模型，以及 Zyxin–Hippo 连接张力与上皮生长，都直接对应 biological homeostasis / morphogenesis control。 控制论方向今天有两篇边界清晰的生物系统工作：Notch–Delta 的双稳态数学分析，以及用相图曲率判定昼夜节律波形的 arXiv 预印本。它们不是纯工程控制，而是明确围绕细胞命运或生物振荡器。 本窗口的 medRxiv 没有找到足够强的合成生物学、发育形态发生或细胞/基因网络控制新稿；arXiv q-bio 精确窗口只有 5 条新提交，其中仅 1 条与本简报主题直接相关。",
+      "markdown": "briefs/2026-08-04.md",
+      "url": "reader.html?date=2026-08-04",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Mechanism underlying the high regulatory performance of the doxycycline riboswitch G12",
+        "Systematic Metabolic Engineering of Escherichia coli for High-Level Production of trans-4-Hydroxy-L-proline",
+        "Discovery of a taxusin-mediated route to baccatin III enables its complete biosynthesis in engineered microbes",
+        "A sequence-to-function model to predict T7 transcription rates and redesign T7 expression systems with lowered production of immunogenic RNA byproducts",
+        "Reverse Engineering the Programming Logic of Cytoskeletal Dynamics",
+        "Developmental growth rates adapt to enable self-correction of organ morphology after injury",
+        "Coupling fibroblast mechanotransduction signaling to tissue growth in a multiscale model of skin expansion",
+        "The mechanosensitive protein Zyxin influences Hippo signaling and tissue growth via adherens junctions and basal spot junctions in Drosophila",
+        "Bistability Analysis of a Hybrid Notch-Delta Signaling Model in a Single Cell Interacting with Fixed External Proteins",
+        "A curvature-based criterion for harmonic circadian waveforms"
+      ]
+    },
     {
       "date": "2026-08-03",
       "title": "每日合成与发育生物学简报 - 2026-08-03",
