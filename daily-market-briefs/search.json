@@ -1,6 +1,53 @@
 {
-  "updated": "2026-08-03",
+  "updated": "2026-08-04",
   "briefs": [
+    {
+      "date": "2026-08-04",
+      "title": "每日股票市场简报｜2026-08-04",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "AI",
+        "云",
+        "软件",
+        "工业"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "AMD",
+        "NVDA",
+        "MSFT",
+        "AMZN",
+        "XOM",
+        "CAT"
+      ],
+      "items": [
+        "AMD Advanced Micro Devices",
+        "NVDA NVIDIA",
+        "MSFT Microsoft",
+        "AMZN Amazon",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "8 月 3 日美股反弹接近纪录高位，但 QQQ 仍低于 50 日线、SMH 远低于 20/50 日线；油价回落与 AMD 财报、JOLTS 构成今日主线。",
+      "markdown": "briefs/2026-08-04.md",
+      "url": "reader.html?date=2026-08-04"
+    },
     {
       "date": "2026-08-03",
       "title": "每日股票市场简报｜2026-08-03",
