@@ -1,6 +1,53 @@
 {
-  "updated": "2026-08-04",
+  "updated": "2026-08-05",
   "briefs": [
+    {
+      "date": "2026-08-05",
+      "title": "每日股票市场简报｜2026-08-05",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "AI",
+        "云",
+        "软件",
+        "电商"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "AMD",
+        "NVDA",
+        "MSFT",
+        "AMZN",
+        "XOM"
+      ],
+      "items": [
+        "AMD Advanced Micro Devices",
+        "NVDA NVIDIA",
+        "MSFT Microsoft",
+        "AMZN Amazon",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "8 月 4 日美股收于纪录高位附近，Nasdaq 和半导体领涨；AMD 财报与亚洲芯片反弹支持 AI 主线，但 SMH 仍低于 50 日线，油价、长端利率与 Disney/CVS 事件决定短线确认。",
+      "markdown": "briefs/2026-08-05.md",
+      "url": "reader.html?date=2026-08-05"
+    },
     {
       "date": "2026-08-04",
       "title": "每日股票市场简报｜2026-08-04",
