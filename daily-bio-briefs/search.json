@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-04",
+  "updated": "2026-08-05",
   "briefs": [
+    {
+      "date": "2026-08-05",
+      "title": "每日合成与发育生物学简报 - 2026-08-05",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Computational design of orthogonal operators and synthetic repressors for transcriptional logic gates",
+        "Combinatorial Optimization of Protein Systems in Synthetic Cells",
+        "eFormate-mediated CO2 bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
+        "Engineering Naematelia aurantialba as a Robust Synthetic Biology Chassis: Stable Episomal Vector Construction and Metabolic Optimization for Enhanced Polysaccharide Synthesis",
+        "Using Latent Chemical Recognition in an Evolved Periplasmic Binding Protein Family to Diversify Biosensors",
+        "A Modular Synthetic Hydrogel with Cell-scale Micropores Modulates Osteocyte-like Morphogenesis and Osteogenic Differentiation In Vitro",
+        "Metabolic atlas of early human cortex reveals glycolytic remodeling and pentose phosphate pathway control of cell fate transitions",
+        "Quantitative Modeling of TLR Signaling Reveals Missing Negative Feedback Guiding Identification of TANK-IKKε Checkpoint",
+        "Scaling of Noise Under Resource Constraints in Gene Regulatory Motifs",
+        "ER cholesteryl ester phase separation underlies switch-like cholesterol sensing"
+      ],
+      "summary": "今天的合成生物学信号集中在“可预测的模块化设计”：正交转录逻辑门、合成细胞中的多蛋白组合优化、非模式真菌底盘和电化学—微生物级联，分别推进了线路、细胞模块、宿主和过程尺度的可编程性。 细胞与组织层面的工程化继续依赖物理环境：合成微孔水凝胶改变骨细胞网络形态，细胞质流动性把营养输入连接到肠上皮细胞命运，早期人类皮层的糖酵解/磷酸戊糖通路则直接影响神经谱系组成。 控制论方向出现三种互补的“生物控制器”：资源约束对基因线路噪声和适应速度的整形、TLR4 模型与实验之间用失配定位缺失负反馈、以及胆固醇酯相变产生的阈值型稳态开关。 本窗口的 bioRxiv 新稿数量较多，但强相关条目主要来自上述合成线路、细胞工程、形态发生和反馈调控主题；medRxiv 的 38 条新稿未发现足够强的合成生物学或发育形态发生论文。 Nature 同日出现一篇与合成生物学相关的 Research Highlight，主题是用工程酵母生产通常来自濒危植物的抗癌药前体；它是热点文章而非本次优先阅读中的原始研究。",
+      "markdown": "briefs/2026-08-05.md",
+      "url": "reader.html?date=2026-08-05",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Computational design of orthogonal operators and synthetic repressors for transcriptional logic gates",
+        "Combinatorial Optimization of Protein Systems in Synthetic Cells",
+        "eFormate-mediated CO2 bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
+        "Engineering Naematelia aurantialba as a Robust Synthetic Biology Chassis: Stable Episomal Vector Construction and Metabolic Optimization for Enhanced Polysaccharide Synthesis",
+        "Using Latent Chemical Recognition in an Evolved Periplasmic Binding Protein Family to Diversify Biosensors",
+        "A Modular Synthetic Hydrogel with Cell-scale Micropores Modulates Osteocyte-like Morphogenesis and Osteogenic Differentiation In Vitro",
+        "Metabolic atlas of early human cortex reveals glycolytic remodeling and pentose phosphate pathway control of cell fate transitions",
+        "Quantitative Modeling of TLR Signaling Reveals Missing Negative Feedback Guiding Identification of TANK-IKKε Checkpoint",
+        "Scaling of Noise Under Resource Constraints in Gene Regulatory Motifs",
+        "ER cholesteryl ester phase separation underlies switch-like cholesterol sensing"
+      ]
+    },
     {
       "date": "2026-08-04",
       "title": "每日合成与发育生物学简报 - 2026-08-04",
