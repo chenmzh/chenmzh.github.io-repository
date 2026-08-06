@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-05",
+  "updated": "2026-08-06",
   "briefs": [
+    {
+      "date": "2026-08-06",
+      "title": "每日合成与发育生物学简报 - 2026-08-06",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Mechanistic and machine learning models design human gut consortia that robustly inhibit Clostridioides difficile",
+        "On the Robustness of Biomolecular Systems to Perturbations in Translational Resources",
+        "Spatial control of light-responsive proteins and optogenetics within hydrogels via volumetric bioprinting",
+        "Biological oscillations without intracellular oscillator or external forcing",
+        "Deep learning of dynamic signatures resolves mechanistic ambiguity in complex signaling networks",
+        "Multi-sensor continuous-flow bioreactor for dynamic and scalable cell culture",
+        "Transcriptional feedback targeting Wnt pathway components reveals hidden heterogeneity in Caenorhabditis elegans seam cell lineages",
+        "Tunable Expression of an AAV Payload Using ADAR-mediated RNA Editing",
+        "Computationally Guided Engineering of Multi-Enzyme Cascades Enables Efficient Trehalose Biosynthesis",
+        "A tumour-derived organoid biobank maps cancer gene dependencies"
+      ],
+      "summary": "今天最强的共同趋势是“模型—设计—实验”闭环：机器学习与机制模型被用于设计能跨营养环境抑制病原体的合成菌群，也被用于从复杂信号动力学中压缩可检验机制空间。控制层正在从基因线路扩展到细胞培养与组织工程：负反馈提高资源扰动下的线路稳健性，多传感器生物反应器实时调节培养条件，体积生物打印则把光遗传开关带入厘米尺度水凝胶内部。细胞的振荡和稳态不一定需要预先写入专门的遗传振荡器；生长、基因表达负担与营养供给之间的反馈本身，就能产生可预测并可在连续培养中验证的周期行为。发育方向的直接 synthetic morphogenesis 新稿相对稀少，但组织工程中的空间光遗传控制、Wnt 转录反馈与类器官功能基因组学，正在把形态、谱系和调控回路连接起来。",
+      "markdown": "briefs/2026-08-06.md",
+      "url": "reader.html?date=2026-08-06",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Mechanistic and machine learning models design human gut consortia that robustly inhibit Clostridioides difficile",
+        "On the Robustness of Biomolecular Systems to Perturbations in Translational Resources",
+        "Spatial control of light-responsive proteins and optogenetics within hydrogels via volumetric bioprinting",
+        "Biological oscillations without intracellular oscillator or external forcing",
+        "Deep learning of dynamic signatures resolves mechanistic ambiguity in complex signaling networks",
+        "Multi-sensor continuous-flow bioreactor for dynamic and scalable cell culture",
+        "Transcriptional feedback targeting Wnt pathway components reveals hidden heterogeneity in Caenorhabditis elegans seam cell lineages",
+        "Tunable Expression of an AAV Payload Using ADAR-mediated RNA Editing",
+        "Computationally Guided Engineering of Multi-Enzyme Cascades Enables Efficient Trehalose Biosynthesis",
+        "A tumour-derived organoid biobank maps cancer gene dependencies"
+      ]
+    },
     {
       "date": "2026-08-05",
       "title": "每日合成与发育生物学简报 - 2026-08-05",
