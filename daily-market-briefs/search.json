@@ -1,6 +1,58 @@
 {
-  "updated": "2026-08-05",
+  "updated": "2026-08-06",
   "briefs": [
+    {
+      "date": "2026-08-06",
+      "title": "每日股票市场简报｜2026-08-06",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "医疗",
+        "消费",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "AI",
+        "云",
+        "软件",
+        "电商",
+        "旅游"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "MSFT",
+        "AMZN",
+        "XOM",
+        "DIS",
+        "CVS"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "MSFT Microsoft",
+        "AMZN Amazon",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "8 月 5 日美股道指上涨而纳指回落，亚洲芯片隔夜大跌；NVDA/AMD 受 AI 芯片叙事分化，低 VIX 与周五就业数据、油价地缘风险构成今日确认窗口。",
+      "markdown": "briefs/2026-08-06.md",
+      "url": "reader.html?date=2026-08-06"
+    },
     {
       "date": "2026-08-05",
       "title": "每日股票市场简报｜2026-08-05",
