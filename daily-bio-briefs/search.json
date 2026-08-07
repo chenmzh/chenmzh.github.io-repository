@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-06",
+  "updated": "2026-08-07",
   "briefs": [
+    {
+      "date": "2026-08-07",
+      "title": "每日合成与发育生物学简报 - 2026-08-07",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Generative design of bacteriophages with genome language models",
+        "Gene circuit-driven amplified selection enables evolution of fast-growing Escherichia coli",
+        "Systems metabolic engineering of Escherichia coli for high-level branched-chain fatty acid production via dual precursor pathways",
+        "SCHEPHERD: A modular, programmable, direct current platform to control cell behavior",
+        "Cardiopedia-Ligand: A ligand-receptor perturbation atlas of human cardiac organoid function and transcriptional state",
+        "TGFβ-dependent upregulation of OCIAD2 is essential for epithelial-to-mesenchymal transition during mesendoderm differentiation",
+        "The limits of scaling in aggregation-driven patterning of cell collectives",
+        "Optimal mechanical noise ensures robust vertebrate body segmentation",
+        "Nutrient environments shape amino acid auxotrophy and cross-feeding",
+        "Mapping 3D cellular mechanical activity with matrix-embedded DNA force-history probes"
+      ],
+      "summary": "今天最强的合成生物学主线是“让设计直接改变进化与功能空间”：Science 的基因组语言模型工作把噬菌体设计推进到整条可复制基因组，bioRxiv 的 Red Queen 基因线路则把选择压力本身工程化。 代谢工程继续从单点改造走向系统重构：E. coli 的支链脂肪酸工作同时改造前体供给、中心碳代谢、脂肪酸模块和应激耐受，说明产量、细胞稳健性与过程放大需要一起设计。 生物控制的“执行器—传感器—记忆”链条正在变得具体：SCHEPHERD 用可编程直流电重排细胞迁移和工程组织动力学；DNA force-history probes 则把三维机械输入累积成带时间记忆的荧光读出。 发育合成生物学的核心问题仍是尺度与鲁棒性：细胞聚集的时间—尺寸权衡、体节边界中的机械噪声、以及 TGFβ/RA 等阶段特异信号，共同把形态发生描述为可测量、可扰动的动态系统。 本窗口的 medRxiv 与 arXiv q-bio 强相关结果较少；今天更有价值的内容主要来自 bioRxiv、PubMed 收录的正式论文，以及 Science/Science Advances 的期刊记录。预印本版本更新已在条目中明确标注，不与新上传稿混同。",
+      "markdown": "briefs/2026-08-07.md",
+      "url": "reader.html?date=2026-08-07",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Generative design of bacteriophages with genome language models",
+        "Gene circuit-driven amplified selection enables evolution of fast-growing Escherichia coli",
+        "Systems metabolic engineering of Escherichia coli for high-level branched-chain fatty acid production via dual precursor pathways",
+        "SCHEPHERD: A modular, programmable, direct current platform to control cell behavior",
+        "Cardiopedia-Ligand: A ligand-receptor perturbation atlas of human cardiac organoid function and transcriptional state",
+        "TGFβ-dependent upregulation of OCIAD2 is essential for epithelial-to-mesenchymal transition during mesendoderm differentiation",
+        "The limits of scaling in aggregation-driven patterning of cell collectives",
+        "Optimal mechanical noise ensures robust vertebrate body segmentation",
+        "Nutrient environments shape amino acid auxotrophy and cross-feeding",
+        "Mapping 3D cellular mechanical activity with matrix-embedded DNA force-history probes"
+      ]
+    },
     {
       "date": "2026-08-06",
       "title": "每日合成与发育生物学简报 - 2026-08-06",
