@@ -1,6 +1,53 @@
 {
-  "updated": "2026-08-06",
+  "updated": "2026-08-07",
   "briefs": [
+    {
+      "date": "2026-08-07",
+      "title": "每日股票市场简报｜2026-08-07",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "AI",
+        "云",
+        "软件",
+        "电商"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "DIA",
+        "IWM",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "MSFT",
+        "AMZN",
+        "XOM"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "MSFT Microsoft",
+        "AMZN Amazon",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "8 月 6 日美股小幅回撤且油价与长端收益率上行；8 月 7 日亚洲市场分化、半导体相对偏弱，14:30 CEST 美国 7 月就业报告尚未发布，NVDA/AMD/MSFT/AMZN/XOM 等待量价与事件确认。",
+      "markdown": "briefs/2026-08-07.md",
+      "url": "reader.html?date=2026-08-07"
+    },
     {
       "date": "2026-08-06",
       "title": "每日股票市场简报｜2026-08-06",
