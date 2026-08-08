@@ -1,6 +1,57 @@
 {
-  "updated": "2026-08-07",
+  "updated": "2026-08-08",
   "briefs": [
+    {
+      "date": "2026-08-08",
+      "title": "每日股票市场简报｜2026-08-08",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "AI",
+        "云",
+        "软件",
+        "电商",
+        "广告",
+        "数据中心",
+        "消费",
+        "运输"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "DIA",
+        "IWM",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "MSFT",
+        "AMZN",
+        "XOM"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "MSFT Microsoft",
+        "AMZN Amazon",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "周六口径采用 8 月 7 日美股收盘：就业减少 2.3 万推动指数与成长股反弹，但油价/霍尔木兹与下周 CPI、PPI 仍构成双向风险；SMH 仍低于 50 日线，观察名单等待量价确认。",
+      "markdown": "briefs/2026-08-08.md",
+      "url": "reader.html?date=2026-08-08"
+    },
     {
       "date": "2026-08-07",
       "title": "每日股票市场简报｜2026-08-07",
