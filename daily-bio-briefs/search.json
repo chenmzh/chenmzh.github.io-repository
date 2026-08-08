@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-07",
+  "updated": "2026-08-08",
   "briefs": [
+    {
+      "date": "2026-08-08",
+      "title": "每日合成与发育生物学简报 - 2026-08-08",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Genomic repeats for single-cell molecular recording",
+        "Engineered caspases directly rewire mutant Ras to cell death",
+        "Allosteric Constraints on Rewiring Inducible Repressors",
+        "Why architecture matters: Controlling gene expression through design",
+        "A Fully Defined GelMA-Based Matrix Allows Fine Tuning of Tissue-Relevant Biomechanical and Biochemical Cues for Organoid Culture",
+        "Reversible epiblast regionalization determines differentiation potential of human pluripotent stem cells",
+        "Engineered cell-like vesicles instruct keratocyte differentiation for corneal biofabrication and regeneration",
+        "A conserved Notch-Meis1-Pbx cascade specifies secretory progenitors into spatially diverse intestinal best4+ cells",
+        "From Signal Dynamics to Cell Fate: The Role of Learning Duration",
+        "Regulatory divergence and functional diversification of a c-di-GMP-controlled sigma factor in Actinomycetota"
+      ],
+      "summary": "今天最值得关注的合成生物学主线，是把“感知—记录—执行”做成可组合的细胞系统：基因组重复序列扩展了单细胞分子记录容量，工程化 caspase 则把突变 Ras 输入直接接到细胞死亡输出。 基因线路的可控性正在从“换一个调控蛋白”转向同时设计调控器的热力学和线路架构：诱导/共抑制方向的能量约束、负反馈缓冲和 aptazyme 层级共同决定动态范围与残余表达。 发育合成生物学的工程对象不只是细胞本身，也包括细胞所处的“输入场”：可调 GelMA 基质、化学染色质恢复和可打印生长因子囊泡，分别从力学/生化环境、表观遗传状态和局部信号递送层面改变分化能力。 控制论与生物学方向出现两个互补的时间尺度：p53 模型把信号持续时间映射为阻滞或凋亡命运；c-di-GMP—抗 sigma—sigma 网络则把环境响应与细菌形态发育、运动和产物调控连接起来。 本窗口的正式期刊结果主要来自发育模型、类器官工程、微生物调控和理论生物学；medRxiv 与 arXiv q-bio 没有发现足够强的新增主题论文。",
+      "markdown": "briefs/2026-08-08.md",
+      "url": "reader.html?date=2026-08-08",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Genomic repeats for single-cell molecular recording",
+        "Engineered caspases directly rewire mutant Ras to cell death",
+        "Allosteric Constraints on Rewiring Inducible Repressors",
+        "Why architecture matters: Controlling gene expression through design",
+        "A Fully Defined GelMA-Based Matrix Allows Fine Tuning of Tissue-Relevant Biomechanical and Biochemical Cues for Organoid Culture",
+        "Reversible epiblast regionalization determines differentiation potential of human pluripotent stem cells",
+        "Engineered cell-like vesicles instruct keratocyte differentiation for corneal biofabrication and regeneration",
+        "A conserved Notch-Meis1-Pbx cascade specifies secretory progenitors into spatially diverse intestinal best4+ cells",
+        "From Signal Dynamics to Cell Fate: The Role of Learning Duration",
+        "Regulatory divergence and functional diversification of a c-di-GMP-controlled sigma factor in Actinomycetota"
+      ]
+    },
     {
       "date": "2026-08-07",
       "title": "每日合成与发育生物学简报 - 2026-08-07",
@@ -62,7 +103,7 @@
         "Computationally Guided Engineering of Multi-Enzyme Cascades Enables Efficient Trehalose Biosynthesis",
         "A tumour-derived organoid biobank maps cancer gene dependencies"
       ],
-      "summary": "今天最强的共同趋势是“模型—设计—实验”闭环：机器学习与机制模型被用于设计能跨营养环境抑制病原体的合成菌群，也被用于从复杂信号动力学中压缩可检验机制空间。控制层正在从基因线路扩展到细胞培养与组织工程：负反馈提高资源扰动下的线路稳健性，多传感器生物反应器实时调节培养条件，体积生物打印则把光遗传开关带入厘米尺度水凝胶内部。细胞的振荡和稳态不一定需要预先写入专门的遗传振荡器；生长、基因表达负担与营养供给之间的反馈本身，就能产生可预测并可在连续培养中验证的周期行为。发育方向的直接 synthetic morphogenesis 新稿相对稀少，但组织工程中的空间光遗传控制、Wnt 转录反馈与类器官功能基因组学，正在把形态、谱系和调控回路连接起来。",
+      "summary": "今天最强的共同趋势是“模型—设计—实验”闭环：机器学习与机制模型被用于设计能跨营养环境抑制病原体的合成菌群，也被用于从复杂信号动力学中压缩可检验机制空间。 控制层正在从基因线路扩展到细胞培养与组织工程：负反馈提高资源扰动下的线路稳健性，多传感器生物反应器实时调节培养条件，体积生物打印则把光遗传开关带入厘米尺度水凝胶内部。 细胞的振荡和稳态不一定需要预先写入专门的遗传振荡器；生长、基因表达负担与营养供给之间的反馈本身，就能产生可预测并可在连续培养中验证的周期行为。 发育方向的直接 synthetic morphogenesis 新稿相对稀少，但组织工程中的空间光遗传控制、Wnt 转录反馈与类器官功能基因组学，正在把形态、谱系和调控回路连接起来。 medRxiv 本窗口有 44 条新稿，但经主题筛选后没有足够贴合合成生物学、合成形态发生或生物控制的优先条目；arXiv 则主要贡献了少量种群动力学和反应网络理论工作。",
       "markdown": "briefs/2026-08-06.md",
       "url": "reader.html?date=2026-08-06",
       "tags": [
@@ -91,18 +132,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Computational design of orthogonal operators and synthetic repressors for transcriptional logic gates",
-        "Combinatorial Optimization of Protein Systems in Synthetic Cells",
-        "eFormate-mediated CO2 bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
-        "Engineering Naematelia aurantialba as a Robust Synthetic Biology Chassis: Stable Episomal Vector Construction and Metabolic Optimization for Enhanced Polysaccharide Synthesis",
-        "Using Latent Chemical Recognition in an Evolved Periplasmic Binding Protein Family to Diversify Biosensors",
-        "A Modular Synthetic Hydrogel with Cell-scale Micropores Modulates Osteocyte-like Morphogenesis and Osteogenic Differentiation In Vitro",
-        "Metabolic atlas of early human cortex reveals glycolytic remodeling and pentose phosphate pathway control of cell fate transitions",
-        "Quantitative Modeling of TLR Signaling Reveals Missing Negative Feedback Guiding Identification of TANK-IKKε Checkpoint",
-        "Scaling of Noise Under Resource Constraints in Gene Regulatory Motifs",
-        "ER cholesteryl ester phase separation underlies switch-like cholesterol sensing"
-      ],
+      "articles": [],
       "summary": "今天的合成生物学信号集中在“可预测的模块化设计”：正交转录逻辑门、合成细胞中的多蛋白组合优化、非模式真菌底盘和电化学—微生物级联，分别推进了线路、细胞模块、宿主和过程尺度的可编程性。 细胞与组织层面的工程化继续依赖物理环境：合成微孔水凝胶改变骨细胞网络形态，细胞质流动性把营养输入连接到肠上皮细胞命运，早期人类皮层的糖酵解/磷酸戊糖通路则直接影响神经谱系组成。 控制论方向出现三种互补的“生物控制器”：资源约束对基因线路噪声和适应速度的整形、TLR4 模型与实验之间用失配定位缺失负反馈、以及胆固醇酯相变产生的阈值型稳态开关。 本窗口的 bioRxiv 新稿数量较多，但强相关条目主要来自上述合成线路、细胞工程、形态发生和反馈调控主题；medRxiv 的 38 条新稿未发现足够强的合成生物学或发育形态发生论文。 Nature 同日出现一篇与合成生物学相关的 Research Highlight，主题是用工程酵母生产通常来自濒危植物的抗癌药前体；它是热点文章而非本次优先阅读中的原始研究。",
       "markdown": "briefs/2026-08-05.md",
       "url": "reader.html?date=2026-08-05",
@@ -111,18 +141,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Computational design of orthogonal operators and synthetic repressors for transcriptional logic gates",
-        "Combinatorial Optimization of Protein Systems in Synthetic Cells",
-        "eFormate-mediated CO2 bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
-        "Engineering Naematelia aurantialba as a Robust Synthetic Biology Chassis: Stable Episomal Vector Construction and Metabolic Optimization for Enhanced Polysaccharide Synthesis",
-        "Using Latent Chemical Recognition in an Evolved Periplasmic Binding Protein Family to Diversify Biosensors",
-        "A Modular Synthetic Hydrogel with Cell-scale Micropores Modulates Osteocyte-like Morphogenesis and Osteogenic Differentiation In Vitro",
-        "Metabolic atlas of early human cortex reveals glycolytic remodeling and pentose phosphate pathway control of cell fate transitions",
-        "Quantitative Modeling of TLR Signaling Reveals Missing Negative Feedback Guiding Identification of TANK-IKKε Checkpoint",
-        "Scaling of Noise Under Resource Constraints in Gene Regulatory Motifs",
-        "ER cholesteryl ester phase separation underlies switch-like cholesterol sensing"
-      ]
+      "items": []
     },
     {
       "date": "2026-08-04",
@@ -132,18 +151,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Mechanism underlying the high regulatory performance of the doxycycline riboswitch G12",
-        "Systematic Metabolic Engineering of Escherichia coli for High-Level Production of trans-4-Hydroxy-L-proline",
-        "Discovery of a taxusin-mediated route to baccatin III enables its complete biosynthesis in engineered microbes",
-        "A sequence-to-function model to predict T7 transcription rates and redesign T7 expression systems with lowered production of immunogenic RNA byproducts",
-        "Reverse Engineering the Programming Logic of Cytoskeletal Dynamics",
-        "Developmental growth rates adapt to enable self-correction of organ morphology after injury",
-        "Coupling fibroblast mechanotransduction signaling to tissue growth in a multiscale model of skin expansion",
-        "The mechanosensitive protein Zyxin influences Hippo signaling and tissue growth via adherens junctions and basal spot junctions in Drosophila",
-        "Bistability Analysis of a Hybrid Notch-Delta Signaling Model in a Single Cell Interacting with Fixed External Proteins",
-        "A curvature-based criterion for harmonic circadian waveforms"
-      ],
+      "articles": [],
       "summary": "今天最清晰的合成生物学主线是“动态调控与可设计性”：doxycycline riboswitch G12、E. coli 代谢工程中的生长—产物切换、T7 启动子序列到功能模型，分别从 RNA 结构、代谢资源分配和转录起始三个层面提高可控性。 复杂生物合成继续从“找酶”走向“重建模块”：bioRxiv 的 taxusin-mediated baccatin III 工作把植物天然产物路径拆成可在酵母和 E. coli 中部署的工程模块；细胞自由 ActiveDROPS 则把 kinesin 结构域组合映射为可调的微管流动状态。 发育与形态发生方向的共同语言是反馈和力学耦合：损伤后的器官面积自校正、成纤维细胞机械转导—皮肤生长多尺度模型，以及 Zyxin–Hippo 连接张力与上皮生长，都直接对应 biological homeostasis / morphogenesis control。 控制论方向今天有两篇边界清晰的生物系统工作：Notch–Delta 的双稳态数学分析，以及用相图曲率判定昼夜节律波形的 arXiv 预印本。它们不是纯工程控制，而是明确围绕细胞命运或生物振荡器。 本窗口的 medRxiv 没有找到足够强的合成生物学、发育形态发生或细胞/基因网络控制新稿；arXiv q-bio 精确窗口只有 5 条新提交，其中仅 1 条与本简报主题直接相关。",
       "markdown": "briefs/2026-08-04.md",
       "url": "reader.html?date=2026-08-04",
@@ -152,18 +160,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Mechanism underlying the high regulatory performance of the doxycycline riboswitch G12",
-        "Systematic Metabolic Engineering of Escherichia coli for High-Level Production of trans-4-Hydroxy-L-proline",
-        "Discovery of a taxusin-mediated route to baccatin III enables its complete biosynthesis in engineered microbes",
-        "A sequence-to-function model to predict T7 transcription rates and redesign T7 expression systems with lowered production of immunogenic RNA byproducts",
-        "Reverse Engineering the Programming Logic of Cytoskeletal Dynamics",
-        "Developmental growth rates adapt to enable self-correction of organ morphology after injury",
-        "Coupling fibroblast mechanotransduction signaling to tissue growth in a multiscale model of skin expansion",
-        "The mechanosensitive protein Zyxin influences Hippo signaling and tissue growth via adherens junctions and basal spot junctions in Drosophila",
-        "Bistability Analysis of a Hybrid Notch-Delta Signaling Model in a Single Cell Interacting with Fixed External Proteins",
-        "A curvature-based criterion for harmonic circadian waveforms"
-      ]
+      "items": []
     },
     {
       "date": "2026-08-03",
@@ -173,18 +170,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Increased tolerance to biomass-derived inhibitors by deletion of the transcriptional regulator mraZ in Cupriavidus necator H16",
-        "Establishment of a BRET-based fusion protein expression system to detect benzo[a]pyrene among polycyclic aromatic hydrocarbons",
-        "Naturally cysteine-less LOV domains from halophilic archaea exhibit magnetic field effects on their fluorescence",
-        "A MYB-WRKY feedback module activates MdAAT2-like to regulate aromatic ester biosynthesis during apple ripening",
-        "Two stress-responsive kinases suppress ferroptosis by activating antioxidant programs under mild oxidative stress",
-        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
-        "Reconstructing whole-organism cell phylogenies with resolved ancestral transcriptional states",
-        "Progressive mitochondrial and autophagic dysfunction during RGC development driven by a LHON-associated mitochondrial tRNAThr mutation",
-        "Autonomous intranasal delivery systems for central nervous system therapeutics",
-        "MreB is dispensable for viability but critical for rod shape, motility and biofilm fitness in Pseudomonas aeruginosa"
-      ],
+      "articles": [],
       "summary": "今天最清晰的主线是“把细胞状态、形态和产量当作可调系统来设计”：Cupriavidus necator 的 mraZ 删除提高抑制物耐受与 PHB 生产，BRET/细胞自由体系把蛋白互作变成可读出的生物传感器，天然 LOV 蛋白则提供了可移植的磁/光响应元件。 控制论与生物学方向出现两个层次的反馈例子：苹果成熟中的 MYB–WRKY 正反馈放大芳香酯合成；SMG1/DNA-PK–NRF2 轴则像一个按氧化应激强度切换的细胞命运控制器，在轻度应激下维持抗氧化适应，强应激下转向铁死亡。 发育合成生物学的重点偏向“先读懂状态空间，再谈工程化”：斑马鱼全胚胎谱系与祖先转录状态重建、线虫诱导大豆根合胞体的单细胞多组学，以及 LHON 突变 iPSC 向视网膜神经节细胞分化的渐进性线粒体缺陷，分别覆盖谱系、空间重编程和发育时序。 bioRxiv 本窗口新稿数量不多但有几篇直接贴近工程设计；medRxiv 和 arXiv q-bio 未发现足够强的新增主题条目。纯机器人、纯电机控制和纯 AI benchmark 均未纳入优先阅读。 今日优先阅读共 10 篇，其中包括 1 篇合成生物学相关综述；综述用于补足“可编程递送系统”的热点背景，原始研究仍按新发表/新上传优先排序。",
       "markdown": "briefs/2026-08-03.md",
       "url": "reader.html?date=2026-08-03",
@@ -193,18 +179,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Increased tolerance to biomass-derived inhibitors by deletion of the transcriptional regulator mraZ in Cupriavidus necator H16",
-        "Establishment of a BRET-based fusion protein expression system to detect benzo[a]pyrene among polycyclic aromatic hydrocarbons",
-        "Naturally cysteine-less LOV domains from halophilic archaea exhibit magnetic field effects on their fluorescence",
-        "A MYB-WRKY feedback module activates MdAAT2-like to regulate aromatic ester biosynthesis during apple ripening",
-        "Two stress-responsive kinases suppress ferroptosis by activating antioxidant programs under mild oxidative stress",
-        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
-        "Reconstructing whole-organism cell phylogenies with resolved ancestral transcriptional states",
-        "Progressive mitochondrial and autophagic dysfunction during RGC development driven by a LHON-associated mitochondrial tRNAThr mutation",
-        "Autonomous intranasal delivery systems for central nervous system therapeutics",
-        "MreB is dispensable for viability but critical for rod shape, motility and biofilm fitness in Pseudomonas aeruginosa"
-      ]
+      "items": []
     },
     {
       "date": "2026-08-02",
@@ -214,18 +189,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Global analysis of the cold-shock response in the model antibiotic producing actinomycete, Streptomyces coelicolor A3(2)",
-        "Modeling the structure-conditioned sequence landscape for large-scale protein design with TriFlow",
-        "PlantST: Unraveling Plant Tissue Heterogeneity and Developmental Trajectories via Multimodal Graph Contrastive Learning",
-        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
-        "Programmable continuous gradient bioprinting for engineering spatially heterogeneous microenvironments",
-        "Stable and robust differentiation programs are predominantly irreversible",
-        "Mouse suppressyn-like 1 suppresses membrane fusion through envelope glycoprotein recognition",
-        "Integrative genomics of the siphonophore Physalia utriculus reveals the regulatory logic of colonial division of labour and the molecular basis of venom activity",
-        "A Self-Sustaining Repair Circuit Drives the Progression of Pulmonary Fibrosis",
-        "Millisecond-scale, single-neuron credit assignment in a songbird"
-      ],
+      "articles": [],
       "summary": "今天的 bioRxiv 新增强相关条目不算多，但质量集中在“调控层与设计基础设施”：Streptomyces 冷休克 operon/翻译调控、TriFlow 蛋白序列设计、以及分化程序不可逆性的理论模型都可直接服务合成生物学设计。 发育合成生物学方向偏向空间与轨迹基础设施：PlantST、soybean root syncytia 单核多组学、连续梯度生物打印和 siphonophore zooid 分化图谱都在回答“空间结构如何对应细胞状态和命运程序”。 控制论与生物学今天的代表性工作更偏自然系统中的反馈与学习：肺纤维化被表述为自维持 repair circuit，songbird vocal learning 则显示单神经元、毫秒级 credit assignment。 medRxiv 在本窗口只有 4 条记录，未发现与三大主题强相关的新稿；arXiv q-bio 最新 feed 仍停留在 2026-07-30 UTC 的条目，本次未重复纳入优先阅读。 Nature/Science/Cell/PNAS 等顶刊页面和 PubMed 检索未发现比本期候选更强的 2026-08-01/02 新原创研究；Nature synthetic biology 页面最新强相关研究主要仍是 2026-07-27 及更早条目。",
       "markdown": "briefs/2026-08-02.md",
       "url": "reader.html?date=2026-08-02",
@@ -234,18 +198,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Global analysis of the cold-shock response in the model antibiotic producing actinomycete, Streptomyces coelicolor A3(2)",
-        "Modeling the structure-conditioned sequence landscape for large-scale protein design with TriFlow",
-        "PlantST: Unraveling Plant Tissue Heterogeneity and Developmental Trajectories via Multimodal Graph Contrastive Learning",
-        "Single-cell multi-omic characterization of the soybean root response to cyst nematode infection",
-        "Programmable continuous gradient bioprinting for engineering spatially heterogeneous microenvironments",
-        "Stable and robust differentiation programs are predominantly irreversible",
-        "Mouse suppressyn-like 1 suppresses membrane fusion through envelope glycoprotein recognition",
-        "Integrative genomics of the siphonophore Physalia utriculus reveals the regulatory logic of colonial division of labour and the molecular basis of venom activity",
-        "A Self-Sustaining Repair Circuit Drives the Progression of Pulmonary Fibrosis",
-        "Millisecond-scale, single-neuron credit assignment in a songbird"
-      ]
+      "items": []
     },
     {
       "date": "2026-08-01",
@@ -255,18 +208,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Agrochemical-responsive gene expression control systems for modulating plant development and metabolism",
-        "Genetic code expansion enables plant-directed control of bacterial activity",
-        "ATP-Free Fatty Aldehyde Biosynthesis Enables an Autonomous Lux-Based Bioluminescence System",
-        "Multiplex genome engineering in yeast using the TIGR-Tas system",
-        "From Circuits to Symphonies: A Systems-Engineering Blueprint for Multimicrobial Synthetic Biology",
-        "De Novo Autogenic Engineered Living Functional Materials",
-        "Integrative spatial profiling of 3D genome organization and gene expression in tissue",
-        "Deep Mechanistic Models reveal pathway-extrinsic drivers of mammary MAPK signalling heterogeneity",
-        "Microbial colonization establishes stratified radial niches that coordinate host epithelial and immune maturation in the colon",
-        "CRISPR activation screen uncovers MARCKSL1 as a gauge for extracellular vesicle secretion"
-      ],
+      "articles": [],
       "summary": "今天的合成生物学重点明显偏向“可部署控制系统”：植物中可由农用化学品触发的 Cas9/Cre 表达控制、植物驱动的非天然氨基酸-细菌活性控制、PAM-independent TIGR-Tas 酵母编辑工具都直接面向可编程调控。 多微生物系统和工程活体材料继续升温：Advanced Science 的多微生物合成生物学框架强调 communication、temporal regulation、ecological structuring 与 spatial organization；Advanced Materials 的 ELM 工作把天然蛋白挖掘、计算建模和细菌 curli machinery 连接起来。 发育合成生物学今天更多是“测量与模型基础设施”：Spatial Hi-C-RNA 同时读取组织内 3D genome architecture 和 transcriptome，肠道微生物空间生态图谱把 colon maturation 看成宿主-微生物空间协调过程。 控制论与生物学方向以 signaling dynamics、homeostasis 和机制模型为主；bioRxiv 的 MAPK deep mechanistic model 试图把 representation learning 与 ODE pathway model 接起来。 medRxiv 当天有 93 条去重记录，但强相关性偏弱；主要是临床预测、影像、公共卫生和疾病建模，只有少数 transmission/optimal control 文章列入低相关文章。",
       "markdown": "briefs/2026-08-01.md",
       "url": "reader.html?date=2026-08-01",
@@ -275,18 +217,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Agrochemical-responsive gene expression control systems for modulating plant development and metabolism",
-        "Genetic code expansion enables plant-directed control of bacterial activity",
-        "ATP-Free Fatty Aldehyde Biosynthesis Enables an Autonomous Lux-Based Bioluminescence System",
-        "Multiplex genome engineering in yeast using the TIGR-Tas system",
-        "From Circuits to Symphonies: A Systems-Engineering Blueprint for Multimicrobial Synthetic Biology",
-        "De Novo Autogenic Engineered Living Functional Materials",
-        "Integrative spatial profiling of 3D genome organization and gene expression in tissue",
-        "Deep Mechanistic Models reveal pathway-extrinsic drivers of mammary MAPK signalling heterogeneity",
-        "Microbial colonization establishes stratified radial niches that coordinate host epithelial and immune maturation in the colon",
-        "CRISPR activation screen uncovers MARCKSL1 as a gauge for extracellular vesicle secretion"
-      ]
+      "items": []
     },
     {
       "date": "2026-07-31",
@@ -296,18 +227,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Dynamics of a Hes1-Dll1 regulatory network in coupled muscle stem cells: stability, bifurcations, and coexistence of oscillatory states",
-        "Characterization of PduU Reveals a Modular Tool for Tuning Microcompartment Permeability",
-        "Single-cell lineage tracing of human neuromesoderm organoids reveals TBX6-mediated posterior mesoderm fate diversification",
-        "Selective autophagy receptor VISP1 enhances cytokinin signaling by modulating the Type-A/B ARR feedback loop during root development",
-        "Basement membrane turnover controls cell shape",
-        "Biochemical Logic Computation Through Repurposing Natural bZIP Protein Interaction Networks",
-        "Circadian clock regulates intestinal epithelial cell differentiation via NOTCH/Hes1 oscillations",
-        "In vivo reconstruction of the cell lineage history of a developing mouse with DNA Typewriter, from zygote to late organogenesis",
-        "Stimulus-Evoked Network Dynamics in Human Cortical Organoids: From a Graph-Computational Framework to Repeated-Stimulation Depression",
-        "Causal Architecture Dynamics Prior to Arrival of Self-replicators in a Model of Catalytic Networks Relevant to Origin-of-Life"
-      ],
+      "articles": [],
       "summary": "今天的发育和控制信号很强：Hes1-Dll1/Notch 振荡、ARR cytokinin feedback loop、基底膜应力松弛和 Drosophila gastrulation 的外部锚定，都把发育看成多尺度反馈系统。 合成生物学方向偏“可工程化部件”：细菌 microcompartment 壳蛋白 PduU 可调通透性、天然 bZIP 相互作用网络可复用为蛋白逻辑计算、R2 retrotransposon 被系统综述为基因添加工具。 类器官和谱系追踪继续升温：human neuromesoderm organoids 的 CRISPR lineage tracing 给出 posterior trunk lineage map，arXiv 的 cortical organoid 网络动力学则强调刺激实验需要发展匹配对照。 生物控制论方向出现两个干净条目：肌肉干细胞振荡模型和移动网络上的传染病多尺度 R(t) 都有明确 biological systems 语境；我排除了纯机器人控制、纯 AI benchmark 和泛临床预测。 medRxiv 今天有记录，但强相关性不足；多为临床队列、影像、公共卫生或诊断模型，未进入优先阅读。",
       "markdown": "briefs/2026-07-31.md",
       "url": "reader.html?date=2026-07-31",
@@ -316,18 +236,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Dynamics of a Hes1-Dll1 regulatory network in coupled muscle stem cells: stability, bifurcations, and coexistence of oscillatory states",
-        "Characterization of PduU Reveals a Modular Tool for Tuning Microcompartment Permeability",
-        "Single-cell lineage tracing of human neuromesoderm organoids reveals TBX6-mediated posterior mesoderm fate diversification",
-        "Selective autophagy receptor VISP1 enhances cytokinin signaling by modulating the Type-A/B ARR feedback loop during root development",
-        "Basement membrane turnover controls cell shape",
-        "Biochemical Logic Computation Through Repurposing Natural bZIP Protein Interaction Networks",
-        "Circadian clock regulates intestinal epithelial cell differentiation via NOTCH/Hes1 oscillations",
-        "In vivo reconstruction of the cell lineage history of a developing mouse with DNA Typewriter, from zygote to late organogenesis",
-        "Stimulus-Evoked Network Dynamics in Human Cortical Organoids: From a Graph-Computational Framework to Repeated-Stimulation Depression",
-        "Causal Architecture Dynamics Prior to Arrival of Self-replicators in a Model of Catalytic Networks Relevant to Origin-of-Life"
-      ]
+      "items": []
     },
     {
       "date": "2026-07-30",
@@ -337,18 +246,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "articles": [
-        "Intestinal stem cells count self-renewal divisions to switch multipotency",
-        "Directing hierarchical cell fate decisions through sequential pulses of minimal signaling alphabets",
-        "4D Biomimetic Morphing Hydrogel Scaffold via Biaxial Gradient Programming",
-        "Navigation driven by bidirectional information transmission between sensing and actuation",
-        "Neural control of respiration in Drosophila",
-        "A xeno-free human iPSC-derived prostate organoid platform for multilineage differentiation and genetic manipulation",
-        "Kalman-filter force inference: an estimation framework for cellular forces from temporal evolution of epithelial morphogenesis",
-        "Plant cells at the organ surface use mechanical cues to activate a specific growth-control program",
-        "CRISPR screens identify targets to rescue age-related T cell dysfunction in cancer",
-        "Spatiotemporal Metabolic Regulation for Programmable Microbial Cell Factories"
-      ],
+      "articles": [],
       "summary": "今天最强的信号集中在“发育系统如何编码和切换细胞命运”：Nature 的肠道干细胞分裂计数、bioRxiv 的序列脉冲信号模型、Current Biology 的植物表面力学线索，都把发育看成带状态记忆和反馈约束的动态系统。 形态发生方向同时出现了材料工程和力学推断两条线：4D 梯度水凝胶尝试把可编程形变做成组织工程支架，Kalman-filter force inference 和 epithelial necking 模型则加强了从时序影像反推组织力学的工具箱。 控制论与生物学方向有几个很干净的生物语境条目：arXiv 的细胞导航信息环、果蝇呼吸的神经-代谢耦合、Myxococcus 生物膜发育中的 histidine kinase 控制，都不是泛控制理论误报。 合成生物学今天偏“平台化”：iPSC 前列腺类器官的可操控系统、老年肿瘤 T 细胞 CRISPR screen、可编程微生物工厂的时空代谢调控综述，以及 Lactiplantibacillus 的 CRISPR/Cas9 编辑平台，都是可复用工具或 chassis 层面的进展。 medRxiv 在本窗口内有 74 条记录、65 篇新稿，但强相关条目不足；主要候选偏临床影像、卒中康复或血管类器官，未进入优先阅读。",
       "markdown": "briefs/2026-07-30.md",
       "url": "reader.html?date=2026-07-30",
@@ -357,18 +255,7 @@
         "发育合成生物学",
         "控制论与生物学"
       ],
-      "items": [
-        "Intestinal stem cells count self-renewal divisions to switch multipotency",
-        "Directing hierarchical cell fate decisions through sequential pulses of minimal signaling alphabets",
-        "4D Biomimetic Morphing Hydrogel Scaffold via Biaxial Gradient Programming",
-        "Navigation driven by bidirectional information transmission between sensing and actuation",
-        "Neural control of respiration in Drosophila",
-        "A xeno-free human iPSC-derived prostate organoid platform for multilineage differentiation and genetic manipulation",
-        "Kalman-filter force inference: an estimation framework for cellular forces from temporal evolution of epithelial morphogenesis",
-        "Plant cells at the organ surface use mechanical cues to activate a specific growth-control program",
-        "CRISPR screens identify targets to rescue age-related T cell dysfunction in cancer",
-        "Spatiotemporal Metabolic Regulation for Programmable Microbial Cell Factories"
-      ]
+      "items": []
     },
     {
       "date": "2026-07-29",
@@ -398,7 +285,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "",
+      "summary": "今天的强信号来自三个层面：PNAS/Nature 系正式发表补入多篇 2026-07-27/28 条目，bioRxiv 新上传中出现 synthetic cells、CRISPR 调控、微生物代谢和发育染色质候选，arXiv q-bio 则集中在形态发生、生态/神经动力学与反馈建模。 合成生物学方向最值得关注的是“自调控代谢线路”和“可编程细胞内隔室”：L-lysine alkaloid 自调控平台、细菌 tocopherol 非经典路径、synthetic-cell condensates、sentinel plants 都带有可复用工程模块意味。 发育合成生物学方向今天偏物理与细胞器控制：epithelial dome 的水力反馈振荡、morphogenetic rods 的 shape memory、peroxisome-ether lipid-线粒体轴调控 cortical neurogenesis，均可给 synthetic morphogenesis 提供设计原则。 控制论与生物学方向的主线很清楚：从 microglia-neuron 正反馈、YAP/TAZ 负反馈式 metastasis dynamics，到植物 NO-melatonin set-point control，反馈、稳态和可控未来状态正在作为生物系统解释框架出现。 medRxiv 本窗口返回不少公共卫生和临床建模条目，但强相关度低于 bioRxiv/PubMed/arXiv 候选；本次只把 measles/dengue/epidemic surveillance 等作为低相关扫读。",
       "markdown": "briefs/2026-07-28.md",
       "url": "reader.html?date=2026-07-28",
       "tags": [
@@ -417,7 +304,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "",
+      "summary": "过去 24 小时是典型周末低供给窗口：bioRxiv、medRxiv 和 arXiv 未发现新的强相关预印本，优先阅读主要来自 PubMed 收录的正式期刊 ahead-of-print 文章。 合成生物学方向今天偏“生物制造综述与平台归纳”：三萜微生物制造、微藻异源萜类合成、植物抗氧化物 biosynthesis/refining 等条目集中出现。 发育合成生物学方向更偏机制与可控模型：昆虫 appendage morphogenesis 的 CRISPR/RNAi 靶点、真菌 morphogenesis 转录调控、glioblastoma tumor organoid 协议对组织架构的影响。 控制论与生物学方向的强条目集中在正反馈、稳态、分岔和群体动力学：肿瘤代谢-乳酰化正反馈、T 细胞耗竭建模、耦合细胞系统的 pitchfork bifurcation，以及骨/免疫血管稳态。 本次严格排除了纯工程控制、纯机器人、纯电池/电机控制和纯 AI 教育/benchmark 条目；只保留与细胞、组织、发育、免疫、微生物或生理系统有明确联系的控制/系统文章。",
       "markdown": "briefs/2026-07-27.md",
       "url": "reader.html?date=2026-07-27",
       "tags": [
@@ -436,7 +323,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "",
+      "summary": "过去 24 小时强合成生物学新稿不算密集，但正式期刊中出现了几个值得跟进的工程化方向：机制驱动发现细菌 P450 抗除草剂基因、CRISPR 精准编辑效率增强、藻类/酵母细胞工厂和工程化微生物共培养。 发育合成生物学相关内容今天主要来自组织工程和神经发育：人皮肤构建体中的 hair peg-like 结构、内源 neurofascin 活体成像、血管信号调控小脑回路发育，以及植物胚乳 imprinting 调控网络。 控制论与生物学方向以“可测量、可调控的生物系统”为主线：工程化交叉喂养共培养强调稳定性和可控性，SynNotch 预印本把免疫受体力传导和下游信号可视化，神经发育/运动适应论文关注 feedforward 与 feedback 机制的成熟。 arXiv q-bio 在本次窗口内没有新的强相关条目；medRxiv 有若干动态/因果模型文章，但多偏临床或公共卫生，不进入优先阅读。",
       "markdown": "briefs/2026-07-26.md",
       "url": "reader.html?date=2026-07-26",
       "tags": [
@@ -455,7 +342,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "",
+      "summary": "今天的强相关新稿集中在“可部署的工程生物系统”：工程化益生菌递送 CRISPR、区域靶向调节肠道 H2S、以及面向光合产氢的蓝藻电子流重定向。 发育方向出现多篇以可控模型系统为核心的文章：人多能干细胞心脏谱系分化模型、C. elegans 胚胎 ex ovo 长期培养、Xenopus 肾单位 β-catenin 活体成像，以及脑类器官中的 AD regulome 重建。 控制论/系统生物学方向今天更偏“生物调控层级”：微生物生长控制综述把蛋白丰度控制与活性控制合并讨论，神经网络稳定性条目则把 extracellular matrix homeostasis、突触耦合和 gamma oscillation 放在同一框架下。 medRxiv 今天有新稿，但未发现与合成生物学、发育合成生物学或生物反馈控制高度相关的条目；arXiv q-bio 的可见强相关 7 月 24 日公告条目已在上一期覆盖，本期未重复纳入。",
       "markdown": "briefs/2026-07-25.md",
       "url": "reader.html?date=2026-07-25",
       "tags": [
@@ -569,7 +456,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "过去 24 小时内 bioRxiv 在 2026-07-18/19 日期粒度仅返回 16 条，`count_new_papers=0`，因此今天的预印本重点主要是重要修订版，而非全新上传。 合成生物学方向最值得看的是可编程跨膜核酸传感、TnpB 超紧凑基因编辑机制、工程 CAR T 细胞动态监测，以及 Streptomyces 形态发生肽的异源表达。 发育合成生物学/合成形态发生方向较稀疏，但 Nature Communications 的 “Morphogenic colloids” 提供了非生命材料系统中可逆形态转换和拓扑转换的概念参照。 控制论与生物学方向今天的强相关条目集中在细胞稳态、分布式感觉-机械反馈、能量分配适应和细胞器离子稳态。 arXiv q-bio 最新条目仍停在 2026-07-16 UTC 附近，未发现落入本次精确窗口的强相关新增。",
+      "summary": "过去 24 小时内 bioRxiv 在 2026-07-18/19 日期粒度仅返回 16 条，countnewpapers=0，因此今天的预印本重点主要是重要修订版，而非全新上传。 合成生物学方向最值得看的是可编程跨膜核酸传感、TnpB 超紧凑基因编辑机制、工程 CAR T 细胞动态监测，以及 Streptomyces 形态发生肽的异源表达。 发育合成生物学/合成形态发生方向较稀疏，但 Nature Communications 的 “Morphogenic colloids” 提供了非生命材料系统中可逆形态转换和拓扑转换的概念参照。 控制论与生物学方向今天的强相关条目集中在细胞稳态、分布式感觉-机械反馈、能量分配适应和细胞器离子稳态。 arXiv q-bio 最新条目仍停在 2026-07-16 UTC 附近，未发现落入本次精确窗口的强相关新增。",
       "markdown": "briefs/2026-07-19.md",
       "url": "reader.html?date=2026-07-19",
       "tags": [
@@ -588,7 +475,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "今天最强的合成生物学信号来自 **Nature Chemical Biology**：工程化细菌把合成纳米组装体的红氧状态、细胞摄取/排出和细胞内 homeostasis 响应连成可循环的“生物-材料”调控网络。 发育合成生物学方向继续围绕“力学环境如何指定命运”：hPSC 肺类器官显示 ECM stiffness 可定向产生不同区域的呼吸道/肺泡上皮，Nature Plants 则用细胞壁 pH 传感器挑战了根发育分区中的经典 acid growth 直觉。 控制论与生物学方向今天偏测量与模型：绝对膜电压成像、polyamine 振荡需求、podocyte 机械正反馈、生态网络 feedback loops 都把“动态状态变量”推到中心。 合成生物材料和 engineered living materials 有多篇可读条目：looped translation 合成超大纤维蛋白、K. rhaeticus 细菌纳米纤维素原位功能化、pyrenoid 组装逻辑与植物工程工具箱。 medRxiv 今日窗口内有结果，但多为临床预测、公共卫生、医学影像或教育/流行病学研究；未发现足够强的合成生物学、synthetic morphogenesis 或生物反馈控制新稿。arXiv q-bio 在精确窗口内未检出强相关新增。",
+      "summary": "今天最强的合成生物学信号来自 Nature Chemical Biology：工程化细菌把合成纳米组装体的红氧状态、细胞摄取/排出和细胞内 homeostasis 响应连成可循环的“生物-材料”调控网络。 发育合成生物学方向继续围绕“力学环境如何指定命运”：hPSC 肺类器官显示 ECM stiffness 可定向产生不同区域的呼吸道/肺泡上皮，Nature Plants 则用细胞壁 pH 传感器挑战了根发育分区中的经典 acid growth 直觉。 控制论与生物学方向今天偏测量与模型：绝对膜电压成像、polyamine 振荡需求、podocyte 机械正反馈、生态网络 feedback loops 都把“动态状态变量”推到中心。 合成生物材料和 engineered living materials 有多篇可读条目：looped translation 合成超大纤维蛋白、K. rhaeticus 细菌纳米纤维素原位功能化、pyrenoid 组装逻辑与植物工程工具箱。 medRxiv 今日窗口内有结果，但多为临床预测、公共卫生、医学影像或教育/流行病学研究；未发现足够强的合成生物学、synthetic morphogenesis 或生物反馈控制新稿。arXiv q-bio 在精确窗口内未检出强相关新增。",
       "markdown": "briefs/2026-07-18.md",
       "url": "reader.html?date=2026-07-18",
       "tags": [
@@ -607,7 +494,7 @@
         "控制论与生物学"
       ],
       "articles": [],
-      "summary": "今天最强的“控制论与生物学”信号来自 **Cell Systems** 的闭环光遗传智能显微镜平台：它把实时图像分割、biosensor 读出和 optogenetic stimulation 串成反馈控制回路，用于单细胞和组织尺度的集体迁移控制。 发育与形态发生方向集中在“力学-形态-命运”的连接：人类胎儿皮层折叠的全脑生物物理建模、皮层类器官机械转导、FERONIA 调控组织力学与生长、植物细胞分裂面定位等都在同一条线上。 合成生物学方向出现多篇偏“可编程生物系统”的新稿：E. coli 多步分化产生空间图案、CAR-T 药物可控 ON/OFF 稳定域、植物 CRISPR-associated transposase 可编程整合、植物 SynCom 设计规则。 微生物与细胞工程里，CO2 固定路径优化、Shewanella 光定向生物膜、电活性细菌电子传递等条目强调从设计到宿主整合、材料化和可测量控制的转变。 medRxiv 今日有 93 条窗口内结果，但强相关条目很少；少数系统建模/空间统计/临床预测文章更偏流行病学或医学信息学，未纳入优先阅读。",
+      "summary": "今天最强的“控制论与生物学”信号来自 Cell Systems 的闭环光遗传智能显微镜平台：它把实时图像分割、biosensor 读出和 optogenetic stimulation 串成反馈控制回路，用于单细胞和组织尺度的集体迁移控制。 发育与形态发生方向集中在“力学-形态-命运”的连接：人类胎儿皮层折叠的全脑生物物理建模、皮层类器官机械转导、FERONIA 调控组织力学与生长、植物细胞分裂面定位等都在同一条线上。 合成生物学方向出现多篇偏“可编程生物系统”的新稿：E. coli 多步分化产生空间图案、CAR-T 药物可控 ON/OFF 稳定域、植物 CRISPR-associated transposase 可编程整合、植物 SynCom 设计规则。 微生物与细胞工程里，CO2 固定路径优化、Shewanella 光定向生物膜、电活性细菌电子传递等条目强调从设计到宿主整合、材料化和可测量控制的转变。 medRxiv 今日有 93 条窗口内结果，但强相关条目很少；少数系统建模/空间统计/临床预测文章更偏流行病学或医学信息学，未纳入优先阅读。",
       "markdown": "briefs/2026-07-17.md",
       "url": "reader.html?date=2026-07-17",
       "tags": [
