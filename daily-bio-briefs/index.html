@@ -3,63 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f2f5f3">
-  <meta name="description" content="每日合成生物学、发育生物学与组织工程研究简报">
-  <title>每日合成与发育生物学简报 · Mingzhe Chen</title>
-  <link rel="stylesheet" href="../assets/site-shell.css">
+  <title>每日合成与发育生物学简报</title>
+  <style>
+    body { margin:0; font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:#17202a; background:#f7f8fb; }
+    main { max-width:1080px; margin:0 auto; padding:28px 18px 48px; }
+    h1 { margin:0 0 14px; font-size:32px; line-height:1.15; }
+    .controls { display:grid; grid-template-columns:1fr 180px 180px; gap:12px; margin:20px 0; }
+    input, select { font:inherit; padding:10px 12px; border:1px solid #cfd6e2; border-radius:6px; background:#fff; }
+    .grid { display:grid; gap:12px; }
+    .card { display:block; text-decoration:none; color:inherit; background:#fff; border:1px solid #d8dee8; border-radius:8px; padding:16px; }
+    .meta { color:#667085; font-size:14px; margin-bottom:6px; }
+    .tags { color:#335c81; font-size:14px; margin-top:8px; }
+    @media (max-width:900px) { .controls { grid-template-columns:1fr 1fr; } }
+    @media (max-width:700px) { .controls { grid-template-columns:1fr; } h1 { font-size:26px; } }
+  </style>
 </head>
-<body class="ss-page ss-stream ss-stream-bio">
-  <a class="ss-skip" href="#brief-list">跳到简报列表</a>
-  <header class="ss-site-header">
-    <nav class="ss-site-nav ss-shell" aria-label="主导航">
-      <a class="ss-brand" href="../" aria-label="返回 Mingzhe Chen 首页"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
-      <div class="ss-nav-links"><a href="./" aria-current="page">Briefs</a><a href="../lecture/">Learning</a><a href="../gaming/">Play</a><a href="../tools/">Tools</a></div>
-    </nav>
-  </header>
-  <section class="ss-page-hero">
-    <div class="ss-shell ss-hero-grid">
-      <div><p class="ss-kicker">Daily feed / Life science</p><h1 class="ss-page-title">Synthetic &amp; developmental <em>biology.</em></h1><p class="ss-lede">合成生物学、发育生物学、组织工程与生命系统设计的每日研究简报。</p></div>
-      <aside class="ss-signal-panel" aria-label="简报说明"><span class="ss-signal-label">Research stream</span><dl class="ss-signal-list"><div><dt>Cadence</dt><dd>Daily</dd></div><div><dt>Format</dt><dd>Markdown</dd></div><div><dt>Browse by</dt><dd>Date + Tag</dd></div><div><dt>Archive</dt><dd id="issue-count">Loading</dd></div></dl></aside>
-    </div>
-  </section>
-  <main class="ss-shell ss-main" id="brief-list">
-    <section class="ss-section" aria-labelledby="browse-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">Search the archive</span><h2 class="ss-section-title" id="browse-title">Browse briefs</h2></div><p class="ss-section-note">搜索日期、主题、摘要、重点条目或标签。</p></div>
-      <div class="ss-filter-bar">
-        <input class="ss-input" id="q" type="search" placeholder="搜索标题、摘要、条目或标签" aria-label="搜索简报">
-        <input class="ss-input" id="date" type="date" aria-label="按日期筛选">
-        <select class="ss-select" id="tag" aria-label="按标签筛选"><option value="">全部标签</option></select>
-      </div>
-      <p class="ss-results-meta" id="meta" aria-live="polite"></p>
-      <div id="list" class="ss-brief-grid"></div>
-    </section>
-    <footer class="ss-footer"><span>Mingzhe Chen · Daily Bio Briefs</span><span>Research stream</span></footer>
-  </main>
-  <script>
-    const q = document.getElementById('q');
-    const date = document.getElementById('date');
-    const tag = document.getElementById('tag');
-    const list = document.getElementById('list');
-    const meta = document.getElementById('meta');
-    let briefs = [];
-    function esc(s) { return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function searchable(b) { return [b.date,b.title,b.summary,(b.items||[]).join(' '),(b.tags||[]).join(' ')].join(' ').toLowerCase(); }
-    function render() {
-      const needle = q.value.trim().toLowerCase();
-      const rows = briefs.filter(b => (!needle || searchable(b).includes(needle)) && (!date.value || b.date === date.value) && (!tag.value || (b.tags||[]).includes(tag.value)));
-      meta.textContent = `共 ${briefs.length} 期 · 当前显示 ${rows.length} 期`;
-      list.innerHTML = rows.map(b => `<a class="ss-brief-card" href="${esc(b.url)}"><span class="ss-brief-date">${esc(b.date)}</span><span><strong class="ss-brief-title">${esc(b.title)}</strong><p class="ss-brief-copy">${esc(b.summary || '')}</p><span class="ss-tags">${(b.tags || []).map(t => `<span class="ss-tag">${esc(t)}</span>`).join('')}</span></span><span class="ss-row-arrow" aria-hidden="true">↗</span></a>`).join('') || '<div class="ss-empty">没有匹配结果。可以换一个关键词或清空筛选条件。</div>';
-    }
-    fetch('search.json').then(r => r.json()).then(data => {
-      briefs = data.briefs || [];
-      document.getElementById('issue-count').textContent = `${briefs.length} issues`;
-      const tags = [...new Set(briefs.flatMap(b => b.tags || []))].sort();
-      tag.innerHTML += tags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
-      render();
-    }).catch(() => { list.innerHTML = '<div class="ss-empty">简报索引暂时无法加载。</div>'; });
-    q.addEventListener('input', render);
-    date.addEventListener('input', render);
-    tag.addEventListener('change', render);
-  </script>
+<body>
+<main>
+  <h1>每日合成与发育生物学简报</h1>
+  <div class="controls">
+    <input id="q" type="search" placeholder="搜索日期、标题、摘要、条目或标签">
+    <select id="date"><option value="">全部日期</option></select>
+    <select id="tag"><option value="">全部标签</option></select>
+  </div>
+  <div id="list" class="grid"></div>
+</main>
+<script>
+const q = document.getElementById('q');
+const date = document.getElementById('date');
+const tag = document.getElementById('tag');
+const list = document.getElementById('list');
+let briefs = [];
+function esc(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function searchable(b) { return [b.date,b.title,b.summary,(b.articles||b.items||[]).join(' '),(b.tags||b.topics||[]).join(' ')].join(' ').toLowerCase(); }
+function render() {
+  const needle = q.value.trim().toLowerCase();
+  const selectedDate = date.value;
+  const selected = tag.value;
+  const rows = briefs.filter(b => (!needle || searchable(b).includes(needle)) && (!selectedDate || b.date === selectedDate) && (!selected || (b.tags||b.topics||[]).includes(selected)));
+  list.innerHTML = rows.map(b => `<a class="card" href="${esc(b.url)}">
+    <div class="meta">${esc(b.date)}</div>
+    <strong>${esc(b.title)}</strong>
+    <p>${esc(b.summary || '')}</p>
+    <div class="tags">${(b.tags || []).map(esc).join(' / ')}</div>
+  </a>`).join('') || '<p>没有匹配结果。</p>';
+}
+fetch('search.json').then(r => r.json()).then(data => {
+  briefs = data.briefs || [];
+  date.innerHTML += briefs.map(b => `<option value="${esc(b.date)}">${esc(b.date)}</option>`).join('');
+  const tags = [...new Set(briefs.flatMap(b => b.tags || []))].sort();
+  tag.innerHTML += tags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  render();
+});
+q.addEventListener('input', render);
+date.addEventListener('change', render);
+tag.addEventListener('change', render);
+</script>
 </body>
 </html>
