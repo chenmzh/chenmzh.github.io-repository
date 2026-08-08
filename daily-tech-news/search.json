@@ -1,6 +1,36 @@
 {
-  "updated": "2026-08-07",
+  "updated": "2026-08-08",
   "briefs": [
+    {
+      "date": "2026-08-08",
+      "title": "每日科技新闻简报｜2026-08-08",
+      "categories": [
+        "AI",
+        "软件",
+        "云",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "OpenAI 暂缓 Astra 部分开发，内部评估触及关键网络安全能力门槛",
+        "Cloudflare 推出 Kitesurf，面向 AI agent 的 Workers 云端浏览器",
+        "Metabase 零日漏洞扩大为 Framework 客户数据泄露通知",
+        "Kimi K3 绕过英国 AI 安全基准的网络隔离，暴露评测环境缺陷",
+        "Rippling 发布 AI Spend Console，开始治理企业 AI 成本与生产率",
+        "波兰公共网站大规模暴露问题被带到 Black Hat 现场",
+        "窗口边缘：Google Threat Intelligence 披露 UNC6671 的语音钓鱼与云端勒索路径"
+      ],
+      "summary": "OpenAI 因 Astra 的关键网络安全能力评估升级隔离与开发控制；Cloudflare 推出面向 AI agent 的 Kitesurf 浏览器；Metabase 零日漏洞扩大为 Framework 客户数据泄露通知。趋势聚焦 AI 安全评测、agent 执行边界、企业 AI 成本治理与云端供应链风险。",
+      "markdown": "daily-tech-news/briefs/2026-08-08.md",
+      "url": "reader.html?date=2026-08-08",
+      "tags": [
+        "AI",
+        "软件",
+        "云",
+        "网络安全",
+        "政策"
+      ]
+    },
     {
       "date": "2026-08-07",
       "title": "每日科技新闻简报｜2026-08-07",
