@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-08",
+  "updated": "2026-08-09",
   "briefs": [
+    {
+      "date": "2026-08-09",
+      "title": "每日合成与发育生物学简报 - 2026-08-09",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "AAV-delivered miRNA-gated Cre circuits enable programmable gene activation in AFP-active liver tumor models",
+        "Site-specific recombinases and their essential role in synthetic biology",
+        "ModelSEED v2: High-throughput genome-scale metabolic model reconstruction with enhanced energy biosynthesis pathway prediction",
+        "Genome-scale modeling of the influence of microbiota-derived butyrate on the regulation of human metabolism by the histone deacetylase SIRT1",
+        "Harnessing machine learning to decode and optimize bioelectrochemical systems: Principles, progress and future directions",
+        "Recruitment of Cas3 enables DNA cleavage by the type I-A CRISPR-Cas system of Saccharolobus islandicus",
+        "Exploring the dynamics of symbiont Enterobacter aerogenes expressing Cry1Ac for potential biocontrol of Helicoverpa armigera",
+        "Disrupting the cockroach circadian clock through RNAi-mediated knockdown of clock proteins",
+        "Cellular adhesion-dependent 3D morphogenesis indicating brain tumor aggressiveness and chemosensitivity in spherical cavity culture",
+        "A hybrid model for multiscale prediction and generation of phase separating protein regions"
+      ],
+      "summary": "本窗口的直接合成生物学信号主要落在“可编程输入—逻辑门—执行器”工具链：SLICER 将肿瘤状态感知、miRNA 后转录门控和 Cre-loxP 执行器组合起来；位点特异性重组酶综述则系统梳理了基因线路和大载荷基因组工程的工具箱。 控制论与生物学方向有三条互补主线：连续调控代谢模型把微生物来源丁酸和 SIRT1 反馈接入人类代谢网络；生物电化学系统综述把微生物群落、在线监测和实时控制放在同一框架中；蟑螂昼夜节律预印本用 TTFL–PTFL 耦合模型讨论补偿性反馈。 发育合成生物学/合成形态发生在严格 24 小时窗口内没有检出新的直接命中；最接近的是一个可重复生成并表征 3D 肿瘤球体形态的培养平台，但其生物学问题是肿瘤侵袭与化疗敏感性，而不是发育组织工程。 工具基础设施仍是热点：ModelSEED v2 的新版本改善能量代谢、古菌模板和 gap-filling；Phaseek 则把相分离蛋白预测延伸到 de novo 肽设计。两者都是 bioRxiv 版本更新，不应与当天首次上传的预印本混同。",
+      "markdown": "briefs/2026-08-09.md",
+      "url": "reader.html?date=2026-08-09",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "AAV-delivered miRNA-gated Cre circuits enable programmable gene activation in AFP-active liver tumor models",
+        "Site-specific recombinases and their essential role in synthetic biology",
+        "ModelSEED v2: High-throughput genome-scale metabolic model reconstruction with enhanced energy biosynthesis pathway prediction",
+        "Genome-scale modeling of the influence of microbiota-derived butyrate on the regulation of human metabolism by the histone deacetylase SIRT1",
+        "Harnessing machine learning to decode and optimize bioelectrochemical systems: Principles, progress and future directions",
+        "Recruitment of Cas3 enables DNA cleavage by the type I-A CRISPR-Cas system of Saccharolobus islandicus",
+        "Exploring the dynamics of symbiont Enterobacter aerogenes expressing Cry1Ac for potential biocontrol of Helicoverpa armigera",
+        "Disrupting the cockroach circadian clock through RNAi-mediated knockdown of clock proteins",
+        "Cellular adhesion-dependent 3D morphogenesis indicating brain tumor aggressiveness and chemosensitivity in spherical cavity culture",
+        "A hybrid model for multiscale prediction and generation of phase separating protein regions"
+      ]
+    },
     {
       "date": "2026-08-08",
       "title": "每日合成与发育生物学简报 - 2026-08-08",
