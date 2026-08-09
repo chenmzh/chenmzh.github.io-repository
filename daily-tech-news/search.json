@@ -1,6 +1,39 @@
 {
-  "updated": "2026-08-08",
+  "updated": "2026-08-09",
   "briefs": [
+    {
+      "date": "2026-08-09",
+      "title": "每日科技新闻简报｜2026-08-09",
+      "categories": [
+        "AI",
+        "软件",
+        "云",
+        "硬件",
+        "消费电子",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "亚马逊计划在德州建设的 AI 数据中心，获准排放规模可能超过美国任何电厂",
+        "OpenAI 收购演示文稿初创公司 NextSlide，团队并入 ChatGPT",
+        "Google 威胁情报改用统一双词代号，攻击者命名走向可检索标准",
+        "生成式 AI 的“污名化”开始影响创作者与娱乐行业",
+        "X 将关闭原有 Revenue Sharing，9 月启用 Original Content Rewards",
+        "Kindle Scribe Colorsoft 评测显示：彩色墨水屏笔记本的适用人群清晰，但价格和尺寸抬高门槛"
+      ],
+      "summary": "亚马逊德州 AI 数据中心的许可排放规模引发基础设施外部性关注；OpenAI 收购 NextSlide，继续向可编辑办公成果物延伸；Google Threat Intelligence 的统一攻击者命名体系进入行业落地讨论。趋势聚焦 AI 基础设施成本、工作流产品化、威胁情报标准化与 AI 内容信任。",
+      "markdown": "daily-tech-news/briefs/2026-08-09.md",
+      "url": "reader.html?date=2026-08-09",
+      "tags": [
+        "AI",
+        "软件",
+        "云",
+        "硬件",
+        "消费电子",
+        "网络安全",
+        "政策"
+      ]
+    },
     {
       "date": "2026-08-08",
       "title": "每日科技新闻简报｜2026-08-08",
