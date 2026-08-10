@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-09",
+  "updated": "2026-08-10",
   "briefs": [
+    {
+      "date": "2026-08-10",
+      "title": "每日合成与发育生物学简报 - 2026-08-10",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Engineered protein circuits for cancer therapy",
+        "Engineering P4 satellite phage particles with single and dual antimicrobial actions",
+        "Forging an evolutionary individual from separate replicators",
+        "Directed evolution of the Drosophila microbiome improves intestinal health and extends lifespan",
+        "VariantFlux: A genotype-first modelling workflow for predicting the impact of genetic variations on human metabolism",
+        "Dynamic knowledge representation of blood brain barrier activation, injury and restitution with a novel agent-based model",
+        "microRNA-mediated control of cell fate specification and patterning in *Marchantia polymorpha*",
+        "A Hierarchical Hydrogel Modulates Immune-Mechanical Microenvironments to Spatiotemporally Reprogram Fibroblasts for Scarless Diabetic Wound Healing",
+        "Screening cross-injury responses in skin organoids identifies a THBS2-enriched pro-repair fibroblast state during regeneration",
+        "De novo E-cadherin/catenin complex formation controls basal epithelial mechanics and force transmission for apoptotic cell clearance"
+      ],
+      "summary": "今日最强的合成生物学信号是“可编程执行器与可进化系统”并行推进：工程化蛋白线路把突变 RAS 状态直接接到细胞死亡，工程 P4 噬菌体颗粒把裂解与载荷递送组合起来，酵母质粒系统则展示了群体选择如何塑造可遗传的新个体。 工程微生物与微生物组研究开始把“部署环境”纳入设计对象：定向进化后的果蝇肠道微生物组能改善宿主抗氧化应激和寿命，但效果依赖具体菌株及其代谢物，不能简单外推为通用疗法。 发育合成生物学的直接新命中仍然偏少；今天较接近的结果分别从天然 miRNA—转录因子—生长素回路、可阶段响应的免疫—力学水凝胶和皮肤类器官的修复状态入手，说明“状态、时间和微环境”正在成为形态与再生工程的共同语言。 控制论与生物学方向出现了可计算的稳态与鲁棒性案例：VariantFlux 将基因型扰动映射到器官代谢通量，BBBABM 将血脑屏障损伤—修复过程写成跨时间尺度的细胞—分子模型，生物力学预印本则把上皮黏附复合体作为凋亡清除中的力学调节器。",
+      "markdown": "briefs/2026-08-10.md",
+      "url": "reader.html?date=2026-08-10",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Engineered protein circuits for cancer therapy",
+        "Engineering P4 satellite phage particles with single and dual antimicrobial actions",
+        "Forging an evolutionary individual from separate replicators",
+        "Directed evolution of the Drosophila microbiome improves intestinal health and extends lifespan",
+        "VariantFlux: A genotype-first modelling workflow for predicting the impact of genetic variations on human metabolism",
+        "Dynamic knowledge representation of blood brain barrier activation, injury and restitution with a novel agent-based model",
+        "microRNA-mediated control of cell fate specification and patterning in *Marchantia polymorpha*",
+        "A Hierarchical Hydrogel Modulates Immune-Mechanical Microenvironments to Spatiotemporally Reprogram Fibroblasts for Scarless Diabetic Wound Healing",
+        "Screening cross-injury responses in skin organoids identifies a THBS2-enriched pro-repair fibroblast state during regeneration",
+        "De novo E-cadherin/catenin complex formation controls basal epithelial mechanics and force transmission for apoptotic cell clearance"
+      ]
+    },
     {
       "date": "2026-08-09",
       "title": "每日合成与发育生物学简报 - 2026-08-09",
