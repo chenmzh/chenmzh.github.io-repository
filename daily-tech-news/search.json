@@ -1,6 +1,38 @@
 {
-  "updated": "2026-08-09",
+  "updated": "2026-08-10",
   "briefs": [
+    {
+      "date": "2026-08-10",
+      "title": "每日科技新闻简报｜2026-08-10",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "Anthropic 将 Claude Code Auto mode 设为 Pro、Max、Team 默认",
+        "Frontier AI 安全评测本身暴露为新的高风险攻击面",
+        "NHTSA 监管放行后，Zoox 计划 8 月 10 日在拉斯维加斯开始收费运营",
+        "Situational Awareness 据报向 Source Foundry 投资 4 亿美元",
+        "对抗性图案让部分监控摄像系统难以识别目标"
+      ],
+      "summary": "Anthropic 将 Claude Code Auto mode 推向付费用户默认配置；近期模型安全评测暴露出网络边界与第三方环境配置风险；Zoox 计划在监管豁免下于拉斯维加斯开始收费 robotaxi 服务。趋势聚焦代理自动执行、评测基础设施安全、自动驾驶商业化，以及芯片制造和监控对抗技术的双重用途。",
+      "markdown": "daily-tech-news/briefs/2026-08-10.md",
+      "url": "reader.html?date=2026-08-10",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策"
+      ]
+    },
     {
       "date": "2026-08-09",
       "title": "每日科技新闻简报｜2026-08-09",
