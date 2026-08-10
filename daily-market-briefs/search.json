@@ -1,6 +1,62 @@
 {
-  "updated": "2026-08-09",
+  "updated": "2026-08-10",
   "briefs": [
+    {
+      "date": "2026-08-10",
+      "title": "每日股票市场简报｜2026-08-10",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "AI",
+        "云",
+        "电商",
+        "消费",
+        "运输",
+        "航运",
+        "数据中心",
+        "银行"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "GOOGL",
+        "TSLA",
+        "XOM",
+        "JPM",
+        "GM",
+        "MSFT",
+        "META",
+        "AMZN",
+        "AMD"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "AMZN Amazon",
+        "JPM JPMorgan Chase",
+        "XOM Exxon Mobil"
+      ],
+      "summary": "8/7 美股收盘受弱就业推动而偏强，今早 ES/NQ 期货温和上行，但霍尔木兹谈判、原油与本周 CPI/PPI/零售销售构成主要双向风险；SMH 与 AMD 仍需量价确认。",
+      "markdown": "briefs/2026-08-10.md",
+      "url": "reader.html?date=2026-08-10"
+    },
     {
       "date": "2026-08-09",
       "title": "每日股票市场简报｜2026-08-09",
