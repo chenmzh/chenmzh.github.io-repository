@@ -1,6 +1,43 @@
 {
-  "updated": "2026-08-10",
+  "updated": "2026-08-11",
   "briefs": [
+    {
+      "date": "2026-08-11",
+      "title": "每日科技新闻简报｜2026-08-11",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策"
+      ],
+      "items": [
+        "OpenAI 扩展 Daybreak，推出 GPT-5.6-Cyber",
+        "Meta 开源 30B 本地智能体模型 Muse Glimmer",
+        "CEVA 物流遭入侵，欧洲仓储与部分 Steam 硬件客户数据受影响",
+        "AI 代理开始被用于材料搜索，但实验室验证仍是瓶颈",
+        "Sila 获得最高 14 亿美元美国政府有条件贷款承诺",
+        "Aptoide 成为首个在美国回到 Google Play 的竞争性应用商店",
+        "Archer 签署协议拟从 Boeing 收购 Wisk Aero、SkyGrid 和 Insitu",
+        "Klaviyo 注册页面的历史配置曾把广告商注册数据暴露给第三方追踪器"
+      ],
+      "summary": "OpenAI 扩展 Daybreak 并推出 GPT-5.6-Cyber；Meta 开源可在消费级设备上运行的 Muse Glimmer；CEVA 物流入侵波及欧洲仓储和部分 Steam 硬件客户数据。趋势聚焦受控的高风险网络安全模型、本地智能体、AI 材料搜索、供应链安全与开放应用分发。",
+      "markdown": "daily-tech-news/briefs/2026-08-11.md",
+      "url": "reader.html?date=2026-08-11",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "政策"
+      ]
+    },
     {
       "date": "2026-08-10",
       "title": "每日科技新闻简报｜2026-08-10",
