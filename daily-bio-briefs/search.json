@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-10",
+  "updated": "2026-08-11",
   "briefs": [
+    {
+      "date": "2026-08-11",
+      "title": "每日合成与发育生物学简报 - 2026-08-11",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Evolverator: An engineered yeast system to drive rapid continuous in vivo evolution of proteins",
+        "Systematic mapping of orthogonality and domain-swap permissiveness across LysR-type transcriptional biosensors",
+        "Systematic pathway engineering of *Escherichia coli* for enhanced 3'-sialyllactose production",
+        "Spatial Control of Light-Responsive Proteins and Optogenetics Within Hydrogels via Volumetric Bioprinting",
+        "Closed-loop optical optimization enables patterned retinal stimulation in vivo at cellular scales",
+        "From Diverse Prior Knowledge to Mechanistic Causal Network Using PSoup: A Case Study in Shoot Branching",
+        "Node-specific phase adjustment buffers the collective output of hyperthermal sarcomeric oscillations while preserving local power in a five-node model",
+        "Before auxin distribution matters: Prepatterning of the Arabidopsis embryo axis by MPK6-dependent AUX/IAA8 phosphorylation",
+        "Single-locus chromatin memory enables flexible spatial fate specification in the Drosophila visual system",
+        "Generation of Human Taste Bud Organoids as a Human-Mimetic Platform for Modeling Taste Perception"
+      ],
+      "summary": "合成生物学的主线很清晰：模型指导的酵母连续进化线路、LTTR 转录因子生物传感器的正交化，以及 *E. coli* 代谢通路的染色体整合，都在把“可编程输入—状态判定—功能输出”推进到更可复用的工程模块。 空间与时间控制正在成为工程生物学的共同接口：体积生物打印把光响应蛋白和 optogenetic circuit 放进厘米尺度水凝胶，闭环光学系统则把视网膜刺激定位和实时校正做到细胞尺度。 发育合成生物学的直接命中仍然不多，但天然发育系统的“历史依赖”信号很强：拟南芥胚胎轴的第一步轴向预模式先于可检测的生长素梯度，果蝇视觉系统用单个位点的染色质记忆保留空间身份，同时允许部分神经元绕过该身份。 控制论与生物学方向出现两个互补范式：一类用相位调节缓冲心肌肌节群体输出，另一类用因果网络和实验扰动预测植物分枝；两者都把局部状态、时间延迟和系统级输出联系起来。",
+      "markdown": "briefs/2026-08-11.md",
+      "url": "reader.html?date=2026-08-11",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Evolverator: An engineered yeast system to drive rapid continuous in vivo evolution of proteins",
+        "Systematic mapping of orthogonality and domain-swap permissiveness across LysR-type transcriptional biosensors",
+        "Systematic pathway engineering of *Escherichia coli* for enhanced 3'-sialyllactose production",
+        "Spatial Control of Light-Responsive Proteins and Optogenetics Within Hydrogels via Volumetric Bioprinting",
+        "Closed-loop optical optimization enables patterned retinal stimulation in vivo at cellular scales",
+        "From Diverse Prior Knowledge to Mechanistic Causal Network Using PSoup: A Case Study in Shoot Branching",
+        "Node-specific phase adjustment buffers the collective output of hyperthermal sarcomeric oscillations while preserving local power in a five-node model",
+        "Before auxin distribution matters: Prepatterning of the Arabidopsis embryo axis by MPK6-dependent AUX/IAA8 phosphorylation",
+        "Single-locus chromatin memory enables flexible spatial fate specification in the Drosophila visual system",
+        "Generation of Human Taste Bud Organoids as a Human-Mimetic Platform for Modeling Taste Perception"
+      ]
+    },
     {
       "date": "2026-08-10",
       "title": "每日合成与发育生物学简报 - 2026-08-10",
