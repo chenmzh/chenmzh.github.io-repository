@@ -1,6 +1,61 @@
 {
-  "updated": "2026-08-11",
+  "updated": "2026-08-12",
   "briefs": [
+    {
+      "date": "2026-08-12",
+      "title": "每日股票市场简报｜2026-08-12",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "宏观",
+        "AI",
+        "云",
+        "电商",
+        "消费",
+        "数据中心",
+        "银行",
+        "全球市场"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "XOM",
+        "JPM",
+        "AMZN",
+        "MSFT",
+        "GOOGL",
+        "TSLA",
+        "META"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "XOM Exxon Mobil",
+        "JPM JPMorgan Chase",
+        "AMZN Amazon"
+      ],
+      "summary": "8/11 美股高位回落，Nasdaq 与成长相对偏弱；隔夜亚洲芯片反弹、油价与霍尔木兹风险继续影响板块轮动，8/12 美国 CPI 是主要定价事件；SMH 仍低于 50 日线，观察名单以条件式突破/回调为主。",
+      "markdown": "briefs/2026-08-12.md",
+      "url": "reader.html?date=2026-08-12"
+    },
     {
       "date": "2026-08-11",
       "title": "每日股票市场简报｜2026-08-11",
