@@ -1,6 +1,39 @@
 {
-  "updated": "2026-08-11",
+  "updated": "2026-08-12",
   "briefs": [
+    {
+      "date": "2026-08-12",
+      "title": "每日科技新闻简报｜2026-08-12",
+      "categories": [
+        "AI",
+        "软件",
+        "网络安全",
+        "政策",
+        "科研"
+      ],
+      "items": [
+        "Anthropic 为 Claude 输出加入机器可读内容标记，以适配欧盟透明度义务",
+        "Google 称 Gemini 独立应用月活用户突破 10 亿",
+        "Anthropic 称未发布研究版 Claude 将黎曼猜想相关下界从 41.6% 推进到 67.2%",
+        "OpenAI 推出 ChatGPT Linux 桌面预览版，包含 ChatGPT、Work 和 Codex",
+        "River AI 获 11 亿美元融资，押注可由用户持续训练的个人智能体",
+        "Spotify 将给 AI Persona 艺人打标，并默认排除其音乐推荐",
+        "OpenAI 长期高管 Brad Lightcap 离职，称将“开始新的事情”",
+        "FBI 警告攻击者入侵社交账户，盗取并传播成人和未成年人私密内容",
+        "FBI 调查疑似在美国联邦机构工作的朝鲜远程 IT 人员",
+        "Delta 调查航班上出现的仿冒机上 Wi‑Fi 网络"
+      ],
+      "summary": "Anthropic 同时推进 Claude 内容标记与可验证数学研究；Google 称 Gemini 独立应用达到 10 亿月活；OpenAI、River AI 和 Spotify 的动态显示 AI 正进入桌面工作流、个人化训练与内容分发治理。趋势聚焦 AI 透明度、长时运行代理、十亿级消费分发和身份/执行环境安全。",
+      "markdown": "daily-tech-news/briefs/2026-08-12.md",
+      "url": "reader.html?date=2026-08-12",
+      "tags": [
+        "AI",
+        "软件",
+        "网络安全",
+        "政策",
+        "科研"
+      ]
+    },
     {
       "date": "2026-08-11",
       "title": "每日科技新闻简报｜2026-08-11",
