@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-11",
+  "updated": "2026-08-12",
   "briefs": [
+    {
+      "date": "2026-08-12",
+      "title": "每日合成与发育生物学简报 - 2026-08-12",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "eFormate-mediated CO₂ bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
+        "Engineered probiotics block arsenite absorption in the gastrointestinal tract",
+        "Targeted KRAS suppression in colorectal cancer via in vivo self-assembled siRNAs encapsulated in endogenous small extracellular vesicles",
+        "Mining Microbial Transcriptomes to Engineer Cell-Based Bacterial Biosensors in Gut-Resident Bacteroidaceae",
+        "CRISPR-FOIL: A Programmable CRISPR Tool to Engineer and Illuminate Chromatin Folding in Live Human Cells",
+        "Elongating human heart organoids recapitulate early cardiac morphogenesis and axial organization",
+        "Sequential stenciling to reconstitute 2D microtissues for multicellular and synthetic signaling architectures",
+        "Human iPSC-derived heart valve-like assembloids model valve development and disease pathology",
+        "A nutrient-sensitive enterokine coordinates developmental plasticity through inter-organ signaling",
+        "CRITERIA: A network decomposition and elementary flux mode translation-based tool for computing equilibria of biochemical systems"
+      ],
+      "summary": "今天最清晰的合成生物学主线是“感知—逻辑—输出”的模块化：工程益生菌用砷响应开关驱动螯合，KRAS 基因线路驱动细胞外囊泡装载 siRNA，Bacteroidaceae 生物传感器则把体内转录组信号转成可筛选的响应元件。 生物制造正在扩大可用底盘和碳源空间：PNAS 的 eFormate 平台把电化学 CO₂ 还原与多种微生物的碳升级串联起来，展示了 abiotic–biotic 模块化级联的可扩展方向。 发育合成生物学的直接命中集中在“把空间和力学输入工程化”：人心脏延长类器官重现轴向组织与环化样曲率，序贯模板化平台则把 synNotch 梯度、肿瘤微环境和肠道隐窝—绒毛结构放入可重复的空间图案中。 控制论与生物学方向出现两个互补层次：Limostatin—胰岛素样肽回路调节营养胁迫下的发育速度，CRITERIA 和细胞因子网络工作则分别从稳态计算与患者单细胞网络层面分析生物系统的鲁棒性和反馈重连。",
+      "markdown": "briefs/2026-08-12.md",
+      "url": "reader.html?date=2026-08-12",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "eFormate-mediated CO₂ bioconversion: A modular electrochemical-microbial cascade compared across a diverse set of microorganisms",
+        "Engineered probiotics block arsenite absorption in the gastrointestinal tract",
+        "Targeted KRAS suppression in colorectal cancer via in vivo self-assembled siRNAs encapsulated in endogenous small extracellular vesicles",
+        "Mining Microbial Transcriptomes to Engineer Cell-Based Bacterial Biosensors in Gut-Resident Bacteroidaceae",
+        "CRISPR-FOIL: A Programmable CRISPR Tool to Engineer and Illuminate Chromatin Folding in Live Human Cells",
+        "Elongating human heart organoids recapitulate early cardiac morphogenesis and axial organization",
+        "Sequential stenciling to reconstitute 2D microtissues for multicellular and synthetic signaling architectures",
+        "Human iPSC-derived heart valve-like assembloids model valve development and disease pathology",
+        "A nutrient-sensitive enterokine coordinates developmental plasticity through inter-organ signaling",
+        "CRITERIA: A network decomposition and elementary flux mode translation-based tool for computing equilibria of biochemical systems"
+      ]
+    },
     {
       "date": "2026-08-11",
       "title": "每日合成与发育生物学简报 - 2026-08-11",
