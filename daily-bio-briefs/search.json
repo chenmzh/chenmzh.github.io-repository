@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-12",
+  "updated": "2026-08-13",
   "briefs": [
+    {
+      "date": "2026-08-13",
+      "title": "每日合成与发育生物学简报 - 2026-08-13",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Insertion-Ligation Reconstitution of Transmembrane Proteins for Functional Interfaces in Synthetic Cells",
+        "A synthetic biology approach to bacterial transcription initiation: RNA aptamer based in vitro transcription assay for rapidly testing bacterial RNA polymerases, promoters and inhibitors",
+        "Decoding the role of microbial interspecies interactions on nitrogen fixation",
+        "Light-directed biofilm formation reveals the functional contributions of periplasmic cytochromes to the electrochemical activity of *Shewanella oneidensis*",
+        "Spontaneous Curvature Sculpts Filament-Vesicle Morphogenesis",
+        "Differential turnover of apicobasal regulators drives emergent mechano-response and shape homeostasis",
+        "A systems-based analysis of feedback structure and characteristic timescales in turnover-mediated mechanical adaptation",
+        "On the Convergence Rate Lower Bound of Biochemical Computational Modules",
+        "Dynamics of fluctuating populations in multi-state switching environments",
+        "Environment-specific mechanosensing preserves a common bleb-based migratory program across diverse embryonic environments"
+      ],
+      "summary": "合成生物学的直接进展集中在“可测量的输入—可编程的分子接口—可验证的输出”：合成细胞获得了跨膜蛋白介导的细胞间黏附/信号转导接口，RNA aptamer 平台则把细菌启动子、RNA 聚合酶和抑制剂测试变成了实时体外测量。 微生物系统工程从单菌株优化走向群落级设计：底向上构建的合成微生物群落用于解析固氮菌之间的生长非依赖互作；Shewanella 的光图案化生物膜则把空间结构固定下来，以区分周质细胞色素对电子传递的不同作用。 发育合成生物学与形态发生的共同关键词是“涌现反馈”：细胞连接的差异周转可自动产生机械化学负反馈并维持形状稳态；囊泡内丝状结构的自发曲率则提供了编程合成形态的物理设计参数。 控制论方向出现三个尺度互补的模型：组织力学适应的闭环时间尺度、生化计算模块的收敛速度下界，以及随机营养环境中的微生物种群竞争动力学。它们都把生物系统的鲁棒性、响应速度或稳态作为可计算对象。",
+      "markdown": "briefs/2026-08-13.md",
+      "url": "reader.html?date=2026-08-13",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Insertion-Ligation Reconstitution of Transmembrane Proteins for Functional Interfaces in Synthetic Cells",
+        "A synthetic biology approach to bacterial transcription initiation: RNA aptamer based in vitro transcription assay for rapidly testing bacterial RNA polymerases, promoters and inhibitors",
+        "Decoding the role of microbial interspecies interactions on nitrogen fixation",
+        "Light-directed biofilm formation reveals the functional contributions of periplasmic cytochromes to the electrochemical activity of *Shewanella oneidensis*",
+        "Spontaneous Curvature Sculpts Filament-Vesicle Morphogenesis",
+        "Differential turnover of apicobasal regulators drives emergent mechano-response and shape homeostasis",
+        "A systems-based analysis of feedback structure and characteristic timescales in turnover-mediated mechanical adaptation",
+        "On the Convergence Rate Lower Bound of Biochemical Computational Modules",
+        "Dynamics of fluctuating populations in multi-state switching environments",
+        "Environment-specific mechanosensing preserves a common bleb-based migratory program across diverse embryonic environments"
+      ]
+    },
     {
       "date": "2026-08-12",
       "title": "每日合成与发育生物学简报 - 2026-08-12",
