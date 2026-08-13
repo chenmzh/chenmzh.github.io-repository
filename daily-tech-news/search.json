@@ -1,6 +1,41 @@
 {
-  "updated": "2026-08-12",
+  "updated": "2026-08-13",
   "briefs": [
+    {
+      "date": "2026-08-13",
+      "title": "每日科技新闻简报｜2026-08-13",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "网络安全",
+        "科研"
+      ],
+      "items": [
+        "xAI 发布 Grok 4.6，主打长时运行代理和交互式工作",
+        "Google 发布 Pixel 11 系列，以 Tensor G6 和 Gemini Intelligence 推进端侧 AI",
+        "Cerebras 报告 AI 推理云业务近四倍增长，扩张数据中心和制造产能",
+        "Google DeepMind 将多语言手语转文字带入 Gboard 和 Live Transcribe",
+        "Cisco 财报显示 AI 超大规模客户订单继续推高网络基础设施需求",
+        "Pixel Watch 5 加入离线 Gemini、主动建议和 Health Guardian 功能",
+        "Google Pixel Tag 将 UWB、Bluetooth Channel Sounding 用于 Find Hub 定位",
+        "Mindgard 完成 3000 万美元 A 轮，继续扩展 AI 红队测试平台"
+      ],
+      "summary": "xAI 发布 Grok 4.6，前沿模型竞争继续转向长时运行代理；Google 以 Pixel 11、Tensor G6 和手语转文字把 AI 推向端侧与无障碍交互；Cerebras 与 Cisco 的业绩披露显示，推理云、网络互联和数据中心容量正在成为 AI 基础设施扩张的新瓶颈。",
+      "markdown": "daily-tech-news/briefs/2026-08-13.md",
+      "url": "reader.html?date=2026-08-13",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "硬件",
+        "网络安全",
+        "科研"
+      ]
+    },
     {
       "date": "2026-08-12",
       "title": "每日科技新闻简报｜2026-08-12",
