@@ -1,6 +1,59 @@
 {
-  "updated": "2026-08-12",
+  "updated": "2026-08-13",
   "briefs": [
+    {
+      "date": "2026-08-13",
+      "title": "每日股票市场简报｜2026-08-13",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "宏观",
+        "AI",
+        "云",
+        "电商",
+        "消费",
+        "数据中心",
+        "银行",
+        "全球市场"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "XOM",
+        "JPM",
+        "AMZN",
+        "SMCI",
+        "CRWV"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "XOM Exxon Mobil",
+        "JPM JPMorgan Chase",
+        "AMZN Amazon"
+      ],
+      "summary": "7 月 CPI 同比约 3.4%、核心约 2.5%，AI 业绩与亚洲芯片反弹支撑风险偏好；但 SMH 仍低于 50 日线，PPI、零售销售与油价/霍尔木兹风险带来双向波动。",
+      "markdown": "briefs/2026-08-13.md",
+      "url": "reader.html?date=2026-08-13"
+    },
     {
       "date": "2026-08-12",
       "title": "每日股票市场简报｜2026-08-12",
