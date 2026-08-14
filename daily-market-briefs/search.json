@@ -1,6 +1,57 @@
 {
-  "updated": "2026-08-13",
+  "updated": "2026-08-14",
   "briefs": [
+    {
+      "date": "2026-08-14",
+      "title": "每日股票市场简报｜2026-08-14",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "宏观",
+        "AI",
+        "云",
+        "电商",
+        "消费",
+        "数据中心",
+        "银行",
+        "全球市场"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "XOM",
+        "JPM",
+        "AMZN"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "XOM Exxon Mobil",
+        "JPM JPMorgan Chase",
+        "AMZN Amazon"
+      ],
+      "summary": "8/13 美股创收盘新高，PPI headline 持平但核心服务价格仍有黏性；隔夜期货横盘、亚洲分化，SMH 仍低于 50 日线，零售销售、油价/霍尔木兹与 8/26 NVIDIA 财报构成主要事件风险，五只观察股均等待条件确认。",
+      "markdown": "briefs/2026-08-14.md",
+      "url": "reader.html?date=2026-08-14"
+    },
     {
       "date": "2026-08-13",
       "title": "每日股票市场简报｜2026-08-13",
