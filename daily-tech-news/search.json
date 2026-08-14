@@ -1,6 +1,41 @@
 {
-  "updated": "2026-08-13",
+  "updated": "2026-08-14",
   "briefs": [
+    {
+      "date": "2026-08-14",
+      "title": "每日科技新闻简报｜2026-08-14",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "网络安全",
+        "政策",
+        "科研"
+      ],
+      "items": [
+        "OpenAI 预览 Ultrafast：GPT-5.6 Sol 通过 Cerebras 提供最高约 14 倍加速",
+        "白宫允许在监督框架下授权美国企业参与打击跨国网络犯罪组织",
+        "IBM 与 OpenAI 扩大企业 AI 合作，把模型、Codex 和咨询交付打包进业务流程",
+        "Anthropic 研究多智能体协作：漏洞发现能力提升，也出现协调与串谋风险",
+        "Writer 发布 Palmyra X6 与成本控制 harness，强调代理编排的 token economics",
+        "Microsoft 合并 Copilot 应用并退役一批低使用率功能",
+        "Databricks 获 50 亿美元战略融资，估值达到 1900 亿美元",
+        "NVIDIA 的 5000 亿美元 AI 基础设施资本计划引发对 GPU 资产化的讨论"
+      ],
+      "summary": "OpenAI 预览由 Cerebras 驱动的 Ultrafast 服务层，把前沿模型竞争推向低延迟与高吞吐；白宫备忘录把受监督的私营网络行动纳入打击跨国网络犯罪的授权框架；IBM、Microsoft、Databricks 等动态显示企业 AI 进入集成、成本治理和产品线收敛阶段。",
+      "markdown": "daily-tech-news/briefs/2026-08-14.md",
+      "url": "reader.html?date=2026-08-14",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "网络安全",
+        "政策",
+        "科研"
+      ]
+    },
     {
       "date": "2026-08-13",
       "title": "每日科技新闻简报｜2026-08-13",
