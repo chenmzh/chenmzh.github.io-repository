@@ -1,6 +1,49 @@
 {
-  "updated": "2026-08-13",
+  "updated": "2026-08-14",
   "briefs": [
+    {
+      "date": "2026-08-14",
+      "title": "每日合成与发育生物学简报 - 2026-08-14",
+      "summary": "今日最清晰的共同主题是“把生物状态转变变成可识别、可操纵的反馈结构”：PNAS 的 ROOT 框架从网络逻辑中定位不可逆转移的反馈回路，Science 的神经和生态—进化研究则在活体系统中检验历史依赖与反馈如何改变状态。 合成生物学侧出现两类可落地工程：一类是提高底盘的多重基因组编辑能力，另一类是让肿瘤定殖菌在体内可外部调控；另有从 CO₂ 生产亮氨酸的中试规模结果。 发育方向的强相关新作主要来自天然系统和类器官：TGF β 对果蝇卵巢上皮通透性的空间控制，以及 EBV 感染扁桃体类器官中生发中心样 B 细胞状态的形成。 bioRxiv/medRxiv 在本窗口内新条目很多，但强相关结果相对集中；arXiv q bio 的精确窗口结果较少，最值得看的条目是共享环境波动如何选择不对称资源继承的群体模型。",
+      "items": [
+        "今日最清晰的共同主题是“把生物状态转变变成可识别、可操纵的反馈结构”：PNAS 的 ROOT 框架从网络逻辑中定位不可逆转移的反馈回路，Science 的神经和生态—进化研究则在活体系统中检验历史依赖与反馈如何改变状态。",
+        "合成生物学侧出现两类可落地工程：一类是提高底盘的多重基因组编辑能力，另一类是让肿瘤定殖菌在体内可外部调控；另有从 CO₂ 生产亮氨酸的中试规模结果。",
+        "发育方向的强相关新作主要来自天然系统和类器官：TGF β 对果蝇卵巢上皮通透性的空间控制，以及 EBV 感染扁桃体类器官中生发中心样 B 细胞状态的形成。",
+        "bioRxiv/medRxiv 在本窗口内新条目很多，但强相关结果相对集中；arXiv q bio 的精确窗口结果较少，最值得看的条目是共享环境波动如何选择不对称资源继承的群体模型。",
+        "1. The structural origin of irreversible transitions in biological networks",
+        "作者/来源/发布日期：Kim；Jang；Lee；Hopper；Cho / PNAS / 2026 08 13",
+        "链接：PubMed · DOI",
+        "方向标签：控制论与生物学；合成生物学（网络设计邻近）",
+        "中文总结：论文提出 ROOT（Revelation Of the Original circuit of irreversible Transition），从逻辑网络模型中定位导致生物过程不可逆转移的分子组件和反馈回路。作者进一步给出恢复原状态、或消除不可逆性的控制策略，并将其与多类生物过程和已有实验文献联系起来。",
+        "为什么值得看：它把“细胞记忆/不可逆分化”从现象描述推进到可计算的反馈回路识别与反向控制问题。",
+        "2. A Dual Dimensional CRISPR Toolkit Enables One Step High Efficiency Multiplex Genome Editing in Komagataella phaffii",
+        "作者/来源/发布日期：Yu；Chen；Maimaitirexiati；Bai；Li；Yu；Yu；Guo / Metabolic Engineering / 2026 08 13"
+      ],
+      "tags": [
+        "合成生物学",
+        "控制论与生物学",
+        "发育合成生物学"
+      ],
+      "markdown": "briefs/2026-08-14.md",
+      "url": "reader.html?date=2026-08-14",
+      "topics": [
+        "合成生物学",
+        "控制论与生物学",
+        "发育合成生物学"
+      ],
+      "articles": [
+        "The structural origin of irreversible transitions in biological networks",
+        "A Dual-Dimensional CRISPR Toolkit Enables One-Step High-Efficiency Multiplex Genome Editing in *Komagataella phaffii*",
+        "Programmable genetic control of tumor-colonizing *Bifidobacterium longum* for intratumoral therapeutic delivery and biocontainment",
+        "Pilot-scale production of leucine from CO₂",
+        "Functional atlas of vertebrate viral RNA elements that stabilize RNA and enhance translation",
+        "TGF-β signaling modulates adhesion and actomyosin contractility to pattern epithelial permeability in *Drosophila* ovaries",
+        "A tonsil organoid model reveals Epstein-Barr virus-infected germinal center B cell states during primary infection",
+        "A thalamocortical circuit encoding deviations from sensory history",
+        "Eco-evolutionary feedback reshapes competitive dynamics in an orchard fly system",
+        "Shared environmental risk selects asymmetric inheritance of a protective reserve"
+      ]
+    },
     {
       "date": "2026-08-13",
       "title": "每日合成与发育生物学简报 - 2026-08-13",
