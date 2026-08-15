@@ -514,7 +514,18 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <div class="term">为什么“转置”出现在这里</div>
         <p class="plain">形状自检：$(\bar W^{(l+1)})^\top\in\mathbb R^{d_l\times d_{l+1}}$ 乘以 $\delta^{(l+1)}\in\mathbb R^{d_{l+1}}$ 得到 $\mathbb R^{d_l}$，正好是本层宽度。转置的作用是把“下一层的责任”按连接权重<b>反向汇聚</b>回本层每个单元。</p>
       </div>
-    </section>
+    
+      <div class="viz">
+        <h4>🏗 多层传递可视化：2 → 3 → 3 → 1，每个参数都有名字</h4>
+        <div class="svg-wrap"><svg id="multiSvg" viewBox="0 0 980 540" role="img" aria-label="多层网络前向与反向传递可视化"></svg></div>
+        <div class="step-bar">
+          <button class="btn" id="multiFwd" type="button">前向 0→4</button>
+          <button class="btn warm" id="multiBwd" type="button">反向 0→4</button>
+          <button class="btn ghost" id="multiReset" type="button">重置</button>
+        </div>
+        <div id="multiParams"></div>
+        <div class="caption">阅读顺序：<b>前向</b>从左到右逐层算；<b>反向</b>从损失开始，每经过一个权重矩阵就乘一次它的转置，再乘本层 ReLU 导数。下面三张卡片把 $W^{(1)},W^{(2)},W^{(3)}$ 中每一个参数的名字（以及它的梯度名字）都列出来了。</div>
+      </div></section>
 
     <!-- ============ FULL BACKPROP LAB ============ -->
     <section id="lab">
@@ -1206,6 +1217,93 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     $('#outerDisplay').innerHTML=html;
   }
   $$('#outerD1,#outerD2,#outerV1,#outerV2').forEach(el=>el.addEventListener('input',render));
+  render();
+})();
+
+/* ---------- multi-layer pass ---------- */
+(()=>{
+  const svg=$('#multiSvg');
+  const W1=[[1,0,0],[0,1,0],[1,1,0]];
+  const W2=[[1,0,0,0],[0,1,0,0],[0,0,1,0]];
+  const W3=[[2,-1,1,0]];
+  let fwdStep=0,bwdStep=0;
+  const relu=z=>Math.max(0,z),drelu=z=>z>0?1:0;
+  const X=[1,2,1];
+  function fwd(){
+    const z1=W1.map(r=>r.reduce((s,w,i)=>s+w*X[i],0));
+    const v1=z1.map(relu),a1=[...v1,1];
+    const z2=W2.map(r=>r.reduce((s,w,i)=>s+w*a1[i],0));
+    const v2=z2.map(relu),a2=[...v2,1];
+    const f=W3[0].reduce((s,w,i)=>s+w*a2[i],0),loss=(f-1)*(f-1);
+    return {z1,v1,z2,v2,f,loss};
+  }
+  function back(){
+    const q=fwd();const dLdf=2*(q.f-1);
+    const d2=q.v2.map((v,i)=>(v>0?1:0)*W3[0][i]*dLdf);
+    const core2=W2.map(r=>r.slice(0,3));
+    const d1=q.v1.map((v,i)=>(v>0?1:0)*core2.reduce((s,row,j)=>s+row[i]*d2[j],0));
+    const gW3=q.v2.map((v,i)=>dLdf*v).concat([dLdf]);
+    const gW2=d2.map(d=>q.v1.map(v=>d*v).concat([d]));
+    const gW1=d1.map(d=>[d*X[0],d*X[1],d]);
+    return {...q,dLdf,d2,d1,gW3,gW2,gW1};
+  }
+  const sub='₀₁₂₃₄₅₆₇₈₉',sup='⁰¹²³⁴⁵⁶⁷⁸⁹';
+  const pname=(l,i,j,dout,din)=> j===din?'b'+sub[i+1]+'⁽'+sup[l]+'⁾':'w'+sub[i+1]+sub[j+1]+'⁽'+sup[l]+'⁾';
+  function block(cx,cy,w,h,title,lines,col,on){
+    const g=svgAdd(svg,'g',{transform:`translate(${cx},${cy})`});
+    svgAdd(g,'rect',{width:w,height:h,rx:13,fill:on?'color-mix(in srgb,'+col+' 8%, var(--surface))':'var(--surface)',stroke:on?col:'var(--line)',strokeWidth:on?2:1.5});
+    svgAdd(g,'text',{x:w/2,y:24,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},title);
+    lines.forEach((t,i)=>svgAdd(g,'text',{x:w/2,y:46+i*18,'text-anchor':'middle','font-size':11,fill:on?'var(--ink)':'var(--muted)'},t));
+  }
+  function render(){
+    const q=fwd(),b=back();
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mkF=svgMarker(defs,'multiF','#176653'),mkB=svgMarker(defs,'multiB','#b45a2b');
+    const on=(i)=>fwdStep>=i;
+    block(30,200,130,140,'v⁽⁰⁾ = [x;1]',['x₁ = 1','x₂ = 2','1（bias）'],'#176653',true);
+    block(220,170,160,180,'v⁽¹⁾ = ReLU(z⁽¹⁾)',on(1)?(on(2)?['z₁='+q.z1[0]+' · v₁='+q.v1[0],'z₂='+q.z1[1]+' · v₂='+q.v1[1],'z₃='+q.z1[2]+' · v₃='+q.v1[2]]:['z₁='+q.z1[0],'z₂='+q.z1[1],'z₃='+q.z1[2]]):['等待前向…'],'#176653',on(1));
+    block(400,170,160,180,'v⁽²⁾ = ReLU(z⁽²⁾)',on(2)?(on(3)?['z₁='+q.z2[0]+' · v₁='+q.v2[0],'z₂='+q.z2[1]+' · v₂='+q.v2[1],'z₃='+q.z2[2]+' · v₃='+q.v2[2]]:['z₁='+q.z2[0],'z₂='+q.z2[1],'z₃='+q.z2[2]]):['等待前向…'],'#176653',on(2));
+    block(580,245,120,80,'f = W⁽³⁾v⁽²⁾',on(3)?['f = '+q.f]:['等待前向…'],'#176653',on(3));
+    block(760,255,150,70,'ℓ = (f−y)²',on(4)?['ℓ = '+q.loss]:['等待前向…'],'#176653',on(4));
+    // forward connectors with matrix names
+    const fwdEdges=[
+      {x1:160,y1:265,x2:220,y2:255,lab:'W⁽¹⁾',lx:190,ly:235},
+      {x1:380,y1:255,x2:400,y2:255,lab:'W⁽²⁾',lx:390,ly:158},
+      {x1:560,y1:270,x2:580,y2:280,lab:'W⁽³⁾',lx:570,ly:158},
+      {x1:700,y1:285,x2:760,y2:290,lab:'square',lx:730,ly:265}
+    ];
+    fwdEdges.forEach(e=>{
+      svgCurve(svg,e.x1,e.y1,e.x2,e.y2,{color:'#176653',width:2,marker:mkF,bend:0.3});
+      if(e.lab)svgHalo(svg,e.lx,e.ly,e.lab,{fill:'#176653',font:10.5});
+    });
+    // backward messages
+    const bw=[
+      {step:1,d:'M835,325 C835,390 640,390 640,325',lx:737,ly:412,lab:'δ⁽ᴸ⁾ = ∂ℓ/∂f = '+b.dLdf},
+      {step:2,d:'M640,325 C640,440 480,440 480,350',lx:560,ly:462,lab:'δ⁽²⁾ = φ′⊙(W⁽³⁾)ᵀδ = ['+b.d2.map(fmt)+']'},
+      {step:3,d:'M480,350 C480,490 300,490 300,350',lx:390,ly:512,lab:'δ⁽¹⁾ = φ′⊙(W⁽²⁾)ᵀδ = ['+b.d1.map(fmt)+']'}
+    ];
+    bw.forEach(e=>{
+      if(bwdStep>=e.step){
+        svgAdd(svg,'path',{d:e.d,fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkB});
+        svgHalo(svg,e.lx,e.ly,e.lab,{fill:'#b45a2b',font:10.5});
+      }
+    });
+    if(bwdStep>=4){
+      svgHalo(svg,890,535,'权重梯度 = δ × 前层激活（见下方名册）',{fill:'#b45a2b',font:10.5,anchor:'end'});
+    }
+  }
+  $('#multiFwd').addEventListener('click',()=>{fwdStep=(fwdStep+1)%5;render();});
+  $('#multiBwd').addEventListener('click',()=>{bwdStep=(bwdStep+1)%5;render();});
+  $('#multiReset').addEventListener('click',()=>{fwdStep=0;bwdStep=0;render();});
+  // parameter name rosters
+  function roster(l,dout,din,W,grads){
+    const names=W.map((row,i)=>row.map((_,j)=>pname(l,i,j,dout,din)).join(' · '));
+    const gnames=grads.map((row,i)=>row.map((_,j)=>'∂ℓ/∂'+pname(l,i,j,dout,din)).join(' · '));
+    return `<div class="card compact" style="margin:8px 0"><b>W⁽${'⁰¹²³'[l]}⁾ ∈ ℝ<sup>${dout}×${din+1}</sup>（行 = 接收单元，最后一列 = bias）</b><div style="font-family:Menlo,Monaco,monospace;font-size:.8rem;line-height:1.7">${names.join('<br>')}</div><div class="small" style="margin-top:4px">对应梯度：${gnames.join(' · ')}</div></div>`;
+  }
+  const bp=back();
+  $('#multiParams').innerHTML=roster(1,3,2,W1,bp.gW1)+roster(2,3,3,W2,bp.gW2)+roster(3,1,3,W3,[bp.gW3]);
   render();
 })();
 
