@@ -1,6 +1,51 @@
 {
-  "updated": "2026-08-14",
+  "updated": "2026-08-15",
   "briefs": [
+    {
+      "date": "2026-08-15",
+      "title": "每日合成与发育生物学简报 - 2026-08-15",
+      "summary": "今日最强的共同主题是“把细胞或组织状态变成可编程模块”：Nature Plants 的两篇 pyrenoid 工作分别从最小机制和自下而上重构切入，bioRxiv 的设计蛋白工作则把 T 细胞状态重编程为可移植的遗传模块。 合成生物学出现了从输入到生理输出的完整链条：工程酵母、可光交联水凝胶和可穿戴电子设备组合成可编程 IL-10 递送系统；另一篇理论工作把工程质粒传播与微生物群落生态动力学耦合起来。 控制论与生物学方向的代表性结果集中在反馈和鲁棒性：*C. elegans* 趋化模型包含本体感受反馈，斑马鱼脊索研究揭示后部祖细胞加入与前部液泡化之间的长程反馈，植物 TPL/TPR 家族则在稳定性与状态转换之间调节基因抑制。 发育合成生物学的测量和设计接口继续成熟：空间转录组驱动的细胞特异性 GRN 推断、上皮分支形态发生中的剂量敏感蛋白酶，都为后续构建可控组织提供了机制或工具层面的入口。",
+      "items": [
+        "今日最强的共同主题是“把细胞或组织状态变成可编程模块”：Nature Plants 的两篇 pyrenoid 工作分别从最小机制和自下而上重构切入，bioRxiv 的设计蛋白工作则把 T 细胞状态重编程为可移植的遗传模块。",
+        "合成生物学出现了从输入到生理输出的完整链条：工程酵母、可光交联水凝胶和可穿戴电子设备组合成可编程 IL-10 递送系统；另一篇理论工作把工程质粒传播与微生物群落生态动力学耦合起来。",
+        "控制论与生物学方向的代表性结果集中在反馈和鲁棒性：*C. elegans* 趋化模型包含本体感受反馈，斑马鱼脊索研究揭示后部祖细胞加入与前部液泡化之间的长程反馈，植物 TPL/TPR 家族则在稳定性与状态转换之间调节基因抑制。",
+        "发育合成生物学的测量和设计接口继续成熟：空间转录组驱动的细胞特异性 GRN 推断、上皮分支形态发生中的剂量敏感蛋白酶，都为后续构建可控组织提供了机制或工具层面的入口。",
+        "Ingestible Hydrogel-Encapsulated Optogenetic Yeast Controlled by Wearable Electronics Enables Programmable IL-10 Delivery for Inflammatory Bowel Disease Therapy",
+        "Bottom-up reconstruction of synthetic pyrenoids provides insights into the mechanisms and evolution of carbon concentration by EPYC1 proteins",
+        "Mechanistic insights into CO2-concentrating mechanisms using a synthetic minimal pyrenoid",
+        "Protein design to broadly reprogram engineered T cell function",
+        "Synthetic horizontal gene transfer for ecosystem restoration",
+        "A dynamical circuit model for C. elegans chemotaxis with emergent sharp turns",
+        "Coupling Vgll4b/Yap regulated posterior cell addition with anterior vacuolation enables robust notochord elongation",
+        "The extracellular protease AdamTS-B is a dosage-sensitive regulator of unicellular tracheal branch morphogenesis",
+        "Conservation and divergence within the Arabidopsis TPL/TPR corepressor family",
+        "Spatially varying gene regulation network inference from spatial transcriptomics"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markdown": "briefs/2026-08-15.md",
+      "url": "reader.html?date=2026-08-15",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Ingestible Hydrogel-Encapsulated Optogenetic Yeast Controlled by Wearable Electronics Enables Programmable IL-10 Delivery for Inflammatory Bowel Disease Therapy",
+        "Bottom-up reconstruction of synthetic pyrenoids provides insights into the mechanisms and evolution of carbon concentration by EPYC1 proteins",
+        "Mechanistic insights into CO2-concentrating mechanisms using a synthetic minimal pyrenoid",
+        "Protein design to broadly reprogram engineered T cell function",
+        "Synthetic horizontal gene transfer for ecosystem restoration",
+        "A dynamical circuit model for C. elegans chemotaxis with emergent sharp turns",
+        "Coupling Vgll4b/Yap regulated posterior cell addition with anterior vacuolation enables robust notochord elongation",
+        "The extracellular protease AdamTS-B is a dosage-sensitive regulator of unicellular tracheal branch morphogenesis",
+        "Conservation and divergence within the Arabidopsis TPL/TPR corepressor family",
+        "Spatially varying gene regulation network inference from spatial transcriptomics"
+      ]
+    },
     {
       "date": "2026-08-14",
       "title": "每日合成与发育生物学简报 - 2026-08-14",
