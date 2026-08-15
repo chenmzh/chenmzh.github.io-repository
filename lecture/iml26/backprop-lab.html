@@ -1121,12 +1121,13 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 /* ---------- Jacobian / VJP ---------- */
 (()=>{
   const nEl=$('#jacN'),mEl=$('#jacM');
-  let J=null;
-  function randomize(){const n=+nEl.value,m=+mEl.value;J=Array.from({length:m},(_,i)=>Array.from({length:n},(_,j)=>Math.round((Math.sin((i+1)*(j+2))+((i+j)%2?0.6:-0.4))*100)/100));render();}
+  let J=null,u=null;
+  const rnd=()=>Math.round((Math.random()*4-2)*10)/10;
+  function randomize(){const n=+nEl.value,m=+mEl.value;J=Array.from({length:m},()=>Array.from({length:n},rnd));u=Array.from({length:m},rnd);render();}
   function render(){
     const n=+nEl.value,m=+mEl.value;
     if(!J||J.length!==m||J[0].length!==n)randomize();
-    const u=Array.from({length:m},(_,i)=>Math.round((i%2===0?0.8+i*0.4:-0.6-i*0.3)*100)/100);
+    if(!u||u.length!==m)u=Array.from({length:m},rnd);
     const v=Array.from({length:n},(_,j)=>Math.round(u.reduce((s,ui,i)=>s+ui*J[i][j],0)*100)/100);
     $('#jacNval').textContent=n;$('#jacMval').textContent=m;
     let html=`<div class="small">J = ∂f/∂x ∈ ℝ<sup>${m}×${n}</sup>：行 = 输出 fᵢ，列 = 输入 xⱼ</div>`;
@@ -1144,8 +1145,8 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     html+=`<div class="def toolnote" style="margin-top:10px"><div class="term">内存账本</div><p class="plain">完整 J 需要存 <b>${m}×${n}=${m*n}</b> 个数；VJP 只保留上游向量（${m} 个）与结果向量（${n} 个），共 <b>${m+n}</b> 个数。小表格无所谓，当一层有 4096×4096 个单元时，这就是“存 1600 万个数”与“只传两个 4096 维向量”的差别。</p></div>`;
     $('#jacDisplay').innerHTML=html;
   }
-  nEl.addEventListener('input',()=>{J=null;render();});mEl.addEventListener('input',()=>{J=null;render();});
-  $('#jacRandom').addEventListener('click',randomize);
+  nEl.addEventListener('input',()=>{J=null;u=null;render();});mEl.addEventListener('input',()=>{J=null;u=null;render();});
+  $('#jacRandom').addEventListener('click',()=>{randomize();toast('已生成一组新的随机数');});
   render();
 })();
 
