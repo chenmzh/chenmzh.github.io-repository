@@ -696,6 +696,19 @@ function svgAdd(parent,tag,attrs,text){
   if(text!==undefined)el.textContent=text;
   parent.appendChild(el);return el;
 }
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgCurve(parent,x1,y1,x2,y2,opts={}){
+  const o=Object.assign({color:'var(--accent)',width:1.8,dash:false,marker:null,bend:0.35,flip:1},opts);
+  const dx=(x2-x1),dy=(y2-y1);
+  const c1x=x1+dx*o.bend,c1y=y1+dy*0.15*o.flip,c2x=x2-dx*o.bend,c2y=y2-dy*0.15*o.flip;
+  return svgAdd(parent,'path',{d:`M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`,fill:'none',stroke:o.color,strokeWidth:o.width,strokeDasharray:o.dash?'6 4':'none',markerEnd:o.marker||''});
+}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
 
 /* ---------- theme / toc / progress / reset ---------- */
@@ -729,60 +742,64 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- concept map ---------- */
 (()=>{
-  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1100 510');
+  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1220 560');
   const defs=svgAdd(svg,'defs');
-  for(const [id,col] of [['arrFwd','#176653'],['arrBwd','#b45a2b'],['arrOpt','#285a9e'],['arrTool','#6c4fa1']]){
-    const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});
-    svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:col});
-  }
+  const mkFwd=svgMarker(defs,'cmFwd','#176653'),mkBwd=svgMarker(defs,'cmBwd','#b45a2b'),mkOpt=svgMarker(defs,'cmOpt','#285a9e'),mkTool=svgMarker(defs,'cmTool','#6c4fa1'),mkGray=svgMarker(defs,'cmGray','#8a938b');
   const N=[
-    {id:'n11',x:60,y:230,w:150,h:64,t:'第 11 讲',s:'神经网络模型 · 前向传播',target:null,cls:'prev',col:'#6c7068'},
-    {id:'fwd',x:245,y:70,w:170,h:64,t:'前向传播',s:'x → z → v → f → ℓ',target:'#minimal',cls:'fwd',col:'#176653'},
-    {id:'loss',x:445,y:70,w:170,h:64,t:'损失 ℓ（标量）',s:'衡量预测误差',target:'#sgd',cls:'fwd',col:'#176653'},
-    {id:'bp',x:645,y:60,w:180,h:74,t:'反向传播',s:'从 ℓ 往回追每个权重',target:'#lab',cls:'bwd',col:'#b45a2b'},
-    {id:'sgdnode',x:875,y:60,w:160,h:64,t:'SGD 优化器',s:'W ← W − η∇ℓ',target:'#notlearner',cls:'opt',col:'#285a9e'},
-    {id:'chain',x:645,y:180,w:180,h:58,t:'链式法则',s:'dc/dx = ∏ 局部导数',target:'#chain',cls:'bwd',col:'#b45a2b'},
-    {id:'jac',x:445,y:180,w:170,h:64,t:'Jacobian / VJP',s:'向量版链式法则',target:'#jacobian',cls:'tool',col:'#6c4fa1'},
-    {id:'delta',x:645,y:295,w:180,h:64,t:'误差信号 δ',s:'∂ℓ/∂z：本讲枢纽',target:'#delta',cls:'bwd',col:'#b45a2b'},
-    {id:'act',x:875,y:180,w:160,h:64,t:'激活导数 φ′',s:'梯度闸门',target:'#activation',cls:'bwd',col:'#b45a2b'},
-    {id:'ce',x:875,y:300,w:160,h:64,t:'softmax + 交叉熵',s:'δ⁽ᴸ⁾ = p − y',target:'#crossentropy',cls:'tool',col:'#6c4fa1'},
-    {id:'autod',x:245,y:300,w:170,h:64,t:'自动微分 / tape',s:'自动执行链式法则',target:'#autodiff',cls:'tool',col:'#6c4fa1'},
-    {id:'gcheck',x:445,y:300,w:170,h:64,t:'梯度检查',s:'数值差分复核',target:'#gradcheck',cls:'tool',col:'#6c4fa1'},
-    {id:'n13',x:1020,y:235,w:70,h:110,t:'第 13 讲',s:'初始化 · 学习率 · 正则化',target:null,cls:'prev',col:'#6c7068'}
+    {id:'n11',x:30,y:235,w:170,h:90,t:'第 11 讲',s:'神经网络模型 · 前向传播',target:null,col:'#8a938b'},
+    {id:'fwd',x:260,y:60,w:180,h:72,t:'前向传播',s:'x → z → v → f → ℓ',target:'#minimal',col:'#176653'},
+    {id:'loss',x:500,y:60,w:180,h:72,t:'损失 ℓ（标量）',s:'衡量预测误差',target:'#sgd',col:'#176653'},
+    {id:'bp',x:740,y:60,w:200,h:76,t:'反向传播',s:'从 ℓ 往回追每个权重',target:'#lab',col:'#b45a2b'},
+    {id:'sgd',x:970,y:60,w:180,h:72,t:'SGD 优化器',s:'W ← W − η∇ℓ',target:'#notlearner',col:'#285a9e'},
+    {id:'n13',x:1150,y:225,w:70,h:130,t:'第 13 讲',s:'初始化 · 学习率 · 正则化',target:null,col:'#8a938b'},
+    {id:'chain',x:740,y:190,w:200,h:60,t:'链式法则',s:'dc/dx = ∏ 局部导数',target:'#chain',col:'#b45a2b'},
+    {id:'jac',x:500,y:190,w:180,h:60,t:'Jacobian / VJP',s:'向量版链式法则',target:'#jacobian',col:'#6c4fa1'},
+    {id:'delta',x:740,y:320,w:200,h:60,t:'误差信号 δ',s:'∂ℓ/∂z：本讲枢纽',target:'#delta',col:'#b45a2b'},
+    {id:'act',x:970,y:190,w:180,h:60,t:'激活导数 φ′',s:'梯度闸门',target:'#activation',col:'#b45a2b'},
+    {id:'ce',x:970,y:320,w:180,h:60,t:'softmax + 交叉熵',s:'δ⁽ᴸ⁾ = p − y',target:'#crossentropy',col:'#6c4fa1'},
+    {id:'autod',x:260,y:320,w:180,h:60,t:'自动微分 / tape',s:'自动执行链式法则',target:'#autodiff',col:'#6c4fa1'},
+    {id:'gcheck',x:500,y:320,w:180,h:60,t:'梯度检查',s:'数值差分复核',target:'#gradcheck',col:'#6c4fa1'}
   ];
-  const E=[
-    {from:'n11',to:'fwd',label:'前向',col:'arrFwd'},
-    {from:'fwd',to:'loss',label:'',col:'arrFwd'},
-    {from:'loss',to:'bp',label:'标量损失',col:'arrBwd'},
-    {from:'bp',to:'sgdnode',label:'∇ℓ',col:'arrOpt'},
-    {from:'sgdnode',to:'n13',label:'更新 W',col:'arrOpt'},
-    {from:'bp',to:'chain',label:'反复使用',col:'arrBwd'},
-    {from:'chain',to:'jac',label:'向量版',col:'arrTool'},
-    {from:'jac',to:'delta',label:'只传向量',col:'arrBwd'},
-    {from:'delta',to:'bp',label:'逐层向前',col:'arrBwd'},
-    {from:'delta',to:'act',label:'乘 φ′',col:'arrBwd'},
-    {from:'act',to:'sgdnode',label:'',col:'arrBwd'},
-    {from:'loss',to:'ce',label:'分类损失',col:'arrTool'},
-    {from:'ce',to:'bp',label:'δ⁽ᴸ⁾',col:'arrBwd'},
-    {from:'fwd',to:'autod',label:'记录 tape',col:'arrTool'},
-    {from:'autod',to:'bp',label:'反向读带',col:'arrTool'},
-    {from:'loss',to:'gcheck',label:'数值复核',col:'arrTool'},
-    {from:'gcheck',to:'bp',label:'验证',col:'arrTool'}
-  ];
-  const pos=Object.fromEntries(N.map(n=>[n.id,n]));
-  for(const e of E){
-    const a=pos[e.from],b=pos[e.to];
-    const x1=a.x+a.w/2,y1=a.y+a.h/2,x2=b.x+b.w/2,y2=b.y+b.h/2;
-    const mx=(x1+x2)/2,my=(y1+y2)/2;
-    const dx=Math.abs(x2-x1)/2.4;
-    svgAdd(svg,'path',{d:`M${x1},${y1} C${x1+dx},${y1} ${x2-dx},${y2} ${x2},${y2}`,fill:'none',stroke:'var(--line)',strokeWidth:1.6,markerEnd:`url(#${e.col})`});
-    if(e.label){svgAdd(svg,'text',{x:mx,y:my-4,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},e.label);}
+  const P=Object.fromEntries(N.map(n=>[n.id,n]));
+  const side=(id,dir)=>{const n=P[id];if(dir==='l')return[n.x,n.y+n.h/2];if(dir==='r')return[n.x+n.w,n.y+n.h/2];if(dir==='t')return[n.x+n.w/2,n.y];return[n.x+n.w/2,n.y+n.h];};
+  function route(pts,color,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length-1;i++){d+=` L${pts[i][0]},${pts[i][1]}`;}
+    d+=` L${pts[pts.length-1][0]},${pts[pts.length-1][1]}`;
+    const marker=color==='#176653'?mkFwd:color==='#b45a2b'?mkBwd:color==='#285a9e'?mkOpt:color==='#6c4fa1'?mkTool:mkGray;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:1.9,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
   }
+  function conn(a,ad,b,bd,col,label,lx,ly,anchor='middle'){
+    const [x1,y1]=side(a,ad),[x2,y2]=side(b,bd);
+    const pts=[[x1,y1],[(x1+x2)/2,y1],[(x1+x2)/2,y2],[x2,y2]];
+    route(pts,col,label,lx,ly,anchor);
+  }
+  // forward / optimization spine
+  conn('n11','r','fwd','l','#8a938b','前向',232,150);
+  route([side('fwd','r'),side('loss','l')],'#176653','',440,90);
+  conn('loss','r','bp','l','#b45a2b','标量 ℓ',710,78);
+  conn('bp','r','sgd','l','#285a9e','∇ℓ',955,78);
+  route([[1150,132],[1185,180],[1185,225]],'#285a9e','更新 W',1178,172,'end');
+  // backward theory spine
+  conn('bp','b','chain','t','#b45a2b','反复使用',856,162);
+  conn('chain','l','jac','r','#6c4fa1','向量版',710,206);
+  route([side('jac','r'),[700,290],side('delta','l')],'#6c4fa1','只传向量 δ',700,280);
+  route([[940,350],[940,136]],'#b45a2b','逐层向前',958,266,'start');
+  conn('delta','r','act','l','#b45a2b','乘 φ′',885,300);
+  // tools
+  conn('fwd','b','autod','t','#6c4fa1','记录 tape',366,218);
+  route([[440,350],[440,462],[700,462],[700,120],[740,120]],'#6c4fa1','反向读带',540,486);
+  route([[510,132],[480,132],[480,320],[500,320]],'#6c4fa1','数值复核',498,286);
+  conn('gcheck','r','delta','l','#6c4fa1','验证',710,342);
+  route([[680,132],[710,132],[710,430],[1060,430],[1060,380]],'#6c4fa1','分类损失',880,454);
+  conn('ce','l','delta','r','#6c4fa1','δ⁽ᴸ⁾ = p−y',975,310);
+  // nodes
   for(const n of N){
     const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node',style:'cursor:pointer',tabindex:'0'});
-    svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:'var(--surface)',stroke:n.col,strokeWidth:1.8});
-    svgAdd(g,'text',{x:n.w/2,y:24,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--ink)'},n.t);
-    svgAdd(g,'text',{x:n.w/2,y:43,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':14.5,'font-weight':700,fill:'var(--ink)'},n.t);
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
     if(n.target){
       g.addEventListener('click',()=>location.hash=n.target);
       g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();location.hash=n.target;}});
@@ -792,48 +809,56 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- factory ---------- */
 (()=>{
-  const svg=$('#factorySvg');
-  const der=[0.8,1.2,2.0], names=['切割','打磨','上漆'];
-  function draw(step,del,E){
+  const svg=$('#factorySvg');svg.setAttribute('viewBox','0 0 640 300');
+  const der=[0.8,1.2,2.0], names=['切割','打磨','上漆'], xs=[20,225,430];
+  function machine(i,lit){
+    const x=xs[i];
+    const g=svgAdd(svg,'g',{transform:`translate(${x},30)`});
+    svgAdd(g,'rect',{width:170,height:100,rx:14,fill:lit?'rgba(180,90,43,.12)':'var(--surface)',stroke:lit?'#b45a2b':'var(--line)',strokeWidth:lit?2:1.5});
+    svgAdd(g,'text',{x:85,y:32,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--ink)'},names[i]);
+    svgAdd(g,'line',{x1:38,y1:45,x2:132,y2:45,stroke:'var(--line)'});
+    svgAdd(g,'text',{x:85,y:66,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'局部导数');
+    svgAdd(g,'text',{x:85,y:87,'text-anchor':'middle','font-size':13,'font-weight':700,fill:lit?'#b45a2b':'var(--ink)'},String(der[i]));
+  }
+  function draw(step,E){
     svg.innerHTML='';
-    const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id:'facArr',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto'});
-    svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:'#b45a2b'});
-    for(let i=0;i<3;i++){
-      const x=55+i*145;
-      const g=svgAdd(svg,'g',{transform:`translate(${x},30)`});
-      const lit=step>i+1;
-      svgAdd(g,'rect',{width:115,height:86,rx:12,fill:lit?'rgba(180,90,43,.13)':'var(--surface2)',stroke:lit?'#b45a2b':'var(--line)',strokeWidth:1.6});
-      svgAdd(g,'text',{x:58,y:26,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},names[i]);
-      svgAdd(g,'text',{x:58,y:46,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'局部导数');
-      svgAdd(g,'text',{x:58,y:68,'text-anchor':'middle','font-size':13,'font-weight':700,fill:lit?'#b45a2b':'var(--ink)'},String(der[i]));
-    }
-    const ex=485,ey=72;
-    svgAdd(svg,'rect',{x:ex-10,y:ey-26,width:42,height:52,rx:10,fill:'var(--surface)',stroke:'#b23a48',strokeWidth:1.8});
-    svgAdd(svg,'text',{x:ex+11,y:ey-2,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'#b23a48'},'误差');
-    svgAdd(svg,'text',{x:ex+11,y:ey+16,'text-anchor':'middle','font-size':12,fill:'#b23a48'},'E='+fmt(E,1));
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'facArr','#b45a2b');
+    for(let i=0;i<3;i++)machine(i,step>i+1);
+    // error node
+    const g=svgAdd(svg,'g',{transform:'translate(270,215)'});
+    svgAdd(g,'rect',{width:100,height:54,rx:12,fill:'var(--surface)',stroke:'#b23a48',strokeWidth:2});
+    svgAdd(g,'text',{x:50,y:23,'text-anchor':'middle','font-size':11.5,'font-weight':700,fill:'#b23a48'},'最终误差');
+    svgAdd(g,'text',{x:50,y:43,'text-anchor':'middle','font-size':12,fill:'#b23a48'},'E = '+fmt(E,1));
+    // error -> paint (final stage)
     if(step>=1){
-      let sig=E;const xs=[455,310,165];
-      for(let i=0;i<3;i++){
-        const idx=2-i, x=xs[i], y=178-i*34;
-        sig=sig*der[idx];
-        svgAdd(svg,'path',{d:`M${ex-10},${ey+2} C ${ex-60},${ey+2} ${x+80},${y} ${x+58},${y}`,fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:i<step-1?'5 4':'none',markerEnd:'url(#facArr)'});
-        svgAdd(svg,'rect',{x:x-8,y:y-18,width:190,height:36,rx:8,fill:step>i?'rgba(180,90,43,.14)':'var(--surface)',stroke:step>i?'#b45a2b':'var(--line)'});
-        svgAdd(svg,'text',{x:x+87,y:y-1,'text-anchor':'middle','font-size':11,fill:'#b45a2b'},(i===2?'责任=δ·0.8 = ':'传递错误 δ = ')+fmt(sig,1));
-      }
+      svgCurve(svg,320,215,515,130,{color:'#b45a2b',width:2,marker:mk,bend:0.3});
+      svgHalo(svg,470,168,'先看最后一道工序',{fill:'#b45a2b',font:11});
     }
-    svgAdd(svg,'text',{x:265,y:252,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'上游的“错误账本”每经过一道工序，都要乘上该工序的局部导数');
+    // paint -> polish
+    if(step>=2){
+      svgCurve(svg,430,80,395,80,{color:'#b45a2b',width:2,marker:mk,bend:0.35});
+      svgHalo(svg,412,62,'× 2.0（上漆）',{fill:'#b45a2b',font:11});
+    }
+    // polish -> cut
+    if(step>=3){
+      svgCurve(svg,225,80,190,80,{color:'#b45a2b',width:2,marker:mk,bend:0.35});
+      svgHalo(svg,207,62,'× 1.2（打磨）',{fill:'#b45a2b',font:11});
+      svgHalo(svg,105,155,'切割的责任 = E × 2.0 × 1.2 × 0.8',{fill:'#b45a2b',font:11});
+    }
+    svgAdd(svg,'text',{x:320,y:292,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'反向追溯：每经过一道工序，错误信号都要乘上该工序的局部导数');
   }
   function update(){
     const E=Number($('#factoryE').value);
     $('#factoryEval').textContent=fmt(E,1);
-    draw(0,[0,0,0],E);
+    draw(0,E);
   }
   $('#factoryE').addEventListener('input',update);
   let timer=null;
   $('#factoryRun').addEventListener('click',()=>{
     const E=Number($('#factoryE').value);clearInterval(timer);let step=1;
-    draw(1,[E,E*der[2],E*der[2]*der[1]],E);
-    timer=setInterval(()=>{step++;if(step<=3){draw(step,[E,E*der[2],E*der[2]*der[1]],E);}else{clearInterval(timer);toast('追溯完成：越靠近输入端，责任越要乘上更多下游导数');}},700);
+    draw(1,E);
+    timer=setInterval(()=>{step++;if(step<=3){draw(step,E);}else{clearInterval(timer);toast('追溯完成：越靠近输入端，责任越要乘上更多下游导数');}},750);
   });
   $('#factoryReset').addEventListener('click',()=>{clearInterval(timer);update();});
   update();
@@ -842,7 +867,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 /* ---------- SGD plot ---------- */
 (()=>{
   const svg=$('#sgdPlot');
-  const M={l:74,r:18,t:22,b:52},W=620,H=330;
+  const M={l:76,r:18,t:24,b:54},W=620,H=330;
   const L=w=>(w-2)*(w-2)+1, G=w=>2*(w-2);
   const xMin=-1,xMax=5, yMax=11;
   const sx=w=>M.l+(w-xMin)/(xMax-xMin)*(W-M.l-M.r);
@@ -851,20 +876,27 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     const w=Number($('#sgdW').value),eta=Number($('#sgdEta').value),g=G(w),l=L(w);
     $('#sgdWval').textContent=fmt(w,2);$('#sgdEtaval').textContent=fmt(eta,2);
     svg.innerHTML='';
-    svgAdd(svg,'line',{x1:M.l,y1:sy(0),x2:W-M.r,y2:sy(0),stroke:'var(--line)',strokeWidth:1});
-    svgAdd(svg,'line',{x1:sx(0),y1:M.t,x2:sx(0),y2:H-M.b,stroke:'var(--line)',strokeWidth:1});
-    svgAdd(svg,'text',{x:M.l-6,y:sy(0)-8,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'ℓ');
-    svgAdd(svg,'text',{x:sx(0),y:H-M.b+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'w');
+    const defs=svgAdd(svg,'defs');
+    const clip=svgAdd(defs,'clipPath',{id:'sgdClip'});svgAdd(clip,'rect',{x:M.l-8,y:M.t-10,width:W-M.l-M.r+16,height:H-M.t-M.b+18});
+    // axes
+    svgAdd(svg,'line',{x1:M.l,y1:sy(0),x2:W-M.r,y2:sy(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:sx(0),y1:M.t,x2:sx(0),y2:H-M.b,stroke:'var(--line)'});
+    for(let xi=0;xi<=5;xi++){const x=sx(xi);svgAdd(svg,'line',{x1:x,y1:H-M.b,x2:x,y2:H-M.b+4,stroke:'var(--line)'});svgAdd(svg,'text',{x,y:H-M.b+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},String(xi));}
+    for(const yi of [0,5,10]){const y=sy(yi);svgAdd(svg,'line',{x1:M.l-4,y1:y,x2:M.l,y2:y,stroke:'var(--line)'});svgAdd(svg,'text',{x:M.l-8,y:y+4,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},String(yi));}
+    svgAdd(svg,'text',{x:M.l-8,y:M.t-8,'font-size':11,fill:'var(--muted)'},'ℓ');
+    svgAdd(svg,'text',{x:W-M.r+8,y:H-M.b+6,'font-size':11,fill:'var(--muted)'},'w');
+    // curve
     let d='M';
     for(let i=0;i<=240;i++){const x=xMin+(xMax-xMin)*i/240;d+=(i?'L':'')+sx(x).toFixed(1)+','+sy(L(x)).toFixed(1);}
-    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
-    const t0=clamp(w-1.2,xMin,xMax),t1=clamp(w+1.2,xMin,xMax);
-    svgAdd(svg,'line',{x1:sx(t0),y1:sy(l+g*(t0-w)),x2:sx(t1),y2:sy(l+g*(t1-w)),stroke:'var(--warm)',strokeWidth:2});
-    svgAdd(svg,'circle',{cx:sx(w),cy:sy(l),r:6,fill:'var(--warm)'});
-    svgAdd(svg,'text',{x:sx(w)+10,y:sy(l)-12,'font-size':12,'font-weight':700,fill:'var(--warm)'},'w='+fmt(w,2));
-    svgAdd(svg,'text',{x:W-M.r-8,y:M.t+18,'text-anchor':'end','font-size':13,fill:'var(--ink)'},'ℓ(w) = (w−2)² + 1');
-    svgAdd(svg,'text',{x:W-M.r-8,y:M.t+40,'text-anchor':'end','font-size':12,fill:'var(--warm)'},'梯度 g = 2(w−2) = '+fmt(g,2));
-    svgAdd(svg,'text',{x:W-M.r-8,y:M.t+60,'text-anchor':'end','font-size':12,fill:'var(--blue)'},'一步后 w ← w − η·g');
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6,'clip-path':'url(#sgdClip)'});
+    // tangent
+    const t0=clamp(w-1.15,xMin,xMax),t1=clamp(w+1.15,xMin,xMax);
+    svgAdd(svg,'line',{x1:sx(t0),y1:sy(l+g*(t0-w)),x2:sx(t1),y2:sy(l+g*(t1-w)),stroke:'var(--warm)',strokeWidth:2,'clip-path':'url(#sgdClip)'});
+    svgAdd(svg,'circle',{cx:sx(w),cy:sy(l),r:6,fill:'var(--warm)',stroke:'var(--surface)',strokeWidth:2});
+    svgHalo(svg,sx(w)+12,sy(l)-12,'w = '+fmt(w,2),{fill:'var(--warm)',font:11.5,anchor:'start'});
+    svgHalo(svg,W-M.r-8,M.t+10,'ℓ(w) = (w−2)² + 1',{fill:'var(--accent)',font:11.5,anchor:'end'});
+    svgHalo(svg,W-M.r-8,M.t+38,'梯度 g = 2(w−2) = '+fmt(g,2),{fill:'var(--warm)',font:11.5,anchor:'end'});
+    svgHalo(svg,W-M.r-8,M.t+66,'一步后 w ← w − η·g',{fill:'var(--blue)',font:11.5,anchor:'end'});
   }
   $('#sgdW').addEventListener('input',draw);$('#sgdEta').addEventListener('input',draw);
   $('#sgdStep').addEventListener('click',()=>{
@@ -879,9 +911,11 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- minimal network ---------- */
 (()=>{
-  const svg=$('#minimalSvg');
+  const svg=$('#minimalSvg');svg.setAttribute('viewBox','0 0 900 430');
   const relu=z=>Math.max(0,z), drelu=z=>z>0?1:0;
   let step=0;
+  const node=(cx,id,label,col)=>{const g=svgAdd(svg,'g',{transform:`translate(${cx-60},150)`});svgAdd(g,'rect',{width:120,height:64,rx:13,fill:'color-mix(in srgb,'+col+' 6%, var(--surface))',stroke:col,strokeWidth:2});svgAdd(g,'text',{x:60,y:26,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'var(--ink)'},id);svgAdd(g,'text',{x:60,y:48,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},label);};
+  const param=(cx,id,label,col)=>{const g=svgAdd(svg,'g',{transform:`translate(${cx-55},335)`});svgAdd(g,'rect',{width:110,height:52,rx:26,fill:'var(--surface)',stroke:col,strokeWidth:1.7});svgAdd(g,'text',{x:55,y:21,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:col},id);svgAdd(g,'text',{x:55,y:40,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},label);};
   function draw(){
     const x=Number($('#minX').value),y=Number($('#minY').value),wp=Number($('#minWp').value),w=Number($('#minW').value);
     const z=wp*x,v=relu(z),f=w*v,L=(f-y)*(f-y);
@@ -889,37 +923,42 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     $('#minXval').textContent=fmt(x);$('#minYval').textContent=fmt(y);$('#minWpval').textContent=fmt(wp);$('#minWval').textContent=fmt(w);
     svg.innerHTML='';
     const defs=svgAdd(svg,'defs');
-    const mk=svgAdd(defs,'marker',{id:'minArr',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto'});
-    svgAdd(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'#b45a2b'});
-    const nodes=[['x',80,'x = '+fmt(x)],['z',250,'z = w′x = '+fmt(z)],['v',430,'v = ReLU(z) = '+fmt(v)],['f',610,'f = w·v = '+fmt(f)],['ℓ',790,'ℓ = (f−y)² = '+fmt(L)]];
-    for(const [id,cx,label] of nodes){
-      const g=svgAdd(svg,'g',{transform:`translate(${cx-55},175)`});
-      svgAdd(g,'rect',{width:110,height:62,rx:12,fill:'var(--surface)',stroke:step>0&&['f','ℓ'].includes(id)?'#b45a2b':'var(--accent)',strokeWidth:2});
-      svgAdd(g,'text',{x:55,y:26,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'var(--ink)'},id);
-      svgAdd(g,'text',{x:55,y:48,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},label);
+    const mkFwd=svgMarker(defs,'minFwd','#176653'),mkBwd=svgMarker(defs,'minBwd','#b45a2b');
+    // forward nodes and edges
+    node(90,'x','x = '+fmt(x),'#176653');
+    node(260,'z','z = w′x = '+fmt(z),'#176653');
+    node(430,'v','v = ReLU(z) = '+fmt(v),'#176653');
+    node(600,'f','f = w·v = '+fmt(f),'#176653');
+    node(770,'ℓ','ℓ = (f−y)² = '+fmt(L),'#176653');
+    param(170,'w′','w′ = '+fmt(wp),'#b45a2b');
+    param(515,'w','w = '+fmt(w),'#b45a2b');
+    svgCurve(svg,150,182,200,182,{color:'#176653',width:2,marker:mkFwd,bend:0.3});
+    svgCurve(svg,320,182,370,182,{color:'#176653',width:2,marker:mkFwd,bend:0.3});svgHalo(svg,345,166,'ReLU',{fill:'#176653',font:11});
+    svgCurve(svg,490,182,540,182,{color:'#176653',width:2,marker:mkFwd,bend:0.3});
+    svgCurve(svg,660,182,710,182,{color:'#176653',width:2,marker:mkFwd,bend:0.3});svgHalo(svg,685,166,'square',{fill:'#176653',font:11});
+    // parameter feed lines
+    svgAdd(svg,'path',{d:'M170,335 L170,190',fill:'none',stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'3 4'});
+    svgAdd(svg,'path',{d:'M515,335 L515,190',fill:'none',stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'3 4'});
+    // backward channel (y=275)
+    if(step>=1){
+      svgAdd(svg,'path',{d:'M770,214 C770,275 600,275 600,214',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkBwd});
+      svgHalo(svg,685,260,'∂ℓ/∂f = 2(f−y) = '+fmt(dLdf),{fill:'#b45a2b',font:11});
     }
-    // parameters
-    for(const [id,cx,label] of [['w′',165,'w′ = '+fmt(wp)],['w',535,'w = '+fmt(w)]]){
-      const g=svgAdd(svg,'g',{transform:`translate(${cx-50},325)`});
-      svgAdd(g,'rect',{width:100,height:52,rx:26,fill:'var(--surface2)',stroke:'var(--warm)',strokeWidth:1.6});
-      svgAdd(g,'text',{x:50,y:22,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--warm)'},id);
-      svgAdd(g,'text',{x:50,y:41,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},label);
+    if(step>=2){
+      svgAdd(svg,'path',{d:'M600,214 C600,300 515,300 515,335',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkBwd});
+      svgHalo(svg,568,295,'×v → ∂ℓ/∂w = '+fmt(dLdw),{fill:'#b45a2b',font:11});
     }
-    function edge(x1,y1,x2,y2,col,label){
-      svgAdd(svg,'path',{d:`M${x1},${y1} C${(x1+x2)/2},${y1} ${(x1+x2)/2},${y2} ${x2},${y2}`,fill:'none',stroke:col,strokeWidth:1.8,strokeDasharray:col==='#b45a2b'?'6 4':'none',markerEnd:col==='#b45a2b'?'url(#minArr)':''});
-      if(label)svgAdd(svg,'text',{x:(x1+x2)/2,y:(y1+y2)/2-6,'text-anchor':'middle','font-size':10.5,fill:col},label);
+    if(step>=3){
+      svgAdd(svg,'path',{d:'M580,214 C580,275 450,275 430,214',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkBwd});
+      svgHalo(svg,515,260,'×w = '+fmt(w),{fill:'#b45a2b',font:11});
     }
-    // forward edges
-    edge(135,206,195,206,'var(--fwd)','');
-    edge(305,206,375,206,'var(--fwd)','ReLU');
-    edge(485,206,555,206,'var(--fwd)','');
-    edge(665,206,735,206,'var(--fwd)','square');
-    edge(165,340,215,245,'var(--fwd)','×'+fmt(x));
-    edge(535,340,585,245,'var(--fwd)','×'+fmt(v));
-    if(step>=1)edge(790,237,665,237,'#b45a2b','∂ℓ/∂f='+fmt(dLdf));
-    if(step>=2)edge(610,240,535,300,'#b45a2b','×v → ∂ℓ/∂w='+fmt(dLdw));
-    if(step>=3)edge(610,240,430,240,'#b45a2b','×w='+fmt(w));
-    if(step>=4){edge(430,240,250,240,'#b45a2b','×ReLU′='+drelu(z));edge(250,240,165,300,'#b45a2b','×x → ∂ℓ/∂w′='+fmt(dLdwp));}
+    if(step>=4){
+      svgAdd(svg,'path',{d:'M430,214 C430,275 260,275 260,214',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkBwd});
+      svgHalo(svg,345,260,'×ReLU′ = '+drelu(z),{fill:'#b45a2b',font:11});
+      svgAdd(svg,'path',{d:'M260,214 C260,300 170,300 170,335',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkBwd});
+      svgHalo(svg,198,298,'×x → ∂ℓ/∂w′ = '+fmt(dLdwp),{fill:'#b45a2b',font:11});
+    }
+    svgHalo(svg,450,410,'反向通道：每步 = 上游消息 × 局部导数',{fill:'var(--muted)',font:11});
     $('#minimalForward').innerHTML=`<span style="color:var(--accent)">x</span>=${fmt(x)} → <span style="color:var(--accent)">z</span>=${fmt(z)} → <span style="color:var(--accent)">v</span>=${fmt(v)} → <span style="color:var(--accent)">f</span>=${fmt(f)} → <span style="color:var(--accent)">ℓ</span>=${fmt(L)}`;
     const lines=[
       ['∂ℓ/∂f = 2(f−y)',dLdf],
@@ -942,30 +981,47 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- activation plots ---------- */
 (()=>{
-  function plot(id,fn,dfn,xMin,xMax,yMin,yMax,color,fnColor){
-    const svg=$(id),M={l:50,r:14,t:18,b:42},W=420,H=260;
+  function plot(id,fn,dfn,xMin,xMax,yMin,yMax,color,dfColor,piecewise){
+    const svg=$(id),M={l:52,r:14,t:28,b:44},W=420,H=260;
     const sx=x=>M.l+(x-xMin)/(xMax-xMin)*(W-M.l-M.r);
     const sy=y=>H-M.b-(y-yMin)/(yMax-yMin)*(H-M.t-M.b);
     return function draw(z){
       svg.innerHTML='';
-      svgAdd(svg,'line',{x1:sx(xMin),y1:sy(0),x2:sx(xMax),y2:sy(0),stroke:'var(--line)',strokeWidth:1});
-      svgAdd(svg,'line',{x1:sx(0),y1:M.t,x2:sx(0),y2:H-M.b,stroke:'var(--line)',strokeWidth:1});
-      let d='M',d2='M';
-      for(let i=0;i<=260;i++){const x=xMin+(xMax-xMin)*i/260;d+=(i?'L':'')+sx(x).toFixed(1)+','+sy(fn(x)).toFixed(1);d2+=(i?'L':'')+sx(x).toFixed(1)+','+sy(dfn(x)).toFixed(1);}
-      svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2.8});
-      svgAdd(svg,'path',{d:d2,fill:'none',stroke:fnColor,strokeWidth:2,strokeDasharray:'6 4'});
-      svgAdd(svg,'line',{x1:sx(z),y1:M.t,x2:sx(z),y2:H-M.b,stroke:'var(--line)',strokeWidth:1});
-      svgAdd(svg,'circle',{cx:sx(z),cy:sy(fn(z)),r:5.5,fill:color});
-      svgAdd(svg,'circle',{cx:sx(z),cy:sy(dfn(z)),r:5.5,fill:fnColor});
-      svgAdd(svg,'text',{x:W-M.r-6,y:M.t+14,'text-anchor':'end','font-size':11,fill:color},'φ(z)');
-      svgAdd(svg,'text',{x:W-M.r-6,y:M.t+32,'text-anchor':'end','font-size':11,fill:fnColor},'φ′(z)');
-      svgAdd(svg,'text',{x:sx(z)+7,y:sy(fn(z))-8,'font-size':11,fill:color},'z='+fmt(z,2));
+      const defs=svgAdd(svg,'defs');
+      const clip=svgAdd(defs,'clipPath',{id:id.slice(1)+'Clip'});svgAdd(clip,'rect',{x:M.l-6,y:M.t-8,width:W-M.l-M.r+12,height:H-M.t-M.b+14});
+      // axes + ticks
+      svgAdd(svg,'line',{x1:sx(xMin),y1:sy(0),x2:sx(xMax),y2:sy(0),stroke:'var(--line)'});
+      svgAdd(svg,'line',{x1:sx(0),y1:M.t,x2:sx(0),y2:H-M.b,stroke:'var(--line)'});
+      for(let xi=Math.ceil(xMin/2)*2;xi<=xMax;xi+=2){if(Math.abs(xi-xMin)>1e-9){svgAdd(svg,'line',{x1:sx(xi),y1:H-M.b,x2:sx(xi),y2:H-M.b+4,stroke:'var(--line)'});svgAdd(svg,'text',{x:sx(xi),y:H-M.b+18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(xi));}}
+      const yTicks=yMax<=1.2?[0,0.5,1]:[0,2,4];
+      for(const yi of yTicks){if(yi>=yMin&&yi<=yMax){svgAdd(svg,'line',{x1:M.l-4,y1:sy(yi),x2:M.l,y2:sy(yi),stroke:'var(--line)'});svgAdd(svg,'text',{x:M.l-7,y:sy(yi)+4,'text-anchor':'end','font-size':10,fill:'var(--muted)'},String(yi));}}
+      // curves
+      let d='M';
+      for(let i=0;i<=280;i++){const x=xMin+(xMax-xMin)*i/280;d+=(i?'L':'')+sx(x).toFixed(1)+','+sy(fn(x)).toFixed(1);}
+      svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2.8,'clip-path':`url(#${id.slice(1)}Clip)`});
+      if(piecewise){
+        svgAdd(svg,'line',{x1:sx(xMin),y1:sy(1),x2:sx(0),y2:sy(1),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
+        svgAdd(svg,'line',{x1:sx(0),y1:sy(0),x2:sx(xMax),y2:sy(0),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
+        svgAdd(svg,'circle',{cx:sx(0),cy:sy(1),r:3.5,fill:dfColor});
+        svgAdd(svg,'circle',{cx:sx(0),cy:sy(0),r:3.5,fill:'var(--surface)',stroke:dfColor,strokeWidth:1.5});
+      }else{
+        let d2='M';
+        for(let i=0;i<=280;i++){const x=xMin+(xMax-xMin)*i/280;d2+=(i?'L':'')+sx(x).toFixed(1)+','+sy(dfn(x)).toFixed(1);}
+        svgAdd(svg,'path',{d:d2,fill:'none',stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
+      }
+      // marker
+      svgAdd(svg,'line',{x1:sx(z),y1:M.t,x2:sx(z),y2:H-M.b,stroke:'var(--line)','clip-path':`url(#${id.slice(1)}Clip)`});
+      svgAdd(svg,'circle',{cx:sx(z),cy:sy(fn(z)),r:5.5,fill:color,stroke:'var(--surface)',strokeWidth:2});
+      svgAdd(svg,'circle',{cx:sx(z),cy:sy(dfn(z)),r:5.5,fill:dfColor,stroke:'var(--surface)',strokeWidth:2});
+      svgHalo(svg,sx(z)+8,sy(fn(z))-10,'z = '+fmt(z,2),{fill:color,font:10.5,anchor:'start'});
+      svgHalo(svg,W-M.r-6,10,'φ(z)',{fill:color,font:11,anchor:'end'});
+      svgHalo(svg,W-M.r-6,30,'φ′(z)',{fill:dfColor,font:11,anchor:'end'});
       return {z,fnz:fn(z),dfz:dfn(z)};
     };
   }
-  const sig=(id)=>plot(id,z=>1/(1+Math.exp(-z)),z=>{const s=1/(1+Math.exp(-z));return s*(1-s);},-6,6,0,1.12,'var(--blue)','var(--warm)');
-  const relu=(id)=>plot(id,z=>Math.max(0,z),z=>z>0?1:0,-4,4,-.6,4.2,'var(--blue)','var(--warm)');
-  function bind(input,draw,valEl,label){
+  const sig=id=>plot(id,z=>1/(1+Math.exp(-z)),z=>{const s=1/(1+Math.exp(-z));return s*(1-s);},-6,6,0,1.12,'var(--blue)','var(--warm)',false);
+  const relu=id=>plot(id,z=>Math.max(0,z),z=>z>0?1:0,-4,4,-.6,4.2,'var(--blue)','var(--warm)',true);
+  function bind(input,draw,valEl){
     input.addEventListener('input',()=>{const r=draw(Number(input.value));valEl.innerHTML=`z = ${fmt(r.z,2)} · φ(z) = ${fmt(r.fnz,2)} · φ′(z) = ${fmt(r.dfz,2)}`;});
     const r=draw(Number(input.value));valEl.innerHTML=`z = ${fmt(r.z,2)} · φ(z) = ${fmt(r.fnz,2)} · φ′(z) = ${fmt(r.dfz,2)}`;
   }
@@ -975,7 +1031,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- chain rule ---------- */
 (()=>{
-  const svg=$('#chainSvg');
+  const svg=$('#chainSvg');svg.setAttribute('viewBox','0 0 900 340');
   const F={
     '2x+1':[x=>2*x+1,x=>2,'a=2x+1','da/dx=2'],
     'x2':[x=>x*x,x=>2*x,'a=x²','da/dx=2x'],
@@ -994,35 +1050,35 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     'log':[b=>Math.log(Math.abs(b)),b=>1/b,'c=ln|b|','dc/db=1/b'],
     'exp':[b=>Math.exp(b),b=>Math.exp(b),'c=eᵇ','dc/db=eᵇ']
   };
+  const node=(cx,id,label,col)=>{const g=svgAdd(svg,'g',{transform:`translate(${cx-65},100)`});svgAdd(g,'rect',{width:130,height:64,rx:13,fill:'color-mix(in srgb,'+col+' 6%, var(--surface))',stroke:col,strokeWidth:1.8});svgAdd(g,'text',{x:65,y:27,'text-anchor':'middle','font-size':16,'font-weight':700,fill:'var(--ink)'},id);svgAdd(g,'text',{x:65,y:48,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},label);};
   function draw(){
     const x=Number($('#chainX').value),g=$('#chainG').value,h=$('#chainH').value,q=$('#chainQ').value;
     const [fg,dg,glabel,gder]=F[g],[fh,dh,hlabel,hder]=H[h],[fq,dq,qlabel,qder]=Q[q];
     const a=fg(x),b=fh(a),c=fq(b),dadx=dg(x),dbda=dh(a),dcdb=dq(b),total=dcdb*dbda*dadx;
     $('#chainXval').textContent=fmt(x);
     svg.innerHTML='';
-    const defs=svgAdd(svg,'defs');const mk=svgAdd(defs,'marker',{id:'chainArr',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto'});
-    svgAdd(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'#b45a2b'});
-    const nodes=[['x',90,'x = '+fmt(x)],['a',300,glabel+' = '+fmt(a)],['b',530,hlabel+' = '+fmt(b)],['c',760,qlabel+' = '+fmt(c)]];
-    for(const [id,cx,label] of nodes){
-      const gEl=svgAdd(svg,'g',{transform:`translate(${cx-56},80)`});
-      svgAdd(gEl,'rect',{width:112,height:60,rx:12,fill:'var(--surface)',stroke:'var(--accent)',strokeWidth:1.8});
-      svgAdd(gEl,'text',{x:56,y:26,'text-anchor':'middle','font-size':16,'font-weight':700,fill:'var(--ink)'},id);
-      svgAdd(gEl,'text',{x:56,y:47,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},label);
-    }
-    function edge(x1,x2,y,label){
-      svgAdd(svg,'path',{d:`M${x1},${y} C${(x1+x2)/2},${y} ${(x1+x2)/2},${y} ${x2},${y}`,fill:'none',stroke:'var(--accent)',strokeWidth:1.6,markerEnd:'url(#chainArr)'});
-      if(label)svgAdd(svg,'text',{x:(x1+x2)/2,y:y-7,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},label);
-    }
-    edge(146,244,110,'');
-    edge(356,474,110,'');
-    edge(586,704,110,'');
-    // backward messages
-    const msgs=[[760,300,530,220,dcdb,'dc/db'], [530,300,300,220,dbda,'db/da'], [300,300,90,220,dadx,'da/dx']];
-    msgs.forEach(([x1,x2,y1,y2,val,lab])=>{
-      svgAdd(svg,'path',{d:`M${x1},${y1} C${(x1+x2)/2},${y1} ${(x1+x2)/2},${y2} ${x2},${y2}`,fill:'none',stroke:'#b45a2b',strokeWidth:1.8,strokeDasharray:'6 4',markerEnd:'url(#chainArr)'});
-      svgAdd(svg,'text',{x:(x1+x2)/2+8,y:(y1+y2)/2+4,'text-anchor':'middle','font-size':10.5,fill:'#b45a2b'},lab+' = '+fmt(val,2));
+    const defs=svgAdd(svg,'defs');
+    const mkF=svgMarker(defs,'chainF','#176653'),mkB=svgMarker(defs,'chainB','#b45a2b');
+    node(80,'x','x = '+fmt(x),'#176653');
+    node(300,'a',glabel+' = '+fmt(a),'#176653');
+    node(530,'b',hlabel+' = '+fmt(b),'#176653');
+    node(760,'c',qlabel+' = '+fmt(c),'#176653');
+    // forward links + local derivative labels
+    const fwd=[[145,235,190,gder],[365,465,415,hder],[595,695,645,qder]];
+    const fwdVals=[dadx,dbda,dcdb];
+    fwd.forEach(([x1,x2,lx,lab],idx)=>{
+      svgCurve(svg,x1,132,x2,132,{color:'#176653',width:2,marker:mkF,bend:0.3});
+      svgHalo(svg,lx,114,lab.split('=')[0]+' = '+fmt(fwdVals[idx]),{fill:'#176653',font:10.5});
     });
-    svgAdd(svg,'text',{x:870,y:130,'text-anchor':'end','font-size':13,'font-weight':700,fill:'var(--warm)'},'dc/dx = '+fmt(total,2));
+    // backward channel: upstream message accumulates
+    const msg3=dcdb,msg2=msg3*dbda,msg1=msg2*dadx;
+    const back=[[760,530,645,'上游 = dc/db = '+fmt(msg3)],[530,300,415,'× db/da → '+fmt(msg2)],[300,80,190,'× da/dx → dc/dx = '+fmt(msg1)]];
+    for(const [x1,x2,lx,lab] of back){
+      svgAdd(svg,'path',{d:`M${x1},164 C${x1},255 ${x2},255 ${x2},164`,fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkB});
+      svgHalo(svg,lx,248,lab,{fill:'#b45a2b',font:11});
+    }
+    svgHalo(svg,890,46,'dc/dx = '+fmt(total,2),{fill:'var(--warm)',font:13,anchor:'end'});
+    svgHalo(svg,450,326,'反向 = 上游消息 × 本节点局部导数',{fill:'var(--muted)',font:11});
     $('#chainResult').innerHTML=`a=${fmt(a,2)} · b=${fmt(b,2)} · c=${fmt(c,2)}<br>dc/dx = (${fmt(dcdb,2)}) × (${fmt(dbda,2)}) × (${fmt(dadx,2)}) = <b style="color:var(--warm)">${fmt(total,2)}</b>`;
   }
   $('#chainX,#chainG,#chainH,#chainQ').forEach(el=>el.addEventListener('input',draw));
@@ -1070,7 +1126,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 (()=>{
   const W1keys=[['w11','w12','b1'],['w21','w22','b2']];
   const W2keys=['a1','a2','b'];
-  const svg=$('#labSvg');
+  const svg=$('#labSvg');svg.setAttribute('viewBox','0 0 880 560');
   const S={
     x1:1,x2:2,y:3,
     W1:[[1,0,0],[0,1,-1]],
@@ -1113,15 +1169,11 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     for(let i=0;i<rows;i++)for(let j=0;j<cols;j++){const v=vals[i][j];html+=`<div class="heatcell" title="${labels?labels[i][j]:''}" style="background:${heatColor(v)};color:var(--ink)">${fmt(v,1)}</div>`;}
     return html+'</div>';
   }
-  function edge(x1,y1,x2,y2,label,col,lx,ly,dash){
-    svgAdd(svg,'path',{d:`M${x1},${y1} C${(x1+x2)/2},${y1} ${(x1+x2)/2},${y2} ${x2},${y2}`,fill:'none',stroke:col,strokeWidth:1.6,strokeDasharray:dash?'5 4':'none',markerEnd:'url(#labArr)'});
-    if(label!==undefined)svgAdd(svg,'text',{x:lx===undefined?(x1+x2)/2+4:lx,y:ly===undefined?(y1+y2)/2-5:ly,'font-size':10.5,fill:col,'text-anchor':'start'},label);
-  }
-  function node(cx,cy,title,sub,col){
+  function node(cx,cy,w,h,title,sub,col){
     const g=svgAdd(svg,'g',{transform:`translate(${cx},${cy})`});
-    svgAdd(g,'rect',{width:130,height:56,rx:12,fill:'var(--surface)',stroke:col,strokeWidth:1.8});
-    svgAdd(g,'text',{x:65,y:22,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--ink)'},title);
-    if(sub)svgAdd(g,'text',{x:65,y:42,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub);
+    svgAdd(g,'rect',{width:w,height:h,rx:12,fill:'color-mix(in srgb,'+col+' 6%, var(--surface))',stroke:col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:w/2,y:h/2-4,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:'var(--ink)'},title);
+    if(sub)svgAdd(g,'text',{x:w/2,y:h/2+16,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},sub);
   }
   function render(){
     const {x1,x2,y}=S;
@@ -1131,52 +1183,70 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     $('#labBackward').innerHTML=`δ⁽²⁾=${fmt(g.deltaOut)} · δ₁⁽¹⁾=${fmt(g.dh1)} · δ₂⁽¹⁾=${fmt(g.dh2)}<br>∇W⁽²⁾ = ${heatGrid(1,3,[g.gW2],[['∂/∂a₁','∂/∂a₂','∂/∂b']])}<div class="small">∇W⁽¹⁾（每行：∂/∂wᵢ₁, ∂/∂wᵢ₂, ∂/∂bᵢ）</div>${heatGrid(2,3,g.gW1,[['∂/∂w₁₁','∂/∂w₁₂','∂/∂b₁'],['∂/∂w₂₁','∂/∂w₂₂','∂/∂b₂']])}`;
     svg.innerHTML='';
     const defs=svgAdd(svg,'defs');
-    const mk=svgAdd(defs,'marker',{id:'labArr',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto'});
-    svgAdd(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'#b45a2b'});
-    // input nodes
-    const fwdShown=S.fwdStep;
-    node(35,120,'x₁',`${fmt(x1)}`,'var(--accent)');
-    node(35,240,'x₂',`${fmt(x2)}`,'var(--accent)');
-    node(35,375,'bias','1','var(--muted)');
-    const zt=fwdShown>=1?`z₁=${fmt(q.z1)}`:'';const vt=fwdShown>=2?`v₁=${fmt(q.v1)}`:'';
-    node(245,95,'h₁ = ReLU(z₁)',zt+'  '+vt,fwdShown>=1?'var(--accent)':'var(--line)');
-    node(245,260,'h₂ = ReLU(z₂)',(fwdShown>=1?`z₂=${fmt(q.z2)}`:'')+'  '+(fwdShown>=2?`v₂=${fmt(q.v2)}`:''),fwdShown>=1?'var(--accent)':'var(--line)');
-    node(245,405,'bias','1','var(--muted)');
-    node(475,180,'f = W⁽²⁾v',fwdShown>=3?`f=${fmt(q.f)}`:'',fwdShown>=3?'var(--accent)':'var(--line)');
-    node(630,180,'ℓ = (f−y)²',fwdShown>=4?`ℓ=${fmt(q.loss)}`:'',fwdShown>=4?'var(--accent)':'var(--line)');
-    const [w11,w12,b1]=S.W1[0],[w21,w22,b2]=S.W1[1],[a1,a2,bb]=S.W2;
-    const hideW1=[[[165,135,290,120],'w₁₁'],[[165,255,290,250],'w₁₂'],[[165,395,290,405],'b₁'],[[165,255,290,275],'w₂₁'],[[165,255,290,250],'w₂₂'],[[165,395,290,405],'b₂']];
-    edge(165,140,290,120,fmt(w11),'var(--accent)',150,105);
-    edge(165,255,290,275,fmt(w21),'var(--accent)',110,250);
-    edge(165,255,290,250,fmt(w12),'var(--accent)',110,225);
-    edge(165,395,290,420,fmt(b1),'var(--accent)',150,435);
-    edge(165,255,290,330,fmt(w22),'var(--accent)',110,305);
-    edge(165,395,290,390,fmt(b2),'var(--accent)',150,375);
-    edge(375,150,540,195,fmt(a1),'var(--accent)',420,150);
-    edge(375,320,540,205,fmt(a2),'var(--accent)',420,290);
-    edge(375,420,540,195,fmt(bb),'var(--accent)',420,420);
-    edge(540,190,565,190,'', 'var(--accent)');
-    // backward overlays
+    const mkF=svgMarker(defs,'labF','#176653'),mkB=svgMarker(defs,'labB','#b45a2b');
+    // ---- nodes ----
+    node(30,70,130,60,'x₁',String(fmt(x1)),'#176653');
+    node(30,190,130,60,'x₂',String(fmt(x2)),'#176653');
+    node(30,330,130,60,'bias','1','#8a938b');
+    const fs=S.fwdStep;
+    node(280,60,160,64,'h₁ = ReLU(z₁)',fs>=1?(fs>=2?`z₁=${fmt(q.z1)} · v₁=${fmt(q.v1)}`:`z₁=${fmt(q.z1)}`):'等待前向…',fs>=1?'#176653':'#8a938b');
+    node(280,220,160,64,'h₂ = ReLU(z₂)',fs>=1?(fs>=2?`z₂=${fmt(q.z2)} · v₂=${fmt(q.v2)}`:`z₂=${fmt(q.z2)}`):'等待前向…',fs>=1?'#176653':'#8a938b');
+    node(280,390,160,64,'bias','1','#8a938b');
+    node(540,180,140,64,'f = W⁽²⁾v',fs>=3?`f = ${fmt(q.f)}`:'等待前向…',fs>=3?'#176653':'#8a938b');
+    node(740,180,140,64,'ℓ = (f−y)²',fs>=4?`ℓ = ${fmt(q.loss)}`:'等待前向…',fs>=4?'#176653':'#8a938b');
+    // ---- forward edges ----
+    const inP=[[160,100],[160,220],[160,360]], hidP=[[280,92],[280,252]];
+    const inEdges=[
+      {i:0,j:0,lx:184,ly:72, glx:244,gly:96},
+      {i:0,j:1,lx:184,ly:186,glx:244,gly:168},
+      {i:1,j:0,lx:184,ly:132,glx:244,gly:150},
+      {i:1,j:1,lx:184,ly:258,glx:244,gly:276},
+      {i:2,j:0,lx:184,ly:210,glx:244,gly:196},
+      {i:2,j:1,lx:184,ly:312,glx:244,gly:328}
+    ];
+    const wv=S.W1;
+    inEdges.forEach((e,k)=>{
+      const src=inP[e.i],dst=hidP[e.j];
+      svgCurve(svg,src[0],src[1],dst[0],dst[1],{color:'#176653',width:1.7,marker:mkF,bend:0.4,flip:e.j===0?-1:1});
+      svgHalo(svg,e.lx,e.ly,W1keys[e.j][e.i]+'='+fmt(wv[e.j][e.i]),{fill:'#176653',font:10.5});
+      if(S.bwdStep>=4){
+        const val=g.gW1[e.j][e.i];
+        svgCurve(svg,dst[0],dst[1],src[0],src[1],{color:'#b45a2b',width:1.5,dash:true,marker:mkB,bend:0.45,flip:e.j===0?1:-1});
+        svgHalo(svg,e.glx,e.gly,'∂ℓ/∂'+W1keys[e.j][e.i]+'='+fmt(val),{fill:'#b45a2b',font:10});
+      }
+    });
+    const hOut=[[440,92],[440,252],[440,422]], fIn=[[540,200],[540,216],[540,232]];
+    const outEdges=[
+      {i:0,lx:478,ly:116,glx:486,gly:134},
+      {i:1,lx:478,ly:262,glx:486,gly:296},
+      {i:2,lx:478,ly:348,glx:486,gly:372}
+    ];
+    outEdges.forEach((e)=>{
+      const src=hOut[e.i],dst=fIn[e.i];
+      svgCurve(svg,src[0],src[1],dst[0],dst[1],{color:'#176653',width:1.7,marker:mkF,bend:0.38,flip:e.i===1?-1:1});
+      svgHalo(svg,e.lx,e.ly,W2keys[e.i]+'='+fmt(S.W2[e.i]),{fill:'#176653',font:10.5});
+      if(S.bwdStep>=2){
+        const val=g.gW2[e.i];
+        svgCurve(svg,dst[0],dst[1],src[0],src[1],{color:'#b45a2b',width:1.5,dash:true,marker:mkB,bend:0.45,flip:e.i===1?1:-1});
+        svgHalo(svg,e.glx,e.gly,'∂ℓ/∂'+W2keys[e.i]+'='+fmt(val),{fill:'#b45a2b',font:10});
+      }
+    });
+    svgCurve(svg,680,212,740,212,{color:'#176653',width:1.7,marker:mkF,bend:0.3});
+    svgHalo(svg,710,196,'W⁽²⁾v',{fill:'#176653',font:10});
+    // ---- backward: output delta ----
     const bs=S.bwdStep;
     if(bs>=1){
-      edge(630,215,540,215,'δ⁽²⁾='+fmt(g.deltaOut),'#b45a2b',580,235);
-      if(bs>=2){
-        edge(540,215,375,155,'∂ℓ/∂a₁='+fmt(g.gW2[0]),'#b45a2b',430,160);
-        edge(540,215,375,325,'∂ℓ/∂a₂='+fmt(g.gW2[1]),'#b45a2b',430,295);
-        edge(540,215,375,425,'∂ℓ/∂b='+fmt(g.gW2[2]),'#b45a2b',430,440);
-      }
-      if(bs>=3){
-        edge(290,115,245,100,'δ₁='+fmt(g.dh1),'#b45a2b',245,85);
-        edge(290,280,245,270,'δ₂='+fmt(g.dh2),'#b45a2b',245,245);
-      }
-      if(bs>=4){
-        edge(290,120,165,145,'g₁₁='+fmt(g.gW1[0][0]),'#b45a2b',195,95);
-        edge(290,120,165,255,'g₁₂='+fmt(g.gW1[0][1]),'#b45a2b',195,165);
-        edge(290,120,165,395,'g_b₁='+fmt(g.gW1[0][2]),'#b45a2b',195,255);
-        edge(290,285,165,255,'g₂₁='+fmt(g.gW1[1][0]),'#b45a2b',215,235);
-        edge(290,285,165,255,'g₂₂='+fmt(g.gW1[1][1]),'#b45a2b',215,215);
-      }
+      svgAdd(svg,'path',{d:'M750,244 C730,278 650,278 680,244',fill:'none',stroke:'#b45a2b',strokeWidth:2,strokeDasharray:'6 4',markerEnd:mkB});
+      svgHalo(svg,702,284,'δ⁽²⁾ = ∂ℓ/∂f = '+fmt(g.deltaOut),{fill:'#b45a2b',font:11});
     }
+    // ---- backward: hidden delta badges ----
+    if(bs>=3){
+      svgAdd(svg,'rect',{x:285,y:24,width:150,height:26,rx:9,fill:'rgba(180,90,43,.12)',stroke:'#b45a2b'});
+      svgAdd(svg,'text',{x:360,y:41,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#b45a2b'},'δ₁⁽¹⁾ = '+fmt(g.dh1));
+      svgAdd(svg,'rect',{x:285,y:188,width:150,height:26,rx:9,fill:'rgba(180,90,43,.12)',stroke:'#b45a2b'});
+      svgAdd(svg,'text',{x:360,y:205,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#b45a2b'},'δ₂⁽¹⁾ = '+fmt(g.dh2));
+    }
+    svgHalo(svg,440,548,'实线=前向 · 虚线=反向 · 权重梯度 = δ × 输入激活',{fill:'var(--muted)',font:11});
   }
   ['#labX1','#labX2','#labY'].forEach(sel=>$(sel).addEventListener('input',()=>{S[sel.slice(4).toLowerCase()]=+$(sel).value;S.bwdStep=0;render();}));
   $('#labPresetPerfect').addEventListener('click',()=>setPreset('perfect'));
@@ -1253,19 +1323,49 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     const p=+$('#effP').value,P=Math.pow(10,p);
     $('#effPval').textContent=`10^${p.toFixed(1)} = ${P.toExponential(1)}`;
     svg.innerHTML='';
-    const M={l:120,r:170,t:60,b:70},W=720,H=330,plotW=W-M.l-M.r;
+    const M={l:120,r:170,t:80,b:60},W=720,H=330,plotW=W-M.l-M.r;
     const sx=v=>M.l+Math.min(1,v/7)*plotW;
-    const barY=[110,210];
-    svgAdd(svg,'text',{x:20,y:80,'font-size':13,'font-weight':700,fill:'var(--ink)'},'对数成本：');
-    for(let i=0;i<=7;i++){svgAdd(svg,'text',{x:sx(i),y:H-M.b+20,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(i));}
-    svgAdd(svg,'text',{x:M.l+plotW/2,y:H-8,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'log₁₀(前向传播次数)');
+    const yN=110,yB=210,hBar=50;
     svgAdd(svg,'line',{x1:M.l,y1:H-M.b,x2:W-M.r,y2:H-M.b,stroke:'var(--line)'});
-    svgAdd(svg,'rect',{x:sx(0),y:barY[0],width:sx(p)-sx(0),height:46,rx:8,fill:'rgba(178,58,72,.22)',stroke:'#b23a48'});
-    svgAdd(svg,'text',{x:sx(p)+8,y:barY[0]+26,'font-size':12,'font-weight':700,fill:'#b23a48'},'数值差分 ≈ '+Math.round(P).toExponential(0)+' 次前向');
-    svgAdd(svg,'rect',{x:sx(0),y:barY[1],width:sx(Math.log10(2.5)),height:46,rx:8,fill:'rgba(23,102,83,.22)',stroke:'var(--accent)'});
-    svgAdd(svg,'text',{x:sx(Math.log10(2.5))+8,y:barY[1]+26,'font-size':12,'font-weight':700,fill:'var(--accent)'},'反向传播 ≈ 2~3 次前向当量');
-    svgAdd(svg,'text',{x:sx(p)+8,y:barY[0]-8,'font-size':11,fill:'#b23a48'},'P 个参数 = P 次前向');
-    svgAdd(svg,'text',{x:sx(7)+8,y:barY[1]-8,'font-size':11,fill:'var(--accent)'},'一次反向拿到全部 P 个梯度');
+    for(let i=0;i<=7;i++){svgAdd(svg,'line',{x1:sx(i),y1:H-M.b,x2:sx(i),y2:H-M.b+5,stroke:'var(--line)'});svgAdd(svg,'text',{x:sx(i),y:H-M.b+22,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(i));}
+    svgAdd(svg,'text',{x:M.l+plotW/2,y:H-8,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'log₁₀(前向传播次数)');
+    svgAdd(svg,'text',{x:20,y:84,'font-size':13,'font-weight':700,fill:'var(--ink)'},'成本对比（对数）：');
+    // numerical difference
+    svgAdd(svg,'rect',{x:sx(0),y:yN,width:sx(p)-sx(0),height:hBar,rx:8,fill:'rgba(178,58,72,.22)',stroke:'#b23a48'});
+    const pLabel='数值差分 ≈ '+P.toExponential(0)+' 次前向（P 个参数）';
+    svgHalo(svg,p>=4.2?sx(p)-6:sx(p)+6,yN-10,pLabel,{fill:'#b23a48',font:11,anchor:p>=4.2?'end':'start'});
+    svgAdd(svg,'text',{x:sx(p)/2,y:yN+hBar+16,'text-anchor':'middle','font-size':10,fill:'#b23a48'},'每参数一次前向');
+    // backprop
+    svgAdd(svg,'rect',{x:sx(0),y:yB,width:Math.max(14,sx(Math.log10(2.5))-sx(0)),height:hBar,rx:8,fill:'rgba(23,102,83,.22)',stroke:'#176653'});
+    svgHalo(svg,sx(0)+6,yB-10,'反向传播 ≈ 2~3 次前向当量',{fill:'#176653',font:11,anchor:'start'});
+    svgAdd(svg,'text',{x:sx(7),y:yB+hBar+16,'text-anchor':'middle','font-size':10,fill:'#176653'},'一次反向拿全部梯度');
+  }
+  $('#effP').addEventListener('input',render);render();
+})();
+
+/* ---------- efficiency ---------- */
+(()=>{
+  const svg=$('#effPlot');
+  function render(){
+    const p=+$('#effP').value,P=Math.pow(10,p);
+    $('#effPval').textContent=`10^${p.toFixed(1)} = ${P.toExponential(1)}`;
+    svg.innerHTML='';
+    const M={l:120,r:170,t:80,b:60},W=720,H=330,plotW=W-M.l-M.r;
+    const sx=v=>M.l+Math.min(1,v/7)*plotW;
+    const yN=110,yB=210,hBar=50;
+    svgAdd(svg,'line',{x1:M.l,y1:H-M.b,x2:W-M.r,y2:H-M.b,stroke:'var(--line)'});
+    for(let i=0;i<=7;i++){svgAdd(svg,'line',{x1:sx(i),y1:H-M.b,x2:sx(i),y2:H-M.b+5,stroke:'var(--line)'});svgAdd(svg,'text',{x:sx(i),y:H-M.b+22,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(i));}
+    svgAdd(svg,'text',{x:M.l+plotW/2,y:H-8,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'log₁₀(前向传播次数)');
+    svgAdd(svg,'text',{x:20,y:84,'font-size':13,'font-weight':700,fill:'var(--ink)'},'成本对比（对数）：');
+    // numerical difference
+    svgAdd(svg,'rect',{x:sx(0),y:yN,width:sx(p)-sx(0),height:hBar,rx:8,fill:'rgba(178,58,72,.22)',stroke:'#b23a48'});
+    const pLabel='数值差分 ≈ '+P.toExponential(0)+' 次前向（P 个参数）';
+    svgHalo(svg,p>=4.2?sx(p)-6:sx(p)+6,yN-10,pLabel,{fill:'#b23a48',font:11,anchor:p>=4.2?'end':'start'});
+    svgAdd(svg,'text',{x:sx(p)/2,y:yN+hBar+16,'text-anchor':'middle','font-size':10,fill:'#b23a48'},'每参数一次前向');
+    // backprop
+    svgAdd(svg,'rect',{x:sx(0),y:yB,width:Math.max(14,sx(Math.log10(2.5))-sx(0)),height:hBar,rx:8,fill:'rgba(23,102,83,.22)',stroke:'#176653'});
+    svgHalo(svg,sx(0)+6,yB-10,'反向传播 ≈ 2~3 次前向当量',{fill:'#176653',font:11,anchor:'start'});
+    svgAdd(svg,'text',{x:sx(7),y:yB+hBar+16,'text-anchor':'middle','font-size':10,fill:'#176653'},'一次反向拿全部梯度');
   }
   $('#effP').addEventListener('input',render);render();
 })();
@@ -1302,36 +1402,66 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
   render(-1);
 })();
 
+/* ---------- pipeline / PyTorch ---------- */
+(()=>{
+  const svg=$('#pipeSvg');svg.setAttribute('viewBox','0 0 900 210');
+  const stages=[
+    ['model(x)','前向传播','#176653'],
+    ['loss_fn(y_pred,y)','损失','#176653'],
+    ['zero_grad()','清空梯度','#8a6a14'],
+    ['loss.backward()','反向传播','#b45a2b'],
+    ['optimizer.step()','更新参数','#285a9e']
+  ];
+  function render(active){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'pipeArr','#176653');
+    stages.forEach(([code,desc,col],i)=>{
+      const x=20+i*178,y=55;
+      const lit=active===i;
+      const g=svgAdd(svg,'g',{transform:`translate(${x},${y})`});
+      svgAdd(g,'rect',{width:160,height:80,rx:12,fill:lit?'rgba(23,102,83,.10)':'var(--surface)',stroke:lit?col:'var(--line)',strokeWidth:lit?2.4:1.5});
+      svgAdd(g,'text',{x:80,y:32,'text-anchor':'middle','font-size':11.5,'font-weight':700,fill:'var(--ink)'},code);
+      svgAdd(g,'text',{x:80,y:56,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},desc);
+      if(i<4)svgCurve(svg,x+160,95,x+178,95,{color:'#176653',width:1.7,marker:mk,bend:0.3});
+    });
+    svgAdd(svg,'path',{d:'M893,95 C945,95 945,195 450,195 C190,195 100,195 100,135',fill:'none',stroke:'#8a938b',strokeWidth:1.5,strokeDasharray:'5 4',markerEnd:mk});
+    svgHalo(svg,465,218,'循环 1000 次（每个 batch 都重新清零梯度）',{fill:'var(--muted)',font:11});
+  }
+  const list=$('#pipeCode');
+  list.innerHTML=stages.map(([code,desc],i)=>`<button class="btn ghost" data-i="${i}" style="justify-content:space-between;width:100%;margin:3px 0"><code>${code}</code><span class="small">${desc}</span></button>`).join('');
+  list.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{render(+b.dataset.i);b.scrollIntoView({behavior:'smooth',block:'nearest'});}));
+  render(-1);
+})();
+
 /* ---------- autodiff tape ---------- */
 (()=>{
-  const svg=$('#tapeSvg');
+  const svg=$('#tapeSvg');svg.setAttribute('viewBox','0 0 900 380');
   const vals=[['x',2],['z=w′x',1],['v=ReLU(z)',1],['f=w·v',3],['ℓ=(f−y)²',4]];
-  const local=['', '∂z/∂x = 0.5', '∂v/∂z = 1', '∂f/∂v = 3', '∂ℓ/∂f = 4'];
   let fwdStep=0,bwdStep=0;
   function render(){
     svg.innerHTML='';
-    const defs=svgAdd(svg,'defs');const mk=svgAdd(defs,'marker',{id:'tapeArr',viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:6,markerHeight:6,orient:'auto'});
-    svgAdd(mk,'path',{d:'M0,0 L10,5 L0,10 z',fill:'#b45a2b'});
-    // tape strip
-    svgAdd(svg,'rect',{x:30,y:100,width:840,height:92,rx:14,fill:'var(--surface2)',stroke:'var(--line)'});
+    const defs=svgAdd(svg,'defs');
+    const mkB=svgMarker(defs,'tapeArr','#b45a2b');
+    svgAdd(svg,'rect',{x:30,y:90,width:840,height:92,rx:14,fill:'var(--surface2)',stroke:'var(--line)'});
     for(let i=0;i<5;i++){
       const x=70+i*170;
-      svgAdd(svg,'rect',{x,y:118,width:150,height:56,rx:10,fill:fwdStep>i?'var(--surface)':'var(--surface2)',stroke:fwdStep>i?'var(--accent)':'var(--line)',strokeWidth:1.6});
-      svgAdd(svg,'text',{x:x+75,y:140,'text-anchor':'middle','font-size':12.5,'font-weight':700,fill:'var(--ink)'},vals[i][0]);
-      svgAdd(svg,'text',{x:x+75,y:160,'text-anchor':'middle','font-size':12,fill:fwdStep>i?'var(--accent)':'var(--muted)'},fwdStep>i?String(vals[i][1]):'·');
-      if(i<4)svgAdd(svg,'text',{x:x+158,y:145,'font-size':13,fill:'var(--muted)'},'→');
+      svgAdd(svg,'rect',{x,y:108,width:150,height:56,rx:10,fill:fwdStep>i?'var(--surface)':'var(--surface2)',stroke:fwdStep>i?'#176653':'var(--line)',strokeWidth:1.6});
+      svgAdd(svg,'text',{x:x+75,y:130,'text-anchor':'middle','font-size':12.5,'font-weight':700,fill:'var(--ink)'},vals[i][0]);
+      svgAdd(svg,'text',{x:x+75,y:150,'text-anchor':'middle','font-size':12,fill:fwdStep>i?'#176653':'var(--muted)'},fwdStep>i?String(vals[i][1]):'·');
+      if(i<4)svgAdd(svg,'text',{x:x+158,y:135,'font-size':14,fill:'var(--muted)'},'→');
     }
-    const rev=['∂ℓ/∂f = 4','∂ℓ/∂v = 4×3 = 12','∂ℓ/∂z = 12×1 = 12','∂ℓ/∂w′ = 12×0.5 = 6'];
+    const rev=['∂ℓ/∂f = 4','∂ℓ/∂v = 4 × 3 = 12','∂ℓ/∂z = 12 × 1 = 12','∂ℓ/∂w′ = 12 × 0.5 = 6'];
     for(let i=0;i<4;i++){
       if(bwdStep>i){
-        const x1=75+(4-i)*170, x2=75+(3-i)*170;
-        svgAdd(svg,'path',{d:`M${x1},${240+i*34} C${(x1+x2)/2},${240+i*34} ${(x1+x2)/2},${270+i*34} ${x2},${270+i*34}`,fill:'none',stroke:'#b45a2b',strokeWidth:1.8,strokeDasharray:'5 4',markerEnd:'url(#tapeArr)'});
-        svgAdd(svg,'text',{x:(x1+x2)/2+6,y:236+i*34,'font-size':10.5,fill:'#b45a2b','text-anchor':'middle'},rev[i]);
+        const x1=75+(4-i)*170, x2=75+(3-i)*170, y1=218+i*30, y2=244+i*30;
+        svgAdd(svg,'path',{d:`M${x1},164 C${x1},${y1} ${x2},${y2} ${x2},164`,fill:'none',stroke:'#b45a2b',strokeWidth:1.8,strokeDasharray:'5 4',markerEnd:mkB});
+        svgHalo(svg,(x1+x2)/2,y1-8,rev[i],{fill:'#b45a2b',font:10.5});
       }
     }
-    if(bwdStep===0&&fwdStep<5)svgAdd(svg,'text',{x:480,y:285,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},'先点“前向记录”，把每个中间值写进 tape；反向时直接读出来复用。');
-    if(fwdStep>=5&&bwdStep===0)svgAdd(svg,'text',{x:480,y:285,'text-anchor':'middle','font-size':12,fill:'var(--accent)'},'tape 已记录 5 个中间值 —— 现在可以反向读带。');
-    if(bwdStep>=4)svgAdd(svg,'text',{x:480,y:285,'text-anchor':'middle','font-size':12,fill:'var(--warm)'},'反向完成：每个节点只执行一次“上游消息 × 局部导数”。');
+    if(bwdStep===0&&fwdStep<5)svgAdd(svg,'text',{x:450,y:368,'text-anchor':'middle','font-size':12,fill:'var(--muted)'},'先点“前向记录”，把每个中间值写进 tape；反向时直接读出来复用。');
+    if(fwdStep>=5&&bwdStep===0)svgAdd(svg,'text',{x:450,y:368,'text-anchor':'middle','font-size':12,fill:'#176653'},'tape 已记录 5 个中间值 —— 现在可以反向读带。');
+    if(bwdStep>=4)svgAdd(svg,'text',{x:450,y:368,'text-anchor':'middle','font-size':12,fill:'#b45a2b'},'反向完成：每个节点只执行一次“上游消息 × 局部导数”。');
   }
   $('#tapeFwd').addEventListener('click',()=>{fwdStep=Math.min(5,fwdStep+1);bwdStep=0;render();});
   $('#tapeBwd').addEventListener('click',()=>{if(fwdStep<5){toast('请先完成前向记录');return;}bwdStep=Math.min(4,bwdStep+1);render();});
@@ -1349,23 +1479,24 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     const d=p.map((pk,k)=>pk-(k===y?1:0));
     $('#ceF1val').textContent=fmt(f[0]);$('#ceF2val').textContent=fmt(f[1]);$('#ceF3val').textContent=fmt(f[2]);
     $$('[data-cey]').forEach(b=>{const on=+b.dataset.cey===y;b.classList.toggle('primary',on);b.classList.toggle('ghost',!on);});
-    const svg=$('#cePlot');svg.innerHTML='';
-    const W=820,H=340;
-    svgAdd(svg,'text',{x:20,y:30,'font-size':13,'font-weight':700,fill:'var(--ink)'},'softmax 概率 p（绿）与输出层 δ = p − y（橙）');
-    svgAdd(svg,'text',{x:W-12,y:30,'text-anchor':'end','font-size':12,fill:'var(--danger)'},'真实类别 y = '+(y+1)+' · ℓ = '+fmt(loss,3));
+    const svg=$('#cePlot');svg.setAttribute('viewBox','0 0 820 380');svg.innerHTML='';
+    const ZERO=108, PBASE=315, PMAX=165, DMAX=62;
+    svgHalo(svg,410,24,'softmax 概率 p（绿）与输出层 δ = p − y（橙）',{fill:'var(--ink)',font:13});
+    svgHalo(svg,808,50,'真实类别 y = '+(y+1)+' · ℓ = '+fmt(loss,3),{fill:'var(--danger)',font:11,anchor:'end'});
     for(let k=0;k<3;k++){
       const cx=130+k*200;
-      // delta chart zero line at y=110
-      svgAdd(svg,'line',{x1:cx-60,y1:110,x2:cx+60,y2:110,stroke:'var(--line)'});
-      const dy=Math.max(-1,Math.min(1,d[k]))*60;
-      svgAdd(svg,'rect',{x:cx-38,y:Math.min(110,110-dy),width:76,height:Math.abs(dy),rx:6,fill:dy>=0?'rgba(180,90,43,.35)':'rgba(180,90,43,.35)',stroke:'#b45a2b'});
-      svgAdd(svg,'text',{x:cx,y:Math.min(104,94-dy)+4,'text-anchor':'middle','font-size':11,fill:'#b45a2b'},'δ'+(k+1)+'='+fmt(d[k],2));
-      // probability bar baseline y=300
-      svgAdd(svg,'rect',{x:cx-46,y:300-p[k]*170,width:92,height:p[k]*170,rx:7,fill:'rgba(23,102,83,.35)',stroke:'var(--accent)'});
-      svgAdd(svg,'text',{x:cx,y:300-p[k]*170-8,'text-anchor':'middle','font-size':11.5,fill:'var(--accent)'},'p'+(k+1)+'='+fmt(p[k],2));
-      svgAdd(svg,'text',{x:cx,y:322,'text-anchor':'middle','font-size':12,fill:'var(--ink)'},'f'+(k+1)+'='+fmt(f[k],1)+(k===y?' ★':''));
+      // delta chart (zero line ZERO)
+      svgAdd(svg,'line',{x1:cx-70,y1:ZERO,x2:cx+70,y2:ZERO,stroke:'var(--line)',strokeWidth:1.2});
+      const dy=clamp(d[k],-1,1)*DMAX;
+      svgAdd(svg,'rect',{x:cx-40,y:dy>=0?ZERO-dy:ZERO,width:80,height:Math.abs(dy),rx:7,fill:'rgba(180,90,43,.32)',stroke:'#b45a2b'});
+      svgHalo(svg,cx,dy>=0?ZERO-dy-8:ZERO+dy+14,'δ'+(k+1)+' = '+fmt(d[k],2),{fill:'#b45a2b',font:11});
+      // probability chart
+      const ph=p[k]*PMAX;
+      svgAdd(svg,'rect',{x:cx-50,y:PBASE-ph,width:100,height:ph,rx:8,fill:'rgba(23,102,83,.34)',stroke:'#176653'});
+      svgHalo(svg,cx,PBASE-ph-8,'p'+(k+1)+' = '+fmt(p[k],2),{fill:'#176653',font:11});
+      svgHalo(svg,cx,342,'f'+(k+1)+' = '+fmt(f[k],1)+(k===y?' ★':''),{fill: k===y?'var(--danger)':'var(--ink)',font:11.5});
     }
-    svgAdd(svg,'text',{x:W/2,y:335,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'δ 之和 = '+fmt(d.reduce((a,b)=>a+b,0),2)+'（恒为 0）');
+    svgHalo(svg,410,366,'δ 之和 = '+fmt(d.reduce((a,b)=>a+b,0),2)+'（恒为 0）',{fill:'var(--muted)',font:11});
   }
   $$('#ceF1,#ceF2,#ceF3').forEach(el=>el.addEventListener('input',render));
   $$('[data-cey]').forEach(b=>b.addEventListener('click',()=>{y=+b.dataset.cey;render();}));
