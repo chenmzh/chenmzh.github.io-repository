@@ -71,7 +71,13 @@ section{margin:0 0 58px;scroll-margin-top:74px}
 .hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
 .hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
 .hero .answer{margin-top:12px;font-weight:700}
-.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px} .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+
 .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
 h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
 h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
@@ -189,6 +195,26 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <p class="subtitle">第 11 讲给出了模型（多层神经网络与前向传播）。第 12 讲不引入新模型，只回答一个问题：训练所需的梯度 $\nabla_W\ell$ 到底怎么高效地算出来。这一页是原讲义的<b>附属互动版</b>：每一个第一次出现的概念都给出定义、图示与动手实验；所有实验都只需要拖动滑杆。</p>
       <div class="question">💬 本讲核心问题：网络里有很多层、很多权重，SGD 需要的梯度 $\dfrac{\partial \ell}{\partial W}$ 如何系统地、高效地计算？</div>
       <div class="answer">一句话答案：把损失沿计算图“倒着”传回去，每一步只乘一个局部导数（链式法则），并复用前向传播保存的中间量 —— 这就是反向传播（backpropagation）。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">讲一种<b>高效计算梯度的方法：反向传播</b>。它不是新模型，也不是新学习算法。核心工具依次是：计算图 → 链式法则 → Jacobian / VJP → 误差信号 δ → 梯度检查 → 自动微分。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">SGD 每走一步都需要 $
+abla_W\ell$。3 个权重可以手算，300 万个权重必须系统化；今天学的就是这套系统方法。它也是所有框架里 `loss.backward()` 的原理，理解它才能诊断梯度消失、梯度爆炸和实现错误。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲只有四步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 前向</b>：$x	o z	o v	o f	o\ell$，把中间量都存下来。</span>
+            <span class="step"><b>② 反向</b>：从 $\ell$ 出发，沿途只乘局部导数。</span>
+            <span class="step"><b>③ 得梯度</b>：每层梯度 = 本层 δ 与上一层激活的外积。</span>
+            <span class="step"><b>④ 验证使用</b>：有限差分检查，再交给 SGD / Adam。</span>
+          </div>
+        </div>
+      </div>
       <div class="hero-meta">
         <span class="pill">📍 位置：模型（L11）→ 梯度（L12）→ 训练稳定性（L13）</span>
         <span class="pill">🧩 前置：前向传播、链式法则、SGD</span>
@@ -198,7 +224,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
 
     <div class="path-bar" id="pathBar">
       <span class="path-title">🎓 学习路径</span>
-      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线 · 15 min</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
       <span class="path-hint" id="pathHint"></span>
     </div>
     <!-- ============ CONCEPT MAP ============ -->
@@ -763,6 +789,16 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <div class="card"><h3>① 先前向</h3><p>算出所有 $z^{(l)}, v^{(l)}, f$ 与 loss，并把中间值存下来备用。</p></div>
         <div class="card"><h3>② 再反向</h3><p>从输出层开始算 δ，逐层向前：$\delta^{(l)}=\varphi'(z^{(l)})\odot\big(\bar W^{(l+1)}\big)^\top\delta^{(l+1)}$。</p></div>
         <div class="card"><h3>③ 外积得梯度</h3><p>每层权重梯度 = 当前层 δ 与前一层激活的外积：$\nabla_{W^{(l)}}\ell=\delta^{(l)}(v^{(l-1)})^\top$。</p></div>
+      </div>
+      <div class="def conn" style="margin-top:26px">
+        <div class="term">收束：把整讲重新串成一条线</div>
+        <p class="plain">我们从“SGD 需要梯度”出发，最终得到的是一个完整闭环：<b>前向产生损失 → 反向传播算出 δ → 外积得到每层梯度 → 梯度检查验证 → 优化器使用梯度更新权重。</b></p>
+        <p class="plain">判断自己是否学完本讲，只需能依次说出四件事：</p>
+        <p class="plain">① 前向：$x\to z^{(l)}=W^{(l)}v^{(l-1)}\to v^{(l)}=\varphi(z^{(l)})\to f\to\ell$；</p>
+        <p class="plain">② 反向：$\delta^{(L)}$ 从损失开始，$\delta^{(l)}=\varphi'(z^{(l)})\odot\big(\bar W^{(l+1)}\big)^\top\delta^{(l+1)}$ 逐层向前；</p>
+        <p class="plain">③ 梯度：$\nabla_{W^{(l)}}\ell=\delta^{(l)}(v^{(l-1)})^\top$；</p>
+        <p class="plain">④ 使用：SGD / Adam 拿 $\nabla_W\ell$ 更新，有限差分用来复核实现。</p>
+        <p class="plain">这也是下一讲讨论“为什么训练仍然难”时，你要随身携带的四件工具。</p>
       </div>
       <div class="hero" style="margin-top:26px">
         <div class="course">NEXT · LECTURE 13</div>
