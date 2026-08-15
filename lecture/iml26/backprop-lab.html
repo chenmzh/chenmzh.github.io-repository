@@ -488,6 +488,13 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <section id="output">
       <h2 class="sec-title"><span class="num">§8</span>起点与递推：输出层 δ、隐藏层 δ</h2>
       <p class="sec-lead">反向传播像多米诺骨牌，需要第一张牌（输出层 δ），也需要一张牌撞倒下一张的规则（隐藏层递推）。</p>
+
+      <div class="def">
+        <div class="term">先记住逐层口诀：两件事交替进行<span class="en">layer-by-layer forward pass</span></div>
+        <p class="plain">前向传播不是一口气算完，而是每层重复“<b>线性变换 → 激活</b>”：</p>
+        <div class="formula">$$v^{(0)}=[x;1],\qquad z^{(l)}=W^{(l)}v^{(l-1)},\qquad v^{(l)}=\varphi(z^{(l)}),\qquad l=1,\dots,L-1$$</div>
+        <p class="plain">对 ReLU 网络就是 $v^{(l)}=\mathrm{ReLU}(z^{(l)})$。输出层按本讲约定保持线性：$f=W^{(L)}v^{(L-1)}$，最后接损失 $\ell=\mathrm{loss}(f,y)$。</p>
+      </div>
       <div class="grid2">
         <div class="def">
           <div class="term">输出层 δ：反向传播的起点<span class="en">output-layer delta</span></div>
