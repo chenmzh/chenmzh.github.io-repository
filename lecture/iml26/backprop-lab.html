@@ -331,12 +331,48 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <!-- ============ JACOBIAN ============ -->
     <section id="jacobian">
       <h2 class="sec-title"><span class="num">§6</span>多变量怎么办：Jacobian 与 VJP</h2>
-      <p class="sec-lead">当中间量是向量时，单变量链式法则升级为 Jacobian。但请记住本讲真正要的是一条结论：<b>我们从不构造完整的大 Jacobian，只计算“Jacobian 转置 × 上游向量”</b>。</p>
+      <p class="sec-lead">单变量链式法则只适用于“中间量是一个数”。神经网络里中间量几乎都是<b>向量</b>（一层的激活有几十上百维）。这一节回答三件事：<b>Jacobian 是什么、它怎么用、以及为什么反向传播实际只算它的“半边乘积”（VJP）而不把整个矩阵构造出来。</b></p>
       <div class="def">
-        <div class="term">Jacobian 矩阵<span class="en">Jacobian matrix</span></div>
+        <div class="term">Jacobian 矩阵：向量函数的“局部敏感度总表”<span class="en">Jacobian matrix</span></div>
         <p class="plain">向量值函数 $f:\mathbb R^n\to\mathbb R^m$ 的全部一阶偏导排成 $m\times n$ 矩阵，第 $i$ 行第 $j$ 列是输出分量 $f_i$ 对输入分量 $x_j$ 的导数：</p>
         <div class="formula">$$J_f(x)=\begin{bmatrix}\frac{\partial f_1}{\partial x_1}&\cdots&\frac{\partial f_1}{\partial x_n}\\\vdots&&\vdots\\\frac{\partial f_m}{\partial x_1}&\cdots&\frac{\partial f_m}{\partial x_n}\end{bmatrix}\in\mathbb R^{m\times n}$$</div>
-        <p class="plain"><b>通俗理解：</b>它是一个“局部敏感度表格”，每个格子回答“输入第 j 个分量动一点，输出第 i 个分量会动多少”。</p>
+        <p class="plain"><b>白话：</b>每个格子回答一个问题——“输入第 j 个分量动一点点，输出第 i 个分量会动多少”。所以 Jacobian 不是神经网络里新发明的魔法，只是把 m×n 个标量导数整齐地摆成一张表。</p>
+      </div>
+      <div class="grid3">
+        <div class="def why">
+          <div class="term">它解决什么问题？</div>
+          <p class="plain">当中间量是向量时，单变量链式法则没法写。Jacobian 把“导数”从数升级成表，多变量复合函数的导数就是两张表相乘：</p>
+          <div class="formula">$$J_{g\circ f}(x)=J_g(f(x))\,J_f(x)$$</div>
+        </div>
+        <div class="def toolnote">
+          <div class="term">它在本讲的用处</div>
+          <p class="plain">网络的一层就是向量到向量的函数：$z^{(l)}=W^{(l)}v^{(l-1)}$。要算“损失对本层输入的梯度”，理论路径就是写出这一层的 Jacobian，再乘上游传来的误差向量。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">但本讲只算它的一半</div>
+          <p class="plain">损失 $\ell$ 是<b>标量</b>，所以上游消息 $\nabla_u\ell$ 是<b>一个向量</b>。链式法则只要求：</p>
+          <div class="formula">$$\nabla_x\ell=J_f(x)^\top\nabla_u\ell$$</div>
+          <p class="plain">这个“矩阵转置乘向量”就是 VJP。</p>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">怎么计算：两条路线，本讲只用第二条<span class="en">how to compute</span></div>
+        <p class="plain"><b>路线 A（概念路线）：</b>先把完整 Jacobian 按定义一格格求出来，再做乘法。它适合 2×3 这样的小表，用来<b>理解</b>，不适合真正实现。</p>
+        <p class="plain"><b>路线 B（实现路线）：</b>直接从上游向量 v 出发，按分量求和：</p>
+        <div class="formula">$$\big(J_f(x)^\top v\big)_j=\sum_{i=1}^{m}\frac{\partial f_i}{\partial x_j}\,v_i,\qquad j=1,\dots,n$$</div>
+        <p class="plain">注意上式只是把“转置乘向量”展开成标量写法：对第 j 个输入分量，把<b>所有输出对它的敏感度 × 对应上游消息</b>加起来。两个本讲反复出现的特例：</p>
+        <div class="grid2">
+          <div class="card compact">
+            <b>线性层</b> $z=Wv$：其 Jacobian 就是 $W$ 本身，于是
+            <div class="formula">$$\nabla_v\ell=W^\top\nabla_z\ell=W^\top\delta^{(l)}$$</div>
+            <span class="small">W 前向时已经在内存里，不需要额外造新矩阵。</span>
+          </div>
+          <div class="card compact">
+            <b>逐元素激活</b> $v=\varphi(z)$：$v_i$ 只依赖 $z_i$，所以 Jacobian 是对角矩阵 $\operatorname{diag}(\varphi'(z))$，于是
+            <div class="formula">$$\nabla_z\ell=\varphi'(z)\odot\nabla_v\ell$$</div>
+            <span class="small">对角矩阵乘向量退化成逐元素乘法，连矩阵都不用写。</span>
+          </div>
+        </div>
       </div>
       <div class="grid2">
         <div class="viz">
@@ -347,16 +383,18 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
             <button class="btn ghost" id="jacRandom" type="button">换一组数</button>
           </div>
           <div id="jacDisplay"></div>
-          <div class="caption">列梯度约定：$\nabla_x\ell = J_f(x)^\top \nabla_u\ell$。把上游向量与局部 Jacobian 相乘，得到的就是“损失对上一级每个分量的敏感度”。反向传播每到一个节点只做一次这样的乘积。</div>
+          <div class="caption">先读 J 的第 j 列（输出对输入 xⱼ 的所有敏感度），再与上游向量逐项相乘并求和，就得到结果向量的第 j 个分量。拖动 n、m 或“换一组数”，看下面的逐步算式如何变化。</div>
         </div>
         <div>
           <div class="def why">
-            <div class="term">vector–Jacobian product（VJP）<span class="en">first mentioned: §7</span></div>
-            <p class="plain">反向传播的实际计算单元：一个上游向量 $v$ 与局部 Jacobian 的乘积 $J_f(x)^\top v$。<b>只算这个乘积，不把 $J_f$ 存下来</b>，所以时间和内存都远小于显式构造 Jacobian。</p>
+            <div class="term">vector–Jacobian product（VJP）<span class="en">vector–Jacobian product</span></div>
+            <p class="plain">一个上游向量 $v$ 与局部 Jacobian 的乘积 $J_f(x)^\top v$。它是反向传播每个节点的<b>标准动作</b>：把“上游损失消息”翻译成“对本地输入的消息”。</p>
           </div>
           <div class="def conn">
-            <div class="term">为什么输出是标量如此关键</div>
-            <p class="plain">损失 $\ell\in\mathbb R$ 只有一个数。对任何中间向量 $u\in\mathbb R^m$，上游消息 $\nabla_u\ell$ 是与 $u$ 同形状的<b>一个向量</b>，而不是矩阵。于是反向传播只需要传递向量，不需要传递矩阵。</p>
+            <div class="term">为什么只需要算 VJP，不需要完整 Jacobian？</div>
+            <p class="plain">① <b>目标形状决定一切：</b>我们最终要的是 $\nabla_x\ell$，它和输入 x 同形状，是一个向量，不是 m×n 矩阵；链式法则给出的恰好就是 $J^\top v$。</p>
+            <p class="plain">② <b>损失是标量：</b>标量损失在每一步只产生<b>一个</b>上游向量 v，而不是一个“上游矩阵”。所以反向传播永远在做“矩阵 × 向量”，得到的仍是向量。</p>
+            <p class="plain">③ <b>省内存、可融合：</b>显式构造 J 要存 $m\times n$ 个数；只保留上游 v 和结果 $\nabla_x\ell$ 只需要 $m+n$ 个数。神经网络的层通常还有结构（线性、逐元素），VJP 能直接利用这些结构计算，不必先拼出大矩阵。</p>
           </div>
           <details>
             <summary>📷 课件原图：Jacobian 维度与误差-激活外积</summary>
@@ -1091,9 +1129,19 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     const u=Array.from({length:m},(_,i)=>Math.round((i%2===0?0.8+i*0.4:-0.6-i*0.3)*100)/100);
     const v=Array.from({length:n},(_,j)=>Math.round(u.reduce((s,ui,i)=>s+ui*J[i][j],0)*100)/100);
     $('#jacNval').textContent=n;$('#jacMval').textContent=m;
-    let html=`<div class="small">J = ∂f/∂x ∈ ℝ<sup>${m}×${n}</sup>（行=输出 fᵢ，列=输入 xⱼ）</div><div class="matrix-grid" style="grid-template-columns:repeat(${n},1fr)">`;
-    J.forEach((row,i)=>row.forEach((val,j)=>html+=`<div class="heatcell" style="background:${heatColor(val)};color:var(--ink)">${fmt(val,1)}</div>`));
-    html+=`</div><div class="label-row"><div class="control"><label>上游向量 ∇ᵤℓ ∈ ℝ^${m}（橙色）</label><div class="matrix-grid" style="grid-template-columns:repeat(${m},52px)">${u.map(x=>`<div class="heatcell" style="background:${heatColor(x)};color:var(--ink)">${fmt(x,1)}</div>`).join('')}</div></div><div class="control"><label>结果 Jᵀ∇ᵤℓ = ∇ₓℓ ∈ ℝ^${n}（绿色）</label><div class="matrix-grid" style="grid-template-columns:repeat(${n},52px)">${v.map(x=>`<div class="heatcell" style="background:${heatColor(x)};color:var(--ink)">${fmt(x,1)}</div>`).join('')}</div></div></div>`;
+    let html=`<div class="small">J = ∂f/∂x ∈ ℝ<sup>${m}×${n}</sup>：行 = 输出 fᵢ，列 = 输入 xⱼ</div>`;
+    html+=`<div class="matrix-grid" style="grid-template-columns:repeat(${n},1fr)">`;
+    J.forEach((row,i)=>row.forEach((val,j)=>html+=`<div class="heatcell" title="∂f${i+1}/∂x${j+1} = ${fmt(val,1)}" style="background:${heatColor(val)};color:var(--ink)">${fmt(val,1)}</div>`));
+    html+=`</div><div class="label-row"><div class="control"><label>上游向量 ∇ᵤℓ ∈ ℝ^${m}（橙色）</label><div class="matrix-grid" style="grid-template-columns:repeat(${m},52px)">${u.map(x=>`<div class="heatcell" style="background:${heatColor(x)};color:var(--ink)">${fmt(x,1)}</div>`).join('')}</div></div><div class="control"><label>结果 Jᵀ∇ᵤℓ = ∇ₓℓ ∈ ℝ^${n}（绿色）</label><div class="matrix-grid" style="grid-template-columns:repeat(${n},52px)">${v.map(x=>`<div class="heatcell" style="background:${heatColor(x)};color:var(--ink)">${fmt(x,2)}</div>`).join('')}</div></div></div>`;
+    // explicit step-by-step: each result component is a dot product of one J column with u
+    html+=`<div class="card compact" style="margin-top:10px"><b>逐步计算（每个输出分量 = J 的一列 · 上游向量）：</b>`;
+    for(let j=0;j<n;j++){
+      const terms=[];
+      for(let i=0;i<m;i++)terms.push(`<span style="color:var(--accent)">${fmt(J[i][j],1)}</span> · <span style="color:var(--warm)">${fmt(u[i],1)}</span>`);
+      html+=`<div style="font-family:Menlo,Monaco,monospace;font-size:.82rem;margin:4px 0">(Jᵀv)<sub>${j+1}</sub> = ${terms.join(' + ')} = <b style="color:var(--accent)">${fmt(v[j],2)}</b></div>`;
+    }
+    html+=`</div>`;
+    html+=`<div class="def toolnote" style="margin-top:10px"><div class="term">内存账本</div><p class="plain">完整 J 需要存 <b>${m}×${n}=${m*n}</b> 个数；VJP 只保留上游向量（${m} 个）与结果向量（${n} 个），共 <b>${m+n}</b> 个数。小表格无所谓，当一层有 4096×4096 个单元时，这就是“存 1600 万个数”与“只传两个 4096 维向量”的差别。</p></div>`;
     $('#jacDisplay').innerHTML=html;
   }
   nEl.addEventListener('input',()=>{J=null;render();});mEl.addEventListener('input',()=>{J=null;render();});
