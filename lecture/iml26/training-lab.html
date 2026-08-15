@@ -1,0 +1,1426 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 13 讲 · 训练动力学互动实验室 | IML 2026</title>
+<meta name="description" content="MIT 风格 IML 第 13 讲 Neural Networks III 的深度互动讲义：训练稳定性与泛化——初始化、梯度消失/爆炸、学习率与 schedule、动量、weight decay、early stopping、dropout 与训练诊断表。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+  --heat-neg:#b23a48; --heat-pos:#176653;
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+  --heat-neg:#e58390; --heat-pos:#7cc4ad;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+ .gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px} .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+.control input[type=number],.control select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+pre.codeblock{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;font-size:.82em;line-height:1.65}
+pre.codeblock code{color:inherit;background:none}
+figure{margin:16px 0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure figcaption{margin-top:6px;color:var(--muted);font-size:.84rem;line-height:1.5}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px}
+.gloss{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.gloss h4{margin:0 0 4px;font-size:1rem}
+.gloss .en{display:block;font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--accent);margin-bottom:7px}
+.gloss p{margin:.35em 0;font-size:.88rem}
+.gloss .role{color:var(--warm)}
+.gloss .formula{font-size:.92em;overflow-x:auto}
+.heatcell{display:inline-flex;align-items:center;justify-content:center;min-width:54px;height:38px;border:1px solid var(--line);border-radius:6px;font-family:Menlo,Monaco,monospace;font-size:.78rem;font-weight:700}
+.matrix-grid{display:grid;gap:6px;margin:10px 0}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.legend span::before{content:"●";margin-right:5px;font-size:.9em}
+.legend .l-fwd::before{color:var(--fwd)} .legend .l-bwd::before{color:var(--bwd)} .legend .l-opt::before{color:var(--opt)} .legend .l-tool::before{color:var(--tool)}
+.step-bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-13" title="返回第 13 讲原文">← 返回第 13 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 13 · INTERACTIVE LAB</div>
+      <div class="title">Neural Networks III — 训练稳定性与泛化互动实验室</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 13 讲 / 25 讲</div>
+      <h1>训练神经网络：<br>拿到梯度之后，<br><span style="color:var(--warm)">为什么仍然会失败</span></h1>
+      <p class="subtitle">第 11 讲给了模型，第 12 讲给了反向传播，能算出梯度 $\nabla_W J$ 了。第 13 讲不再问“梯度怎么算”，而是问一个更难的问题：<b>梯度明明能算，为什么训练还是不稳定、还是不过拟合</b>。这一页是原讲义的<b>附属互动版</b>：每个第一次出现的概念都给出定义、白话、图示与动手实验；所有实验都只需要拖动滑杆。它与第 12 讲的「反向传播实验室」是两个<b>独立</b>的附属页。</p>
+      <div class="question">💬 本讲核心问题：反向传播已经能算梯度了，为什么训练神经网络仍然会失败（训练不稳定，或泛化不好）？</div>
+      <div class="answer">一句话答案：训练不只是“调梯度下降”。<b>从哪个起点出发、每一步迈多大、往哪个方向带惯性、以及别去硬套训练噪声</b>——四组开关一起，才决定训练是否稳定、是否泛化。什么时候该动哪一个，正是本讲要教给你的诊断语言。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">讲把“数学上能算梯度”变成“实践上训练得动”的整套工程：从<b>下山故事</b>出发，主线是「信号尺度 → 优化轨迹 → 泛化控制 → 诊断」。这些不是新模型，而是让已有模型稳定训练并泛化的旋钮。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">梯度只能告诉你<b>往哪走</b>，不能告诉你<b>走多快、从哪开始、别跌倒或别乱记</b>。神经网络的困难大多不在“算梯度”，而在<b>这句“往哪走”之外的一切</b>。它是从“跑通 SGD”到“训练出能在验证集上工作的模型”的关键一跃。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲只有四步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 起点</b>：让<u>前向信号与反向梯度</u>的尺度都能穿过网络（§4–§8）。</span>
+            <span class="step"><b>② 步子</b>：步长与方向惯性决定轨迹是稳定、震荡还是发散（§10–§12）。</span>
+            <span class="step"><b>③ 别过拟合</b>：三类正则化工具控制验证集表现（§14–§16）。</span>
+            <span class="step"><b>④ 诊断</b>：用一张诊断表判断该调哪个旋钮，而不是瞎试（§18）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：模型（L11）→ 梯度（L12）→ 训练稳定性（L13）→ 正则化/CNN（L14）</span>
+        <span class="pill">🧩 前置：神经网络前向传播、反向传播、SGD（第 11 / 12 讲）</span>
+        <span class="pill">🎯 产出：一套<u>能判断“该调哪个旋钮”</u>的诊断语言</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：这一讲在哪里，概念如何互相咬合</h2>
+      <p class="sec-lead">先把“位置”看清楚。第 11 讲给了<b>模型</b>，第 12 讲造出<b>梯度</b>，第 13 讲讨论有了梯度之后<b>训练为什么仍然难、泛化为什么不好</b>。下图可以点击跳转。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 640" role="img" aria-label="第 13 讲概念地图"></svg></div>
+        <div class="caption">概念地图（可点击）：<span class="tag opt">优化</span> 控制“训练是否稳定”；<span class="tag tool">正则化</span> 控制“泛化是否好”；<span class="tag fwd">信号</span> 是起点设置与激活要守住的尺度；<span class="tag bwd">反向</span> 是梯度要穿越的路径。两个灰色节点是本讲前后课程的位置。</div>
+      </div>
+    </section>
+
+    <!-- ============ FACTORY ============ -->
+
+    <!-- ============ DESCENT STORY ============ -->
+    <!-- ============ DESCENT STORY ============ -->
+    <section id="story">
+      <h2 class="sec-title"><span class="num">§1</span>从一个下山故事开始：梯度下降的六个麻烦</h2>
+      <p class="sec-lead">第 12 讲告诉你梯度怎么<b>算</b>。这一节先让你体会：能算梯度，和能训练好，是两回事。原讲义用“雾里下山”作比喻——你看不见整座山，只能感觉脚下坡度，于是每一步<b>朝当前最陡下降方向迈一小步</b>。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>雾里下山 <span class="en">intuition</span></h3>
+          <p class="plain">把损失 $J(W)$ 想成一座山的地形，参数 $W$ 是你在山上的<b>位置</b>，梯度 $\nabla_W J$
+
+          <p class="plain small">但原讲义马上泼冷水：现实中你会遇到下面六种麻烦，每一种都对应本讲后面要解决的一个问题。</p>
+        </div>
+        <div class="card">
+          <h3>六种麻烦 → 本讲对应章节</h3>
+          <ul class="plain" style="line-height:1.9;padding-left:18px">
+            <li><b>一开始站在哪里很重要</b> → §4 初始化</li>
+            <li><b>步子太大会摔出去 / 太小会走很久</b> → §10 学习率</li>
+            <li><b>山谷很窄会左右震荡</b> → §12 动量</li>
+            <li><b>有些地方很平几乎走不动</b> → §5 梯度消失 / §6 激活</li>
+            <li><b>训练集下降不等于验证集下降</b> → §13 泛化</li>
+            <li><b>局部极小 / 鞍点多</b> → §3 非凸地形</li>
+          </ul>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">经验风险 $J(W)$<span class="en">empirical risk · first mentioned: §1</span></div>
+        <p class="plain"><b>是什么</b>：在训练集上“平均”的损失 $J(W)=\sum_i \ell(W;x_i,y_i)$。它是我们要最小化的目标函数，衡量<b>当前权重在整个训练样本上的表现</b>。</p>
+        <p class="plain"><b>白话</b>：把每个样本的“错多少”加起来，得到一个数，数字越小代表越贴合训练数据。</p>
+        <p class="plain"><b>干嘛用</b>：SGD 每一步都朝让 $J$ 变小的方向更新参数；它是优化问题的“地面真值”。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是本讲的舞台。第 12 讲算的是 $J$ 的梯度；本讲讨论在最小化 $J$ 的过程中，信号能不能传下去、步子怎么迈、以及 $J$ 降了为什么验证集不一定好。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ OBJECTIVE / NONCONVEX ============ -->
+    <section id="obj">
+      <h2 class="sec-title"><span class="num">§2</span>回顾：我们到底在优化什么</h2>
+      <p class="sec-lead">训练目标写清楚就是：给定数据 $D=\{(x_1,y_1),\ldots,(x_n,y_n)\}$ 与权重 $W=(W^{(1)},\ldots,W^{(L)})$，求 $W^*=\operatorname*{arg\,min}_W J(W)$。问题是：$J(W)$ 通常是<b>非凸</b>的。</p>
+      <div class="card compact">
+        <p class="plain small"><b>什么是凸？</b>凸函数的任何局部最小都是全局最小——从哪出发都一样。而神经网络把一层层线性变换和非线性激活堆起来后，$J(W)$ 对 $W$ 不再是凸函数。</p>
+        <p class="plain small"><b>非凸意味着什么</b>：可能有多个局部极小、可能有鞍点、不同初始化会走向不同区域、一般没有闭式解。</p>
+        <p class="plain small"><b>但要冷静</b>：<b>非凸 ≠ 不可训练</b>。实践中 SGD 及其变体经常能找到足够好的解。这正是本讲后面为什么要研究初始化、学习率、动量——它们帮助我们在非凸地形上走得稳、走到好解。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ LOCAL MINIMA (EXTRA) ============ -->
+    <section id="threat">
+      <h2 class="sec-title"><span class="num">§3</span>拓展：局部极小，需要多害怕？</h2>
+      <p class="sec-lead">凸优化里“局部最小 = 全局最小”，神经网络不是。一个自然担心是：<b>如果到处都是局部极小，SGD 会不会卡死？</b>原讲义给了两个缓和因素。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>权重空间对称性<span class="en">weight-space symmetry</span></h3>
+          <p class="plain">假设隐藏层有两个<b>完全相同类型</b>的单元。交换它们的顺序（unit 1 ↔ unit 2），只要输出层权重也相应交换，整个网络的输入输出函数<b>完全不变</b>。</p>
+          <p class="plain small">也就是说：不同的 $W$ 可以表示同一个函数 $f(x)$。这会制造很多“等价”的局部极小——它们看起来是不同的点，但预测行为一样，所以你并没有真的卡在“错误”的地方。</p>
+        </div>
+        <div class="card">
+          <h3>权重空间连通性<span class="en">low-loss connectivity</span></h3>
+          <p class="plain">一些研究证据表明：深度学习中好的局部最优之间，可能存在<b>低损失路径</b>相连。损失地形虽非凸，但好解之间未必是彼此孤立的尖坑。</p>
+          <p class="plain small">这不是严格保证，但它解释了为什么实践中坏局部极小并不总是支配结果。</p>
+        </div>
+      </div>
+      <div class="why"><b>为什么把它放「拓展」：</b>理解它有助于消除“非凸就完蛋”的恐慌，但训练时你并不需要显式处理它。先掌握主线，再回来细看这条支线。</div>
+    </section>
+
+
+    <!-- ============ INITIALIZATION ============ -->
+    <section id="init">
+      <h2 class="sec-title"><span class="num">§4</span>初始化为什么重要：让信号穿过很多层</h2>
+      <p class="sec-lead">神经网络是非凸优化，起点影响路径。但初始化还有一个<b>更具体</b>的问题：<b>信号和梯度要能“穿过”很多层</b>。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>权重太小 →</h3>
+          <p class="plain">每层输出都变小 → 梯度反传也变小 → 前面层几乎收不到信号 → <b>几乎不学习</b>。</p>
+        </div>
+        <div class="card">
+          <h3>权重太大 →</h3>
+          <p class="plain">每层输出方差越滚越大 → 激活“爆掉” → 梯度也可能爆 → <b>更新失去控制</b>。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">互动：随机初始化演示——同一套初始化尺度，多看几次才知道稳不稳</h3>
+        <div class="svg-wrap"><svg id="initRandPlot" viewBox="0 0 640 300" role="img" aria-label="随机初始化方差演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>fan_in <span class="kbd">d</span></label><input type="range" id="initRandD" min="2" max="128" step="1" value="8"><div class="val" id="initRandDval">8</div></div>
+          <div class="control"><button class="btn warm" id="initRandRun" type="button">🎲 随机抽样一批初始化权重</button></div>
+        </div>
+        <div class="caption" id="initRandCap">每次点按钮都用 <code>Math.random()</code> 独立抽样一批零均值随机权重。蓝点是“经验输出二阶矩”（把样本过一层线性层后实测），红虚线是理论目标 $d\cdot\operatorname{Var}(W)$。差的绝对值越小，这套初始化在保尺度上越可靠。</div>
+      </div>
+      <div class="def">
+        <div class="term">初始化 <span class="en">initialization · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：训练开始前给所有参数 $W$ 赋的初值，通常是从某个分布随机采样。</p>
+        <p class="plain"><b>白话</b>：出发前的站位。同样一座山，站错地方（或站成一排相同点）可能永远走不到想要的谷底。</p>
+        <p class="plain"><b>干嘛用</b>：让每层<b>激活的尺度</b>和<b>梯度的尺度</b>在深层网络中大致稳定，不爆炸也不消失。</p>
+        <p class="plain"><b>怎么算</b>：不是随便给随机数，而是按“方差传播”来选尺度（§7），不同激活用不同的规则（§8 Glorot / He）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：好的初始化是训练能“跑起来”的地基；它直接决定了 §5 里梯度消失/爆炸是否发生。</p>
+      </div>
+      <div class="toolnote"><b>互动提醒：</b>不是让随机网络从一开始就预测对，而是让训练信号能流动。下面 §5 就用一个滑杆直观感受“乘很多次小因子/大因子”会发生什么。</div>
+    </section>
+
+
+    <!-- ============ VANISHING / EXPLODING GRADIENTS ============ -->
+    <section id="grad">
+      <h2 class="sec-title"><span class="num">§5</span>梯度消失与爆炸：乘很多次，就没了或爆了</h2>
+      <p class="sec-lead">反向传播里的误差信号 $\delta^{(l)}=\partial J/\partial z^{(l)}\in\mathbb{R}^{d_l}$ 要一层层往前传。合并两步链式法则得到（$\odot$ 是逐元素乘，$\varphi'$ 是激活导数）：</p>
+      <p class="formula">$$\delta^{(l)}=\left(W^{(l+1)\top}\delta^{(l+1)}\right)\odot\varphi'(z^{(l)})$$</p>
+      <p class="plain"><b>读法</b>：一次反传拆成两步——先用 $W^{(l+1)\top}$ 把后一层的梯度“搬”回当前层，再用 $\varphi'$ 决定每个单元“放行多少梯度”。深度网络会<b>重复</b>这两步，所以梯度尺度会<b>连续相乘</b>。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>综合缩放 0.5（<1）</h3>
+          <p class="plain">$$0.5\cdot0.5\cdot0.5\cdots\to0$$</p>
+          <p class="plain">前面层几乎收不到训练信号 → <b>梯度消失</b>（vanishing gradients）。</p>
+        </div>
+        <div class="card">
+          <h3>综合缩放 2（>1）</h3>
+          <p class="plain">$$2\cdot2\cdot2\cdots\to\text{很大}$$</p>
+          <p class="plain">更新量突然巨大 → <b>梯度爆炸</b>（exploding gradients）。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">手算小实验：10 层，每层缩放多少？</h3>
+        <div class="svg-wrap"><svg id="gradPlot" viewBox="0 0 640 300" role="img" aria-label="梯度连乘随层数变化"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>每层平均缩放 $r$（0.5–1.8）</label><input type="range" id="gradR" min="0.5" max="1.8" step="0.05" value="0.7"><div class="val" id="gradRval">0.70</div></div>
+          <div class="control"><label>层数 $L$（2–20）</label><input type="range" id="gradL" min="2" max="20" step="1" value="10"><div class="val" id="gradLval">10</div></div>
+        </div>
+        <div class="caption" id="gradCap">拖动滑杆：$r^L$ 是梯度传到第 1 层时被缩放的倍率。$r=0.7, L=10 \Rightarrow 0.7^{10}=0.028$，只剩约 2.8%；$r=1.5, L=10 \Rightarrow 1.5^{10}=57.7$，放大约 57 倍。</div>
+      </div>
+      <div class="def">
+        <div class="term">梯度消失/爆炸 <span class="en">vanishing / exploding gradients · first mentioned: §5</span></div>
+        <p class="plain"><b>是什么</b>：深层网络中，反向信号因连乘许多权重与激活导数，导致早期层梯度指数级变小（消失）或变大（爆炸）。</p>
+        <p class="plain"><b>白话</b>：队伍太长信息传丢，或中间有人拼命放大导致爆表。</p>
+        <p class="plain"><b>干嘛用</b>：解释“为什么训练深层网络难”，也解释为什么初始化、激活、梯度裁剪要存在。</p>
+        <p class="plain"><b>怎么算 / 怎么用</b>：直觉模型是 $r^L$。要抑制它：初始化守住尺度（§7–§8）、用不饱和激活（§6）、必要时梯度裁剪。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是第 12 讲“能算梯度”与第 13 讲“梯度能不能穿过去”的直接接口；也是第 14 讲 Batch Normalization 要解决的问题。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ ACTIVATION (EXTRA) ============ -->
+    <section id="act">
+      <h2 class="sec-title"><span class="num">§6</span>拓展：激活函数也影响梯度</h2>
+      <p class="sec-lead">反向信号穿过非线性层时要乘 $\varphi'(z)$。这个局部导数的“大小”直接决定梯度能否通过。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="actPlot" viewBox="0 0 640 300" role="img" aria-label="Sigmoid 与 ReLU 导数曲线"></svg></div>
+        <div class="caption">蓝色是 Sigmoid 导数 $\sigma'(z)=\sigma(z)(1-\sigma(z))$，最大值只有 0.25，两端饱和趋 0；橙色是 ReLU 导数：$z>0$ 为 1、$z<0$ 为 0。</div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h3>Sigmoid 的问题</h3>
+          <p class="plain">$\sigma'(z)=\sigma(z)(1-\sigma(z))\le0.25$。多层都用 sigmoid，反传就是不断乘 $\le 0.25$ 的小数。</p>
+          <p class="plain small">而且当 $z$ 很大/很小时 $\sigma$ 饱和（趋 0 或 1），$\sigma'$ 趋 0，梯度几乎断流。</p>
+        </div>
+        <div class="card">
+          <h3>ReLU 的优势与风险</h3>
+          <p class="plain">$z>0$ 时 $\operatorname{ReLU}'(z)=1$，<b>激活时梯度不缩小</b>。</p>
+          <p class="plain small">但 $z<0$ 时导数为 0——单元“断电”不向后传梯度，可能变成死亡 ReLU。</p>
+        </div>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>现代网络默认用 ReLU 系，已在 §5 埋下伏笔；这条支线把“激活导数尺度”具体画出来，是理解梯度消失机制的直观补充，主线用不到它也能闭环。</div>
+    </section>
+
+
+    <!-- ============ VARIANCE PROPAGATION ============ -->
+    <section id="var">
+      <h2 class="sec-title"><span class="num">§7</span>方差传播：每层激活尺度为什么要“不增不减”</h2>
+      <p class="sec-lead">现在解一个具体设计问题：<b>随机权重该取多大方差，才能让一层的输入尺度与输出尺度大致相同？</b>先只看线性部分。上一层有 $d$ 个输入激活 $v_i$，输出单元 $j$ 的线性输入是
+        $$z_j=\sum_{i=1}^{d}W_{j,i}v_i.$$</p>
+      <div class="card compact">
+        <p class="plain small"><b>关键一步推导</b>：若权重独立同分布、均值 0 方差 $q_W$，且与输入独立、输入方差约 $q_v$，则
+        $$\operatorname{Var}(z_j)=\sum_{i=1}^{d}\operatorname{Var}(W_{j,i}v_i)\approx d\,q_W\,q_v.$$
+        想让输出方差仍约等于输入方差 $q_v$，就要 $d\,q_W\approx1$，即
+        $$q_W=\operatorname{Var}(W)\approx\frac{1}{d}.$$</p>
+        <p class="plain small"><b>白话</b>：输入连接 $d$ 越多，每条随机权重越小，否则 $d$ 个随机贡献相加会把输出尺度放大。这个“$1/d$”正是后面 Glorot/He 里 <code>fan_in</code> 缩放的来源。</p>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>ReLU 会砍掉一半</b>：ReLU 把负值变 0，若 $z$ 近似零均值对称，它约保留一半二阶矩：$\Delta$ 令 $\mathbb{E}[\operatorname{ReLU}(z)^2]\approx\tfrac12\mathbb{E}[z^2]$。于是前向尺度方程从 $d\,\operatorname{Var}(W)\approx1$ 变成
+        $$\tfrac12\,d\,\operatorname{Var}(W)\approx1\ \Rightarrow\ \operatorname{Var}(W)\approx\frac{2}{d}.$$
+        “2”不是拍脑袋，是在补偿 ReLU 丢掉的那一半二阶矩。</p>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">互动：初始化尺度如何决定“前方信号能量”逐层滚大或滚小</h3>
+        <div class="svg-wrap"><svg id="varPlot" viewBox="0 0 720 300" role="img" aria-label="方差随层数传播"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>每层权重方差 $q_W$</label><input type="range" id="varQ" min="0.02" max="2.0" step="0.02" value="0.5"><div class="val" id="varQval">0.50</div></div>
+          <div class="control"><label>fan_in $d$</label><input type="range" id="varD" min="2" max="64" step="1" value="8"><div class="val" id="varDval">8</div></div>
+        </div>
+        <div class="caption" id="varCap">拖动滑杆：二阶矩逐层乘 $d\cdot q_W$（线性）或 $\tfrac12 d\cdot q_W$（ReLU 后）。绿色=稳定（输出≈输入），红色=发散/消失。</div>
+      </div>
+      <div class="why"><b>为什么重要</b>：凡是“信号尺度随层数变化”的现象（§5 消失/爆炸）都能用它解释；§8 的 Glorot/He 就是这套分析的直接结果。这是本讲最“数学”但最核心的一节。</div>
+    </section>
+
+
+    <!-- ============ GLOROT / HE INTUITION ============ -->
+    <section id="initrules">
+      <h2 class="sec-title"><span class="num">§8</span>Glorot 和 He 初始化的直觉</h2>
+      <p class="sec-lead">选择初始化时，先问<b>激活函数是哪种</b>，再问<b>优先平衡哪条信息流</b>（前向激活尺度，还是反向梯度尺度）。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Glorot 初始化<span class="en">常用于 tanh 等对称激活</span></h3>
+          <p class="plain">设 <code>fan_in</code>$=d_{l-1}$ 个输入、<code>fan_out</code>$=d_l$ 个输出。前向希望
+            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_in}},$$
+            反向（用 $W^{\top}$）希望
+            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_out}}.$$
+            两者通常不能同时严格满足，Glorot 取折中：
+            $$\operatorname{Var}(W)\approx\frac{2}{\mathrm{fan\_in}+\mathrm{fan\_out}}.$$</p>
+          <p class="plain small">它让<b>前向激活</b>和<b>反向梯度</b>都不要随层数放大或缩小。</p>
+        </div>
+        <div class="card">
+          <h3>He 初始化<span class="en">常用于 ReLU</span></h3>
+          <p class="plain">§7 已求出 ReLU 约保留一半二阶矩，所以前向尺度方程从 $\mathrm{fan\_in}\,\operatorname{Var}(W)\approx1$ 变成
+            $$\tfrac12\,\mathrm{fan\_in}\,\operatorname{Var}(W)\approx1\ \Rightarrow\ \operatorname{Var}(W)\approx\frac{2}{\mathrm{fan\_in}}.$$</p>
+          <p class="plain small">分子 2 补偿了 ReLU 砍掉的能量。若 <code>fan_in</code>$=3,\mathrm{fan\_out}=5$，Glorot 给 $\operatorname{Var}(W)\approx2/(3+5)=0.25$。</p>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">fan_in / fan_out <span class="en">fan-in / fan-out · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：<code>fan_in</code> 是一个输出单元接收的输入数（上一层宽度 $d_{l-1}$）；<code>fan_out</code> 是该层输出单元数（$d_l$）。</p>
+        <p class="plain"><b>白话</b>：“一个输出累加了多少项”“一层送出去给多少人用”。随机权重到底多小，取决于这些数。</p>
+        <p class="plain"><b>干嘛用</b>：决定初始化方差的分母，从而调节前向/反向的信息流尺度。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：<b>variance 是设计目标，normal/uniform 只是实现它的采样方式</b>。公式给的是合理起点，不是训练成功的证明——训练后应查看各层激活/梯度的实际分布。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ SYMMETRY (EXTRA) ============ -->
+    <section id="sym">
+      <h2 class="sec-title"><span class="num">§9</span>拓展：对称初始化为什么不好</h2>
+      <p class="sec-lead">假设一层里两个隐藏单元初始化完全一样：$W_1=W_2,\,b_1=b_2$。不论输入是什么，两个单元都会产生<b>同样的激活</b>；若输出层也按相同方式初始化，它们收到的梯度也完全相同。</p>
+      <div class="card compact">
+        <p class="plain">它们看到同样输入 → 产生同样激活 → 收到同样梯度 → 更新后仍然一样。<b>结果：两个单元永远学同一个特征</b>——白白浪费了模型容量。</p>
+        <p class="plain small">所以神经网络用<b>随机初始化</b>打破对称性。<b>注意</b>：偏置初始化为 0 本身通常没问题，真正要打破的是同一层不同单元的<b>输入权重</b>对称；随机也≠尺度合理，要同时满足 §8 的尺度条件。</p>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>它回答“为什么必须随机”，是初始化议题的重要动机，但主线（信号尺度）不依赖这条支线也能讲通。</div>
+    </section>
+
+
+    <!-- ============ LEARNING RATE ============ -->
+    <section id="lr">
+      <h2 class="sec-title"><span class="num">§10</span>学习率：步子大小决定训练命运</h2>
+      <p class="sec-lead">SGD 更新：$W\leftarrow W-\eta\,\nabla_WJ$，其中 <code>eta</code> $=\eta$ 是<b>学习率</b>（learning rate）——每一步迈多大。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>$\eta$ 太大</h3>
+          <p class="plain">越过低谷 → 损失震荡 → 甚至发散（更新量越来越大）。</p>
+        </div>
+        <div class="card">
+          <h3>$\eta$ 太小</h3>
+          <p class="plain">训练很慢 → 可能长时间停在平台区 → 浪费计算资源。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">一维小实验：$J(w)=w^2$</h3>
+        <p class="plain small">梯度 $J'(w)=2w$，更新 $w_{t+1}=w_t-\eta\cdot2w_t=(1-2\eta)w_t$。系数 $(1-2\eta)$ 决定误差缩小还是放大：$0<\eta<1$ 才收敛，$\eta<0.5$ 单调靠近 0，$0.5<\eta<1$ 左右交替但缩小，$\eta>1$ 发散。</p>
+        <div class="svg-wrap"><svg id="lrPlot" viewBox="0 0 640 320" role="img" aria-label="学习率对收敛的影响"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>学习率 $\eta$</label><input type="range" id="lrEta" min="0.05" max="1.4" step="0.05" value="0.1"><div class="val" id="lrEtaVal">0.10</div></div>
+          <div class="control"><button class="btn warm" id="lrReset" type="button">↺ 重新走</button></div>
+        </div>
+        <div class="caption" id="lrCap">绿色=收敛，橙色=震荡但仍缩小，红色=发散。这只对最简单凸函数成立；神经网络地形复杂得多，所以 $\eta$ 更要小心调。</div>
+      </div>
+      <div class="def">
+        <div class="term">学习率 $\eta$ <span class="en">learning rate · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：梯度更新时乘在梯度前面的步长标量 $\eta>0$。$W\leftarrow W-\eta\nabla_WJ$。</p>
+        <p class="plain"><b>白话</b>：迈步子的“大小”。太小磨蹭，太大摔跤。</p>
+        <p class="plain"><b>干嘛用</b>：控制每一步沿负梯度方向走多远；是最常被调、最影响训练成败的超参数。</p>
+        <p class="plain"><b>怎么算 / 怎么用</b>：经验上从较大值（如 0.1）开始，配合 §11 的 schedule 与验证集表现来调；过大过小都能从训练曲线看出。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是“优化稳定性”最主要的旋钮；与初始化（§4，起点）互补——一个管“从哪出发”，一个管“往哪走多远”。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ SCHEDULE (EXTRA) ============ -->
+    <section id="sched">
+      <h2 class="sec-title"><span class="num">§11</span>拓展：学习率 schedule——先大步探索，再小步精修</h2>
+      <p class="sec-lead">实践中常用随时间变化的学习率。原讲义提到 piecewise constant schedule，例如：第 1–50 个 epoch $\eta=0.1$，第 51–100 个 epoch $\eta=0.01$，之后 $\eta=0.001$。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>直觉</h3>
+          <p class="plain">一开始<b>大步探索</b>地形，后面<b>小步精修</b>细节。</p>
+        </div>
+        <div class="card">
+          <h3>监控信号</h3>
+          <p class="plain">看比值：<b>权重更新量 / 权重大小</b>。比例太小→学习率太低；比例太大→学习率太高。</p>
+        </div>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>固定学习率也能讲清“步子大小”主线；schedule 是它的工程升级，值得知道但不必作为闭环前提。</div>
+    </section>
+
+
+    <!-- ============ MOMENTUM ============ -->
+    <section id="momentum">
+      <h2 class="sec-title"><span class="num">§12</span>动量：不要只看当前坡度</h2>
+      <p class="sec-lead">普通 SGD 只看当前梯度：$W\leftarrow W-\eta\nabla_WJ$。动量（momentum）的想法是：<b>更新方向不只由当前梯度决定，也保留上一轮更新的“惯性”</b>。常见写法：
+      $$u\leftarrow \alpha u+\eta\,\nabla W,\qquad W\leftarrow W-u,$$
+      其中 $u$ 是“速度/更新量”，$\alpha$（如 0.9）是动量系数。</p>
+      <div class="card compact">
+        <p class="plain small"><b>它到底累积了什么？</b>展开两步：$u_t=\alpha u_{t-1}+\eta g_t=\alpha^2 u_{t-2}+\eta(\alpha g_{t-1}+g_t)$。继续展开，较早的梯度会乘 $\alpha^r$，影响随时间<b>指数衰减</b>。所以动量不是保存全部历史，而是一份<b>近期方向的加权平均</b>：连续同向的梯度相加，来回变号的互相抵消。</p>
+        <p class="plain small"><b>好处</b>：在狭长山谷中，普通 SGD 沿谷壁来回震荡；动量把连续一致的方向累积起来，加速沿谷底前进、减少横向振荡，有时帮助离开浅局部区域（这是实践现象，不是必然跳出任意局部极小的保证）。</p>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">互动：SGD 与 momentum 在狭长谷底中的轨迹</h3>
+        <div class="svg-wrap"><svg id="momPlot" viewBox="0 0 640 320" role="img" aria-label="SGD 与动量轨迹"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>动量系数 $\alpha$（0–0.95）</label><input type="range" id="momA" min="0" max="0.95" step="0.05" value="0.9"><div class="val" id="momAVal">0.90</div></div>
+          <div class="control"><button class="btn warm" id="momRun" type="button">▶ 播放</button><button class="btn ghost" id="momReset" type="button">重置</button></div>
+        </div>
+        <div class="caption" id="momCap">橙线=普通 SGD（左右震荡），蓝线=带动量的 SGD（沿谷底平滑前进）。</div>
+      </div>
+      <div class="def">
+        <div class="term">动量 <span class="en">momentum · first mentioned: §12</span></div>
+        <p class="plain"><b>是什么</b>：一种优化技巧，更新时叠加历史的梯度方向（速度 $u$），使更新方向是近期梯度带权平均，而不是只看当前一步。</p>
+        <p class="plain"><b>白话</b>：下坡时带着“冲量”，不会一遇小坡就立刻急转弯。</p>
+        <p class="plain"><b>干嘛用</b>：加速沿一致方向前进、抑制来回震荡。</p>
+        <p class="plain"><b>怎么算</b>：$u\leftarrow\alpha u+\eta g$，$W\leftarrow W-u$；$\alpha$ 常见 0.9。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它和第 10 节的 $\eta$ 一起，“决定更新轨迹”。放心，动量仍是拿反向传播算出的梯度来更新——优化器只是改变“怎么用梯度”。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ TRAIN != GENERALIZE + DIAGNOSIS ============ -->
+    <section id="gf">
+      <h2 class="sec-title"><span class="num">§13</span>训练误差下降 ≠ 泛化变好</h2>
+      <p class="sec-lead">神经网络参数多、表达能力强，也就可能<b>记住训练集</b>。过拟合的典型曲线：<b>训练误差持续下降，验证误差先下降后上升</b>。所以训练时不能只看 training loss，必须看验证集表现。</p>
+      <div class="card compact">
+        <p class="plain small"><b>把“优化问题”和“泛化问题”分开诊断</b>（这是本讲最重要的思维工具之一）：</p>
+        <ul class="plain" style="line-height:1.9;padding-left:18px">
+          <li><b>优化</b>：当前模型和训练目标给定后，参数有没有把<b>训练损失</b>降下来？</li>
+          <li><b>泛化</b>：学到的参数，在<b>没参与更新的数据</b>上是否仍然有效？</li>
+        </ul>
+        <p class="plain small">如果训练损失本身很高，先谈过拟合没意义；如果训练损失已很低而验证损失上升，继续加大学习率也不会自动解决泛化（那是在改优化轨迹，不是改泛化）。</p>
+      </div>
+      <div class="why"><b>一句关键</b>：本讲前半（§4–§12：初始化、学习率、动量）主要管<b>优化稳定性</b>；后半（§14–§16：weight decay、early stopping、dropout）主要管<b>泛化</b>。两者都会影响验证集，但不能把“验证误差改善”想成同一个机制。</div>
+    </section>
+
+
+    <!-- ============ WEIGHT DECAY ============ -->
+    <section id="wd">
+      <h2 class="sec-title"><span class="num">§14</span>Weight decay：让权重别太大</h2>
+      <p class="sec-lead">正则化（regularization）/ weight decay 把目标函数改成
+      $$J(W)=\sum_i\ell(W;x_i,y_i)+\lambda\|W\|^2,$$
+      其中 $\lambda\ge0$ 是<b>正则化强度</b>。权重变大，惩罚项增加——鼓励模型用较小权重解释数据。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>对梯度的影响</h3>
+          <p class="plain">惩罚项 $\lambda\|W\|^2$ 的额外梯度是 $2\lambda W$。于是更新变成
+          $$W\leftarrow W-\eta\,(\text{data grad}+2\lambda W),$$
+          也就是 $W$ 会被<b>轻微拉向 0</b>——这就是 “decay”（衰减）的直觉。</p>
+        </div>
+        <div class="card">
+          <h3>为什么能控制泛化</h3>
+          <p class="plain">小权重通常对应更平缓、复杂度更低的函数，不太容易只靠少数奇异特征去硬套训练数据。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h3 style="margin-top:0">互动：$\lambda$ 如何把最优点向原点拉</h3>
+        <div class="svg-wrap"><svg id="wdPlot" viewBox="0 0 640 320" role="img" aria-label="weight decay 改变最优点与路径"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>正则强度 $\lambda$（0–1）</label><input type="range" id="wdL" min="0" max="1" step="0.02" value="0"><div class="val" id="wdLVal">0.00</div></div>
+        </div>
+        <div class="caption">橙点=无正则的数据最优（权重较大）；蓝点=带 weight decay 后的最优点（被拉向原点）。$\lambda$ 越大，蓝点越靠近原点、权重范数越小。</div>
+      </div>
+    </section>
+
+
+    <!-- ============ EARLY STOPPING ============ -->
+    <section id="es">
+      <h2 class="sec-title"><span class="num">§15</span>Early stopping：不要训练到训练集极限</h2>
+      <p class="sec-lead">不一定要训练到权重收敛。early stopping 的做法：每隔一段时间评估验证误差，<b>如果验证误差不再下降就停止，保留验证误差最低时的模型</b>。它像一种正则化——训练越久越可能拟合训练集细节，early stopping 限制了模型实际利用的复杂度。</p>
+      <div class="viz">
+        <h3 style="margin-top:0">互动：看验证损失何时“创新低”</h3>
+        <div class="svg-wrap"><svg id="esPlot" viewBox="0 0 640 320" role="img" aria-label="early stopping 训练与验证损失"></svg></div>
+        <div class="caption" id="esCap">绿线=训练损失持续下降；橙线=验证损失先降后升。应选择验证损失<b>最低</b>的点（星标），而不是训练损失最低的点。</div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>原讲义小例子</b>：第 30 epoch 训练损失最低（0.10），但第 20 epoch 验证损失最低（0.50）。应选择第 20 个 epoch 的模型。</p>
+      </div>
+    </section>
+
+
+    <!-- ============ DROPOUT (EXTRA) ============ -->
+    <section id="dropout">
+      <h2 class="sec-title"><span class="num">§16</span>拓展：Dropout 的位置</h2>
+      <p class="sec-lead">第 13 讲最后只列出 dropout，详细内容放到第 14 讲开头。这里先给直觉：</p>
+      <div class="card compact">
+        <ul class="plain" style="line-height:1.9;padding-left:18px">
+          <li><b>训练时</b>：随机丢掉一部分隐藏单元；</li>
+          <li><b>测试时</b>：使用全部单元。</li>
+        </ul>
+        <p class="plain small">这样可阻止网络过度依赖某几个单元，也可以理解为训练了许多<b>共享权重</b>的子网络。下一讲会展开。</p>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>它是泛化控制的有效手段，但第 14 讲才正式展开。主线里知道“dropout 属于泛化控制、在训练时随机丢单元”即可闭环。</div>
+    </section>
+
+
+    <!-- ============ ARCHITECTURE (EXTRA) ============ -->
+    <section id="arch">
+      <h2 class="sec-title"><span class="num">§17</span>拓展：如何选择网络架构</h2>
+      <p class="sec-lead">层数、每层单元数、激活函数、学习率、正则化——这些都是超参数，没有一个普遍最优答案。通常做法：</p>
+      <div class="card compact">
+        <ul class="plain" style="line-height:1.9;padding-left:18px">
+          <li>从<b>简单模型</b>开始；</li>
+          <li>观察<b>训练误差</b>与<b>验证误差</b>；</li>
+          <li>判断是<b>欠拟合</b>还是<b>过拟合</b>；</li>
+          <li>逐步调整<b>容量</b>与<b>正则化</b>。</li>
+        </ul>
+        <p class="plain small">训练误差高 → 模型太小 / 优化没跑好 / 学习率不合适 / 初始化有问题。训练误差低但验证误差高 → 过拟合，需要更多数据、正则化、早停或数据增强。</p>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>它把所有旋钮串成“调试流程”，是 §13 泛化诊断的落地，但主线用一张诊断表（§18）就能闭环。</div>
+    </section>
+
+
+    <!-- ============ DIAGNOSIS TABLE ============ -->
+    <section id="diag">
+      <h2 class="sec-title"><span class="num">§18</span>一张诊断表：看到现象，先调哪个旋钮</h2>
+      <p class="sec-lead">这张表不是定理，是<b>调试时的第一轮排查顺序</b>：看到现象，先想到可能原因，再试对应方法。</p>
+      <table class="plain" style="width:100%;border-collapse:collapse;font-size:.92rem">
+        <thead><tr><th style="text-align:left;border-bottom:2px solid var(--line);padding:8px">现象</th><th style="text-align:left;border-bottom:2px solid var(--line);padding:8px">可能原因</th><th style="text-align:left;border-bottom:2px solid var(--line);padding:8px">可尝试方法</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--line)">loss 变成 NaN</td><td style="padding:8px;border-bottom:1px solid var(--line)">学习率太大、梯度爆炸</td><td style="padding:8px;border-bottom:1px solid var(--line)">降学习率、梯度裁剪、检查输入</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--line)">training loss 不降</td><td style="padding:8px;border-bottom:1px solid var(--line)">学习率太小、梯度消失、模型太小</td><td style="padding:8px;border-bottom:1px solid var(--line)">调学习率、改初始化、换激活</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--line)">training loss 降得慢</td><td style="padding:8px;border-bottom:1px solid var(--line)">步子太小、无动量</td><td style="padding:8px;border-bottom:1px solid var(--line)">学习率 schedule、momentum</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--line)">training 很低、validation 很差</td><td style="padding:8px;border-bottom:1px solid var(--line)">过拟合</td><td style="padding:8px;border-bottom:1px solid var(--line)">weight decay、early stopping、dropout</td></tr>
+          <tr><td style="padding:8px">不同随机种子差异大</td><td style="padding:8px">初始化敏感、数据少</td><td style="padding:8px">多次运行、调正则化、检查数据</td></tr>
+        </tbody>
+      </table>
+      <div class="why"><b>为什么是本讲枢纽</b>：到这里，“从现象 → 该调哪个旋钮”才真正落地。前面 §4–§16 的所有概念，最后都收敛到这张表的每一行。</div>
+    </section>
+
+
+    <!-- ============ FULL LOOP (EXTRA) ============ -->
+    <section id="loop">
+      <h2 class="sec-title"><span class="num">§19</span>拓展：一个完整训练循环的概念版</h2>
+      <p class="sec-lead">这比“跑 SGD”更接近真实训练，把所有旋钮串起来：</p>
+      <div class="card compact">
+<pre class="plain" style="background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:.82rem;line-height:1.6"><code>初始化 W（按 Glorot / He 尺度）
+初始化 optimizer 状态，例如 momentum u = 0
+for epoch = 1, 2, ...:
+    打乱训练数据
+    for each mini-batch B:
+        前向传播，计算 batch loss
+        反向传播，计算 gradient
+        加上正则化梯度（weight decay）
+        用 optimizer（学习率 + 动量）更新 W
+    在验证集上评估
+    如果 validation loss 创新低，保存模型
+    如果长期没有改善，early stop
+    按 schedule 调整学习率</code></pre>
+      </div>
+      <div class="why"><b>为什么放「拓展」：</b>它是所有概念的“合订本”，主线用 §18 的诊断表 + §21 自测即可闭环。</div>
+    </section>
+
+
+    <!-- ============ MISCONCEPTIONS (EXTRA) ============ -->
+    <section id="mis">
+      <h2 class="sec-title"><span class="num">§20</span>拓展：容易误解的地方</h2>
+      <div class="misconception"><div><div class="truth">误解 1：非凸就意味着训练不可靠</div><p class="plain small">非凸确实更难分析，但合适初始化、SGD、动量、归一化和正则化可以让很多网络训练成功。</p></div></div>
+      <div class="misconception"><div><div class="truth">误解 2：初始化只是随机给个数</div><p class="plain small">不是。初始化要控制激活和梯度的尺度；Glorot 和 He 正是为此。</p></div></div>
+      <div class="misconception"><div><div class="truth">误解 3：学习率越大训练越快</div><p class="plain small">只在不发散的范围内可能更快；过大时会震荡或爆炸。</p></div></div>
+      <div class="misconception"><div><div class="truth">误解 4：训练越久越好</div><p class="plain small">训练集上通常越久越好；验证集上不一定。过拟合时应早停或加强正则化。</p></div></div>
+      <div class="misconception"><div><div class="truth">误解 5：正则化只是为了让公式好看</div><p class="plain small">不是，它直接影响模型选择，限制模型用过高复杂度解释训练集。</p></div></div>
+    </section>
+
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <h2 class="sec-title"><span class="num">§21</span>自测：确认你真的带走了</h2>
+      <p class="sec-lead">主线全部走完。先自己写一句话答案，再展开参考答案对照。</p>
+      <div id="quizList"></div>
+      <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+    </section>
+
+
+    <!-- ============ TAKEAWAY / CLOSING ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§22</span>收束：把整讲重新串成一条线</h2>
+      <div class="def">
+        <div class="term">收束：三条信息流必须健康</div>
+        <p class="plain">能计算梯度只是训练神经网络的<b>起点</b>。真正训练时，要让三个东西同时健康：</p>
+        <ul class="plain" style="line-height:1.9;padding-left:18px">
+          <li>① <b>信号前向</b>：初始化/激活让前向激活不要爆掉或消失（§4–§8）；</li>
+          <li>② <b>梯度反向</b>：学习率/动量让更新轨迹稳定不震荡不发散（§10–§12）；</li>
+          <li>③ <b>泛化</b>：weight decay / early stopping / dropout 让验证集表现不被训练集欺骗（§13–§16）。</li>
+        </ul>
+        <p class="plain">判断自己是否学完本讲，只需能依次说清楚四件事：</p>
+        <p class="plain"><b>① 为什么还会失败</b>：非凸地形 + 信号连乘（消失/爆炸）+ 步子不当 + 过拟合，四类原因。</p>
+        <p class="plain"><b>② 起点怎么守</b>：$\operatorname{Var}(W)\approx\tfrac{2}{\mathrm{fan\_in}+\mathrm{fan\_out}}$（Glorot）或 $\tfrac{2}{\mathrm{fan\_in}}$（He），让激活/梯度尺度稳定。</p>
+        <p class="plain"><b>③ 轨迹怎么稳</b>：$\eta$（学习率）管步长，$u\leftarrow\alpha u+\eta g$（动量）管方向惯性。</p>
+        <p class="plain"><b>④ 泛化怎么控</b>：$J(W)+\lambda\|W\|^2$（weight decay）、early stopping、dropout，附一张诊断表判断该调哪个。</p>
+        <p class="plain">区分<b>优化</b>与<b>泛化</b>，是本讲最有复用价值的语言：前者回答“训练损失降没降”，后者回答“没见过的数据还行不行”。</p>
+      </div>
+      <div class="hero" style="margin-top:26px">
+        <div class="course">NEXT · LECTURE 14</div>
+        <h2 style="font-size:1.6rem;margin:.2em 0">如果输入是图像，能不能把“局部性”和“平移结构”直接写进网络？</h2>
+        <p class="subtitle">第 14 讲补完两个训练技巧——<b>dropout</b> 与 <b>batch normalization</b>——然后进入卷积神经网络（CNN）：局部连接 + 参数共享，把图像结构写进模型。</p>
+        <div class="hero-meta">
+          <a class="btn primary" href="index.html#lecture-13">← 回到原讲义第 13 讲</a>
+          <a class="btn" href="index.html#lecture-14">前往第 14 讲（原讲义）→</a>
+        </div>
+      </div>
+    </section>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="术语表侧边栏">
+    <div class="toc-label">Glossary · 随文术语</div>
+    <div id="glossRailBody"></div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<footer>
+  <p>IML 2026 · Lecture 13 “Neural Networks III” 互动附属页 · 基于 chenmzh.github.io 讲义内容制作</p>
+  <p><a href="index.html#lecture-13">原讲义（index.html#lecture-13）</a> · 建议先学 <a href="index.html#lecture-12">第 12 讲（反向传播）</a>，再进入 <a href="index.html#lecture-14">第 14 讲（dropout / batch norm / CNN）</a></p>
+</footer>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e3||a<1e-3))return x.toExponential(1);return x.toFixed(p).replace(/\.?0+$/,'').replace(/^-0$/,'0');};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const heatColor=v=>{const a=clamp(Math.abs(v)/3,0,1);const r=v>=0?[23,102,83]:[178,58,72];return `color-mix(in srgb, rgb(${r[0]},${r[1]},${r[2]}) ${Math.round(a*100)}%, var(--surface))`;};
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgCurve(parent,x1,y1,x2,y2,opts={}){
+  const o=Object.assign({color:'var(--accent)',width:1.8,dash:false,marker:null,bend:0.35,flip:1},opts);
+  const dx=(x2-x1),dy=(y2-y1);
+  const c1x=x1+dx*o.bend,c1y=y1+dy*0.15*o.flip,c2x=x2-dx*o.bend,c2y=y2-dy*0.15*o.flip;
+  return svgAdd(parent,'path',{d:`M${x1},${y1} C${c1x},${c1y} ${c2x},${c2y} ${x2},${y2}`,fill:'none',stroke:o.color,strokeWidth:o.width,strokeDasharray:o.dash?'6 4':'none',markerEnd:o.marker||''});
+}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L13) ---------- */
+(()=>{
+  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1460 640');
+  const defs=svgAdd(svg,'defs');
+  const mkFwd=svgMarker(defs,'cmFwd','#176653'),mkBwd=svgMarker(defs,'cmBwd','#b45a2b'),mkOpt=svgMarker(defs,'cmOpt','#285a9e'),mkTool=svgMarker(defs,'cmTool','#6c4fa1'),mkGray=svgMarker(defs,'cmGray','#8a938b');
+  const N=[
+    {id:'n11',x:30,y:250,w:180,h:120,t:'第 11 讲',s1:'神经网络模型',s2:'前向传播',target:'index.html#lecture-11',col:'#8a938b'},
+    {id:'n12',x:30,y:450,w:180,h:110,t:'第 12 讲',s1:'反向传播',s2:'算梯度 ∇J',target:'index.html#lecture-12',col:'#8a938b'},
+    {id:'sq',x:290,y:60,w:200,h:86,t:'信号尺度',s:'初始化的主线问题',target:'#init',col:'#176653'},
+    {id:'vg',x:560,y:60,w:210,h:86,t:'梯度消失/爆炸',s:'连乘缩放 r^L',target:'#grad',col:'#176653'},
+    {id:'vv',x:560,y:225,w:210,h:86,t:'方差传播 1/d · 2/d',s:'激活尺度怎么守',target:'#var',col:'#176653'},
+    {id:'init',x:290,y:225,w:200,h:86,t:'Glorot / He',s:'具体初始化规则',target:'#initrules',col:'#b45a2b'},
+    {id:'lr',x:860,y:60,w:200,h:86,t:'学习率 η',s:'步子大小',target:'#lr',col:'#b45a2b'},
+    {id:'mom',x:860,y:225,w:200,h:86,t:'动量 momentum',s:'方向惯性 u',target:'#momentum',col:'#b45a2b'},
+    {id:'gf',x:1130,y:60,w:200,h:86,t:'优化 vs 泛化',s:'看验证集',target:'#gf',col:'#8a938b'},
+    {id:'wd',x:1130,y:225,w:200,h:86,t:'Weight decay',s:'λ||W||² 拉向 0',target:'#wd',col:'#6c4fa1'},
+    {id:'es',x:1130,y:390,w:200,h:86,t:'Early stopping',s:'验证损失创新低就停',target:'#es',col:'#6c4fa1'},
+    {id:'do',x:860,y:390,w:200,h:86,t:'Dropout',s:'训练时随机丢单元',target:'#dropout',col:'#6c4fa1'},
+    {id:'diag',x:560,y:390,w:210,h:86,t:'诊断表',s:'现象 → 该调哪个',target:'#diag',col:'#6c4fa1'},
+    {id:'n14',x:1320,y:520,w:120,h:100,t:'第 14 讲',s1:'dropout',s2:'batch norm / CNN',target:'index.html#lecture-14',col:'#8a938b'}
+  ];
+  const P=Object.fromEntries(N.map(n=>[n.id,n]));
+  function route(pts,color,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    const marker=color==='#176653'?mkFwd:color==='#b45a2b'?mkBwd:color==='#6c4fa1'?mkTool:mkGray;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:1.9,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  // course spine: 表达能力 -> 梯度计算 -> 训练稳定性 -> 架构偏置
+  route([[210,310],[250,310],[250,103],[290,103]],'#8a938b','表达能力',258,208,'start');
+  route([[490,103],[560,103]],'#176653','信号尺度',524,86);
+  route([[770,103],[860,103]],'#b45a2b','轨迹',814,86);
+  route([[1060,103],[1130,103]],'#8a938b','泛化',1094,86);
+  route([[1170,146],[1170,280],[1220,280],[1230,280]],'#6c4fa1','正则化',1246,190,'end');
+  route([[1230,311],[1230,460],[1320,460],[1320,520]],'#8a938b','偏置归纳',1282,420,'end');
+  // inner connections
+  route([[390,146],[390,196],[390,225]],'#176653','',390,190);
+  route([[770,146],[770,225]],'#b45a2b','',770,190);
+  route([[1050,146],[1050,225]],'#8a938b','',1050,190);
+  route([[565,311],[565,390]],'#176653','',565,352);
+  route([[1060,311],[1060,390]],'#6c4fa1','',1060,352);
+  route([[770,340],[770,390]],'#b45a2b','动量让轨迹稳',838,368,'start');
+  route([[560,225],[490,225],[490,320],[490,390],[560,390]],'#176653','方差→激活尺度',540,300,'start');
+  route([[860,390],[960,390],[960,445],[1180,445],[1180,540],[1320,540]],'#6c4fa1','下一讲展开 dropout',1120,470,'start');
+  route([[210,250],[210,505],[250,505]],'#8a938b','反向传播',258,430,'start');
+  // nodes
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':14.5,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    else if(n.s1){svgAdd(g,'text',{x:n.w/2,y:n.h/2+14,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s1);svgAdd(g,'text',{x:n.w/2,y:n.h/2+31,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s2);}
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- gradient vanishing/exploding plot ---------- */
+(()=>{
+  const svg=$('#gradPlot'), M={l:64,r:20,t:22,b:54},W=640,H=300;
+  const sX=w=>M.l+(w/20)*(W-M.l-M.r);
+  const sY=v=>M.t+(1-v)*(H-M.t-M.b);
+  const x0=0,x1=20;
+  function draw(r,L){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'gpArr','#285a9e');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    svgAdd(svg,'text',{x:M.l-9,y:sY(0)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'1');
+    svgAdd(svg,'text',{x:Math.min(x0,x1),y:M.l-9,'x':M.l,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'层 0（输出）');
+    for(let i=0;i<=L;i++){
+      const f=Math.pow(r,i);
+      const col=f>1.2?'#b23a48':(f<0.4?'#285a9e':'#176653');
+      const x=sX(i);
+      svgAdd(svg,'line',{x1:x,y1:sY(0),x2:x,y2:sY(Math.min(f,1.4)),stroke:col,strokeWidth:16,opacity:0.85,'stroke-linecap':'round'});
+    }
+    // cumulative scale line
+    let prev=null;
+    for(let i=0;i<=L;i++){
+      const f=Math.min(Math.pow(r,i),1.4);
+      const x=sX(i),y=sY(f);
+      if(prev)svgAdd(svg,'line',{x1:prev.x,y1:prev.y,x2:x,y2:y,stroke:'var(--accent)',strokeWidth:2,markerEnd:i===L?mk:''});
+      prev={x,y};
+    }
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+20,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'越靠前层，梯度被乘的越多');
+    const final=Math.pow(r,L);
+    const cap = r<1
+      ? `每层平均缩小到 ${fmt(r)} × ${L} 层 → 传到第 1 层只剩 ${final.toExponential(2)}（${fmt(final*100,1)}%）→ 梯度消失`
+      : (r>1.2 ? `每层放大 ${fmt(r)} × ${L} 层 → ${fmt(final,2)} 倍 → 梯度爆炸` : `每层 ${fmt(r)} → ${L} 层后约 ${fmt(final,3)}，尺度大致稳定`);
+    const c=$('#gradCap'); if(c)c.textContent='梯度传到第 1 层的缩放倍率。'+cap;
+    $('#gradRval').textContent=fmt(r,2);
+    $('#gradLval').textContent=L;
+  }
+  function upd(){ draw(Number($('#gradR').value), Number($('#gradL').value)); }
+  $('#gradR').addEventListener('input',upd); $('#gradL').addEventListener('input',upd);
+  upd();
+})();
+
+/* ---------- activation derivative plot ---------- */
+(()=>{
+  const svg=$('#actPlot'), M={l:64,r:18,t:20,b:52},W=640,H=300;
+  const sX=z=>M.l+(z-(-6))/12*(W-M.l-M.r);
+  const sY=v=>M.t+(1-v)*(H-M.t-M.b);
+  function draw(){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const ms=svgMarker(defs,'as','#285a9e'), mr=svgMarker(defs,'ar','#b45a2b');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    ['0','0.25','1'].forEach((v,i)=>{const y=[sY(0),sY(0.25),sY(1)][i];svgAdd(svg,'text',{x:M.l-9,y:y+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},v);});
+    // sigmoid derivative sigma(1-sigma)
+    let d='';
+    for(let i=0;i<=120;i++){const z=-6+12*i/120;const s=1/(1+Math.exp(-z));const v=s*(1-s);d+=(i?'L':'M')+sX(z)+','+sY(v)+' ';}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#285a9e',strokeWidth:2.6});
+    svgHalo(svg,sX(-1.9),sY(0.21),'σ′(z)=σ(1−σ)，峰值 0.25',{fill:'#285a9e',font:11});
+    // ReLU derivative
+    svgAdd(svg,'line',{x1:sX(0),y1:sY(0),x2:sX(-6),y2:sY(0),stroke:'#b45a2b',strokeWidth:2.6,markerEnd:''});
+    svgAdd(svg,'line',{x1:sX(0),y1:sY(1),x2:sX(6),y2:sY(1),stroke:'#b45a2b',strokeWidth:2.6,markerEnd:mr});
+    svgAdd(svg,'line',{x1:sX(0),y1:sY(0),x2:sX(0),y2:sY(1),stroke:'#b45a2b',strokeWidth:2.2,'stroke-dasharray':'4 3'});
+    svgHalo(svg,sX(2.6),sY(1)-12,'ReLU′：z>0 为 1，z<0 为 0',{fill:'#b45a2b',font:11});
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'z →（端点：−6 到 6）');
+  }
+  draw();
+})();
+
+/* ---------- variance propagation plot ---------- */
+(()=>{
+  const svg=$('#varPlot'), M={l:70,r:20,t:24,b:54},W=720,H=300;
+  const LMAX=16;
+  const sX=i=>M.l+(i/LMAX)*(W-M.l-M.r);
+  const sY=q=>M.t+(1-(q/8))*(H-M.t-M.b); // show up to 8x
+  function draw(q,d){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'vpArr','#176653');
+    const E2=1; // input second moment
+    let vals=[E2];
+    for(let i=1;i<=LMAX;i++) vals.push(vals[i-1]*0.5*d*q); // ReLU halves ~0.5 factor
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    ['1','2','4','8'].forEach((v,i)=>{svgAdd(svg,'text',{x:M.l-9,y:sY(Number(v))+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},v);});
+    const scale=0.5*d*q;
+    let prev=null, stable=true;
+    for(let i=0;i<=LMAX;i++){
+      const f=vals[i];
+      const col = (scale>1.12)?'#b23a48':(scale<0.8?'#285a9e':'#176653');
+      if(Math.abs(scale-1)>0.12) stable=false;
+      const x=sX(i),y=sY(Math.min(f,8));
+      svgAdd(svg,'line',{x1:x,y1:sY(0),x2:x,y2:y,stroke:col,strokeWidth:15,opacity:0.85,'stroke-linecap':'round'});
+      if(prev)svgAdd(svg,'line',{x1:prev.x,y1:prev.y,x2:x,y2:y,stroke:'var(--accent)',strokeWidth:2});
+      prev={x,y};
+    }
+    const label = (scale>1.12)?'放大（平方尺度爆掉）':(scale<0.8?'缩小（信号消失）':'稳定（输出≈输入）');
+    const cond = `每层保留因子 ≈ ½·d·q_W = ½·${d}·${fmt(q,2)} = ${fmt(scale,3)}`;
+    $('#varCap').textContent = `初始化方差 q_W=${fmt(q,2)}、fan_in d=${d}：${cond} → ${label}。当 ½·d·q_W≈1 时最稳（He 规则 q_W=2/d）。`;
+    $('#varQval').textContent=fmt(q,2); $('#varDval').textContent=d;
+  }
+  function upd(){ draw(Number($('#varQ').value), Number($('#varD').value)); }
+  $('#varQ').addEventListener('input',upd); $('#varD').addEventListener('input',upd);
+  upd();
+})();
+
+/* ---------- learning rate plot (J=w^2) ---------- */
+(()=>{
+  const svg=$('#lrPlot'), M={l:64,r:22,t:20,b:54},W=640,H=320;
+  const sX=w=>M.l+(w-(-2))/4.4*(W-M.l-M.r);
+  const sY=J=>M.t+(1-J/5)*(H-M.t-M.b);
+  const w0=1.0;
+  function J(w){return w*w;}
+  function steps(eta,N){
+    const arr=[];let w=w0;arr.push({i:0,w,J:J(w)});
+    for(let i=1;i<=N;i++){w=w*(1-2*eta);arr.push({i,w,J:J(w)});}
+    return arr;
+  }
+  function classify(eta){
+    const c=1-2*eta;
+    if(Math.abs(c)>=1)return 'diverge';
+    if(c<0)return 'oscillate';
+    return 'converge';
+  }
+  function draw(eta){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    // parabola
+    let d='';for(let i=0;i<=88;i++){const w=-2+4.4*i/88;d+=(i?'L':'M')+sX(w)+','+sY(J(w))+' ';}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--line)',strokeWidth:1.6,'stroke-dasharray':'5 4'});
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    const cls=classify(eta);
+    const col = cls==='diverge'?'#b23a48':(cls==='oscillate'?'#b45a2b':'#176653');
+    const st=steps(eta,28);
+    let prev=null;
+    st.forEach((s,i)=>{
+      const x=sX(s.w),y=sY(s.J);
+      svgAdd(svg,'circle',{cx:x,cy:y,r:3.4,fill:col});
+      if(prev)svgAdd(svg,'line',{x1:prev.x,y1:prev.y,x2:x,y2:y,stroke:col,strokeWidth:1.6});
+      prev={x,y};
+    });
+    const msg = cls==='diverge'?`η=${fmt(eta,2)}：|1−2η|≥1 → 发散（红）`:(cls==='oscillate'?`η=${fmt(eta,2)}：0.5<η<1 → 左右震荡但缩小（橙）`:`η=${fmt(eta,2)}：0<η<0.5 → 单调收敛（绿）`);
+    $('#lrCap').textContent=msg;
+    $('#lrEtaVal').textContent=fmt(eta,2);
+  }
+  let eta=Number($('#lrEta').value);
+  $('#lrEta').addEventListener('input',()=>{eta=Number($('#lrEta').value);draw(eta);});
+  $('#lrReset').addEventListener('click',()=>draw(eta));
+  draw(0.1);
+})();
+
+/* ---------- momentum vs SGD valley trajectory ---------- */
+(()=>{
+  const svg=$('#momPlot'), M={l:60,r:22,t:20,b:54},W=640,H=320;
+  const sX=w1=>M.l+(w1-(-1.6))/3.4*(W-M.l-M.r);
+  const sY=w2=>M.t+(1-(w2-(-0.6))/2.4)*(H-M.t-M.b);
+  const g=(w1,w2)=>[2*w1, 8*w2]; // narrow valley: much steeper along w2
+  function trace(momentum){
+    const N=34,eta=0.045,alpha=momentum;
+    let w1=1.24,w2=0.16,u1=0,u2=0;
+    const pts=[];
+    for(let i=0;i<N;i++){
+      const g1=2*w1,g2=9*w2;
+      if(momentum>0){u1=alpha*u1+eta*g1;u2=alpha*u2+eta*g2;w1-=u1;w2-=u2;}
+      else {w1-=eta*g1;w2-=eta*g2;}
+      pts.push({w1,w2});
+    }
+    return pts;
+  }
+  function draw(alpha){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    // draw valley level-ish: lighter fill
+    for(let row=0;row<24;row++)for(let col=0;col<34;col++){
+      const w1=-1.6+3.4*col/34, w2=-0.6+2.4*row/24;
+      const val=g(w1,w2)[0]*g(w1,w2)[0]+g(w1,w2)[1]*g(w1,w2)[1];
+      // gradient magnitude ellipses (approx contour value)
+    }
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    const sgd=trace(0),mom=trace(alpha);
+    function poly(pts,col){
+      let d='';pts.forEach((p,i)=>{const x=sX(p.w1),y=sY(p.w2);d+=(i?'L':'M')+x+','+y+' ';});
+      svgAdd(svg,'path',{d,fill:'none',stroke:col,strokeWidth:2});
+    }
+    poly(sgd,'#b45a2b');poly(mom,'#176653');
+    // endpoints
+    const e1=sgd[sgd.length-1],e2=mom[mom.length-1];
+    svgAdd(svg,'circle',{cx:sX(e1.w1),cy:sY(e1.w2),r:4,fill:'#b45a2b'});
+    svgAdd(svg,'circle',{cx:sX(e2.w1),cy:sY(e2.w2),r:4,fill:'#176653'});
+    svgHalo(svg,sX(-1.2),sY(0.05),'普通 SGD（橙）：左右震荡大',{fill:'#b45a2b',font:11,'text-anchor':'middle'});
+    svgHalo(svg,sX(e2.w1)-40,sY(e2.w2)+18,`momentum α=${fmt(alpha,2)}（绿）：沿谷底平滑`,{fill:'#176653',font:11});
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'w₁（缓坡）→，w₂（陡坡）→；收敛到原点');
+    $('#momAVal').textContent=fmt(alpha,2);
+  }
+  draw(Number($('#momA').value));
+  $('#momA').addEventListener('input',()=>draw(Number($('#momA').value)));
+  $('#momRun').addEventListener('click',()=>{/* redraw with current alpha */ draw(Number($('#momA').value)); toast('已用当前 α 重画轨迹（绿=带动量，橙=纯 SGD）');});
+  $('#momReset').addEventListener('click',()=>draw(Number($('#momA').value)));
+})();
+
+/* ---------- weight decay plot ---------- */
+(()=>{
+  const svg=$('#wdPlot'), M={l:64,r:22,t:24,b:54},W=640,H=320;
+  const sX=w=>M.l+(w-(-1.2))/3.4*(W-M.l-M.r);
+  const sY=h=>M.t+(1-(h-(-1.2))/3.4)*(H-M.t-M.b);
+  // 1-D demo: unregularized optimum at w=1 (weight large), J_data=(w-1)^2
+  function wstar(lam){return 1/(1+lam);}
+  function draw(lam){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'wdArr','#6c4fa1');
+    // data parabola
+    let d='';for(let i=0;i<=80;i++){const w=-1.2+3.4*i/80;const v=(w-1)*(w-1);d+=(i?'L':'M')+sX(w)+','+sY(v)+' ';}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--line)',strokeWidth:1.6,'stroke-dasharray':'5 4'});
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    const wu=wstar(0),wu2=wstar(lam);
+    svgAdd(svg,'circle',{cx:sX(wu),cy:sY(0),r:5,fill:'#b45a2b'});
+    svgAdd(svg,'text',{x:sX(wu)+6,y:sY(0)-8,'font-size':12,'font-weight':700,fill:'#b45a2b'},'数据最优 w=1');
+    svgAdd(svg,'circle',{cx:sX(wu2),cy:sY(0),r:5,fill:'#176653'});
+    svgAdd(svg,'text',{x:sX(wu2)-12,y:sY(0)-8,'font-size':12,'font-weight':700,fill:'#176653','text-anchor':'end'},`weight decay 后 w=1/(1+λ)=${fmt(wu2,3)}`);
+    svgAdd(svg,'line',{x1:sX(wu),y1:sY(0)-26,x2:sX(wu2),y2:sY(0)-26,stroke:'#6c4fa1',strokeWidth:2,markerEnd:mk});
+    svgHalo(svg,(sX(wu)+sX(wu2))/2,sY(0)-34,'被拉向 0',{fill:'#6c4fa1',font:11});
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},`λ=${fmt(lam,2)}：范数 |w|=${fmt(Math.abs(wu2),3)}`);
+    $('#wdLVal').textContent=fmt(lam,2);
+  }
+  function upd(){draw(Number($('#wdL').value));}
+  $('#wdL').addEventListener('input',upd);upd();
+})();
+
+/* ---------- early stopping plot ---------- */
+(()=>{
+  const svg=$('#esPlot'), M={l:56,r:20,t:20,b:54},W=640,H=320;
+  const epoch=[1,5,10,20,30], tr=[1.20,0.70,0.40,0.20,0.10], va=[1.30,0.80,0.55,0.50,0.62];
+  const sX=e=>M.l+(e-0.5)/31*(W-M.l-M.r);
+  const sY=v=>M.t+(1-(v-0.05)/1.4)*(H-M.t-M.b);
+  function draw(){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    const mk=svgMarker(defs,'esArr','#b45a2b');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    function line(pts,col){let d='';pts.forEach((p,i)=>{const x=sX(p[0]),y=sY(p[1]);d+=(i?'L':'M')+x+','+y+' ';});svgAdd(svg,'path',{d,fill:'none',stroke:col,strokeWidth:2.4});}
+    line(epoch.map((e,i)=>[e,tr[i]]),'#176653');line(epoch.map((e,i)=>[e,va[i]]),'#b45a2b');
+    epoch.forEach((e,i)=>{svgAdd(svg,'circle',{cx:sX(e),cy:sY(tr[i]),r:3.5,fill:'#176653'});svgAdd(svg,'circle',{cx:sX(e),cy:sY(va[i]),r:3.5,fill:'#b45a2b'});});
+    // best val = epoch 20
+    const be=20,bv=0.50;
+    svgAdd(svg,'circle',{cx:sX(be),cy:sY(bv),r:6,fill:'none',stroke:'#b23a48',strokeWidth:2.4});
+    svgAdd(svg,'path',{d:`M${sX(be)-0},${sY(bv)-18} L${sX(be)+10},${sY(bv)-34} L${sX(be)+42},${sY(bv)-34}`,fill:'none',stroke:'#b23a48',strokeWidth:1.6});
+    svgHalo(svg,sX(be)+34,sY(bv)-40,'验证损失最低（第 20 epoch）→ 选这里',{fill:'#b23a48',font:11.5});
+    svgHalo(svg,sX(2),sY(1.15),'训练损失（绿）：一直降',{fill:'#176653',font:11,'text-anchor':'start'});
+    svgHalo(svg,sX(24),sY(0.28),'验证损失（橙）：先降后升',{fill:'#b45a2b',font:11,'text-anchor':'start'});
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'epoch（训练轮数）→');
+    const c=$('#esCap'); if(c)c.textContent='验证损失最低点在第 20 epoch（0.50），而非训练损失最低的第 30 epoch（0.10）。early stopping 保留第 20 epoch 的模型。';
+  }
+  draw();
+})();
+
+/* ---------- random initialization demo (uses Math.random) ---------- */
+(()=>{
+  const svg=$('#initRandPlot'), M={l:64,r:20,t:24,b:54},W=640,H=300;
+  const sX=v=>M.l+(v-(-3))/6*(W-M.l-M.r); // z range roughly -3..3
+  const sY=h=>M.t+(1-h/0.8)*(H-M.t-M.b);
+  function norm(){ // Box–Muller with Math.random -> N(0,1)
+    let u=0,v=0;while(u===0)u=Math.random();v=Math.random();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+  function draw(d){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    svgAdd(svg,'text',{x:W-M.r,y:sY(0)+16,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'z（一层线性输出）→');
+    // theoretical target red dashed at E[z^2]=d*Var(W)=1
+    svgAdd(svg,'line',{x1:M.l,y1:sY(1),x2:W-M.r,y2:sY(1),stroke:'#b23a48',strokeWidth:2,'stroke-dasharray':'7 4'});
+    svgHalo(svg,sX(0),sY(1)-12,'理论目标 E[z²] ≈ d·Var(W) = 1',{fill:'#b23a48',font:10.5});
+    // sample weights with Math.random: uniform on [-a,a], a=sqrt(3/d) => Var=1/d
+    const a=Math.sqrt(3/d);
+    const w=[];for(let j=0;j<d;j++)w.push((Math.random()*2-1)*a);
+    // push N=600 random inputs through one linear layer
+    const N=600,zs=[];
+    for(let i=0;i<N;i++){let z=0;for(let j=0;j<d;j++)z+=w[j]*norm();zs.push(z);}
+    // histogram into bins
+    const bins=26, bmin=-3,bmax=3, bw=(bmax-bmin)/bins,counts=new Array(bins).fill(0);
+    zs.forEach(z=>{let k=Math.floor((z-bmin)/bw);if(k<0)k=0;if(k>=bins)k=bins-1;counts[k]++;});
+    const maxC=Math.max(...counts);
+    counts.forEach((c,i)=>{
+      const x=bmin+i*bw, h=c/maxC*0.7;
+      svgAdd(svg,'rect',{x:sX(x+bw/2)-bw/2*((W-M.l-M.r)/6)/2,y:sY(h),width:(W-M.l-M.r)/6*bw,height:sY(0)-sY(h),fill:'color-mix(in srgb, var(--blue) 45%, var(--surface))',stroke:'none'});
+    });
+    // empirical second moment
+    const emp=zs.reduce((a,z)=>a+z*z,0)/N;
+    svgAdd(svg,'circle',{cx:sX(Math.sqrt(emp)),cy:sY(0)-8,r:5,fill:'#285a9e'});
+    svgAdd(svg,'text',{x:sX(Math.sqrt(emp)),y:sY(0)-14,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#285a9e'},'实测 √E[z²]');
+    $('#initRandCap').textContent=`抽样一次：d=${d}，随机权重 Var≈${fmt(1/d,3)}，实测 E[z²]≈${fmt(emp,3)}（理论 1）。多按几次按钮，你会看到它在 1 附近随机晃——这正是“随机≠尺度错”的意思。`;
+    $('#initRandDval').textContent=d;
+  }
+  function upd(){draw(Number($('#initRandD').value));}
+  $('#initRandD').addEventListener('input',upd);
+  $('#initRandRun').addEventListener('click',upd);
+  upd();
+})();
+
+/* ---------- learning path / focus mode ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},story:{mode:'core',tag:'问题'},
+    obj:{mode:'core',tag:'回顾'},threat:{mode:'extra',tag:'拓展'},init:{mode:'core',tag:'起点'},
+    grad:{mode:'core',tag:'消失·爆炸'},act:{mode:'extra',tag:'工具'},var:{mode:'core',tag:'方差'},
+    initrules:{mode:'core',tag:'规则'},sym:{mode:'extra',tag:'拓展'},lr:{mode:'core',tag:'步长'},
+    sched:{mode:'extra',tag:'拓展'},momentum:{mode:'core',tag:'惯性'},gf:{mode:'core',tag:'泛化'},
+    wd:{mode:'core',tag:'正则'},es:{mode:'core',tag:'早停'},dropout:{mode:'extra',tag:'拓展'},
+    arch:{mode:'extra',tag:'拓展'},diag:{mode:'core',tag:'枢纽'},loop:{mode:'extra',tag:'拓展'},
+    mis:{mode:'extra',tag:'误区'},quiz:{mode:'core',tag:'自测'},takeaway:{mode:'core',tag:'带走'}
+  };
+  const REASON={
+    map:'先用“雾里下山”建立直觉：能算梯度，不等于能训练好。',
+    story:'把“下山”翻译成要最小化的对象：非凸的经验风险 J(W)。',
+    obj:'地形既非凸，起点就重要——先看初始化为什么决定信号能否穿过很多层。',
+    init:'初始化管的是“信号尺度”，它直接决定梯度消失 / 爆炸是否会来。',
+    grad:'消失 / 爆炸的根因是尺度连乘，现在用方差传播把“尺度怎么守”真正算出来。',
+    var:'方差分析的结论直接变成 Glorot / He 两条具体的初始化规则。',
+    initrules:'起点解决了，接下来看每一步迈多大：学习率 η。',
+    lr:'固定学习率决定“走多快”，动量进一步改变“往哪个方向带惯性”。',
+    momentum:'轨迹稳了，但训练损失下降不等于泛化变好——先拆分“优化”与“泛化”。',
+    gf:'泛化问题的第一个工具：weight decay，让权重别太大。',
+    wd:'第二种泛化控制：验证误差不再下降就 early stopping。',
+    es:'有了工具还不行，得知道“看到现象该调哪个旋钮”——进一张诊断表。',
+    diag:'主线走完，用自测题确认你真的带走了。',
+    quiz:'把整讲重新串成闭环，并接上第 14 讲的 dropout 与 batch norm。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    rebuildBridges();
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'经验风险',en:'empirical risk',f:'J(W)=\\sum_i\\ell(W;x_i,y_i)',d:'在训练集上“平均”的损失函数，衡量当前权重在整个训练样本上的表现。',r:'位置：§1。用处：SGD 每一步都朝让它变小的方向更新。重要：它是本讲的舞台，代表“训练目标”。'},
+    {t:'非凸优化',en:'non-convex optimization',f:'无闭式解',d:'损失对权重不是凸函数，地形里有局部极小、鞍点，不同初始化走向不同区域。',r:'位置：§2。用处：解释为什么训练难、为什么需要好的初始化。重要：非凸 ≠ 不可训练，实践仍常能找到好解。'},
+    {t:'局部极小',en:'local minimum',d:'地形中局部最低但未必全局最低的点；凸问题里局部最小=全局最小，神经网络不成立。',r:'位置：§3。用处：判断“SGD 会不会卡死”的担心是否成立。重要：权重空间对称性会制造很多预测等价的局部极小。'},
+    {t:'权重空间对称性',en:'weight-space symmetry',d:'交换同层相同类型隐藏单元及其输出连接，网络输入输出函数不变；不同 W 可表示同一 f(x)。',r:'位置：§3。用处：解释为何存在许多“等价”局部极小。重要：它们预测行为一样，不是你卡在“错误”的地方。'},
+    {t:'初始化',en:'initialization',f:'W\\sim\\text{分布}',d:'训练开始前给所有权重赋的初值，通常从某分布随机采样。',r:'位置：§4。用处：让每层激活与梯度的尺度在深层中大致稳定。重要：它是信号能否穿过很多层的起点。'},
+    {t:'梯度消失',en:'vanishing gradients',f:'\\delta^{(l)}\\to0',d:'深层网络中反向信号因连乘许多小因子（权重与激活导数），导致早期层梯度趋近 0。',r:'位置：§5。用处：解释“前层几乎不学习”。重要：由初始化尺度与激活共同决定。'},
+    {t:'梯度爆炸',en:'exploding gradients',f:'\\delta^{(l)}\\to\\infty',d:'反向信号因连乘大因子导致梯度尺度指数级放大，更新量失控。',r:'位置：§5。用处：解释 loss 变 NaN 等现象。重要：可通过初始化与梯度裁剪处理。'},
+    {t:'方差传播',en:'variance propagation',f:'\\operatorname{Var}(W)\\approx\\tfrac{1}{d}',d:'分析随机权重尺度如何随层数传递的框架：一层的输出方差约等于 d·Var(W)·输入方差。',r:'位置：§7。用处：导出 Glorot / He 的分母。重要：把“信号尺度怎么守”变成可计算的方程。'},
+    {t:'fan_in / fan_out',en:'fan-in / fan-out',d:'fan_in 是一个输出单元接收的输入数（上一层宽度 d_{l-1}）；fan_out 是这层输出单元数（d_l）。',r:'位置：§8。用处：决定初始化方差的分母，调节前向/反向信息流尺度。重要：variance 是设计目标，normal/uniform 只是实现它的采样。'},
+    {t:'Glorot 初始化',en:'Glorot initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}+\\mathrm{fan\\_out}}',d:'常用于 tanh 等对称激活的尺度初始化，在前向（1/fan_in）与反向（1/fan_out）两条信息流之间折中。',r:'位置：§8。用处：让前向激活与反向梯度都不随层数放大或缩小。重要：它不是凭空来的分母。'},
+    {t:'He 初始化',en:'He initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}}',d:'常用于 ReLU 的尺度初始化；分子 2 补偿 ReLU 丢掉的约一半二阶矩。',r:'位置：§8。用处：配套 ReLU 使用。重要：2 的来历是 §7 的方差分析，不是拍脑袋。'},
+    {t:'学习率',en:'learning rate',f:'\\eta',d:'梯度更新时乘在梯度前面的步长标量；决定每一步沿负梯度方向走多远。',r:'位置：§10。用处：控制训练稳定性与速度。重要：太大震荡/发散，太小磨蹭；是最常调的超参数。'},
+    {t:'学习率 schedule',en:'learning rate schedule',d:'随训练过程逐步调低学习率的策略，例如从一开始大步探索、后面小步精修。',r:'位置：§11。用处：平衡探索与收敛。重要：可监控“权重更新量/权重大小”判断是否合适。'},
+    {t:'动量',en:'momentum',f:'u\\leftarrow\\alpha u+\\eta g',d:'优化技巧：更新叠加历史梯度方向（速度 u），得到近期方向的指数加权平均，而不是只看当前一步。',r:'位置：§12。用处：加速沿一致方向、抑制来回震荡。重要：动量仍是拿反向传播算出的梯度来更新。'},
+    {t:'优化 vs 泛化',en:'optimization vs generalization',d:'优化：参数有没有把训练损失降下来；泛化：学到的参数在没参与更新的数据上是否仍有效。',r:'位置：§13。用处：区分“该调学习率/初始化”还是“该上正则化/早停”。重要：两者都影响验证集，但机制不同。'},
+    {t:'过拟合',en:'overfitting',d:'模型在训练集上损失很低、但在没见过的数据上表现差，通常因参数多而记住了训练集噪声。',r:'位置：§13。用处：诊断“训练损失低、验证损失高”的现象。重要：用正则化/早停/更多数据应对。'},
+    {t:'weight decay',en:'weight decay',f:'\\lambda\\|W\\|^2',d:'在目标函数加 L2 惩罚，鼓励小权重；更新时把权重轻微拉向 0（梯度多一项 2λW）。',r:'位置：§14。用处：控制模型复杂度、改善泛化。重要：这是“decay”名字的来源。'},
+    {t:'early stopping',en:'early stopping',d:'验证误差不再下降就停止训练，保留验证误差最低时的模型；像一种正则化。',r:'位置：§15。用处：限制模型拟合训练细节的时间。重要：选择验证损失最低的点，而不是训练损失最低的点。'},
+    {t:'dropout',en:'dropout',d:'训练时随机丢弃一部分隐藏单元、测试时用全部单元；可阻止网络过度依赖某几个单元。',r:'位置：§16。用处：正则化、改善泛化。重要：可理解为训练了许多共享权重的子网络，第 14 讲展开。'},
+    {t:'超参数',en:'hyperparameter',d:'训练前由人设定的值（层数、单元数、激活、学习率、正则化强度），不靠梯度下降学出。',r:'位置：§17。用处：根据训练/验证误差来调。重要：没有一个普遍最优答案，需从简单开始迭代。'},
+    {t:'梯度裁剪',en:'gradient clipping',d:'把梯度范数限制在某个阈值内，防止梯度爆炸导致更新过大。',r:'位置：§18 诊断表。用处：应对 loss 变 NaN 的一种手段。重要：与初始化一起守住梯度尺度。'}
+  ];
+  const KEYS={'经验风险':'经验风险','非凸优化':'非凸','局部极小':'局部极小','权重空间对称性':'权重空间对称性','初始化':'初始化','梯度消失':'梯度消失','梯度爆炸':'梯度爆炸','方差传播':'方差传播','fan_in / fan_out':'fan_in','Glorot 初始化':'Glorot 初始化','He 初始化':'He 初始化','学习率':'学习率','学习率 schedule':'学习率 schedule','动量':'动量','优化 vs 泛化':'泛化问题','过拟合':'过拟合的典型曲线','weight decay':'weight decay','early stopping':'early stopping','dropout':'Dropout','超参数':'超参数','梯度裁剪':'梯度裁剪'};
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg';
+  // 1) place a small interactive marker at the FIRST occurrence of each term
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&p.matches(GLOSS_SKIP))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:c.k||KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  // 2) glossary sidebar, grouped by the section of first occurrence
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  // 3) highlight rail group of the active section
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  // 4) click term marker -> floating definition popover
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'为什么神经网络训练问题通常是非凸的？',a:'多层线性变换与非线性的激活组合后，损失对权重不再是凸函数；因此可能存在局部极小、鞍点，不同初始化走向不同区域，且一般没有闭式解。'},
+    {q:'梯度消失和梯度爆炸分别是怎样产生的？',a:'反向传播中误差信号要连续乘许多权重与激活导数。若每层综合缩放因子 <1（如 0.5），连乘若干层就趋近 0 → 消失；若 >1（如 2），连乘就指数放大 → 爆炸。'},
+    {q:'为什么好的初始化要考虑 fan_in 或 fan_out？',a:'因为一个输出单元的线性输入是 d（=fan_in）个随机贡献之和，方差约 d·Var(W)；想让输出尺度与输入大致相同，就要让 Var(W)≈1/fan_in（前向）或用 fan_out（反向），Glorot/He 正是据此定分母。'},
+    {q:'ReLU 相比 sigmoid 在梯度传播上有什么优势和风险？',a:'优势：z>0 时 ReLU′ = 1，激活时不缩小梯度（sigmoid 导数 ≤0.25 且两端饱和趋 0）。风险：z<0 时导数为 0，单元“断电”，可能出现死亡 ReLU。'},
+    {q:'学习率过大和过小分别会出现什么现象？',a:'过大：越过低谷、损失震荡、甚至发散（如 J(w)=w² 中 η>1 时 |1−2η|≥1）。过小：训练很慢、可能长时间停在平台区、浪费计算。'},
+    {q:'momentum 如何减少狭长山谷中的震荡？',a:'更新叠加历史梯度（速度 u），连续一致的方向累积、来回变号的方向互相抵消，于是沿谷底前进加速、横向振荡减弱。'},
+    {q:'weight decay 在目标函数里加了什么？它如何影响更新？',a:'加了 λ||W||²，额外梯度 2λW，更新时把权重轻微拉向 0（W ← W − η·(data grad + 2λW)），限制模型复杂度。'},
+    {q:'early stopping 为什么可以看作一种正则化？',a:'它限制训练时间，在验证误差不再下降时停止，阻止模型继续拟合训练噪声，相当于限制了模型实际利用的复杂度。'},
+    {q:'如果训练误差低但验证误差高，你会优先检查什么？',a:'优先考虑过拟合 / 泛化失败：检查是否有充分验证、正则化强度、模型容量、是否数据划分泄露；对应 weight decay、early stopping、dropout、更多数据。'},
+    {q:'“训练损失不降”和“训练损失很低但验证损失上升”分别更像优化问题还是泛化问题？为什么不能用同一项修复策略解释二者？',a:'前者更像是优化问题（先检查学习率、初始化、激活、梯度尺度）；后者是泛化问题（先检查过拟合与验证流程）。两者可能交互，但一个在改“训练轨迹”，另一个在改“训练外数据上的误差”，机制不同。'}
+  ];
+  $('#quizList').innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  let opened=0;
+  $('#quizList').addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
