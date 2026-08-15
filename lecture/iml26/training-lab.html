@@ -345,6 +345,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <p class="sec-lead">反向传播里的误差信号 $\delta^{(l)}=\partial J/\partial z^{(l)}\in\mathbb{R}^{d_l}$ 要一层层往前传。合并两步链式法则得到（$\odot$ 是逐元素乘，$\varphi'$ 是激活导数）：</p>
       <p class="formula">$$\delta^{(l)}=\left(W^{(l+1)\top}\delta^{(l+1)}\right)\odot\varphi'(z^{(l)})$$</p>
       <p class="plain"><b>读法</b>：一次反传拆成两步——先用 $W^{(l+1)\top}$ 把后一层的梯度“搬”回当前层，再用 $\varphi'$ 决定每个单元“放行多少梯度”。深度网络会<b>重复</b>这两步，所以梯度尺度会<b>连续相乘</b>。</p>
+      <p class="plain small">下方两张卡片里的“综合缩放 0.5 / 2”是<b>每层的平均缩放</b>：把这一层的权重 $W$ 与激活导数 $\varphi'$ 合起来看，信号平均每层变成 0.5 倍或 2 倍。真实值取决于初始化与激活（§7–§8 会算），这里先把它当常数，体会“连乘”的威力。</p>
       <div class="grid2">
         <div class="card">
           <h3>综合缩放 0.5（<1）</h3>
@@ -417,6 +418,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <p class="plain small"><b>ReLU 会砍掉一半</b>：ReLU 把负值变 0，若 $z$ 近似零均值对称，它约保留一半二阶矩：$\mathbb{E}[\operatorname{ReLU}(z)^2]\approx\tfrac12\mathbb{E}[z^2]$。于是前向尺度方程从 $d\,\operatorname{Var}(W)\approx1$ 变成
         $$\tfrac12\,d\,\operatorname{Var}(W)\approx1\ \Rightarrow\ \operatorname{Var}(W)\approx\frac{2}{d}.$$
         “2”不是拍脑袋，是在补偿 ReLU 丢掉的那一半二阶矩。</p>
+        <p class="plain small"><b>对照：不砍半的激活。</b>若换成 tanh / 线性这类对称激活（能量不砍半），把上面每步的 $\tfrac12$ 换成 $1$ 即可——最佳方差回到 $\operatorname{Var}(W)\approx 1/d$。下方互动图默认画 ReLU（已砍半）的情形。</p>
       </div>
       <div class="viz">
         <h3 style="margin-top:0">互动：初始化尺度如何决定“前方信号能量”逐层滚大或滚小</h3>
@@ -425,7 +427,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
           <div class="control"><label>每层权重方差 $q_W$</label><input type="range" id="varQ" min="0.02" max="2.0" step="0.02" value="0.25"><div class="val" id="varQval">0.25</div></div>
           <div class="control"><label>fan_in $d$</label><input type="range" id="varD" min="2" max="64" step="1" value="8"><div class="val" id="varDval">8</div></div>
         </div>
-        <div class="caption" id="varCap">拖动滑杆：二阶矩逐层乘 $d\cdot q_W$（线性）或 $\tfrac12 d\cdot q_W$（ReLU 后）。绿色=稳定（输出≈输入），红色=发散/消失。</div>
+        <div class="caption" id="varCap">拖动滑杆：二阶矩逐层乘 $\tfrac12\, d\cdot q_W$（下图为 ReLU 情形，能量已砍半）。绿色=稳定（输出≈输入），红色=发散/消失。</div>
       </div>
       <div class="why"><b>为什么重要</b>：凡是“信号尺度随层数变化”的现象（§5 消失/爆炸）都能用它解释；§8 的 Glorot/He 就是这套分析的直接结果。这是本讲最“数学”但最核心的一节。</div>
     </section>
@@ -434,31 +436,107 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <!-- ============ GLOROT / HE INTUITION ============ -->
     <section id="initrules">
       <h2 class="sec-title"><span class="num">§8</span>Glorot 和 He 初始化的直觉</h2>
-      <p class="sec-lead">选择初始化时，先问<b>激活函数是哪种</b>，再问<b>优先平衡哪条信息流</b>（前向激活尺度，还是反向梯度尺度）。</p>
-      <div class="grid2">
+      <p class="sec-lead">这一节把“初始化到底该怎么选”讲成<b>三步决策</b>，每步都有理由：
+        <b>① 目标</b>：让经过每一层之后，<u>前向信号的能量</u>与<u>反向梯度的强度</u>都不随深度“滚大”或“滚小”——都维持在 1 倍上下；
+        <b>② 分母由谁定</b>：“分母”是方程里那个<b>累加项数</b>。前向时一个输出单元累加 <code>fan_in</code> 项，所以前向方程分母用 <code>fan_in</code>；反向时要把 <code>fan_out</code> 个单元的结果汇总，所以反向方程分母想要 <code>fan_out</code>；
+        <b>③ 激活选哪条</b>：对称激活（tanh / 线性）用 <b>Glorot</b>（前向、反向两条都照顾）；ReLU 系用 <b>He</b>（只保前向、分子补一个 2，代价是不保证反向）。</p>
+      <div class="card compact" style="margin-top:18px">
+        <h3 style="margin-top:0">先回忆 §7 那条核心方程：能量是怎么“穿过”一层的</h3>
+        <p class="plain small">一层的输出方差约等于（<b>累加了多少项</b>）×（权重方差）×（输入方差）：
+        $$\operatorname{Var}(\text{输出})\approx \underbrace{\operatorname{fan\_in}}_{\text{一次要累加的项数}}\;\cdot\;\operatorname{Var}(W)\;\cdot\;\operatorname{Var}(\text{输入}).$$
+        想让“输出尺度 ≈ 输入尺度”（不增不减），就要 <code>fan_in</code>·<code>Var(W)</code> ≈ 1，即
+        $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_in}}.$$
+        这条方程同时解释了两件事：<b>分母来自“一次累加了多少项”</b>，<b>分子 = 1（希望不缩放）</b>。Glorot 与 He 只是各自在解这条方程时，多考虑了“反向也要传”或“ReLU 会砍掉一半能量”。</p>
+      </div>
+      <div class="grid2" style="margin-top:16px">
         <div class="card">
-          <h3>Glorot 初始化<span class="en">常用于 tanh 等对称激活</span></h3>
-          <p class="plain">设 <code>fan_in</code>$=d_{l-1}$ 个输入、<code>fan_out</code>$=d_l$ 个输出。前向希望
-            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_in}},$$
-            反向（用 $W^{\top}$）希望
-            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_out}}.$$
-            两者通常不能同时严格满足，Glorot 取折中：
-            $$\operatorname{Var}(W)\approx\frac{2}{\mathrm{fan\_in}+\mathrm{fan\_out}}.$$</p>
-          <p class="plain small">它让<b>前向激活</b>和<b>反向梯度</b>都不要随层数放大或缩小。</p>
+          <h3>Glorot 初始化 <span class="en">Xavier · 配 tanh / 线性等对称激活</span></h3>
+          <p class="plain small"><b>前向（激活一路往前传）</b>：一个输出单元要累加 <code>fan_in</code> 个随机贡献，要 <code>fan_in</code>·Var(W) ≈ 1 ⇒
+            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_in}}.$$
+            <b>反向（梯度乘 $W^{\top}$ 一路传回）</b>：$W^{\top}\delta$ 的求和里共有 <code>fan_out</code> 个随机项（本层有多少个单元，就要把多少份梯度累加回来），所以累加项数从 <code>fan_in</code> 变成 <code>fan_out</code>，要 <code>fan_out</code>·Var(W) ≈ 1 ⇒
+            $$\operatorname{Var}(W)\approx\frac{1}{\mathrm{fan\_out}}.$$</p>
+          <p class="plain small">两个目标通常不能同时精确满足。Glorot 取折中——把方程的“项数”换成两个 fan 的平均：
+            $$\operatorname{Var}(W)=\frac{1}{\frac{\mathrm{fan\_in}+\mathrm{fan\_out}}{2}}=\frac{2}{\mathrm{fan\_in}+\mathrm{fan\_out}}.$$
+            于是每一层：前向偏一点、反向偏一点，但<b>两边都贴着 1</b>，确保谁都不会随层数爆掉或消失。</p>
+          <p class="plain small">“2/(fi+fo)”不是凭空变出来的：当 fi = fo 时它退化成 1/fan，两边都精确等于 1；fi ≠ fo 时（比如 fi=3、fo=5）前向每层 ≈0.75、反向每层 ≈1.25，属于“公平地各让一步”（上式按对称激活、不砍半计算）。</p>
         </div>
         <div class="card">
-          <h3>He 初始化<span class="en">常用于 ReLU</span></h3>
-          <p class="plain">§7 已求出 ReLU 约保留一半二阶矩，所以前向尺度方程从 $\mathrm{fan\_in}\,\operatorname{Var}(W)\approx1$ 变成
+          <h3>He 初始化 <span class="en">Kaiming · 专门配 ReLU</span></h3>
+          <p class="plain small"><b>ReLU 先把能量砍掉一半。</b>若 $z$ 近似零均值对称，ReLU(z) 只保留约一半二阶矩（负半边变成 0）：
+            $$\mathbb{E}[\operatorname{ReLU}(z)^2]\approx\tfrac12\,\mathbb{E}[z^2].$$
+            所以“输出尺度 = 输入尺度”的方程要从 $1\cdot\mathrm{fan\_in}\,\operatorname{Var}(W)\approx1$ 改成
             $$\tfrac12\,\mathrm{fan\_in}\,\operatorname{Var}(W)\approx1\ \Rightarrow\ \operatorname{Var}(W)\approx\frac{2}{\mathrm{fan\_in}}.$$</p>
-          <p class="plain small">分子 2 补偿了 ReLU 砍掉的能量。若 <code>fan_in</code>$=3,\mathrm{fan\_out}=5$，Glorot 给 $\operatorname{Var}(W)\approx2/(3+5)=0.25$。</p>
+          <p class="plain small"><b>分子 2 = “回血”</b>：它不是在拍脑袋，而是在补偿 ReLU 砍掉的那一半二阶矩。He 只用 <code>fan_in</code> 做分母，因此优先保住了<b>前向信号</b>；反向尺度则退化成 <code>fan_out</code>/<code>fan_in</code>（下面互动图里 fo＞fi 时反向略热、fo＜fi 时反向偏冷）——对 ReLU 网络通常可以接受，极深的网络还可再用归一化兜底。</p>
+          <p class="plain small">反过来说：<b>Glorot 配 ReLU 会“前向悄悄变暗”</b>（少了那个 ½ 补偿），这正是“ReLU 要用 He”的原因。下面互动图会让你亲眼看到。</p>
         </div>
       </div>
-      <div class="def">
-        <div class="term">fan_in / fan_out <span class="en">fan-in / fan-out · first mentioned: §8</span></div>
-        <p class="plain"><b>是什么</b>：<code>fan_in</code> 是一个输出单元接收的输入数（上一层宽度 $d_{l-1}$）；<code>fan_out</code> 是该层输出单元数（$d_l$）。</p>
-        <p class="plain"><b>白话</b>：“一个输出累加了多少项”“一层送出去给多少人用”。随机权重到底多小，取决于这些数。</p>
-        <p class="plain"><b>干嘛用</b>：决定初始化方差的分母，从而调节前向/反向的信息流尺度。</p>
-        <p class="plain"><b>为什么重要 + 连接</b>：<b>variance 是设计目标，normal/uniform 只是实现它的采样方式</b>。公式给的是合理起点，不是训练成功的证明——训练后应查看各层激活/梯度的实际分布。</p>
+      <div class="why"><b>一句话决策</b>：<b>tanh / 线性 → Glorot（两边都平衡）；ReLU 系 → He（前向优先、分子补 2）</b>。拿不准时就记：先问激活函数，再问优先保哪条信息流。</div>
+
+      <div class="viz">
+        <h3 style="margin-top:0">互动实验室：亲眼看“前向 / 反向尺度”随深度滚大或滚小</h3>
+        <p class="plain small">选规则、调 <code>fan_in</code> / <code>fan_out</code>、选激活。绿线 = <b>前向</b>（激活要穿过的路），橙线 = <b>反向</b>（梯度要传回来的路）；虚线 = 理想值 <b>1</b>。曲线在 1 上方 = 每层放大，在 1 下方 = 每层缩小——离 1 越远，越深越严重。</p>
+        <div class="svg-wrap"><svg id="initViz" viewBox="0 0 760 340" role="img" aria-label="Glorot 与 He 的前向/反向尺度互动实验"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:180px"><label>初始化规则</label>
+            <select id="initRuleSel">
+              <option value="glorot">Glorot = 2/(fi+fo)</option>
+              <option value="he" selected>He = 2/fi</option>
+              <option value="fwd">只满足前向 = 1/fi</option>
+              <option value="bwd">只满足反向 = 1/fo</option>
+            </select>
+          </div>
+          <div class="control"><label>fan_in <span class="kbd">fi</span>（上层宽度）</label><input type="range" id="initFi" min="2" max="64" step="1" value="16"><div class="val" id="initFiVal">16</div></div>
+          <div class="control"><label>fan_out <span class="kbd">fo</span>（本层宽度）</label><input type="range" id="initFo" min="2" max="64" step="1" value="16"><div class="val" id="initFoVal">16</div></div>
+          <div class="control"><label>激活函数</label>
+            <select id="initActSel"><option value="sym">tanh / 线性（不砍半）</option><option value="relu" selected>ReLU（能量砍半）</option></select>
+          </div>
+        </div>
+        <div class="caption" id="initVizCap"></div>
+      </div>
+
+      <div class="grid2">
+        <div class="def">
+          <div class="term">fan_in / fan_out <span class="en">fan-in / fan-out · first mentioned: §8</span></div>
+          <p class="plain"><b>是什么</b>：<code>fan_in</code> 是一个输出单元接收的输入数（上一层宽度 $d_{l-1}$）；<code>fan_out</code> 是该层输出单元数（$d_l$）。</p>
+          <p class="plain"><b>白话</b>：<b>进来几个数 → fan_in，送出去给几个人用 → fan_out</b>。随机权重到底多大，取决于这两个数。</p>
+          <p class="plain"><b>干嘛用</b>：决定初始化方差的分母；前向信息流关心 fan_in，反向信息流关心 fan_out。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：<b>variance 是设计目标，normal / uniform 只是实现它的采样方式</b>。公式只是合理起点——训练后应查看各层激活与梯度的<b>实际分布</b>，而不是无条件相信默认值。</p>
+          <div class="svg-wrap" style="margin-top:8px"><svg viewBox="0 0 320 132" role="img" aria-label="fan_in 与 fan_out 的接线示意">
+            <line x1="52" y1="22" x2="128" y2="60" stroke="#176653" stroke-width="1.6"/>
+            <line x1="52" y1="60" x2="128" y2="60" stroke="#176653" stroke-width="1.6"/>
+            <line x1="52" y1="98" x2="128" y2="60" stroke="#176653" stroke-width="1.6"/>
+            <line x1="152" y1="60" x2="262" y2="14" stroke="#b45a2b" stroke-width="1.6"/>
+            <line x1="152" y1="60" x2="262" y2="38" stroke="#b45a2b" stroke-width="1.6"/>
+            <line x1="152" y1="60" x2="262" y2="62" stroke="#b45a2b" stroke-width="1.6"/>
+            <line x1="152" y1="60" x2="262" y2="86" stroke="#b45a2b" stroke-width="1.6"/>
+            <line x1="152" y1="60" x2="262" y2="110" stroke="#b45a2b" stroke-width="1.6"/>
+            <circle cx="44" cy="22" r="6" fill="#176653"/><circle cx="44" cy="60" r="6" fill="#176653"/><circle cx="44" cy="98" r="6" fill="#176653"/>
+            <circle cx="140" cy="60" r="11" fill="none" stroke="#20231f" stroke-width="2"/>
+            <circle cx="270" cy="14" r="6" fill="#b45a2b"/><circle cx="270" cy="38" r="6" fill="#b45a2b"/><circle cx="270" cy="62" r="6" fill="#b45a2b"/><circle cx="270" cy="86" r="6" fill="#b45a2b"/><circle cx="270" cy="110" r="6" fill="#b45a2b"/>
+            <text x="40" y="128" text-anchor="middle" font-size="11" fill="#176653">fan_in = 3</text>
+            <text x="268" y="128" text-anchor="middle" font-size="11" fill="#b45a2b">fan_out = 5</text>
+          </svg></div>
+        </div>
+        <div class="def conn" style="margin-top:0">
+          <div class="term">怎么落地成随机数 <span class="en">variance → std → distribution</span></div>
+          <p class="plain small">用正态 $N(0,\sigma^2)$ 或在 $[-a,a]$ 均匀采样都可以，只要<b>方差对上</b>：</p>
+          <table class="data">
+            <thead><tr><th>规则</th><th>方差 Var(W)</th><th>标准差 σ</th><th>均匀区间 ±a = √3·σ</th></tr></thead>
+            <tbody>
+              <tr><td>Glorot（Xavier）</td><td class="num">2/(fi+fo)</td><td class="num">√(2/(fi+fo))</td><td class="num">±√(6/(fi+fo))</td></tr>
+              <tr><td>He（Kaiming）</td><td class="num">2/fi</td><td class="num">√(2/fi)</td><td class="num">±√(6/fi)</td></tr>
+            </tbody>
+          </table>
+          <p class="plain small">死记不住公式就代例子：<b>fi=3、fo=5</b> 时——Glorot：Var = 2/(3+5) = 0.25、σ = 0.5、均匀 ±0.866；He：Var = 2/3 ≈ 0.667、σ ≈ 0.816、均匀 ±1.414。<b>He 配 ReLU 的权重天生“更大声”</b>，这是补偿性质，不是 bug。</p>
+          <p class="plain small">工程提示：PyTorch 的 <code>xavier_*</code> / <code>kaiming_*</code>、TensorFlow 的 <code>Glorot*</code> / <code>He*</code> 系列，就是这套方差规则的现成实现；阅读或自定义初始化时只要盯着“方差”这个目标就行。</p>
+        </div>
+      </div>
+      <div class="misconception" style="margin-top:18px">
+        <div>
+          <div class="truth">两个最常见的误解</div>
+          <p class="plain small">① “初始化随便给个小随机数就行”——错：<code>fan_in</code> / <code>fan_out</code> 决定分母、连着更深的尺度问题，随便给会给 §5 的消失 / 爆炸埋雷。</p>
+          <p class="plain small">② “Glorot 和 He 只是写法不同”——错：它们适用的激活（tanh vs ReLU）、平衡的信息流（两边 vs 前向优先）、分母（fi+fo vs fi）都不同；He 的分子 2 是在给 ReLU 砍掉的一半能量回血。</p>
+        </div>
       </div>
     </section>
 
@@ -491,7 +569,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       </div>
       <div class="viz">
         <h3 style="margin-top:0">一维小实验：$J(w)=w^2$</h3>
-        <p class="plain small">梯度 $J'(w)=2w$，更新 $w_{t+1}=w_t-\eta\cdot2w_t=(1-2\eta)w_t$。系数 $(1-2\eta)$ 决定误差缩小还是放大：$0<\eta<1$ 才收敛，$\eta<0.5$ 单调靠近 0，$0.5<\eta<1$ 左右交替但缩小，$\eta>1$ 发散。</p>
+        <p class="plain small">梯度 $J'(w)=2w$，更新 $w_{t+1}=w_t-\eta\cdot2w_t=(1-2\eta)w_t$。系数 $(1-2\eta)$ 决定误差缩小还是放大：$0<\eta<1$ 收敛（$\eta<0.5$ 单调靠近 0，$0.5<\eta<1$ 左右交替但逐次缩小）；$\eta=1$ 时 $w$ 只在 $\pm w_0$ 间原地打转、不收敛；$\eta>1$ 才真正发散。</p>
         <div class="svg-wrap"><svg id="lrPlot" viewBox="0 0 640 320" role="img" aria-label="学习率对收敛的影响"></svg></div>
         <div class="label-row">
           <div class="control"><label>学习率 $\eta$</label><input type="range" id="lrEta" min="0.05" max="1.4" step="0.05" value="0.1"><div class="val" id="lrEtaVal">0.10</div></div>
@@ -857,7 +935,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
   route([[770,103],[860,103]],'#b45a2b','轨迹',814,86);
   route([[1060,103],[1130,103]],'#8a938b','泛化',1094,86);
   route([[1170,146],[1170,280],[1220,280],[1230,280]],'#6c4fa1','正则化',1246,190,'end');
-  route([[1230,311],[1230,460],[1320,460],[1320,520]],'#8a938b','偏置归纳',1282,420,'end');
+  route([[1230,311],[1230,460],[1320,460],[1320,520]],'#8a938b','偏置归纳',1232,490,'start');
   // inner connections
   route([[390,146],[390,196],[390,225]],'#176653','',390,190);
   route([[770,146],[770,225]],'#b45a2b','',770,190);
@@ -1206,6 +1284,72 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
   upd();
 })();
 
+
+/* ---------- Glorot / He scale lab (§8) ---------- */
+(()=>{
+  const svg=$('#initViz'),M={l:60,r:24,t:26,b:56},W=760,H=340,LMAX=10,YMAX=2.4;
+  const sX=i=>M.l+(i/LMAX)*(W-M.l-M.r);
+  const sY=v=>M.t+(1-clamp(v/YMAX,0,1))*(H-M.t-M.b);
+  const vOf={glorot:(fi,fo)=>2/(fi+fo),he:fi=>2/fi,fwd:fi=>1/fi,bwd:(fi,fo)=>1/fo};
+  function draw(){
+    const rule=$('#initRuleSel').value,fi=Number($('#initFi').value),fo=Number($('#initFo').value),act=$('#initActSel').value;
+    const ac=act==='relu'?0.5:1;
+    const VarW=vOf[rule](fi,fo),std=Math.sqrt(VarW),ua=Math.sqrt(3)*std;
+    const fwd=ac*fi*VarW,bwd=ac*fo*VarW;
+    const fEnd=Math.pow(fwd,LMAX),bEnd=Math.pow(bwd,LMAX);
+    svg.innerHTML='';
+    // 安全区带：每层缩放落在 0.85–1.15 之间算“可接受”，越出带外越深越麻烦
+    const bandTop=sY(1.15),bandBot=sY(0.85);
+    svgAdd(svg,'rect',{x:M.l,y:bandBot,width:W-M.l-M.r,height:Math.max(0,bandTop-bandBot),fill:'color-mix(in srgb, var(--fwd) 7%, transparent)',stroke:'none'});
+    svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
+    [0,0.5,1,1.5,2].forEach(v=>svgAdd(svg,'text',{x:M.l-9,y:sY(v)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},String(v)));
+    svgAdd(svg,'text',{x:(M.l+W-M.r)/2,y:H-M.b+16,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'深度 d（已穿过 d 层）→');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(1),x2:W-M.r,y2:sY(1),stroke:'var(--muted)',strokeWidth:1.4,'stroke-dasharray':'7 4'});
+    svgHalo(svg,M.l+8,sY(1)-12,'理想 = 1（每层不增不减）',{fill:'var(--muted)',font:10.5,anchor:'start'});
+    const labelY=val=>{const ey=sY(Math.pow(val,LMAX));return Math.max(M.t+8, ey+(val<1?-12:16));};
+    // 两条曲线的终点说明固定摆放：默认各自的上下位置，撞在一起就朝“有空的一侧”错开
+    let lyF=labelY(fwd),lyB=labelY(bwd);
+    const need=17-Math.abs(lyF-lyB);
+    if(need>0){
+      const hiIsF=lyF<=lyB;
+      const hiY=Math.min(lyF,lyB),loY=Math.max(lyF,lyB),upRoom=hiY-(M.t+8),loRoom=(H-M.b-56)-loY,delta=need+6;
+      if(upRoom>=delta){ if(hiIsF)lyF=hiY-delta; else lyB=hiY-delta; }
+      else if(loRoom>=delta){ if(hiIsF)lyB=loY+delta; else lyF=loY+delta; }
+      else{ const up=Math.max(0,Math.floor(upRoom)); if(hiIsF){lyF=hiY-up;lyB=loY+(delta-up);}else{lyB=hiY-up;lyF=loY+(delta-up);} }
+    }
+    function curve(col,val,label,ly){
+      let prev=null;
+      for(let i=0;i<=LMAX;i++){
+        const c=Math.pow(val,i),x=sX(i),y=sY(c);
+        if(prev)svgAdd(svg,'line',{x1:prev.x,y1:prev.y,x2:x,y2:y,stroke:col,strokeWidth:2.2});
+        svgAdd(svg,'circle',{cx:x,cy:y,r:i===LMAX?4:2.4,fill:col});
+        prev={x,y};
+      }
+      svgHalo(svg,sX(LMAX),ly,label,{fill:col,font:11,'text-anchor':'end'});
+    }
+    curve('#176653',fwd,'前向：每层 ×'+fmt(fwd,3)+' → '+LMAX+' 层后 ≈'+fmt(fEnd,3),lyF);
+    curve('#b45a2b',bwd,'反向：每层 ×'+fmt(bwd,3)+' → '+LMAX+' 层后 ≈'+fmt(bEnd,3),lyB);
+    const name={glorot:'Glorot',he:'He',fwd:'只满足前向 1/fi',bwd:'只满足反向 1/fo'}[rule];
+    const actName=act==='relu'?'ReLU（能量砍半）':'tanh / 线性（不砍半）';
+    const tag=x=>Math.abs(x-1)<=0.05?'稳定 ≈1 ✓':(x>1?'每层放大 ×'+fmt(x,3):'每层缩小 ×'+fmt(x,3));
+    const hint=x=>{if(x>1.05)return '越深放大越狠 → 很快爆掉';if(x<0.95)return '越深越没信号 → 很快消失';if(x>1)return '每层略放大，深层轻微变热 ✓';if(x<1)return '每层略缩小，深层轻微变弱 ✓';return '随深度保持不变';};
+    const note=[];
+    if(act==='relu'&&rule==='glorot')note.push('Glorot 配 ReLU：前向缺了 ½ 补偿，随深度衰减——这正是 ReLU 要用 He 的原因。');
+    if(rule==='he'&&act!=='relu')note.push('He 配非 ReLU：前向每层放大 2 倍——说明 He 是给 ReLU 用的（为它砍掉的一半能量回血）。');
+    if(rule==='fwd'&&act==='relu')note.push('“只满足前向”配 ReLU：分母用了 1/fi 却仍缺 He 的分子 2，前向照样衰减。');
+    if(rule==='bwd'&&act==='relu')note.push('“只满足反向”配 ReLU：反向用 1/fo 对了，但前向完全没被照顾。');
+    $('#initVizCap').textContent='规则 '+name+' · fi='+fi+' · fo='+fo+' · 激活：'+actName+'。权重尺度 Var(W)='+fmt(VarW,3)+'（σ='+fmt(std,3)+'，均匀采样 ±'+fmt(ua,3)+'）。'+
+      '前向：'+tag(fwd)+'（'+hint(fwd)+'）；反向：'+tag(bwd)+'（'+hint(bwd)+'）。'+LMAX+' 层后：前向 ≈'+fmt(fEnd,3)+'，反向 ≈'+fmt(bEnd,3)+'。'+(note.length?note.join(' '):'');
+    $('#initFiVal').textContent=fi;$('#initFoVal').textContent=fo;
+  }
+  $('#initRuleSel').addEventListener('change',draw);
+  $('#initFi').addEventListener('input',draw);
+  $('#initFo').addEventListener('input',draw);
+  $('#initActSel').addEventListener('change',draw);
+  draw();
+})();
+
 /* ---------- learning path / focus mode ---------- */
 (()=>{
   window.FLOW_META={
@@ -1313,8 +1457,8 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     {t:'梯度爆炸',en:'exploding gradients',f:'\\delta^{(l)}\\to\\infty',d:'反向信号因连乘大因子导致梯度尺度指数级放大，更新量失控。',r:'位置：§5。用处：解释 loss 变 NaN 等现象。重要：可通过初始化与梯度裁剪处理。'},
     {t:'方差传播',en:'variance propagation',f:'\\operatorname{Var}(W)\\approx\\tfrac{1}{d}',d:'分析随机权重尺度如何随层数传递的框架：一层的输出方差约等于 d·Var(W)·输入方差。',r:'位置：§7。用处：导出 Glorot / He 的分母。重要：把“信号尺度怎么守”变成可计算的方程。'},
     {t:'fan_in / fan_out',en:'fan-in / fan-out',d:'fan_in 是一个输出单元接收的输入数（上一层宽度 d_{l-1}）；fan_out 是这层输出单元数（d_l）。',r:'位置：§8。用处：决定初始化方差的分母，调节前向/反向信息流尺度。重要：variance 是设计目标，normal/uniform 只是实现它的采样。'},
-    {t:'Glorot 初始化',en:'Glorot initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}+\\mathrm{fan\\_out}}',d:'常用于 tanh 等对称激活的尺度初始化，在前向（1/fan_in）与反向（1/fan_out）两条信息流之间折中。',r:'位置：§8。用处：让前向激活与反向梯度都不随层数放大或缩小。重要：它不是凭空来的分母。'},
-    {t:'He 初始化',en:'He initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}}',d:'常用于 ReLU 的尺度初始化；分子 2 补偿 ReLU 丢掉的约一半二阶矩。',r:'位置：§8。用处：配套 ReLU 使用。重要：2 的来历是 §7 的方差分析，不是拍脑袋。'},
+    {t:'Glorot 初始化',en:'Glorot (Xavier) initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}+\\mathrm{fan\\_out}}',d:'常用于 tanh、线性等对称激活：前向希望 1/fan_in、反向希望 1/fan_out，取折中 2/(fan_in+fan_out)，让两条信息流都不随层数爆掉或消失。',r:'位置：§8。用处：tanh/线性 网络的默认选项。重要：公式是设计目标，正态或均匀只是采样方式；fi=fo 时退化为 1/fan，两边恰好=1。'},
+    {t:'He 初始化',en:'He (Kaiming) initialization',f:'\\operatorname{Var}(W)\\approx\\tfrac{2}{\\mathrm{fan\\_in}}',d:'专配 ReLU：分母用 fan_in、分子 2 用来补偿 ReLU 砍掉的约一半二阶矩，优先保证前向信号尺度稳定。',r:'位置：§8。用处：ReLU 系网络的默认初始化。重要：2 不是拍脑袋——来自 §7 方差分析；反向尺度会略热但通常可接受。'},
     {t:'学习率',en:'learning rate',f:'\\eta',d:'梯度更新时乘在梯度前面的步长标量；决定每一步沿负梯度方向走多远。',r:'位置：§10。用处：控制训练稳定性与速度。重要：太大震荡/发散，太小磨蹭；是最常调的超参数。'},
     {t:'学习率 schedule',en:'learning rate schedule',d:'随训练过程逐步调低学习率的策略，例如从一开始大步探索、后面小步精修。',r:'位置：§11。用处：平衡探索与收敛。重要：可监控“权重更新量/权重大小”判断是否合适。'},
     {t:'动量',en:'momentum',f:'u\\leftarrow\\alpha u+\\eta g',d:'优化技巧：更新叠加历史梯度方向（速度 u），得到近期方向的指数加权平均，而不是只看当前一步。',r:'位置：§12。用处：加速沿一致方向、抑制来回震荡。重要：动量仍是拿反向传播算出的梯度来更新。'},
