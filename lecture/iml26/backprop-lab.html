@@ -742,64 +742,58 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- concept map ---------- */
 (()=>{
-  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1220 560');
+  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1460 640');
   const defs=svgAdd(svg,'defs');
   const mkFwd=svgMarker(defs,'cmFwd','#176653'),mkBwd=svgMarker(defs,'cmBwd','#b45a2b'),mkOpt=svgMarker(defs,'cmOpt','#285a9e'),mkTool=svgMarker(defs,'cmTool','#6c4fa1'),mkGray=svgMarker(defs,'cmGray','#8a938b');
   const N=[
-    {id:'n11',x:30,y:235,w:170,h:90,t:'第 11 讲',s:'神经网络模型 · 前向传播',target:null,col:'#8a938b'},
-    {id:'fwd',x:260,y:60,w:180,h:72,t:'前向传播',s:'x → z → v → f → ℓ',target:'#minimal',col:'#176653'},
-    {id:'loss',x:500,y:60,w:180,h:72,t:'损失 ℓ（标量）',s:'衡量预测误差',target:'#sgd',col:'#176653'},
-    {id:'bp',x:740,y:60,w:200,h:76,t:'反向传播',s:'从 ℓ 往回追每个权重',target:'#lab',col:'#b45a2b'},
-    {id:'sgd',x:970,y:60,w:180,h:72,t:'SGD 优化器',s:'W ← W − η∇ℓ',target:'#notlearner',col:'#285a9e'},
-    {id:'n13',x:1150,y:225,w:70,h:130,t:'第 13 讲',s:'初始化 · 学习率 · 正则化',target:null,col:'#8a938b'},
-    {id:'chain',x:740,y:190,w:200,h:60,t:'链式法则',s:'dc/dx = ∏ 局部导数',target:'#chain',col:'#b45a2b'},
-    {id:'jac',x:500,y:190,w:180,h:60,t:'Jacobian / VJP',s:'向量版链式法则',target:'#jacobian',col:'#6c4fa1'},
-    {id:'delta',x:740,y:320,w:200,h:60,t:'误差信号 δ',s:'∂ℓ/∂z：本讲枢纽',target:'#delta',col:'#b45a2b'},
-    {id:'act',x:970,y:190,w:180,h:60,t:'激活导数 φ′',s:'梯度闸门',target:'#activation',col:'#b45a2b'},
-    {id:'ce',x:970,y:320,w:180,h:60,t:'softmax + 交叉熵',s:'δ⁽ᴸ⁾ = p − y',target:'#crossentropy',col:'#6c4fa1'},
-    {id:'autod',x:260,y:320,w:180,h:60,t:'自动微分 / tape',s:'自动执行链式法则',target:'#autodiff',col:'#6c4fa1'},
-    {id:'gcheck',x:500,y:320,w:180,h:60,t:'梯度检查',s:'数值差分复核',target:'#gradcheck',col:'#6c4fa1'}
+    {id:'n11',x:30,y:250,w:180,h:120,t:'第 11 讲',s1:'神经网络模型',s2:'前向传播',target:null,col:'#8a938b'},
+    {id:'fwd',x:290,y:60,w:190,h:78,t:'前向传播',s:'x → z → v → f → ℓ',target:'#minimal',col:'#176653'},
+    {id:'loss',x:550,y:60,w:190,h:78,t:'损失 ℓ（标量）',s:'衡量预测误差',target:'#sgd',col:'#176653'},
+    {id:'bp',x:820,y:60,w:210,h:78,t:'反向传播',s:'从 ℓ 往回追每个权重',target:'#lab',col:'#b45a2b'},
+    {id:'sgd',x:1070,y:60,w:190,h:78,t:'SGD 优化器',s:'W ← W − η∇ℓ',target:'#notlearner',col:'#285a9e'},
+    {id:'n13',x:1300,y:250,w:120,h:140,t:'第 13 讲',s1:'初始化 · 学习率',s2:'正则化',target:null,col:'#8a938b'},
+    {id:'chain',x:820,y:225,w:210,h:66,t:'链式法则',s:'dc/dx = ∏ 局部导数',target:'#chain',col:'#b45a2b'},
+    {id:'jac',x:550,y:225,w:190,h:66,t:'Jacobian / VJP',s:'向量版链式法则',target:'#jacobian',col:'#6c4fa1'},
+    {id:'delta',x:820,y:380,w:210,h:66,t:'误差信号 δ',s:'∂ℓ/∂z：本讲枢纽',target:'#delta',col:'#b45a2b'},
+    {id:'act',x:1070,y:225,w:190,h:66,t:'激活导数 φ′',s:'梯度闸门',target:'#activation',col:'#b45a2b'},
+    {id:'ce',x:1070,y:380,w:190,h:66,t:'softmax + 交叉熵',s:'δ⁽ᴸ⁾ = p − y',target:'#crossentropy',col:'#6c4fa1'},
+    {id:'autod',x:290,y:380,w:190,h:66,t:'自动微分 / tape',s:'自动执行链式法则',target:'#autodiff',col:'#6c4fa1'},
+    {id:'gcheck',x:550,y:380,w:190,h:66,t:'梯度检查',s:'数值差分复核',target:'#gradcheck',col:'#6c4fa1'}
   ];
   const P=Object.fromEntries(N.map(n=>[n.id,n]));
-  const side=(id,dir)=>{const n=P[id];if(dir==='l')return[n.x,n.y+n.h/2];if(dir==='r')return[n.x+n.w,n.y+n.h/2];if(dir==='t')return[n.x+n.w/2,n.y];return[n.x+n.w/2,n.y+n.h];};
   function route(pts,color,label,lx,ly,anchor='middle'){
     let d=`M${pts[0][0]},${pts[0][1]}`;
-    for(let i=1;i<pts.length-1;i++){d+=` L${pts[i][0]},${pts[i][1]}`;}
-    d+=` L${pts[pts.length-1][0]},${pts[pts.length-1][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
     const marker=color==='#176653'?mkFwd:color==='#b45a2b'?mkBwd:color==='#285a9e'?mkOpt:color==='#6c4fa1'?mkTool:mkGray;
     svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:1.9,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
     if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
   }
-  function conn(a,ad,b,bd,col,label,lx,ly,anchor='middle'){
-    const [x1,y1]=side(a,ad),[x2,y2]=side(b,bd);
-    const pts=[[x1,y1],[(x1+x2)/2,y1],[(x1+x2)/2,y2],[x2,y2]];
-    route(pts,col,label,lx,ly,anchor);
-  }
   // forward / optimization spine
-  conn('n11','r','fwd','l','#8a938b','前向',232,150);
-  route([side('fwd','r'),side('loss','l')],'#176653','',440,90);
-  conn('loss','r','bp','l','#b45a2b','标量 ℓ',710,78);
-  conn('bp','r','sgd','l','#285a9e','∇ℓ',955,78);
-  route([[1150,132],[1185,180],[1185,225]],'#285a9e','更新 W',1178,172,'end');
+  route([[210,310],[250,310],[250,99],[290,99]],'#8a938b','前向',260,210,'start');
+  route([[480,99],[550,99]],'#176653','',515,84);
+  route([[740,99],[820,99]],'#b45a2b','标量 ℓ',780,80);
+  route([[1030,99],[1070,99]],'#285a9e','∇ℓ',1050,80);
+  route([[1260,138],[1280,138],[1280,280],[1300,280]],'#285a9e','更新 W',1292,220,'end');
   // backward theory spine
-  conn('bp','b','chain','t','#b45a2b','反复使用',856,162);
-  conn('chain','l','jac','r','#6c4fa1','向量版',710,206);
-  route([side('jac','r'),[700,290],side('delta','l')],'#6c4fa1','只传向量 δ',700,280);
-  route([[940,350],[940,136]],'#b45a2b','逐层向前',958,266,'start');
-  conn('delta','r','act','l','#b45a2b','乘 φ′',885,300);
+  route([[925,138],[925,225]],'#b45a2b','反复使用',940,180,'start');
+  route([[820,258],[740,258]],'#6c4fa1','向量版',780,244);
+  route([[740,258],[775,258],[775,413],[820,413]],'#6c4fa1','只传向量 δ',755,340,'start');
+  route([[1030,413],[1038,413],[1038,99],[1030,99]],'#b45a2b','逐层向前',1046,190,'start');
+  route([[1030,413],[1062,413],[1062,258],[1070,258]],'#b45a2b','乘 φ′',1078,335,'end');
   // tools
-  conn('fwd','b','autod','t','#6c4fa1','记录 tape',366,218);
-  route([[440,350],[440,462],[700,462],[700,120],[740,120]],'#6c4fa1','反向读带',540,486);
-  route([[510,132],[480,132],[480,320],[500,320]],'#6c4fa1','数值复核',498,286);
-  conn('gcheck','r','delta','l','#6c4fa1','验证',710,342);
-  route([[680,132],[710,132],[710,430],[1060,430],[1060,380]],'#6c4fa1','分类损失',880,454);
-  conn('ce','l','delta','r','#6c4fa1','δ⁽ᴸ⁾ = p−y',975,310);
+  route([[385,138],[385,380]],'#6c4fa1','记录 tape',400,260,'start');
+  route([[480,413],[480,540],[760,540],[760,99],[820,99]],'#6c4fa1','反向读带',620,572);
+  route([[560,138],[515,138],[515,380],[550,380]],'#6c4fa1','数值复核',535,270,'end');
+  route([[740,413],[820,413]],'#6c4fa1','验证',780,398);
+  route([[740,138],[770,138],[770,540],[1185,540],[1185,446]],'#6c4fa1','分类损失',1000,572);
+  route([[1070,413],[1030,413]],'#6c4fa1','δ⁽ᴸ⁾ = p−y',1050,468);
   // nodes
   for(const n of N){
     const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node',style:'cursor:pointer',tabindex:'0'});
     svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
     svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':14.5,'font-weight':700,fill:'var(--ink)'},n.t);
-    svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    else if(n.s1){svgAdd(g,'text',{x:n.w/2,y:n.h/2+14,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s1);svgAdd(g,'text',{x:n.w/2,y:n.h/2+31,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s2);}
     if(n.target){
       g.addEventListener('click',()=>location.hash=n.target);
       g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();location.hash=n.target;}});
