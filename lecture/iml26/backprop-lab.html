@@ -251,6 +251,12 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <section id="minimal">
       <h2 class="sec-title"><span class="num">§3</span>最小网络：一个输入、一个隐藏单元、一个输出</h2>
       <p class="sec-lead">先玩原讲义的“最小网络” $x\to z=w'x \to v=\mathrm{ReLU}(z)\to f=w\,v\to \ell=(f-y)^2$。拖动滑杆，再按下“逐步反向传播”，看梯度消息如何一步一步从损失传回两个权重。</p>
+
+      <div class="def conn">
+        <div class="term">记号预告：本节是“单神经元标量版”，后面会换成“整层矩阵版”</div>
+        <p class="plain">这里写 $z=w'x$、$f=w\,v$，是因为本节只有 1 个输入、1 个隐藏单元、1 个输出，每个权重都只是一个数。到 §6–§7 讲整层网络时，同一个公式会写成 $z^{(l)}=W^{(l)}v^{(l-1)}$。</p>
+        <p class="plain">两者的对应关系是：$W^{(1)}=[w']$、$v^{(0)}=[x]$、$z^{(1)}=[z]$，以及 $W^{(2)}=[w]$、$v^{(1)}=[v]$、$f=[f]$。所以 $z=w'x$ 不是另一个公式，而是矩阵公式在“$1\times1$ 矩阵”时展开出来的特例。</p>
+      </div>
       <div class="viz">
         <div class="svg-wrap"><svg id="minimalSvg" viewBox="0 0 900 420" role="img" aria-label="最小神经网络的前向与反向计算图"></svg></div>
         <div class="label-row">
