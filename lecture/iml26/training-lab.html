@@ -192,7 +192,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <section id="hero" class="hero">
       <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 13 讲 / 25 讲</div>
       <h1>训练神经网络：<br>拿到梯度之后，<br><span style="color:var(--warm)">为什么仍然会失败</span></h1>
-      <p class="subtitle">第 11 讲给了模型，第 12 讲给了反向传播，能算出梯度 $\nabla_W J$ 了。第 13 讲不再问“梯度怎么算”，而是问一个更难的问题：<b>梯度明明能算，为什么训练还是不稳定、还是不过拟合</b>。这一页是原讲义的<b>附属互动版</b>：每个第一次出现的概念都给出定义、白话、图示与动手实验；所有实验都只需要拖动滑杆。它与第 12 讲的「反向传播实验室」是两个<b>独立</b>的附属页。</p>
+      <p class="subtitle">第 11 讲给了模型，第 12 讲给了反向传播，能算出梯度 $\nabla_W J$ 了。第 13 讲不再问“梯度怎么算”，而是问一个更难的问题：<b>梯度明明能算，为什么训练还是不稳定、还是会过拟合</b>。这一页是原讲义的<b>附属互动版</b>：每个第一次出现的概念都给出定义、白话、图示与动手实验；所有实验都只需要拖动滑杆。它与第 12 讲的「反向传播实验室」是两个<b>独立</b>的附属页。</p>
       <div class="question">💬 本讲核心问题：反向传播已经能算梯度了，为什么训练神经网络仍然会失败（训练不稳定，或泛化不好）？</div>
       <div class="answer">一句话答案：训练不只是“调梯度下降”。<b>从哪个起点出发、每一步迈多大、往哪个方向带惯性、以及别去硬套训练噪声</b>——四组开关一起，才决定训练是否稳定、是否泛化。什么时候该动哪一个，正是本讲要教给你的诊断语言。</div>
       <div class="overview-grid">
@@ -246,7 +246,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <div class="grid2">
         <div class="card">
           <h3>雾里下山 <span class="en">intuition</span></h3>
-          <p class="plain">把损失 $J(W)$ 想成一座山的地形，参数 $W$ 是你在山上的<b>位置</b>，梯度 $\nabla_W J$
+          <p class="plain">把损失 $J(W)$ 想成一座山的地形，参数 $W$ 是你在山上的<b>位置</b>，梯度 $\nabla_W J$ 就是脚下的坡度：它指向当前最陡的下降方向，于是你每一步都朝当前最陡下降方向迈一小步。</p>
 
           <p class="plain small">但原讲义马上泼冷水：现实中你会遇到下面六种麻烦，每一种都对应本讲后面要解决的一个问题。</p>
         </div>
@@ -325,7 +325,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
           <div class="control"><label>fan_in <span class="kbd">d</span></label><input type="range" id="initRandD" min="2" max="128" step="1" value="8"><div class="val" id="initRandDval">8</div></div>
           <div class="control"><button class="btn warm" id="initRandRun" type="button">🎲 随机抽样一批初始化权重</button></div>
         </div>
-        <div class="caption" id="initRandCap">每次点按钮都用 <code>Math.random()</code> 独立抽样一批零均值随机权重。蓝点是“经验输出二阶矩”（把样本过一层线性层后实测），红虚线是理论目标 $d\cdot\operatorname{Var}(W)$。差的绝对值越小，这套初始化在保尺度上越可靠。</div>
+        <div class="caption" id="initRandCap">每次点按钮都用 <code>Math.random()</code> 独立抽样一批零均值随机权重，把 600 个随机输入过这一层得到输出 $z$ 的直方图。红虚线是理论根均方 $\sqrt{d\cdot\operatorname{Var}(W)}=1$（好的初始化该有的尺度），蓝虚线是这次抽样实测的 $\sqrt{\mathbb{E}[z^2]}$——多按几次会看到它在 1 附近晃动。</div>
       </div>
       <div class="def">
         <div class="term">初始化 <span class="en">initialization · first mentioned: §4</span></div>
@@ -414,7 +414,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <p class="plain small"><b>白话</b>：输入连接 $d$ 越多，每条随机权重越小，否则 $d$ 个随机贡献相加会把输出尺度放大。这个“$1/d$”正是后面 Glorot/He 里 <code>fan_in</code> 缩放的来源。</p>
       </div>
       <div class="card compact">
-        <p class="plain small"><b>ReLU 会砍掉一半</b>：ReLU 把负值变 0，若 $z$ 近似零均值对称，它约保留一半二阶矩：$\Delta$ 令 $\mathbb{E}[\operatorname{ReLU}(z)^2]\approx\tfrac12\mathbb{E}[z^2]$。于是前向尺度方程从 $d\,\operatorname{Var}(W)\approx1$ 变成
+        <p class="plain small"><b>ReLU 会砍掉一半</b>：ReLU 把负值变 0，若 $z$ 近似零均值对称，它约保留一半二阶矩：$\mathbb{E}[\operatorname{ReLU}(z)^2]\approx\tfrac12\mathbb{E}[z^2]$。于是前向尺度方程从 $d\,\operatorname{Var}(W)\approx1$ 变成
         $$\tfrac12\,d\,\operatorname{Var}(W)\approx1\ \Rightarrow\ \operatorname{Var}(W)\approx\frac{2}{d}.$$
         “2”不是拍脑袋，是在补偿 ReLU 丢掉的那一半二阶矩。</p>
       </div>
@@ -422,7 +422,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <h3 style="margin-top:0">互动：初始化尺度如何决定“前方信号能量”逐层滚大或滚小</h3>
         <div class="svg-wrap"><svg id="varPlot" viewBox="0 0 720 300" role="img" aria-label="方差随层数传播"></svg></div>
         <div class="label-row">
-          <div class="control"><label>每层权重方差 $q_W$</label><input type="range" id="varQ" min="0.02" max="2.0" step="0.02" value="0.5"><div class="val" id="varQval">0.50</div></div>
+          <div class="control"><label>每层权重方差 $q_W$</label><input type="range" id="varQ" min="0.02" max="2.0" step="0.02" value="0.25"><div class="val" id="varQval">0.25</div></div>
           <div class="control"><label>fan_in $d$</label><input type="range" id="varD" min="2" max="64" step="1" value="8"><div class="val" id="varDval">8</div></div>
         </div>
         <div class="caption" id="varCap">拖动滑杆：二阶矩逐层乘 $d\cdot q_W$（线性）或 $\tfrac12 d\cdot q_W$（ReLU 后）。绿色=稳定（输出≈输入），红色=发散/消失。</div>
@@ -542,10 +542,10 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <h3 style="margin-top:0">互动：SGD 与 momentum 在狭长谷底中的轨迹</h3>
         <div class="svg-wrap"><svg id="momPlot" viewBox="0 0 640 320" role="img" aria-label="SGD 与动量轨迹"></svg></div>
         <div class="label-row">
-          <div class="control"><label>动量系数 $\alpha$（0–0.95）</label><input type="range" id="momA" min="0" max="0.95" step="0.05" value="0.9"><div class="val" id="momAVal">0.90</div></div>
+          <div class="control"><label>动量系数 $\alpha$（0–0.95）</label><input type="range" id="momA" min="0" max="0.95" step="0.05" value="0.85"><div class="val" id="momAVal">0.85</div></div>
           <div class="control"><button class="btn warm" id="momRun" type="button">▶ 播放</button><button class="btn ghost" id="momReset" type="button">重置</button></div>
         </div>
-        <div class="caption" id="momCap">橙线=普通 SGD（左右震荡），蓝线=带动量的 SGD（沿谷底平滑前进）。</div>
+        <div class="caption">橙线 = 普通 SGD（η=0.20）：在陡峭谷壁上弹跳、缓坡方向推进很慢；绿线 = 带动量的 SGD（η=0.006，α 由滑杆控制）：来回震荡被平均掉，沿谷底平滑抵达原点。</div>
       </div>
       <div class="def">
         <div class="term">动量 <span class="en">momentum · first mentioned: §12</span></div>
@@ -739,7 +739,6 @@ for epoch = 1, 2, ...:
         </div>
       </div>
     </section>
-    </section>
   </main>
   <aside class="gloss-rail" id="glossRail" aria-label="术语表侧边栏">
     <div class="toc-label">Glossary · 随文术语</div>
@@ -887,32 +886,37 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 /* ---------- gradient vanishing/exploding plot ---------- */
 (()=>{
   const svg=$('#gradPlot'), M={l:64,r:20,t:22,b:54},W=640,H=300;
+  const VMAX=1.6; // y-axis shows gradient scale 0..VMAX, so clamped values (≤1.5) stay on-screen
   const sX=w=>M.l+(w/20)*(W-M.l-M.r);
-  const sY=v=>M.t+(1-v)*(H-M.t-M.b);
-  const x0=0,x1=20;
+  const sY=v=>M.t+(1-v/VMAX)*(H-M.t-M.b);
   function draw(r,L){
     svg.innerHTML='';
     const defs=svgAdd(svg,'defs');
     const mk=svgMarker(defs,'gpArr','#285a9e');
     svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
     svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
-    svgAdd(svg,'text',{x:M.l-9,y:sY(0)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'1');
-    svgAdd(svg,'text',{x:Math.min(x0,x1),y:M.l-9,'x':M.l,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'层 0（输出）');
+    // y-axis ticks: 0 (baseline) and 1 (no-scaling level)
+    svgAdd(svg,'text',{x:M.l-9,y:sY(0)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'0');
+    svgAdd(svg,'text',{x:M.l-9,y:sY(1)+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'1');
+    svgAdd(svg,'line',{x1:M.l,y1:sY(1),x2:M.l+4,y2:sY(1),stroke:'var(--line)',strokeWidth:1});
+    // layer labels under the axis
+    svgAdd(svg,'text',{x:sX(0),y:sY(0)+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'层 0（输出）');
+    svgAdd(svg,'text',{x:sX(L),y:sY(0)+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'层 L（输入）');
     for(let i=0;i<=L;i++){
       const f=Math.pow(r,i);
       const col=f>1.2?'#b23a48':(f<0.4?'#285a9e':'#176653');
       const x=sX(i);
-      svgAdd(svg,'line',{x1:x,y1:sY(0),x2:x,y2:sY(Math.min(f,1.4)),stroke:col,strokeWidth:16,opacity:0.85,'stroke-linecap':'round'});
+      svgAdd(svg,'line',{x1:x,y1:sY(0),x2:x,y2:sY(Math.min(f,1.5)),stroke:col,strokeWidth:16,opacity:0.85,'stroke-linecap':'round'});
     }
     // cumulative scale line
     let prev=null;
     for(let i=0;i<=L;i++){
-      const f=Math.min(Math.pow(r,i),1.4);
+      const f=Math.min(Math.pow(r,i),1.5);
       const x=sX(i),y=sY(f);
       if(prev)svgAdd(svg,'line',{x1:prev.x,y1:prev.y,x2:x,y2:y,stroke:'var(--accent)',strokeWidth:2,markerEnd:i===L?mk:''});
       prev={x,y};
     }
-    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+20,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'越靠前层，梯度被乘的越多');
+    svgAdd(svg,'text',{x:W-M.r,y:M.t+14,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'越靠前层，梯度被乘得越多 →');
     const final=Math.pow(r,L);
     const cap = r<1
       ? `每层平均缩小到 ${fmt(r)} × ${L} 层 → 传到第 1 层只剩 ${final.toExponential(2)}（${fmt(final*100,1)}%）→ 梯度消失`
@@ -1038,52 +1042,60 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- momentum vs SGD valley trajectory ---------- */
 (()=>{
-  const svg=$('#momPlot'), M={l:60,r:22,t:20,b:54},W=640,H=320;
-  const sX=w1=>M.l+(w1-(-1.6))/3.4*(W-M.l-M.r);
-  const sY=w2=>M.t+(1-(w2-(-0.6))/2.4)*(H-M.t-M.b);
-  const g=(w1,w2)=>[2*w1, 8*w2]; // narrow valley: much steeper along w2
-  function trace(momentum){
-    const N=34,eta=0.045,alpha=momentum;
-    let w1=1.24,w2=0.16,u1=0,u2=0;
-    const pts=[];
-    for(let i=0;i<N;i++){
-      const g1=2*w1,g2=9*w2;
-      if(momentum>0){u1=alpha*u1+eta*g1;u2=alpha*u2+eta*g2;w1-=u1;w2-=u2;}
-      else {w1-=eta*g1;w2-=eta*g2;}
-      pts.push({w1,w2});
-    }
+  const svg=$('#momPlot'), M={l:58,r:20,t:26,b:60},W=640,H=320;
+  const XMIN=-1.2,XMAX=1.8, YMIN=-0.9,YMAX=1.8;
+  const sX=w1=>M.l+(w1-XMIN)/(XMAX-XMIN)*(W-M.l-M.r);
+  const sY=w2=>M.t+(1-(w2-YMIN)/(YMAX-YMIN))*(H-M.t-M.b);
+  // valley cost: J = w1^2 + 4.5*w2^2  ->  gradient (2·w1, 9·w2)
+  const N=46, SGD_ETA=0.20, MOM_ETA=0.006;
+  function tracesSGD(){ // eta=0.20 is supercritical in the steep direction → bounces across the wall
+    let w1=1.5,w2=0.9; const pts=[[w1,w2]];
+    for(let i=0;i<N;i++){ w1*=(1-2*SGD_ETA); w2*=(1-9*SGD_ETA); pts.push([w1,w2]); }
     return pts;
   }
-  function draw(alpha){
+  function tracesMom(alpha){ // small eta + momentum: averages the bounce, glides along the valley
+    let w1=1.5,w2=0.9,u1=0,u2=0; const pts=[[w1,w2]];
+    for(let i=0;i<N;i++){ const g1=2*w1,g2=9*w2; u1=alpha*u1+MOM_ETA*g1; u2=alpha*u2+MOM_ETA*g2; w1-=u1; w2-=u2; pts.push([w1,w2]); }
+    return pts;
+  }
+  let anim=null;
+  function stopAnim(){ if(anim){clearInterval(anim);anim=null;} }
+  function draw(alpha,reveal){
     svg.innerHTML='';
     const defs=svgAdd(svg,'defs');
-    // draw valley level-ish: lighter fill
-    for(let row=0;row<24;row++)for(let col=0;col<34;col++){
-      const w1=-1.6+3.4*col/34, w2=-0.6+2.4*row/24;
-      const val=g(w1,w2)[0]*g(w1,w2)[0]+g(w1,w2)[1]*g(w1,w2)[1];
-      // gradient magnitude ellipses (approx contour value)
+    const sgd=tracesSGD(), mom=tracesMom(alpha);
+    const show=reveal==null?N:Math.max(2,Math.min(N,reveal));
+    // faint elongated valley contours (narrow along w2)
+    const cx=sX(0),cy=sY(0);
+    for(let r=1;r<=4;r++){
+      const rx0=r*0.30*(W-M.l-M.r)/(XMAX-XMIN), ry0=rx0*0.22;
+      svgAdd(svg,'ellipse',{cx,cy,rx:rx0,ry:ry0,fill:'none',stroke:'var(--line)',strokeWidth:1,'stroke-dasharray':'3 3',opacity:0.5});
     }
     svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
     svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
-    const sgd=trace(0),mom=trace(alpha);
-    function poly(pts,col){
-      let d='';pts.forEach((p,i)=>{const x=sX(p.w1),y=sY(p.w2);d+=(i?'L':'M')+x+','+y+' ';});
-      svgAdd(svg,'path',{d,fill:'none',stroke:col,strokeWidth:2});
+    function poly(pts,col,count){
+      const seen=pts.slice(0,count);
+      if(seen.length>1){let d='';seen.forEach((p,i)=>{const x=sX(p[0]),y=sY(p[1]);d+=(i?'L':'M')+x+','+y+' ';});svgAdd(svg,'path',{d,fill:'none',stroke:col,strokeWidth:2});}
+      const e=seen[seen.length-1]||pts[0];
+      svgAdd(svg,'circle',{cx:sX(e[0]),cy:sY(e[1]),r:4,fill:col});
     }
-    poly(sgd,'#b45a2b');poly(mom,'#176653');
-    // endpoints
-    const e1=sgd[sgd.length-1],e2=mom[mom.length-1];
-    svgAdd(svg,'circle',{cx:sX(e1.w1),cy:sY(e1.w2),r:4,fill:'#b45a2b'});
-    svgAdd(svg,'circle',{cx:sX(e2.w1),cy:sY(e2.w2),r:4,fill:'#176653'});
-    svgHalo(svg,sX(-1.2),sY(0.05),'普通 SGD（橙）：左右震荡大',{fill:'#b45a2b',font:11,'text-anchor':'middle'});
-    svgHalo(svg,sX(e2.w1)-40,sY(e2.w2)+18,`momentum α=${fmt(alpha,2)}（绿）：沿谷底平滑`,{fill:'#176653',font:11});
-    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'w₁（缓坡）→，w₂（陡坡）→；收敛到原点');
+    poly(sgd,'#b45a2b',sgd.length);
+    poly(mom,'#176653',show);
+    svgHalo(svg,sX(1.9)-6,sY(1.45),`普通 SGD η=${fmt(SGD_ETA,2)}：在谷壁上弹跳`,{fill:'#b45a2b',font:11,'text-anchor':'end'});
+    svgHalo(svg,sX(0.42),sY(-0.18),`momentum α=${fmt(alpha,2)} η=${fmt(MOM_ETA,3)}：平滑抵达`,{fill:'#176653',font:11,'text-anchor':'start'});
+    svgAdd(svg,'text',{x:W-M.r,y:H-M.b+18,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'w₁（缓坡 / 谷底方向）→，w₂（陡峭谷壁）→');
     $('#momAVal').textContent=fmt(alpha,2);
   }
-  draw(Number($('#momA').value));
-  $('#momA').addEventListener('input',()=>draw(Number($('#momA').value)));
-  $('#momRun').addEventListener('click',()=>{/* redraw with current alpha */ draw(Number($('#momA').value)); toast('已用当前 α 重画轨迹（绿=带动量，橙=纯 SGD）');});
-  $('#momReset').addEventListener('click',()=>draw(Number($('#momA').value)));
+  function fullDraw(){ draw(Number($('#momA').value), null); }
+  $('#momA').addEventListener('input',()=>{stopAnim();fullDraw();});
+  $('#momRun').addEventListener('click',()=>{
+    stopAnim();
+    const alpha=Number($('#momA').value);
+    let k=3; draw(alpha,k);
+    anim=setInterval(()=>{ k+=2; if(k>=N){k=N;stopAnim();toast('播放完成：绿线=带动量的 SGD，已平滑抵达原点附近');} draw(alpha,k); },45);
+  });
+  $('#momReset').addEventListener('click',()=>{stopAnim();fullDraw();});
+  fullDraw();
 })();
 
 /* ---------- weight decay plot ---------- */
@@ -1146,9 +1158,11 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
 
 /* ---------- random initialization demo (uses Math.random) ---------- */
 (()=>{
-  const svg=$('#initRandPlot'), M={l:64,r:20,t:24,b:54},W=640,H=300;
-  const sX=v=>M.l+(v-(-3))/6*(W-M.l-M.r); // z range roughly -3..3
-  const sY=h=>M.t+(1-h/0.8)*(H-M.t-M.b);
+  const svg=$('#initRandPlot'), M={l:64,r:20,t:26,b:54},W=640,H=300;
+  const ZMIN=-3.5,ZMAX=3.5;
+  const sX=v=>M.l+(v-ZMIN)/(ZMAX-ZMIN)*(W-M.l-M.r);
+  // histogram heights are normalized 0..1; map onto the upper 78% of the plot area
+  const sY=h=>M.t+(1-h)*(H-M.t-M.b-18);
   function norm(){ // Box–Muller with Math.random -> N(0,1)
     let u=0,v=0;while(u===0)u=Math.random();v=Math.random();
     return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
@@ -1159,9 +1173,6 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     svgAdd(svg,'line',{x1:M.l,y1:sY(0),x2:W-M.r,y2:sY(0),stroke:'var(--line)'});
     svgAdd(svg,'line',{x1:M.l,y1:M.t,x2:M.l,y2:H-M.b,stroke:'var(--line)'});
     svgAdd(svg,'text',{x:W-M.r,y:sY(0)+16,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'z（一层线性输出）→');
-    // theoretical target red dashed at E[z^2]=d*Var(W)=1
-    svgAdd(svg,'line',{x1:M.l,y1:sY(1),x2:W-M.r,y2:sY(1),stroke:'#b23a48',strokeWidth:2,'stroke-dasharray':'7 4'});
-    svgHalo(svg,sX(0),sY(1)-12,'理论目标 E[z²] ≈ d·Var(W) = 1',{fill:'#b23a48',font:10.5});
     // sample weights with Math.random: uniform on [-a,a], a=sqrt(3/d) => Var=1/d
     const a=Math.sqrt(3/d);
     const w=[];for(let j=0;j<d;j++)w.push((Math.random()*2-1)*a);
@@ -1169,18 +1180,24 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     const N=600,zs=[];
     for(let i=0;i<N;i++){let z=0;for(let j=0;j<d;j++)z+=w[j]*norm();zs.push(z);}
     // histogram into bins
-    const bins=26, bmin=-3,bmax=3, bw=(bmax-bmin)/bins,counts=new Array(bins).fill(0);
-    zs.forEach(z=>{let k=Math.floor((z-bmin)/bw);if(k<0)k=0;if(k>=bins)k=bins-1;counts[k]++;});
+    const bins=28, bw=(ZMAX-ZMIN)/bins, counts=new Array(bins).fill(0);
+    zs.forEach(z=>{let k=Math.floor((z-ZMIN)/bw);if(k<0)k=0;if(k>=bins)k=bins-1;counts[k]++;});
     const maxC=Math.max(...counts);
+    const binW=(W-M.l-M.r)/bins;
     counts.forEach((c,i)=>{
-      const x=bmin+i*bw, h=c/maxC*0.7;
-      svgAdd(svg,'rect',{x:sX(x+bw/2)-bw/2*((W-M.l-M.r)/6)/2,y:sY(h),width:(W-M.l-M.r)/6*bw,height:sY(0)-sY(h),fill:'color-mix(in srgb, var(--blue) 45%, var(--surface))',stroke:'none'});
+      const h=c/maxC;
+      svgAdd(svg,'rect',{x:M.l+i*binW,y:sY(h),width:binW-1,height:sY(0)-sY(h),fill:'color-mix(in srgb, var(--blue) 45%, var(--surface))',stroke:'none'});
     });
-    // empirical second moment
-    const emp=zs.reduce((a,z)=>a+z*z,0)/N;
-    svgAdd(svg,'circle',{cx:sX(Math.sqrt(emp)),cy:sY(0)-8,r:5,fill:'#285a9e'});
-    svgAdd(svg,'text',{x:sX(Math.sqrt(emp)),y:sY(0)-14,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#285a9e'},'实测 √E[z²]');
-    $('#initRandCap').textContent=`抽样一次：d=${d}，随机权重 Var≈${fmt(1/d,3)}，实测 E[z²]≈${fmt(emp,3)}（理论 1）。多按几次按钮，你会看到它在 1 附近随机晃——这正是“随机≠尺度错”的意思。`;
+    // theory: std(z) = sqrt(d * Var(W)) = 1  -> vertical dashed red line
+    const thStd=1;
+    svgAdd(svg,'line',{x1:sX(thStd),y1:sY(1),x2:sX(thStd),y2:sY(0),stroke:'#b23a48',strokeWidth:2,'stroke-dasharray':'7 4'});
+    svgHalo(svg,sX(thStd),sY(1)-8,'理论 √(d·Var(W)) = 1',{fill:'#b23a48',font:10.5});
+    // empirical RMS(std) -> vertical dashed blue line
+    const emp=Math.sqrt(zs.reduce((a,z)=>a+z*z,0)/N);
+    svgAdd(svg,'line',{x1:sX(emp),y1:sY(1),x2:sX(emp),y2:sY(0),stroke:'#285a9e',strokeWidth:2,'stroke-dasharray':'2 3'});
+    svgAdd(svg,'circle',{cx:sX(emp),cy:sY(0)+10,r:4,fill:'#285a9e'});
+    svgHalo(svg,M.l+34,sY(1)-8,`实测 √E[z²] ≈ ${fmt(emp,3)}`,{fill:'#285a9e',font:10.5,anchor:'start'});
+    $('#initRandCap').textContent=`抽样一次：d=${d}，随机权重 Var≈${fmt(1/d,3)}，所以理论 σ=√(d·Var(W))=1（红虚线）。这次实测 √E[z²]≈${fmt(emp,3)}（蓝虚线，越接近 1 越稳）。多按几次按钮，你会看到它在 1 附近随机晃——这正是“随机 ≠ 尺度错”的意思。`;
     $('#initRandDval').textContent=d;
   }
   function upd(){draw(Number($('#initRandD').value));}
