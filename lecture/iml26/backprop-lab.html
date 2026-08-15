@@ -42,7 +42,22 @@ code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:
 .btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
 .btn.ghost{background:transparent}
 .icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
-.layout{display:grid;grid-template-columns:252px minmax(0,1fr);gap:0;max-width:1440px;margin:0 auto;align-items:start}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+ .gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
 .toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
 .toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
 .toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
@@ -129,9 +144,10 @@ svg text{font-family:Menlo,Monaco,monospace}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
 footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
 @media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
 @media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
-@media print{.topbar,.toc,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
 </style>
 </head>
 <body>
@@ -690,23 +706,16 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <div class="misconception"><div><div class="truth">误解 4</div><b>ReLU 在负半轴梯度为 0，所以不能用。</b><p class="small">ReLU 会在负半轴阻断梯度，但正半轴导数恒为 1，不会像 sigmoid 那样饱和。这正是它常用于深度网络的原因之一。</p></div></div>
     </section>
 
-    <!-- ============ GLOSSARY ============ -->
-    <section id="glossary">
-      <h2 class="sec-title"><span class="num">§17</span>本讲术语表：每个第一次出现的概念</h2>
-      <p class="sec-lead">每一张卡都给出：<b>严谨定义 → 白话理解 → 在本讲的位置 / 用处 / 为什么重要 → 与前后概念的关系</b>。</p>
-      <div class="gloss-grid" id="glossGrid"></div>
-    </section>
-
     <!-- ============ QUIZ ============ -->
     <section id="quiz">
-      <h2 class="sec-title"><span class="num">§18</span>自测题：关掉页面后还能留下的东西</h2>
+      <h2 class="sec-title"><span class="num">§17</span>自测题：关掉页面后还能留下的东西</h2>
       <div id="quizList"></div>
       <div class="card compact" id="quizScore" style="display:none"></div>
     </section>
 
     <!-- ============ TAKEAWAY ============ -->
     <section id="takeaway">
-      <h2 class="sec-title"><span class="num">§19</span>本讲真正要带走的三句话</h2>
+      <h2 class="sec-title"><span class="num">§18</span>本讲真正要带走的三句话</h2>
       <div class="grid3">
         <div class="card"><h3>① 先前向</h3><p>算出所有 $z^{(l)}, v^{(l)}, f$ 与 loss，并把中间值存下来备用。</p></div>
         <div class="card"><h3>② 再反向</h3><p>从输出层开始算 δ，逐层向前：$\delta^{(l)}=\varphi'(z^{(l)})\odot\big(\bar W^{(l+1)}\big)^\top\delta^{(l+1)}$。</p></div>
@@ -723,6 +732,10 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       </div>
     </section>
   </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="术语表侧边栏">
+    <div class="toc-label">Glossary · 随文术语</div>
+    <div id="glossRailBody"></div>
+  </aside>
 </div>
 <div class="toast" id="toast" role="status"></div>
 <footer>
@@ -1595,7 +1608,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     {t:'梯度',en:'gradient',f:'\\nabla_W\\ell',d:'损失对所有参数的一阶偏导向量；每个分量回答“只动这个参数，损失的一阶变化率”。',r:'位置：§1–§2 定义。用处：SGD 的更新方向。重要：训练的全部目的就是可靠地得到它。'},
     {t:'SGD / 优化器',en:'stochastic gradient descent / optimizer',f:'W\\leftarrow W-\\eta\\nabla_W\\ell',d:'用（小批）样本的梯度估计，沿负梯度方向更新参数的<b>优化算法</b>。',r:'位置：承接第 11 讲。用处：消费梯度、改变权重。重要：它与反向传播分工不同——反向传播只算梯度。'},
     {t:'前向传播',en:'forward pass',f:'z^{(l)}=W^{(l)}v^{(l-1)},\\ v^{(l)}=\\varphi(z^{(l)})',d:'从输入逐层算到预测 f 与损失 ℓ 的过程；沿途的中间值被保存下来供反向复用。',r:'位置：反向传播前的准备。用处：产生损失，同时留下“计算轨迹”。重要：反向传播能高效，正因它复用前向保存的中间量。'},
-    {t:'计算图',en:'computation graph',d:'把一次计算拆成节点（中间量）与有向边（依赖关系）的图。前向沿边算值，反向沿反向边传导数。',r:'位置：§13、§17 的底层语言。用处：链式法则的“地图”。重要：自动微分就是把程序实际执行的每一步当作计算图节点。'},
+    {t:'计算图',en:'computation graph',d:'把一次计算拆成节点（中间量）与有向边（依赖关系）的图。前向沿边算值，反向沿反向边传导数。',r:'位置：§0 概念地图与 §13 自动微分。用处：链式法则的“地图”。重要：自动微分就是把程序实际执行的每一步当作计算图节点。'},
     {t:'局部导数',en:'local derivative',d:'计算图中单个节点“输出对输入”的导数，例如 ∂f/∂v。它只依赖这个节点自己的局部计算。',r:'位置：§3 最小网络逐项手算。用处：反向消息每经过一个节点就乘一次它。重要：模块化——每个算子只要实现自己的局部导数。'},
     {t:'链式法则',en:'chain rule',f:'\\frac{dc}{dx}=\\frac{dc}{db}\\cdot\\frac{db}{da}\\cdot\\frac{da}{dx}',d:'复合函数求导规则：整体变化率等于沿途各步局部变化率之积。',r:'位置：§5。用处：反向传播的全部数学引擎。重要：它把“求一个复杂函数的梯度”分解成许多小问题。'},
     {t:'Jacobian 矩阵',en:'Jacobian matrix',f:'J_f\\in\\mathbb R^{m\\times n}',d:'向量值函数 f:ℝⁿ→ℝᵐ 的全部一阶偏导排成的 m×n 矩阵；第 i 行第 j 列是 ∂fᵢ/∂xⱼ。',r:'位置：§6。用处：多变量链式法则的载体。重要：我们原则上需要它，但<b>实现上不显式构造它</b>。'},
@@ -1617,7 +1630,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     {t:'梯度检查',en:'gradient checking',d:'比较解析梯度与有限差分，看相对误差是否足够小（如 &lt;1e-4~1e-6）。',r:'位置：§10。用处：调试反向传播实现。重要：误差不随 ε 变小而趋近 0，通常说明转置/broadcast/激活导数写错。'},
     {t:'forward / reverse mode',en:'forward / reverse mode AD',d:'自动微分的两种扫描方式：forward mode 沿输入方向传播方向导数，适合“输入少、输出多”；reverse mode 从标量输出反向扫描，适合“输出少（损失是标量）、参数多”。',r:'位置：§11。用处：解释为什么深度学习用 reverse mode。重要：一次反向扫描得到全部 P 个参数梯度。'},
     {t:'checkpointing',en:'checkpointing',d:'为节省内存不保存全部前向激活，反向需要时重算一部分前向段的折中策略。',r:'位置：§11 提及。用处：训练超深网络时平衡内存与计算。重要：反向传播用内存换速度，checkpointing 是反向的折中。'},
-    {t:'自动微分 / tape',en:'automatic differentiation / tape',d:'记录程序实际执行的每个运算与中间值，反向时读取 tape 并应用各节点的局部导数。它既不是符号求导，也不是数值差分。',r:'位置：§13、§17。用处：PyTorch 的 loss.backward() 背后机制。重要：理解 tape 才能理解“为什么先 forward 再 backward”。'},
+    {t:'自动微分 / tape',en:'automatic differentiation / tape',d:'记录程序实际执行的每个运算与中间值，反向时读取 tape 并应用各节点的局部导数。它既不是符号求导，也不是数值差分。',r:'位置：§13。用处：PyTorch 的 loss.backward() 背后机制。重要：理解 tape 才能理解“为什么先 forward 再 backward”。'},
     {t:'zero_grad',en:'zeroing gradients',d:'清空上一轮迭代累积在参数上的梯度。很多框架默认梯度累加，不清零会把不同 batch 的梯度混在一起。',r:'位置：§12。用处：训练循环的固定步骤。重要：漏掉它是最常见的“训练不收敛但梯度正常”原因之一。'},
     {t:'softmax',en:'softmax',f:'p_k=e^{f_k}/\\sum_j e^{f_j}',d:'把 K 个 logit 压缩成和为 1 的非负概率向量。',r:'位置：§14。用处：多分类输出层。重要：与交叉熵搭配时导数简洁（p−y），训练稳定。'},
     {t:'交叉熵',en:'cross entropy',f:'\\ell=-\\log p_y',d:'对真实类别概率取负对数；真实类概率越低损失越大。',r:'位置：§14。用处：多分类损失。重要：它对错误预测给强梯度，且与 softmax 的导数互相化简。'},
@@ -1626,14 +1639,79 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     {t:'维度检查',en:'shape checking',d:'核对每个矩阵 / 向量形状，确保梯度与参数同形。',r:'位置：§15。用处：快速定位实现错误。重要：形状错几乎等于转置错；∇W 与 W 必须同形。'},
     {t:'梯度消失 / 爆炸',en:'vanishing / exploding gradients',d:'深层网络中反向信号连乘许多权重与激活导数，导致梯度指数级变小（消失）或变大（爆炸）。',r:'位置：§3 首次埋下伏笔。用处：解释为什么深层训练困难。重要：第 13 讲初始化、学习率与正则化的讨论由此展开。'}
   ];
-  $('#glossGrid').innerHTML=G.map(c=>`
-    <div class="gloss">
-      <h4>${c.t}</h4><span class="en">${c.en}</span>
-      ${c.f?`<div class="formula">$${c.f}$</div>`:''}
-      <p><b>定义：</b>${c.d}</p>
-      <p class="role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>
-    </div>`).join('');
-  renderMathInElement($('#glossGrid'),{delimiters:[{left:'$',right:'$',display:false}],throwOnError:false});
+  const KEYS={'SGD / 优化器':'SGD','forward / reverse mode':'forward mode','自动微分 / tape':'自动微分','bias / 增广激活':'bias','Jacobian 矩阵':'Jacobian','激活函数导数':'激活函数的导数','隐藏层递推':'隐藏层','Hadamard 乘积':'Hadamard product','截断误差 / 舍入误差':'截断误差'};
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg';
+  // 1) place a small interactive marker at the FIRST occurrence of each term
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&p.matches(GLOSS_SKIP))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:c.k||KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  // 2) glossary sidebar, grouped by the section of first occurrence
+  const rail=$('#glossRailBody');rail.innerHTML='';
+  const order=[...document.querySelectorAll('#main section')];
+  for(const sec of order){
+    const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+    if(!items.length)continue;
+    const h=sec.querySelector('h2.sec-title');
+    const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+    const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+    rail.appendChild(div);
+    for(const i of items){
+      const c=G[i];
+      const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+      b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+      b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+      rail.appendChild(b);
+    }
+  }
+  // 3) highlight rail group of the active section
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  // 4) click term marker -> floating definition popover
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
 })();
 
 /* ---------- quiz ---------- */
