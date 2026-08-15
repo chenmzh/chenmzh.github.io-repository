@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <title>GARGANTUA — Schwarzschild Black Hole Raytracer</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three/three.module.js",
+      "three/addons/": "./vendor/three/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="gl" aria-label="GARGANTUA black hole raytracer viewport"></canvas>
+
+  <div id="splash" class="splash">
+    <div class="splash-mark">GARGANTUA</div>
+    <div class="splash-sub">积分 Schwarzschild 零测地线…</div>
+    <div class="splash-bar"><span></span></div>
+  </div>
+
+  <header id="hud" class="hud hidden">
+    <div class="hud-brand">
+      <h1>GARGANTUA</h1>
+      <div class="hud-sub">SCHWARZSCHILD BLACK HOLE RAYTRACER</div>
+      <div class="hud-badges">
+        <span id="badgeQuality" class="badge">High</span>
+        <span id="badgePreset" class="badge">光子环</span>
+        <span id="badgeDebug" class="badge">调试 0</span>
+      </div>
+    </div>
+    <div id="telemetry" class="hud-telemetry">
+      <span id="fps">-- FPS</span>
+      <span id="camDist">r=-- rs</span>
+      <span id="camAngle">θ=--°</span>
+      <span id="resolution">--</span>
+    </div>
+  </header>
+
+  <div id="helpbar" class="helpbar hidden">
+    <span><kbd>H</kbd> 参数</span>
+    <span><kbd>F1–F4</kbd> 视角</span>
+    <span><kbd>0–9</kbd> 调试</span>
+    <span><kbd>C</kbd> 电影镜头</span>
+    <span><kbd>Q</kbd> 画质</span>
+    <span><kbd>M</kbd> 音乐</span>
+    <span><kbd>S</kbd> 截图</span>
+    <span><kbd>R</kbd> 重置</span>
+    <span>拖拽旋转 · 滚轮缩放</span>
+  </div>
+
+  <button id="musicToggle" class="icon-button hidden" type="button" title="环境音乐 (M)">♪</button>
+  <button id="panelToggle" class="icon-button panel-button hidden" type="button" title="参数面板 (H)">☰</button>
+
+  <aside id="panel" class="panel hidden" aria-label="Render parameters">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title">参数控制</div>
+        <div class="panel-sub">Parameter Control · 实时积分零测地线</div>
+      </div>
+      <button id="panelClose" class="close-button" type="button">×</button>
+    </div>
+    <div id="presetRow" class="preset-row"></div>
+    <div class="quality-row">
+      <span class="quality-label">画质</span>
+      <div id="qualityRow" class="quality-buttons"></div>
+    </div>
+    <div class="debug-row">
+      <label for="debugSelect">调试视图</label>
+      <select id="debugSelect"></select>
+    </div>
+    <div id="paramGroups" class="param-groups"></div>
+    <div class="panel-actions">
+      <button id="autoRotateBtn" class="action-button" type="button">电影镜头循环</button>
+      <button id="resetBtn" class="action-button" type="button">重置全部</button>
+    </div>
+  </aside>
+
+  <div id="errorOverlay" class="error-overlay hidden" role="alert">
+    <div class="error-card">
+      <h2>WebGL 初始化失败</h2>
+      <p id="errorMessage">无法创建 WebGL2 上下文。</p>
+      <p class="error-hint">请确认浏览器已启用硬件加速 / WebGL，然后重试。</p>
+      <button id="errorRetry" type="button">重新初始化</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
