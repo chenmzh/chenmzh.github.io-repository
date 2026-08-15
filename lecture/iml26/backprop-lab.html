@@ -144,6 +144,19 @@ svg text{font-family:Menlo,Monaco,monospace}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 #progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
 footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
 @media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
 @media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
 @media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
@@ -183,6 +196,11 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       </div>
     </section>
 
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线 · 15 min</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
     <!-- ============ CONCEPT MAP ============ -->
     <section id="map">
       <h2 class="sec-title"><span class="num">§0</span>课程地图：这一讲在哪里，概念如何互相咬合</h2>
@@ -888,7 +906,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
   route([[1070,413],[1030,413]],'#6c4fa1','δ⁽ᴸ⁾ = p−y',1050,468);
   // nodes
   for(const n of N){
-    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node',style:'cursor:pointer',tabindex:'0'});
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
     svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
     svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':14.5,'font-weight':700,fill:'var(--ink)'},n.t);
     if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
@@ -1713,6 +1731,105 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
   $('#shDin,#shDout').forEach(el=>el.addEventListener('input',render));render();
 })();
 
+/* ---------- learning path / focus mode ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},factory:{mode:'extra',tag:'直觉'},
+    sgd:{mode:'core',tag:'问题'},minimal:{mode:'core',tag:'手算'},activation:{mode:'extra',tag:'工具'},
+    chain:{mode:'core',tag:'引擎'},jacobian:{mode:'extra',tag:'形式化'},delta:{mode:'core',tag:'枢纽'},
+    output:{mode:'core',tag:'递推'},lab:{mode:'core',tag:'完整算法'},gradcheck:{mode:'core',tag:'验证'},
+    efficient:{mode:'extra',tag:'效率'},notlearner:{mode:'core',tag:'分工'},autodiff:{mode:'extra',tag:'实现'},
+    crossentropy:{mode:'extra',tag:'分类'},shapes:{mode:'extra',tag:'调试'},misconceptions:{mode:'extra',tag:'误区'},
+    quiz:{mode:'core',tag:'自测'},takeaway:{mode:'core',tag:'带走'}
+  };
+  const REASON={
+    map:'先把所有概念的位置看成一整张图，知道本讲只有一条主线。',
+    factory:'先用工厂比喻建立直觉：错误要沿反方向逐级分摊。',
+    sgd:'把“责任分摊”翻译成训练真正需要的数学对象：梯度。',
+    minimal:'为了不被符号淹没，先用只有一个隐藏单元的网络完整手算一次。',
+    activation:'刚才手算出现了 ReLU′，先认识两种激活函数导数的行为。',
+    chain:'把最小网络里“一路相乘”的动作提炼成链式法则。',
+    jacobian:'中间量变成向量后，链式法则升级为 Jacobian，但实现只算它的 VJP。',
+    delta:'把反向传递的向量消息正式命名为 δ，它是全讲枢纽。',
+    output:'δ 需要起点（输出层）和递推规则（隐藏层），缺一不可。',
+    lab:'把两条规则拼成完整两层网络沙盘，亲手看梯度矩阵长什么样。',
+    gradcheck:'反向传播最容易写错转置，用有限差分独立复核一次。',
+    efficient:'确认反向传播不只是“算得出”，而且“算得快”。',
+    notlearner:'最后把反向传播与优化器的分工讲清，避免概念混淆。',
+    autodiff:'理论清楚后，看框架如何用 tape 自动完成这一整套动作。',
+    crossentropy:'把平方损失推广到分类任务，看输出层 δ 的漂亮形式。',
+    shapes:'所有公式都要落在形状检查上，这是最快的调试抓手。',
+    misconceptions:'在测验之前，先排除四个最常见的误解。',
+    quiz:'主线全部走完，用自测题确认你真的带走了。',
+    takeaway:'把整讲压缩成三句话，并接上第 13 讲。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    rebuildBridges();
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
 /* ---------- glossary ---------- */
 (()=>{
   const G=[
@@ -1779,23 +1896,29 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     found[item.i]={section,key:item.key};
   }
   // 2) glossary sidebar, grouped by the section of first occurrence
-  const rail=$('#glossRailBody');rail.innerHTML='';
+  const rail=$('#glossRailBody');
   const order=[...document.querySelectorAll('#main section')];
-  for(const sec of order){
-    const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
-    if(!items.length)continue;
-    const h=sec.querySelector('h2.sec-title');
-    const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
-    const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
-    rail.appendChild(div);
-    for(const i of items){
-      const c=G[i];
-      const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
-      b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
-      b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
-      rail.appendChild(b);
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
     }
   }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
   // 3) highlight rail group of the active section
   const spy=new IntersectionObserver(entries=>{
     entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
