@@ -994,10 +994,11 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
       for(let i=0;i<=280;i++){const x=xMin+(xMax-xMin)*i/280;d+=(i?'L':'')+sx(x).toFixed(1)+','+sy(fn(x)).toFixed(1);}
       svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2.8,'clip-path':`url(#${id.slice(1)}Clip)`});
       if(piecewise){
-        svgAdd(svg,'line',{x1:sx(xMin),y1:sy(1),x2:sx(0),y2:sy(1),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
-        svgAdd(svg,'line',{x1:sx(0),y1:sy(0),x2:sx(xMax),y2:sy(0),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
-        svgAdd(svg,'circle',{cx:sx(0),cy:sy(1),r:3.5,fill:dfColor});
-        svgAdd(svg,'circle',{cx:sx(0),cy:sy(0),r:3.5,fill:'var(--surface)',stroke:dfColor,strokeWidth:1.5});
+        // ReLU': 0 on z<0 (left), 1 on z>0 (right); hollow dot marks the non-selected convention
+        svgAdd(svg,'line',{x1:sx(xMin),y1:sy(0),x2:sx(0),y2:sy(0),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
+        svgAdd(svg,'line',{x1:sx(0),y1:sy(1),x2:sx(xMax),y2:sy(1),stroke:dfColor,strokeWidth:2,strokeDasharray:'6 4','clip-path':`url(#${id.slice(1)}Clip)`});
+        svgAdd(svg,'circle',{cx:sx(0),cy:sy(0),r:3.5,fill:dfColor});
+        svgAdd(svg,'circle',{cx:sx(0),cy:sy(1),r:3.5,fill:'var(--surface)',stroke:dfColor,strokeWidth:1.5});
       }else{
         let d2='M';
         for(let i=0;i<=280;i++){const x=xMin+(xMax-xMin)*i/280;d2+=(i?'L':'')+sx(x).toFixed(1)+','+sy(dfn(x)).toFixed(1);}
