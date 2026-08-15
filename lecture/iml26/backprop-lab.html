@@ -411,6 +411,15 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <div class="def">
         <div class="term">误差信号 δ / pre-activation 的敏感度<span class="en">error signal, delta</span></div>
         <p class="plain">对第 $l$ 层的线性输入（pre-activation）$z^{(l)}=W^{(l)}v^{(l-1)}$，定义</p>
+
+          <div class="def conn">
+            <div class="term">为什么这里是 $z^{(l)}=W^{(l)}v^{(l-1)}$，而不是 $z=w'x$？</div>
+            <p class="plain">两个式子没有矛盾：$z=w'x$ 是<b>单个神经元</b>的特例，$z^{(l)}=W^{(l)}v^{(l-1)}$ 是<b>整层神经元</b>的一般写法。</p>
+            <p class="plain"><b>逐分量看：</b>第 $l$ 层第 $j$ 个单元把上一层送来的每个分量 $v_i^{(l-1)}$ 分别乘上自己的权重 $W_{j,i}^{(l)}$，再加起来：</p>
+            <div class="formula">$$z_j^{(l)}=\sum_i W_{j,i}^{(l)}\,v_i^{(l-1)}$$</div>
+            <p class="plain"><b>和最小网络对照：</b>最小网络只有 1 个输入、1 个隐藏单元、没有 bias，此时 $W^{(l)}$ 退化成 $1\times1$ 矩阵 $[w']$，$v^{(l-1)}$ 就是 $[x]$，于是 $z=[w'][x]=w'x$。</p>
+            <p class="plain"><b>带 bias 的完整写法：</b>把 $v^{(l-1)}=[a_1,\dots,a_d,1]^\top$ 增广一个常数 1，把 $W^{(l)}$ 的最后一列存 bias，则一行矩阵乘法同时完成“加权求和 + 加 bias”：$z_j^{(l)}=\sum_i W_{j,i}^{(l)}a_i+b_j$。</p>
+          </div>
         <div class="formula">$$\delta^{(l)}=\frac{\partial \ell}{\partial z^{(l)}},\qquad \delta_j^{(l)}=\frac{\partial\ell}{\partial z_j^{(l)}}$$</div>
         <p class="plain">分量含义：<b>“只把第 j 个单元的 pre-activation $z_j^{(l)}$ 增加一点点，最终损失的一阶变化率”。</b>它不是预测误差 $f-y$ 本身，而是预测误差穿过后续所有层和损失函数之后到达这里的<b>总敏感度</b>。</p>
       </div>
