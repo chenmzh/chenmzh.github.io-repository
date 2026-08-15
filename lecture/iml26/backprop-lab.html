@@ -454,6 +454,14 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <div class="def">
           <div class="term">输出层 δ：反向传播的起点<span class="en">output-layer delta</span></div>
           <p class="plain">它由<b>损失函数</b>决定，不由网络结构猜出。若输出层无激活：$\delta^{(L)}=\nabla_f\ell$；若有激活 $\psi$：$\delta^{(L)}=\nabla_f\ell\odot\psi'(z^{(L)})$。</p>
+          <div class="toolnote def">
+            <div class="term">这个圆点 ⊙ 是什么？<span class="en">Hadamard product / elementwise product</span></div>
+            <p class="plain">$\odot$ 是<b>逐元素乘法（Hadamard product）</b>：两个<b>同形状</b>的向量按位置一一相乘，结果仍是同形状向量。它不是点积（不会得到一个标量），也不是矩阵乘法（不要求行列对齐）。</p>
+            <div class="formula">$$(a\odot b)_k=a_k\,b_k,\qquad a,b\in\mathbb R^K$$</div>
+            <p class="plain">在这行公式里，逐元素展开就是：</p>
+            <div class="formula">$$\delta_k^{(L)}=\frac{\partial\ell}{\partial f_k}\cdot\psi'(z_k^{(L)}),\qquad k=1,\dots,K$$</div>
+            <p class="plain"><b>为什么这里要逐元素乘：</b>每个输出单元 $k$ 都只经过自己的激活函数 $\psi(z_k^{(L)})$。单元 k 的误差信号只需要乘<b>自己那一个</b>导数 $\psi'(z_k^{(L)})$；单元 1 的导数不该乘到单元 2 上。逐元素乘法恰好表达了“各乘各的”。</p>
+          </div>
           <div class="formula">$$\text{平方损失: }\ell=(f-y)^2\ \Rightarrow\ \delta^{(L)}=2(f-y)$$</div>
           <p class="plain">软最大值 + 交叉熵的漂亮结论见 §14：$\delta^{(L)}=p-y$。</p>
         </div>
