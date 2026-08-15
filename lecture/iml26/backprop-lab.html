@@ -354,6 +354,13 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     <section id="jacobian">
       <h2 class="sec-title"><span class="num">§6</span>多变量怎么办：Jacobian 与 VJP</h2>
       <p class="sec-lead">单变量链式法则只适用于“中间量是一个数”。神经网络里中间量几乎都是<b>向量</b>（一层的激活有几十上百维）。这一节回答三件事：<b>Jacobian 是什么、它怎么用、以及为什么反向传播实际只算它的“半边乘积”（VJP）而不把整个矩阵构造出来。</b></p>
+
+      <div class="def toolnote">
+        <div class="term">记号提醒：小写 $l$ 是层号，花体 $\ell$ 是损失</div>
+        <p class="plain">两个符号长得像，但身份完全不同：</p>
+        <div class="formula">$$l=1,\dots,L\ \text{表示第 }l\text{ 层};\qquad \ell\ \text{是一个标量，表示 loss（损失）}$$</div>
+        <p class="plain">所以 $z^{(l)}$ 读作“第 $l$ 层的 pre-activation”，而 $\dfrac{\partial\ell}{\partial W}$ 读作“损失对权重求导”。判断方法：出现在<b>上标括号里</b>的是层号 $l$；单独作为函数值或求导分子的，是损失 $\ell$。</p>
+      </div>
       <div class="def">
         <div class="term">Jacobian 矩阵：向量函数的“局部敏感度总表”<span class="en">Jacobian matrix</span></div>
         <p class="plain">向量值函数 $f:\mathbb R^n\to\mathbb R^m$ 的全部一阶偏导排成 $m\times n$ 矩阵，第 $i$ 行第 $j$ 列是输出分量 $f_i$ 对输入分量 $x_j$ 的导数：</p>
@@ -1607,13 +1614,13 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     {t:'损失函数',en:'loss function',f:'\\ell(W;x,y)',d:'衡量“当前预测离目标有多远”的标量函数，通常非负；训练目标是让它（在数据上平均）尽量小。',r:'位置：前向传播的终点、反向传播的起点。用处：把“模型好不好”压缩成一个数。重要：损失是<b>标量</b>，反向传播因此只需传递向量。'},
     {t:'梯度',en:'gradient',f:'\\nabla_W\\ell',d:'损失对所有参数的一阶偏导向量；每个分量回答“只动这个参数，损失的一阶变化率”。',r:'位置：§1–§2 定义。用处：SGD 的更新方向。重要：训练的全部目的就是可靠地得到它。'},
     {t:'SGD / 优化器',en:'stochastic gradient descent / optimizer',f:'W\\leftarrow W-\\eta\\nabla_W\\ell',d:'用（小批）样本的梯度估计，沿负梯度方向更新参数的<b>优化算法</b>。',r:'位置：承接第 11 讲。用处：消费梯度、改变权重。重要：它与反向传播分工不同——反向传播只算梯度。'},
-    {t:'前向传播',en:'forward pass',f:'z^{(l)}=W^{(l)}v^{(l-1)},\\ v^{(l)}=\\varphi(z^{(l)})',d:'从输入逐层算到预测 f 与损失 ℓ 的过程；沿途的中间值被保存下来供反向复用。',r:'位置：反向传播前的准备。用处：产生损失，同时留下“计算轨迹”。重要：反向传播能高效，正因它复用前向保存的中间量。'},
+    {t:'前向传播',en:'forward pass',f:'z^{(l)}=W^{(l)}v^{(l-1)},\\ v^{(l)}=\\varphi(z^{(l)})',d:'从输入逐层算到预测 f 与损失 ℓ 的过程；沿途的中间值被保存下来供反向复用。注意：公式里的小写 l 是层号，损失用的是花体 ℓ，两者只是字形相似。',r:'位置：反向传播前的准备。用处：产生损失，同时留下“计算轨迹”。重要：反向传播能高效，正因它复用前向保存的中间量。'},
     {t:'计算图',en:'computation graph',d:'把一次计算拆成节点（中间量）与有向边（依赖关系）的图。前向沿边算值，反向沿反向边传导数。',r:'位置：§0 概念地图与 §13 自动微分。用处：链式法则的“地图”。重要：自动微分就是把程序实际执行的每一步当作计算图节点。'},
     {t:'局部导数',en:'local derivative',d:'计算图中单个节点“输出对输入”的导数，例如 ∂f/∂v。它只依赖这个节点自己的局部计算。',r:'位置：§3 最小网络逐项手算。用处：反向消息每经过一个节点就乘一次它。重要：模块化——每个算子只要实现自己的局部导数。'},
     {t:'链式法则',en:'chain rule',f:'\\frac{dc}{dx}=\\frac{dc}{db}\\cdot\\frac{db}{da}\\cdot\\frac{da}{dx}',d:'复合函数求导规则：整体变化率等于沿途各步局部变化率之积。',r:'位置：§5。用处：反向传播的全部数学引擎。重要：它把“求一个复杂函数的梯度”分解成许多小问题。'},
     {t:'Jacobian 矩阵',en:'Jacobian matrix',f:'J_f\\in\\mathbb R^{m\\times n}',d:'向量值函数 f:ℝⁿ→ℝᵐ 的全部一阶偏导排成的 m×n 矩阵；第 i 行第 j 列是 ∂fᵢ/∂xⱼ。',r:'位置：§6。用处：多变量链式法则的载体。重要：我们原则上需要它，但<b>实现上不显式构造它</b>。'},
     {t:'VJP',en:'vector–Jacobian product',f:'J_f(x)^\\top v',d:'上游向量 v 与局部 Jacobian 的乘积；反向传播每个节点真正计算的东西。',r:'位置：§6–§7。用处：把上游误差向量映射回上一级。重要：只算乘积不存大矩阵，是反向传播省时省内存的关键。'},
-    {t:'pre-activation',en:'pre-activation',f:'z^{(l)}=W^{(l)}v^{(l-1)}',d:'激活函数之前、线性变换之后的量。通常把 W 与 bias 合并（增广 v 末尾拼常数 1）写成一次矩阵乘法。',r:'位置：§7。用处：δ 定义在 z 上，因为每个权重恰好只通过自己那一个 z 影响后续。重要：对 z 求导一步就能得到该层所有权重梯度。'},
+    {t:'pre-activation',en:'pre-activation',f:'z^{(l)}=W^{(l)}v^{(l-1)}',d:'激活函数之前、线性变换之后的量。通常把 W 与 bias 合并（增广 v 末尾拼常数 1）写成一次矩阵乘法。',r:'位置：§6–§7。用处：δ 定义在 z 上，因为每个权重恰好只通过自己那一个 z 影响后续。重要：对 z 求导一步就能得到该层所有权重梯度。注意：上标 l 是层号，不是损失 ℓ。'},
     {t:'误差信号 δ',en:'error signal / delta',f:'\\delta^{(l)}=\\partial\\ell/\\partial z^{(l)}',d:'损失对本层 pre-activation 的敏感度向量；分量 δⱼ 表示“只把 zⱼ 增加一点点，最终损失的变化率”。',r:'位置：§7，本讲枢纽。用处：横向外积得到权重梯度；纵向加权求和传回前一层。重要：它是“预测误差穿过后续所有层之后的总敏感度”，不是 f−y 本身。'},
     {t:'外积',en:'outer product',f:'\\nabla_{W^{(l)}}\\ell=\\delta^{(l)}(v^{(l-1)})^\\top',d:'列向量 δ 乘行向量 vᵀ 得到矩阵：第 (j,i) 元是 δⱼ·vᵢ。增广 v 的最后一个 1 使最后一列自动成为 bias 梯度。',r:'位置：§7 核心公式。用处：一次得到整层权重梯度。重要：梯度矩阵形状必须与权重矩阵相同，这是实现的自检。'},
     {t:'bias / 增广激活',en:'bias & augmented activation',d:'bias 是每层可学习的常数偏移。把 v 增广为 [v;1]、W 增广一列 b 后，z=Wv 一行式子同时包含线性项与 bias。',r:'位置：§7–§12。用处：简化公式与代码。重要：常数节点不需要继续向前传误差，但 bias 权重本身仍有梯度（=对应 δ）。'},
