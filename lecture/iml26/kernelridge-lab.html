@@ -1217,9 +1217,9 @@ const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
       const bx=x0+i*(w/6)+8, bwid=w/6-16;
       const h=v/mx*100;
       svgAdd(svg,'rect',{x:bx,y:h>=0?y0+120-h:y0+120,width:bwid,height:Math.abs(h),rx:3,fill:v>=0?'var(--accent)':'var(--danger)'});
-      svgAdd(svg,'text',{x:bx+bwid/2,y:y0+136,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'λ'+(i+1));
+      svgAdd(svg,'text',{x:bx+bwid/2,y:y0+158,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'λ'+(i+1));
       if(v>=0)svgHalo(svg,bx+bwid/2,y0+120-h-6,fmt(v,2),{font:9.5,fill:'var(--ink)'});
-      else svgHalo(svg,bx+bwid+3,y0+132,fmt(v,2),{font:9.5,fill:'var(--danger)',anchor:'start'});
+      else svgHalo(svg,bx+bwid/2,y0+120+Math.abs(h)+12,fmt(v,2),{font:9.5,fill:'var(--danger)'});
     });
     svgHalo(svg,x0+w/2,y0-16,label+' 的 Gram 特征值（6 个输入点，Jacobi 现算）',{font:11,fill:'var(--muted)'});
     // verdict
