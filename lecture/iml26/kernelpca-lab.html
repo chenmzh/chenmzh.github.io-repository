@@ -913,7 +913,7 @@ function swissRoll(n){
       const mx=pts.reduce((s,p)=>s+p.x,0)/pts.length,my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
       const cov=[[0,0],[0,0]];
       pts.forEach(p=>{cov[0][0]+=(p.x-mx)**2;cov[0][1]+=(p.x-mx)*(p.y-my);cov[1][1]+=(p.y-my)**2;});
-      cov[0][0]/=pts.length;cov[0][1]/=pts.length;cov[1][1]/=pts.length;
+      cov[0][0]/=pts.length;cov[0][1]/=pts.length;cov[1][1]/=pts.length;cov[1][0]=cov[0][1];
       const {vecs}=jacobiEig(cov);
       const w=vecs[0];
       vals=pts.map(p=>p.x*w[0]+p.y*w[1]);
@@ -1250,7 +1250,7 @@ function swissRoll(n){
     const mx=data.reduce((s,p)=>s+p[0],0)/n, my=data.reduce((s,p)=>s+p[1],0)/n;
     const cov=[[0,0],[0,0]];
     data.forEach(p=>{cov[0][0]+=(p[0]-mx)**2;cov[0][1]+=(p[0]-mx)*(p[1]-my);cov[1][1]+=(p[1]-my)**2;});
-    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;
+    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;cov[1][0]=cov[0][1];
     const {vals}=jacobiEig(cov);
     return {mx,my,lams:vals}; // sigma_j^2 = n * lambda_j
   }
@@ -1313,7 +1313,7 @@ function swissRoll(n){
     const mx=data.reduce((s,p)=>s+p[0],0)/n, my=data.reduce((s,p)=>s+p[1],0)/n;
     const cov=[[0,0],[0,0]];
     data.forEach(p=>{cov[0][0]+=(p[0]-mx)**2;cov[0][1]+=(p[0]-mx)*(p[1]-my);cov[1][1]+=(p[1]-my)**2;});
-    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;
+    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;cov[1][0]=cov[0][1];
     const {vals,vecs}=jacobiEig(cov);
     return {mx,my,lams:vals,U:vecs,sig2:vals.map(l=>l*n)};
   }
