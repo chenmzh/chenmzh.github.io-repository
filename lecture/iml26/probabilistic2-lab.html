@@ -1,0 +1,1634 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 20 讲 · Probabilistic Modeling II 互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 20 讲 Probabilistic Modeling II 的深度互动讲义：判别式与生成式模型、logistic 条件模型与 MLE=logistic loss、联合分解与似然可分、Bayes 规则与先验移动边界、Gaussian Naive Bayes 建模与 MLE 手算（后验 0.9999）、决策边界三级层级、Bayes 最优预测与条件风险、GNB 工作台与 logsumexp。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+.gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:.92rem}
+.checklist label:hover{border-color:var(--accent)}
+.checklist input{margin-top:5px;accent-color:var(--accent)}
+.checklist label.done{opacity:.62;text-decoration:line-through}
+.check-score{margin-top:10px;font-weight:700;color:var(--accent)}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-20" title="返回第 20 讲原文">← 返回第 20 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 20 · INTERACTIVE LAB</div>
+      <div class="title">Probabilistic Modeling II — 判别与生成，两种讲故事的方式</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 20 讲 / 25 讲</div>
+      <h1>同一张图片，<br>两种问法，<br><span style="color:var(--warm)">两个模型</span></h1>
+      <p class="subtitle">第 19 讲学会了给数据建分布 $p(x)$ 并做最大似然。这一讲把概率视角接到<b>分类</b>上：面对一张手写数字图，你可以问“给定这张图，它是 7 的概率多少”（学 $P(Y\mid X)$），也可以问“先抽中 7，再长出这样一张图的概率多少”（学 $P(Y)$ 与 $P(X\mid Y)$）。两条路线都能分类，但表达的结构假设、能顺手做到的事、难在哪里，全都不一样。</p>
+      <div class="question">💬 本讲核心问题：对分类，到底在学 $P(Y\mid X)$ 还是整个 $P(X,Y)$？logistic 回归为什么恰好是“对条件模型做 MLE”？生成式模型多花了建模 $P(X\mid Y)$ 的力气，换来了什么？学到分布之后，“最优预测”又由什么决定？</div>
+      <div class="answer">一句话答案：两个恒等式 $p(x,y)=p(x)p(y\mid x)=p(y)p(x\mid y)$ 都正确，差别在你愿意为哪一半写简单模型。判别式（logistic）只解释标签概率，其负对数似然恰好就是 logistic loss；生成式（Gaussian Naive Bayes）为每类建一团高斯云再用 Bayes 公式反推后验，顺带获得采样与异常检测能力，代价是必须解释输入分布。预测端殊途同归：给定损失，逐点最小化条件期望损失——平方损失给条件均值，0-1 损失给后验最大的类。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">两种问法 → 条件模型与 logistic（sigmoid 手算）→ logistic MLE = logistic loss（margin 推导）→ 联合分解与“似然可分” → 生成式路线与 Bayes 公式 → GNB 建模故事与二维例子 → GNB 的 MLE 与一维手算（后验 0.9999）→ 边界形状三级跳（线性/受限二次/QDA）→ Bayes 最优预测（平方与 0-1）→ 数值稳定与综合工作台。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">“判别还是生成”是概率建模里最持久的一条路线分岔：它决定你为什么能用 logistic loss（它是 MLE 不是拍脑袋）、为什么朴素贝叶斯敢用“特征给定类别后独立”这种强假设、以及什么时候值得为 $P(X\mid Y)$ 付出建模代价。Bayes 最优预测则把“学分布”与“做决策”干净地分开——第 21 讲的非对称损失直接沿用本讲的后验。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 问</b>：同一数据，两种概率问法（§1）。</span>
+            <span class="step"><b>② 判别</b>：logistic 条件模型，其 MLE 就是 logistic loss（§2–§3）。</span>
+            <span class="step"><b>③ 拼</b>：条件模型 × 输入模型 = 联合；参数分开时 MLE 可分（§4）。</span>
+            <span class="step"><b>④ 生成</b>：先验 × 类条件密度，Bayes 反推后验；GNB 全流程手算（§5–§8）。</span>
+            <span class="step"><b>⑤ 决</b>：给定损失逐点最小化条件风险（§9）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：概率建模 I（L19）→ <b>判别/生成与 Bayes 决策（L20）</b> → 概率建模 III（L21）</span>
+        <span class="pill">🧩 前置：L19 的分布/MLE 语言；求导与 argmax；高斯密度公式</span>
+        <span class="pill">🎯 产出：能<b>手算 logistic 概率（0.881/0.119）、一维 GNB 后验（0.9999）、两类边界方程</b>，能说清两条路线各自的账</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：两条路线汇到同一个决策</h2>
+      <p class="sec-lead">第 19 讲把“函数视角”换成“分布视角”；本讲让两条建模路线（判别/生成）都通向 $P(Y\mid X)$，再交给损失去决定动作；第 21 讲继续用这些后验处理更精细的决策问题。节点可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 350" role="img" aria-label="第 20 讲概念地图"></svg></div>
+        <div class="caption">概念地图：<b style="color:var(--accent)">核心</b>环节构成主线（判别支线上排、生成支线中排、决策收束）；<span style="color:var(--violet);font-weight:700">拓展</span>环节是数值技巧与综合工作台。灰色节点是前后讲次。</div>
+      </div>
+    </section>
+
+    <!-- ============ §1 SETUP ============ -->
+    <section id="setup">
+      <h2 class="sec-title"><span class="num">§1</span>一张图片，两种问法 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">看一张手写数字图片 $x$，要判断它是 $0,1,\ldots,9$ 中的哪个。第一种想法：<b>给我这张图 $x$，它是数字 $y$ 的概率是多少？</b>也就是 $P(Y\mid X=x)$。第二种想法：<b>先选一个数字 $y$，再想这个数字通常会长成什么样的图 $x$</b>，也就是 $P(Y)$ 和 $P(X\mid Y)$。两种方式都能得到分类概率，但它们讲的是不同的故事。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">判别式模型 <span class="en">discriminative model · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：直接建模条件分布 $p(y\mid x;\theta)$ 的模型族；联合由 $p(x,y)=p(x)\,p(y\mid x)$ 拼出。</p>
+          <p class="plain"><b>白话</b>：只学“看到考题后怎么打分”，不学考题本身怎么出。</p>
+          <p class="plain"><b>干嘛用</b>：预测标签；0-1 损失下 $\hat y(x)=\arg\max_y \hat p(y\mid x)$。</p>
+          <p class="plain"><b>怎么算</b>：对条件似然 $\prod_i p(y_i\mid x_i;\theta)$ 做 MLE（§2–§3 的 logistic 就是实例）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：它不解释 $x$ 的密度——只关心分类时这是优势（少一件事可错）；概率分类器还比硬分类器多出不确定性信息（$\hat p=0.9$ 与 $\hat p=0.51$ 都预测 $+1$，但可信度完全不同）。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">生成式模型 <span class="en">generative model · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：建模 $p(y;\pi)$ 与 $p(x\mid y;\eta_y)$，从而得到联合 $p(x,y)=p(y)\,p(x\mid y)$；分类时用 Bayes 公式反推 $p(y\mid x)$。</p>
+          <p class="plain"><b>白话</b>：先讲“标签怎么抽、每个标签长什么样”，再倒过来回答“这张图最像谁生的”。</p>
+          <p class="plain"><b>干嘛用</b>：分类之外还能采样、异常检测、缺失值推断、解释类别形状。</p>
+          <p class="plain"><b>怎么算</b>：分别对先验和“每类自己的输入分布”做 MLE（§6–§7 的 GNB 全流程）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：“生成”不是预测时随机掷标签，而是<b>训练时建立了 $x$ 的生成故事</b>；代价是必须解释 $P(X\mid Y)$——高维（如自然图像）时很难，错了会拖累分类（§12 误区）。</p>
+        </div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>叙事决定分解</b>：食物成分 $x\to$ 是否健康 $y$、血样 $x\to$ 能否驾驶 $y$，读起来“$x$ 先出现、$y$ 是后果”，适合 $p(x)p(y\mid x)$；手写数字“先决定 $y=7$、再写出一张带倾斜粗细的 7”、疾病诊断“先有病 $y$、再表现症状 $x$”，适合 $p(y)p(x\mid y)$。数学上两条恒等式都成立——选择哪种分解，就是选择哪种结构假设（§12 误区 2）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §2 LOGISTIC ============ -->
+    <section id="cond">
+      <h2 class="sec-title"><span class="num">§2</span>logistic 条件模型：从分数到概率 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">二分类里，标签 $y\in\{-1,+1\}$、特征 $x\in\mathbb R^d$、参数 $w\in\mathbb R^d$。为保持推导简洁，本讲先固定截距 $b=0$（一般形式为 $p(y\mid x;w,b)=\big(1+\exp\{-y(w^\top x+b)\}\big)^{-1}$，边界相应为 $w^\top x+b=0$）。</p>
+      <div class="def">
+        <div class="term">logistic 模型 <span class="en">logistic model · first mentioned: §2</span></div>
+        <p class="plain"><b>是什么</b>：$p(y\mid x;w)=\dfrac{1}{1+\exp(-y\langle w,x\rangle)}$——把线性分数 $\langle w,x\rangle$ 经 sigmoid 压成合法概率。</p>
+        <p class="plain"><b>白话</b>：一根数轴上的“信心旋钮”：分数越大越笃定 $+1$，越负越笃定 $-1$，零则五五开。</p>
+        <p class="plain"><b>干嘛用</b>：给每个输入输出带不确定性的类别概率。</p>
+        <p class="plain"><b>怎么算</b>：算 $\langle w,x\rangle$ 再代入 sigmoid。$\langle w,x\rangle$ 很大 → $p(y{=}{+}1\mid x)$ 接近 1；很负 → 接近 0；等于 0 → 恰为 $\tfrac12$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它给的不只是边界 $\langle w,x\rangle=0$（本讲 $b=0$ 特例下是一条直线/超平面），还有<b>边界两侧的概率变化</b>；§3 将证明对它做 MLE 恰好得到 logistic loss。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动 $w$ 与 $x$，读出概率（曲线现算）</h4>
+        <div class="svg-wrap"><svg id="sigmoidViz" viewBox="0 0 880 350" role="img" aria-label="logistic 概率互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>权重 $w$（一维特征）</label><input type="range" id="sgW" min="-3" max="3" step="0.1" value="2"><div class="val" id="sgWval"></div></div>
+          <div class="control"><label>输入 $x$（含糖量）</label><input type="range" id="sgX" min="-3" max="3" step="0.1" value="1"><div class="val" id="sgXval"></div></div>
+        </div>
+        <div class="caption" id="sgCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算对账（$w=2$）</b>：$x=1$ 时 $\langle w,x\rangle=2$，$p(y{=}{+}1\mid x)=\frac1{1+e^{-2}}\approx0.881$；$x=-1$ 时 $\langle w,x\rangle=-2$，$p\approx0.119$；$x=0$ 时 $p=0.5$。把滑杆设为 $(w{=}2,x{=}1)$ 等组合即可逐位核对（面板数值现算）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §3 LOGISTIC MLE ============ -->
+    <section id="mle">
+      <h2 class="sec-title"><span class="num">§3</span>logistic MLE：logistic loss 的出身 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要求解的量是 $\hat w\in\mathbb R^d$：给定带标签数据后，哪个权重让观测标签的条件概率最大？把输入当作给定条件、只建模标签且各标签在给定输入下互相独立，条件似然是 $\prod_i p(y_i\mid x_i;w)$。</p>
+      <div class="card">
+        <h3 style="margin-top:0">四行推导（margin 记 $m_i=y_i\langle w,x_i\rangle$）</h3>
+        <p class="plain">$$\hat w=\arg\max_w\sum_i\log\Big(\frac{1}{1+\exp(-y_i\langle w,x_i\rangle)}\Big)=\arg\min_w\sum_i-\log\Big(\frac{1}{1+e^{-m_i}}\Big)=\arg\min_w\sum_i\log\big(1+e^{-m_i}\big).$$</p>
+        <p class="plain small">第三步只用 $-\log(1/a)=\log a$。所以 <b>logistic regression = 对 logistic 条件分布做最大似然估计</b>。每个样本在惩罚什么：margin 很大（标签方向与模型分数一致）损失趋零；margin 为负（推错一侧）损失随 $|m|$ 迅速增大（下方曲线现算）。与生成模型比较时记住：logistic 只需解释标签概率，不必同时解释 $x$ 在输入空间的分布。</p>
+      </div>
+      <div class="def why">
+        <div class="term">logistic 损失 <span class="en">logistic loss · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：$\ell(m)=\log(1+e^{-m})$，$m=y\langle w,x\rangle$ 为 margin；它是 logistic 条件模型的负对数似然。</p>
+        <p class="plain"><b>白话</b>：对“分数方向与标签是否一致、差多远”的软惩罚。</p>
+        <p class="plain"><b>干嘛用</b>：logistic regression 的训练目标。</p>
+        <p class="plain"><b>怎么算</b>：$m=2\Rightarrow\ell=0.127$；$m=-1\Rightarrow\ell=1.313$；$m\to+\infty\Rightarrow0$，$m\to-\infty$ 线性爆炸。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：第 8 讲讲过 soft-margin SVM 消元后精确得到 hinge loss——本讲给出 logistic 版的对应物；两者都是“把某个概率/几何假设推到底”的结果，而非拍脑袋的规定。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：滑动 margin 看单点损失；四个样本的总损失现算（可随机）</h4>
+        <div class="svg-wrap"><svg id="lossViz" viewBox="0 0 880 360" role="img" aria-label="logistic 损失互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>考察的 margin $m$</label><input type="range" id="lvM" min="-4" max="4" step="0.1" value="2"><div class="val" id="lvMval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="lvRand" type="button">🎲 随机换四个样本</button></div>
+        </div>
+        <div class="caption" id="lvCap"></div>
+      </div>
+    </section>
+
+    <!-- ============ §4 JOINT & SEPARABILITY ============ -->
+    <section id="joint">
+      <h2 class="sec-title"><span class="num">§4</span>拼出联合分布：MLE 为什么可以分开算 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">条件模型能比较同一个 $x$ 下的标签，但没说这个 $x$ 本身常不常见。由 $p(x,y)=p(y\mid x)\,p(x)$：已有 $p(y\mid x;\theta_y)$，再给输入建边缘模型 $p(x;\theta_x)$，就得到“由判别式拼出来的”联合 $p(x,y;\theta_x,\theta_y)$——$\theta_x$ 管输入分布、$\theta_y$ 管分类规则。</p>
+      <div class="def">
+        <div class="term">似然可分 <span class="en">likelihood separation · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：若 $p(x,y;\theta_x,\theta_y)=p(x;\theta_x)\,p(y\mid x;\theta_y)$ 且参数空间是乘积 $\Theta_x\times\Theta_y$，则联合 log-likelihood 恰好拆成 $\ell(\theta_x,\theta_y)=A(\theta_x)+B(\theta_y)$，其中 $A=\sum_i\log p(x_i;\theta_x)$、$B=\sum_i\log p(y_i\mid x_i;\theta_y)$。</p>
+        <p class="plain"><b>白话</b>：两口子各管各的账，各自把自家账 max 掉，总和自然最大。</p>
+        <p class="plain"><b>干嘛用</b>：证明拟合输入模型不会改变条件分类器的 MLE，反之亦然。</p>
+        <p class="plain"><b>怎么算</b>：$\hat\theta_x=\arg\max A(\theta_x)$、$\hat\theta_y=\arg\max B(\theta_y)$ 分开解（下方互动用两个一维二次目标演示）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：原因不是“它们没关系”这种模糊说法，而是目标具有可加形式且参数不耦合；<b>条件</b>是两部分不共享参数、无耦合正则——否则不能拆。这也解释了为什么只关心分类时可以完全不拟合 $p(x)$。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：两个旋钮各转各的——$A(\theta_x)+B(\theta_y)$ 的最大值在各自最优处同时取到</h4>
+        <div class="svg-wrap"><svg id="sepViz" viewBox="0 0 880 380" role="img" aria-label="似然可分演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入模型参数 $\theta_x$</label><input type="range" id="spTx" min="-1" max="3.5" step="0.02" value="0.2"><div class="val" id="spTxval"></div></div>
+          <div class="control"><label>标签模型参数 $\theta_y$</label><input type="range" id="spTy" min="1" max="4.5" step="0.02" value="4"><div class="val" id="spTyval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn primary" id="spBest" type="button">跳到联合最优</button></div>
+        </div>
+        <div class="caption" id="spCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>演示设定</b>：$A(\theta_x)=\sum_i(u_i-\theta_x)^2$（4 个“输入样本” $u$ 的平方误差，最优在均值 $\bar u$）、$B(\theta_y)=\sum_i(v_i-\theta_y)^2$（4 个“标签侧量” $v$，最优在 $\bar v$）。三个条形分别显示 $A$、$B$ 与总和——无论先转哪个旋钮，另一项纹丝不动；联合最优 = 两个各自最优（数值现算）。若把两参数用一个共享参数 $\theta$ 绑住（“耦合”开关的反例），可加性立刻失效——这正是“共享参数不能拆”的几何。</p>
+      </div>
+    </section>
+
+    <!-- ============ §5 GENERATIVE ============ -->
+    <section id="gen">
+      <h2 class="sec-title"><span class="num">§5</span>生成式路线：先抽 $y$，再长出 $x$ <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">换的不是概率定理，而是要参数化的部分：直接为类别先验与类条件输入分布建模，再用 Bayes 公式反推分类所需的后验。联合分布写成 $p(x,y)=p(y)\,p(x\mid y)$——先决定 $y=7$，再生成一张带倾斜、粗细、风格变化的 7。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">类别先验 <span class="en">class prior · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：$p(y)$——抽到每个类别的概率；二分类即 $\pi$ 与 $1-\pi$。</p>
+          <p class="plain"><b>白话</b>：开考之前各类别的基础出场率。</p>
+          <p class="plain"><b>干嘛用</b>：与类条件密度相乘给出未归一化后验分数。</p>
+          <p class="plain"><b>怎么算</b>：MLE 就是频率 $\hat\pi_y=\operatorname{Count}(Y=y)/n$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：分类比较分子即可；但报告“患病概率”或算风险必须完成归一化。先验改变会让后验 0.5 的边界移动（下方互动）——罕见病之所以要小心，就是先验在拉扯。</p>
+        </div>
+        <div class="def">
+          <div class="term">类条件密度 <span class="en">class-conditional density · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：$p(x\mid y)$——给定类别后输入的分布，例如“数字 7 的图片长什么样”。</p>
+          <p class="plain"><b>白话</b>：每个类别自己的画像师。</p>
+          <p class="plain"><b>干嘛用</b>：生成故事的核心；与先验相乘构成联合。</p>
+          <p class="plain"><b>怎么算</b>：GNB 用对角协方差高斯（§6）；预测时算 $s_y(x)=\pi_y\,\mathcal N(x;\mu_y,\Sigma_y)$ 再归一化 $s_y/\sum_c s_c$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：它是生成式的<b>额外账单</b>——高维时很难建对，错了会拖累分类（§12 误区 1）。</p>
+        </div>
+      </div>
+      <div class="def conn">
+        <div class="term">Bayes 规则 <span class="en">Bayes rule · first mentioned: §5</span></div>
+        <p class="plain"><b>是什么</b>：$p(y\mid x)=\dfrac{p(y)\,p(x\mid y)}{p(x)}$，其中 $p(x)=\sum_c p(c)\,p(x\mid c)$ 是总证据。</p>
+        <p class="plain"><b>白话</b>：把“先有类再成像”的故事倒放成“见到像猜类”。</p>
+        <p class="plain"><b>干嘛用</b>：从生成模型取回分类所需的后验。</p>
+        <p class="plain"><b>怎么算</b>：离散类别时分子逐类相乘、分母求和归一。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：三块各有职责——先验与类条件给出未归一化分数，分母把它们变成和为 1 的后验；第 9 讲的 posterior 语言在这里落地成算法。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：只动先验 $\pi$，看后验 0.5 的边界怎么移动</h4>
+        <div class="svg-wrap"><svg id="priorViz" viewBox="0 0 880 360" role="img" aria-label="先验改变边界"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>正类先验 $\pi=P(Y{=}{+}1)$</label><input type="range" id="pvPi" min="0.05" max="0.95" step="0.05" value="0.5"><div class="val" id="pvPival"></div></div>
+        </div>
+        <div class="caption" id="pvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>图的意思</b>：两类一维高斯（$\mu_-=-1,\sigma_-=0.7$；$\mu_+=2,\sigma_+=1$）固定不动，只滑动 $\pi$。加权密度 $\pi_y\mathcal N$ 的交点、以及后验曲线 $p(y{=}{+}1\mid x)$ 过 0.5 的位置，都随先验移动（边界坐标由网格+线性插值现算）。$\pi\to1$ 时负类几乎不可能、边界冲向左端——这就是“先验也能改变决策”的直接可视化。</p>
+      </div>
+    </section>
+
+    <!-- ============ §6 GNB ============ -->
+    <section id="gnb">
+      <h2 class="sec-title"><span class="num">§6</span>Gaussian Naive Bayes：每个类别一团云 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">GNB 是一个生成式分类模型，假设 $Y\sim\operatorname{Categorical}(\pi)$、$X\mid Y=y\sim\mathcal N(\mu_y,\Sigma_y)$ 且 $\Sigma_y$ 为对角矩阵。</p>
+      <div class="def">
+        <div class="term">Gaussian Naive Bayes <span class="en">Gaussian Naive Bayes · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：先验 $\pi_y$ + 每类对角协方差高斯的生成式分类器；预测比较 $s_y(x)=\pi_y\mathcal N(x;\mu_y,\Sigma_y)$ 再归一化。</p>
+        <p class="plain"><b>白话</b>：每类画一团轴对齐的椭圆云，看新点更像掉进哪团云、再乘上类别出场率。</p>
+        <p class="plain"><b>干嘛用</b>：快速生成式基线；文本/表格数据上常用变体。</p>
+        <p class="plain"><b>怎么算</b>：对角协方差让密度分解为 $\prod_j\mathcal N(x_j;\mu_{yj},\sigma_{yj}^2)$；MLE 见 §7。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：参数量从每类约 $\tfrac{d(d+1)}2$ 个协方差参数降到 $d$ 个方差——省，但特征高度相关时密度会错（下方条件独立卡片与 §8 的边界层级）。</p>
+      </div>
+      <div class="def why">
+        <div class="term">条件独立 <span class="en">conditional independence (naive assumption) · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：给定类别后各特征彼此独立：$p(x\mid y)=\prod_j p(x_j\mid y)$，对应 $\Sigma_y$ 对角。</p>
+        <p class="plain"><b>白话</b>：“知道是 7 之后，笔画倾斜度和粗细互不影响”——一个大胆但常够用的假设。</p>
+        <p class="plain"><b>干嘛用</b>：把联合密度拆成一维密度的乘积。</p>
+        <p class="plain"><b>怎么算</b>：它删掉的是 $x_jx_k$ 相关项，<b>没有</b>删掉每个特征自身的均值方差。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：注意 naive ≠ “特征独立于标签”，也 ≠ “所有类共享协方差”——这两个混淆分别对应 §12 误区与 §8 的层级表。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：二维 GNB——拖动测试食物，读两类分数与后验（讲义参数）</h4>
+        <div class="svg-wrap"><svg id="gnb2dViz" viewBox="0 0 880 400" role="img" aria-label="二维 GNB 互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>测试点 $x_1$（甜度）</label><input type="range" id="g2T1" min="0" max="7" step="0.1" value="4"><div class="val" id="g2T1val"></div></div>
+          <div class="control"><label>测试点 $x_2$（脂肪）</label><input type="range" id="g2T2" min="0" max="6" step="0.1" value="3"><div class="val" id="g2T2val"></div></div>
+        </div>
+        <div class="caption" id="g2Cap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义参数</b>：$X\mid Y{=}{+}1\sim\mathcal N([2,1],\operatorname{diag}[1,1])$（健康），$X\mid Y{=}{-}1\sim\mathcal N([5,4],\operatorname{diag}[1,2])$（不健康），先验各 0.5。默认测试点 $[4,3]$：健康类马氏距离平方 $=4$、不健康类 $=0.75$——离负类云更近，后验 $\hat P(+1\mid x)\approx0.052$（面板现算）。预测比较的是 $\pi_y\mathcal N$ 加权分数，不只是“离均值近”；虚线椭圆是各类 1σ/2σ 等密度线（对角协方差 → 轴对齐）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §7 GNB MLE ============ -->
+    <section id="mlegnb">
+      <h2 class="sec-title"><span class="num">§7</span>GNB 的 MLE 与一维手算 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">先验 $\hat\pi_y=\operatorname{Count}(Y=y)/n$；每个类别单独拟合一团高斯：$\hat\mu_y=\frac1{n_y}\sum_{i:y_i=y}x_i$，$\hat\Sigma_y=\frac1{n_y}\sum_{i:y_i=y}(x_i-\hat\mu_y)(x_i-\hat\mu_y)^\top$，GNB 再把非对角元清零（等价于逐坐标一维方差 MLE）。</p>
+      <div class="card compact">
+        <p class="plain small"><b>为什么除以 $n_y$ 而不是 $n_y-1$</b>：这里在最大化给定参数族下的似然，Gaussian MLE 的二阶矩用有效样本数 $n_y$；$n_y-1$ 是无偏样本协方差的频率学修正，不是 MLE。若某类样本很少，方差估计不稳，实用中常用平滑或方差下限避免极端自信。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：四点数据 → 参数 → $x_\star=4$ 的完整后验（数值全部现算，可随机）</h4>
+        <div class="svg-wrap"><svg id="mleGnbViz" viewBox="0 0 880 430" role="img" aria-label="一维 GNB 手算互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>新点 $x_\star$</label><input type="range" id="mgX" min="0" max="8" step="0.1" value="4"><div class="val" id="mgXval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="mgRand" type="button">🎲 随机换训练点</button></div>
+        </div>
+        <div class="caption" id="mgCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义对账（默认数据 $1,2\to-1$；$5,7\to+1$）</b>：$\hat\pi_\pm=0.5$；$\hat\mu_-=1.5,\hat\mu_+=6$；$\hat\sigma_-^2=0.25,\hat\sigma_+^2=1$。对新点 $x_\star=4$：$\mathcal N(4;1.5,0.25)=2.9734\times10^{-6}$（离负类均值 <b>5 个标准差</b>），$s_-=1.4867\times10^{-6}$；$\mathcal N(4;6,1)=0.053991$，$s_+=0.0269955$；归一化 $\hat P(+1\mid x=4)\approx0.999945$、$\hat P(-1\mid x)\approx0.000055$——0-1 损失下预测 $+1$ 且相当自信。<b>诊断点</b>：负类方差那么小只是两个样本碰巧接近；若它来自抽样噪声，这个 0.9999 就是过度自信。</p>
+      </div>
+    </section>
+
+    <!-- ============ §8 BOUNDARY ============ -->
+    <section id="bound">
+      <h2 class="sec-title"><span class="num">§8</span>决策边界：直线还是曲线？ <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要求输入空间里哪些 $x$ 让两类同样可信。为避免连乘下溢、也为了看清形状，先取每一类的 log 分数：$g_y(x)=\log\pi_y-\tfrac12\log|\Sigma_y|-\tfrac12(x-\mu_y)^\top\Sigma_y^{-1}(x-\mu_y)+\text{常数}$；边界即 $g_{+1}(x)=g_{-1}(x)$。</p>
+      <div class="def">
+        <div class="term">log-score <span class="en">log-score · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：$g_y(x)=\log\big(\pi_y\mathcal N(x;\mu_y,\Sigma_y)\big)$——去掉各类公共常数后的对数未归一化后验。</p>
+        <p class="plain"><b>白话</b>：把连乘变成连加的“对数账本”，比谁大不用算分母。</p>
+        <p class="plain"><b>干嘛用</b>：比较类别、推导边界形状。</p>
+        <p class="plain"><b>怎么算</b>：还原后验要用 $p(y\mid x)=\exp\big(g_y-\operatorname*{logsumexp}_c g_c\big)$，不能把 $g_y$ 本身当概率（§11 的数值版）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：log-score 适合比较与推导，归一化后验才适合解释概率或代入风险——两种用途别混。</p>
+      </div>
+      <div class="def conn">
+        <div class="term">决策边界 <span class="en">decision boundary · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：两个动作条件风险相等的输入集合；概率分类里即两类后验相等处 $p(y{=}{+}1\mid x)=p(y{=}{-}1\mid x)$。</p>
+        <p class="plain"><b>白话</b>：模型拿主意时的分水岭。</p>
+        <p class="plain"><b>干嘛用</b>：可视化分类器的几何。</p>
+        <p class="plain"><b>怎么算</b>：共享协方差时比较两类 $g_y$，二次项 $x^\top\Sigma^{-1}x$ 相消 → <b>线性</b>（LDA 风格）；各类自己的对角 $\Sigma_y$ → 留下 $x_1^2,\ldots,x_d^2$ 轴对齐二次项（GNB 的受限二次边界）；完整各类协方差 → 还有 $x_jx_k$ 交叉项（一般 QDA）。logistic 的边界 $\langle w,x\rangle=0$ 恒为线性。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：边界形状不是背诵题，而是“两类 log-density 相减后哪些 $x$ 项留下”的推论——这个判据也适用于多类（任意两类分界面由两个 score 相等给出）。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：切协方差层级，看边界从直线弯成二次曲线（热图与边界现算）</h4>
+        <div class="svg-wrap"><svg id="boundViz" viewBox="0 0 880 430" role="img" aria-label="边界形状层级"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:420px"><label>协方差结构（均值固定 $\mu_+=[2,1]$、$\mu_-=[5,4]$，先验 0.5）</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost active" id="bdShared" type="button">共享对角（线性）</button>
+              <button class="btn ghost" id="bdGnb" type="button">各类对角（GNB）</button>
+              <button class="btn ghost" id="bdQda" type="button">各类完整（QDA）</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption" id="bdCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>三级层级（讲义表格）</b>：共享对角 $\Sigma$ → 受限线性（共享协方差 LDA 的特例）；类别特异对角 → GNB 的轴对齐二次边界；类别特异完整矩阵 → 一般 QDA（含交叉项）。所以 “Naive” 限制的是每类协方差的<b>非对角元</b>，不等于“所有类共享同一协方差”；Gaussian Bayes 分类器与 LDA/QDA 有亲缘，但 GNB ≠ 完整 QDA。热图颜色 = 当前模型下 $p(y{=}{+}1\mid x)$（$40\times26$ 网格现算），白线 = 后验 0.5 边界（逐行线性插值）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §9 BAYES OPTIMAL ============ -->
+    <section id="bayesopt">
+      <h2 class="sec-title"><span class="num">§9</span>Bayes 最优预测：从分布到动作 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">若知道真实分布 $P$，对任意损失 $\ell(a,y)$，最优预测是 $f^*(x)=\arg\min_a\mathbb E[\ell(a,Y)\mid X=x]$。<b>最优动作只依赖条件分布 $P(Y\mid X=x)$</b>——即使你通过生成模型学的是 $P(X,Y)$，预测时也终将转成 $P(Y\mid X)$。</p>
+      <div class="grid2">
+        <div class="card compact">
+          <h3 style="margin:.2em 0 .4em">平方损失 → 条件均值</h3>
+          <p class="plain small">$\mathbb E[(a-Y)^2\mid x]=a^2-2a\,\mathbb E[Y\mid x]+\mathbb E[Y^2\mid x]$，求导得 $f^*(x)=\mathbb E[Y\mid X=x]$。分解视角：$=\underbrace{(a-m(x))^2}_{\text{偏离条件均值的代价}}+\underbrace{\operatorname{Var}(Y\mid x)}_{\text{选对均值也消不掉的噪声}}$——第二项与动作无关，最小化只需第一项为零；但 Bayes 最优 ≠ 消除条件不确定性，要风险或区间仍需完整条件分布。</p>
+        </div>
+        <div class="card compact">
+          <h3 style="margin:.2em 0 .4em">0-1 损失 → 后验最大</h3>
+          <p class="plain small">条件风险 $\mathbb E[\mathbf 1[a\ne Y]\mid x]=1-P(Y=a\mid x)$，最小化它即最大化后验：$y^*(x)=\arg\max_y P(Y=y\mid x)$。二分类的边界就是两类后验相等处——与 §8 的几何完全一致。</p>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">Bayes 最优预测 <span class="en">Bayes optimal predictor · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：在真实分布下逐点最小化条件期望损失的预测规则 $f^*(x)=\arg\min_a\mathbb E[\ell(a,Y)\mid X=x]$。</p>
+        <p class="plain"><b>白话</b>：如果真知道上帝骰子怎么掷，每道题都选期望损失最小的答案。</p>
+        <p class="plain"><b>干嘛用</b>：一切预测规则的理论下界与设计模板。</p>
+        <p class="plain"><b>怎么算</b>：平方损失 → 条件均值；0-1 损失 → 后验 argmax（下方互动两种都可视化）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它把“学分布”与“做决策”解耦——第 21 讲把损失换成非对称矩阵时，<b>用同一个后验重新比较动作风险即可</b>，不用重新训练模型。</p>
+      </div>
+      <div class="def why">
+        <div class="term">条件风险 <span class="en">conditional risk · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：固定 $x$ 后动作 $a$ 的期望损失 $R(a\mid x)=\mathbb E[\ell(a,Y)\mid X=x]$。</p>
+        <p class="plain"><b>白话</b>：在这一点上，选这个动作平均要付多少钱。</p>
+        <p class="plain"><b>干嘛用</b>：预测 = 逐点选条件风险最小的动作。</p>
+        <p class="plain"><b>怎么算</b>：0-1 损失下 $R(+1\mid x)=P(Y{=}{-}1\mid x)$。讲义小例：后验 0.7/0.3 → 选 $+1$、风险 0.3；后验 0.51/0.49 → 仍选 $+1$、风险 0.49——“同样预测 $+1$”背后的可信度可以差很远。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：把 §7 的 GNB 后验代入：$x_\star=4$ 时 $R(+1\mid x)\approx0.000055$、$R(-1\mid x)\approx0.999945$——$+1$ 不只是分数大，而是有明确的风险优势。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：左拖后验看 0-1 风险决策；右拖动作看平方损失的偏差+噪声</h4>
+        <div class="svg-wrap"><svg id="riskViz" viewBox="0 0 880 360" role="img" aria-label="条件风险互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$p=P(Y{=}{+}1\mid x)$（左图）</label><input type="range" id="rkP" min="0.01" max="0.99" step="0.01" value="0.7"><div class="val" id="rkPval"></div></div>
+          <div class="control"><label>动作 $a$（右图，$m=2$、Var=0.6）</label><input type="range" id="rkA" min="0" max="4" step="0.05" value="1"><div class="val" id="rkAval"></div></div>
+        </div>
+        <div class="step-bar">
+          <button class="btn ghost" id="rkE1" type="button">载入讲义例 0.7</button>
+          <button class="btn ghost" id="rkE2" type="button">载入讲义例 0.51</button>
+        </div>
+        <div class="caption" id="rkCap"></div>
+      </div>
+    </section>
+
+    <!-- ============ §10 LAB (EXTRA) ============ -->
+    <section id="lab">
+      <h2 class="sec-title"><span class="num">§10</span>综合工作台：随机数据 → GNB 全流程 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">把 §5–§8 串成一台机器：随机生成两类二维数据，现场做 MNB 的 MLE（先验、均值、对角方差），画后验热图与 0.5 边界，并统计训练准确率。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="labViz" viewBox="0 0 880 430" role="img" aria-label="GNB 综合工作台"></svg></div>
+        <div class="label-row">
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="lbRand" type="button">🎲 随机换一批数据</button></div>
+        </div>
+        <div class="caption" id="lbCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>观察什么</b>：参数表给出 $\hat\pi_y$、$\hat\mu_y$、$\hat\sigma_{yj}^2$（全部按 §7 公式现算，分母 $n_y$）；边界形状由两类对角方差是否接近决定——差别大时明显弯曲。训练准确率 = 按当前模型重新预测训练标签的正确比例。数据每类 25 点、各类中心与扩散随机，连点几次会看到边界与准确率的真实波动。</p>
+      </div>
+    </section>
+
+    <!-- ============ §11 LOGSUMEXP (EXTRA) ============ -->
+    <section id="lse">
+      <h2 class="sec-title"><span class="num">§11</span>logsumexp：别让 $\exp$ 下溢 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">§8 的 log-score 还原后验时，$g_y$ 常是几百上千的负数——直接 $\exp(g_y)$ 会得到 0，归一化变成 $\tfrac00$。正确做法是先减去最大值再做 log-sum-exp。</p>
+      <div class="def">
+        <div class="term">logsumexp <span class="en">log-sum-exp trick · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：$\operatorname*{logsumexp}_c g_c=\log\sum_c e^{g_c}=g_{\max}+\log\sum_c e^{g_c-g_{\max}}$；后验 $p(y\mid x)=\exp\big(g_y-\operatorname*{logsumexp}_c g_c\big)$。</p>
+        <p class="plain"><b>白话</b>：先把最大分数提到指数外，剩下的指数都在 0 附近——不溢出也不下溢。</p>
+        <p class="plain"><b>干嘛用</b>：任何“对数分数 → 概率”的实现（GNB、softmax、HMM…）。</p>
+        <p class="plain"><b>怎么算</b>：两类时等价于 $p_1=1/(1+e^{g_2-g_1})$——差值进指数，量级立刻可控。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它保证 §8 的“log-score 比较”能安全地换算回 §9 需要的后验；直接法与稳定法的对照见下方互动。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：把两个 log-score 拖到 $-700$ 量级，看直接法翻车、稳定法稳住</h4>
+        <div class="svg-wrap"><svg id="lseViz" viewBox="0 0 880 330" role="img" aria-label="logsumexp 对照"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$g_1$</label><input type="range" id="lsG1" min="-800" max="0" step="1" value="-750"><div class="val" id="lsG1val"></div></div>
+          <div class="control"><label>$g_2$</label><input type="range" id="lsG2" min="-800" max="0" step="1" value="-751"><div class="val" id="lsG2val"></div></div>
+        </div>
+        <div class="caption" id="lsCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>默认对账</b>：$g_1=-750$、$g_2=-751$。直接法：$e^{-700}\approx0$（双精度下溢），归一化 $0/(0+0)=\texttt{NaN}$；稳定法：差值 $g_2-g_1=-1$，$p_1=1/(1+e^{-1})\approx0.731$。把滑杆拉回小区间（如 $-5$ 附近）两种方法一致——logsumexp 不是新数学，是把同一条公式算得出来。</p>
+      </div>
+    </section>
+
+    <!-- ============ §12 MISCONCEPTIONS ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">§12</span>常见误区 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">每一条都先给出“听起来对”的说法，再给真相。</p>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 1</b>：生成式模型一定更好，因为它建模了更多东西。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：生成式要建 $P(X\mid Y)$，高维复杂输入（如自然图像）时很难建对，一个错误的 $P(X\mid Y)$ 会拖累分类；判别式只针对 $P(Y\mid X)$，只关心预测时往往更稳。生成式在数据少、结构假设正确、需要采样/异常检测时更有价值。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 2</b>：$P(Y\mid X)$ 和 $P(X\mid Y)$ 只是写法不同，可以互相换。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：作为恒等式可以换；作为<b>模型假设</b>很不同——$p(y\mid x)$ 用 logistic 简单，不代表 $p(x\mid y)$ 用高斯也简单。选分解就是选结构假设（§1）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 3</b>：“naive” 就是特征彼此独立。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：是<b>给定类别后</b>特征条件独立（$\Sigma_y$ 对角）；它也不等于“所有类共享协方差”（§6、§8 层级表）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 4</b>：GNB 的方差估计除以 $n_y-1$。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：MLE 除以 $n_y$；$n_y-1$ 是无偏修正，不是最大似然（§7）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 5</b>：logistic loss 是人为规定的合理损失。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：它是对 logistic 条件模型做 MLE 推导出来的负对数似然——换模型族就换损失（§3，对照第 8 讲 hinge 的来历）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 6</b>：“生成式”指预测时会随机生成一个标签。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：它指训练时建立了 $x$ 的生成故事；预测照样是确定性的后验比较（§5–§6）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 7</b>：预测对了就说明概率可信。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：0.7 与 0.51 都预测 $+1$，条件风险差 0.19（§9）；一维 GNB 的 0.9999 可能只是小方差样本的过度自信（§7 诊断点）。</p></div></div>
+    </section>
+
+    <!-- ============ §13 TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§13</span>收束：第 20 讲真正要带走的东西 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">本讲的中心不是“logistic vs GNB 谁赢”，而是：同一个联合分布可以有不同分解；不同分解对应不同的建模假设；不同假设决定模型擅长什么、难在哪里。</p>
+      <div class="card">
+        <h3 style="margin-top:0">核心问题 → 答案回顾</h3>
+        <p class="plain"><b>在学 $P(Y\mid X)$ 还是 $P(X,Y)$？</b>判别式学前者（logistic），生成式学 $P(Y)P(X\mid Y)$ 再用 Bayes 反推后者到前者。<b>logistic loss 哪来的？</b>对 logistic 条件模型做 MLE，负对数似然逐项就是 $\log(1+e^{-m_i})$。<b>联合的 MLE 能拆开算吗？</b>参数乘积空间 + 可加目标时可拆（$A(\theta_x)+B(\theta_y)$）；共享参数或耦合正则则不行。<b>GNB 全流程？</b>频率先验 + 每类高斯均值/对角方差（除以 $n_y$）→ $\pi_y\mathcal N$ 打分 → 归一化后验；边界形状由协方差共享层级决定。<b>学到分布之后怎么预测？</b>给定损失逐点最小化条件期望损失：平方 → 条件均值，0-1 → 后验 argmax。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">最重要的五个公式</h3>
+        <p class="plain">$$p(x,y)=p(x)\,p(y\mid x)=p(y)\,p(x\mid y) \quad\text{（两种分解，两种结构假设）}$$
+          $$p(y\mid x;w)=\frac{1}{1+\exp(-y\langle w,x\rangle)}\ \Longrightarrow\ \hat w=\arg\min_w\sum_i\log\big(1+e^{-y_i\langle w,x_i\rangle}\big) \quad\text{（logistic MLE = logistic loss）}$$
+          $$p(y\mid x)=\frac{p(y)\,p(x\mid y)}{\sum_c p(c)\,p(x\mid c)} \quad\text{（Bayes 规则：分子比较、分母归一）}$$
+          $$\hat\pi_y=\frac{n_y}{n},\qquad \hat\mu_y=\frac1{n_y}\sum_{i:y_i=y}x_i,\qquad \hat\sigma_{yj}^2=\frac1{n_y}\sum_{i:y_i=y}(x_{ij}-\hat\mu_{yj})^2 \quad\text{（GNB 的 MLE）}$$
+          $$f^*(x)=\arg\min_a\mathbb E[\ell(a,Y)\mid X=x] \quad\text{（平方损失→E[Y|x]，0-1 损失→argmax P(y|x)）}$$</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自查清单（勾掉才算带走）</h3>
+        <div class="checklist" id="checkList"></div>
+        <div class="check-score" id="checkScore"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自测题（先自己算，再看答案）</h3>
+        <div id="quizList"></div>
+        <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="card conn">
+        <h3 style="margin-top:0">与下一讲的连接</h3>
+        <p class="plain">本讲把后验 $P(Y\mid X)$ 立为决策的通用货币；第 21 讲继续概率建模 III：<b>把损失换成非对称矩阵、把单一后验用于多动作决策</b>，并进一步讨论更精细的概率结构与估计。你会看到：换损失不需要重新训练 GNB——这正是“学分布”与“做决策”解耦的红利。</p>
+        <p class="plain" style="margin-bottom:0"><a href="index.html#lecture-21"><b>→ 回到课程目录，进入第 21 讲：Probabilistic Modeling III</b></a></p>
+      </div>
+    </section>
+
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function spreadLabels(items,minGap){
+  const arr=items.slice().sort((a,b)=>a.y-b.y);
+  for(let i=1;i<arr.length;i++){ if(arr[i].y-arr[i-1].y<minGap) arr[i].y=arr[i-1].y+minGap; }
+  return arr;
+}
+/* symmetric eigendecomposition via Jacobi rotations: returns {vals (desc), vecs (columns aligned) } */
+function jacobiEig(M){
+  const n=M.length;
+  let A=M.map(r=>r.slice());
+  let V=M.map((r,i)=>r.map((_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<80;sweep++){
+    let off=0;
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=A[i][j]*A[i][j];
+    if(off<1e-20)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(A[p][q])<1e-14)continue;
+      const theta=(A[q][q]-A[p][p])/(2*A[p][q]);
+      const t=(theta>=0?1:-1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+      const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const akp=A[k][p],akq=A[k][q];A[k][p]=c*akp-s*akq;A[k][q]=s*akp+c*akq;}
+      for(let k=0;k<n;k++){const apk=A[p][k],aqk=A[q][k];A[p][k]=c*apk-s*aqk;A[q][k]=s*apk+c*aqk;}
+      for(let k=0;k<n;k++){const vkp=V[k][p],vkq=V[k][q];V[k][p]=c*vkp-s*vkq;V[k][q]=s*vkp+c*vkq;}
+    }
+  }
+  const order=A.map((r,i)=>i).sort((i,j)=>A[j][j]-A[i][j]);
+  const vals=order.map(i=>A[i][i]);
+  const vecs=order.map(i=>V.map(row=>row[i])); // vecs[r] is eigenvector for vals[r]
+  return {vals,vecs};
+}
+/* solve dense linear system M x = b (n small) */
+function solveLin(M,b){
+  const n=b.length;const A=M.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){
+    let piv=c;
+    for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[piv][c]))piv=r;
+    const tmp=A[c];A[c]=A[piv];A[piv]=tmp;
+    const d=A[c][c]||1e-12;
+    for(let j=c;j<=n;j++)A[c][j]/=d;
+    for(let r=0;r<n;r++)if(r!==c){const f=A[r][c];for(let j=c;j<=n;j++)A[r][j]-=f*A[c][j];}
+  }
+  return A.map(r=>r[n]);
+}
+const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
+/* generate Swiss roll (t along roll, h height) */
+function swissRoll(n){
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const t=0.6+ (3*Math.PI-1.2)*i/(n-1);
+    const h=(i/(n-1))*6-3;
+    pts.push({t, h, x:t*Math.cos(t)/4.6, y:h/2.6, z:t*Math.sin(t)/4.6});
+  }
+  return pts;
+}
+
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L20) ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n19',x:20,y:120,w:150,h:66,t:'第 19 讲',s:'分布 / MLE',target:'index.html#lecture-19',col:'#8a938b'},
+    {id:'setup',x:220,y:20,w:150,h:62,t:'两种问法',s:'P(Y|X) vs P(Y)P(X|Y)',target:'#setup',col:'#176653'},
+    {id:'cond',x:410,y:20,w:160,h:62,t:'logistic 模型',s:'sigmoid 概率',target:'#cond',col:'#176653'},
+    {id:'mle',x:610,y:20,w:170,h:62,t:'logistic MLE',s:'= logistic loss',target:'#mle',col:'#176653'},
+    {id:'joint',x:810,y:20,w:160,h:62,t:'拼联合分布',s:'似然可分',target:'#joint',col:'#176653'},
+    {id:'gen',x:220,y:120,w:160,h:62,t:'生成式路线',s:'Bayes 反推',target:'#gen',col:'#176653'},
+    {id:'gnb',x:410,y:120,w:160,h:62,t:'GNB 建模',s:'对角高斯云',target:'#gnb',col:'#176653'},
+    {id:'mlegnb',x:610,y:120,w:170,h:62,t:'GNB 的 MLE',s:'后验 0.9999',target:'#mlegnb',col:'#176653'},
+    {id:'bound',x:810,y:120,w:160,h:62,t:'边界形状',s:'线性→二次',target:'#bound',col:'#176653'},
+    {id:'bayesopt',x:410,y:250,w:170,h:62,t:'Bayes 最优预测',s:'逐点最小风险',target:'#bayesopt',col:'#176653'},
+    {id:'takeaway',x:630,y:250,w:170,h:62,t:'收束 / 自测',s:'两条路线',target:'#takeaway',col:'#176653'},
+    {id:'lab',x:220,y:250,w:160,h:62,t:'综合工作台',s:'随机→拟合',target:'#lab',col:'#6c4fa1'},
+    {id:'lse',x:860,y:250,w:160,h:62,t:'logsumexp',s:'数值稳定',target:'#lse',col:'#6c4fa1'},
+    {id:'n21',x:1230,y:120,w:170,h:66,t:'第 21 讲',s:'概率建模 III',target:'index.html#lecture-21',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  route([[170,153],[195,153],[195,51],[220,51]],'#8a938b',mkG,'',0,0);
+  route([[370,51],[410,51]],'#176653',mk,'',0,0);
+  route([[570,51],[610,51]],'#176653',mk,'',0,0);
+  route([[780,51],[810,51]],'#176653',mk,'',0,0);
+  route([[890,82],[890,105],[300,105],[300,120]],'#176653',mk,'换分解：先抽 y',595,98);
+  route([[380,151],[410,151]],'#176653',mk,'',0,0);
+  route([[570,151],[610,151]],'#176653',mk,'',0,0);
+  route([[780,151],[810,151]],'#176653',mk,'',0,0);
+  route([[890,182],[890,215],[495,215],[495,250]],'#176653',mk,'后验 → 决策',700,208);
+  route([[610,182],[610,215],[495,215]],'#176653',mk,'',0,0);
+  route([[800,281],[860,281]],'#6c4fa1',mkV,'',0,0);
+  route([[380,281],[410,281]],'#176653',mk,'',0,0);
+  route([[580,281],[630,281]],'#176653',mk,'',0,0);
+  route([[800,151],[1230,151]],'#8a938b',mkG,'下一讲',1015,140);
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- §2 logistic sigmoid ---------- */
+(()=>{
+  const svg=$('#sigmoidViz');
+  const sig=z=>1/(1+Math.exp(-z));
+  function draw(){
+    const w=+$('#sgW').value,x=+$('#sgX').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:40,w:470,h:250};
+    const px=v=>P.x0+(v+3)/6*P.w;
+    const py=v=>P.y0+P.h-v*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>{svgAdd(svg,'line',{x1:P.x0,y1:py(v),x2:P.x0+P.w,y2:py(v),stroke:'var(--line)',opacity:.4});svgAdd(svg,'text',{x:P.x0-10,y:py(v)+4,'text-anchor':'end','font-size':9.5,fill:'var(--muted)'},fmt(v,2));});
+    [-3,-2,-1,0,1,2,3].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+16,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    svgAdd(svg,'line',{x1:P.x0,y1:py(0.5),x2:P.x0+P.w,y2:py(0.5),stroke:'var(--muted)',strokeWidth:1.2,strokeDasharray:'5 4'});
+    let d='M';
+    for(let k=0;k<=160;k++){const xx=-3+6*k/160;d+=(k===0?'':' L')+px(xx)+','+py(sig(w*xx));}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
+    svgHalo(svg,px(-2.85),py(0.97)+4,'p(y=+1|x)（160 点现算；虚线=0.5）',{font:10,fill:'var(--accent)',anchor:'start'});
+    const z=w*x,p=sig(z);
+    svgAdd(svg,'line',{x1:px(x),y1:py(0),x2:px(x),y2:py(p),stroke:'var(--blue)',strokeWidth:1.2,strokeDasharray:'4 3'});
+    svgAdd(svg,'circle',{cx:px(x),cy:py(p),r:6.5,fill:'var(--blue)'});
+    const nearMid=Math.abs(p-0.5)<0.09;
+    svgHalo(svg,px(x)+(x>=0?-12:12),nearMid?py(p)+20:py(p)-12,'p='+fmt(p,3),{font:11,fill:'var(--blue)',anchor:x>=0?'end':'start'});
+    // right panel
+    const q0={x0:600,y0:52};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'读数面板（现算）');
+    const rows=[
+      ['⟨w,x⟩ = '+fmt(w,1)+'×'+fmt(x,1),fmt(z,2)],
+      ['p(y=+1|x) = 1/(1+e^{−z})',fmt(p,3)],
+      ['p(y=−1|x) = 1−p',fmt(1-p,3)],
+      ['0-1 损失下预测',p>=0.5?'+1':'−1'],
+      ['选它的期望出错率',fmt(Math.min(p,1-p),3)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+28+i*28;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':11,fill:i>=3?'var(--warm)':'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+230,y,'font-size':11,'font-weight':700,fill:i>=3?'var(--warm)':'var(--accent)'},r[1]);
+    });
+    svgHalo(svg,q0.x0+110,q0.y0+28+5*28+6,'边界 ⟨w,x⟩=0（b=0 特例）',{font:10.5,fill:'var(--muted)'});
+    $('#sgCap').innerHTML=`当前 w=${fmt(w,1)}、x=${fmt(x,1)}：⟨w,x⟩=${fmt(z,2)}，p(y=+1|x)=<b>${fmt(p,3)}</b>，p(y=−1|x)=${fmt(1-p,3)}，预测 ${p>=0.5?'+1':'−1'}（期望出错率 ${fmt(Math.min(p,1-p),3)}）。讲义对账：w=2 时 x=1 → 0.881、x=−1 → 0.119、x=0 → 0.500。w 的绝对值控制曲线陡峭程度，符号控制哪一侧为正类。`;
+  }
+  function sync(){$('#sgWval').textContent=fmt(+$('#sgW').value,1);$('#sgXval').textContent=fmt(+$('#sgX').value,1);draw();}
+  ['sgW','sgX'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §3 logistic loss ---------- */
+(()=>{
+  const svg=$('#lossViz');
+  const loss=m=>Math.log(1+Math.exp(-m));
+  let samples=[[1,1],[-1,-1],[0.5,-1],[2,1]];
+  function draw(){
+    const m=+$('#lvM').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:40,w:470,h:250};
+    const px=v=>P.x0+(v+4)/8*P.w;
+    const py=v=>P.y0+P.h-(v/2.2)*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.5,1,1.5,2].forEach(v=>{svgAdd(svg,'line',{x1:P.x0,y1:py(v),x2:P.x0+P.w,y2:py(v),stroke:'var(--line)',opacity:.4});svgAdd(svg,'text',{x:P.x0-10,y:py(v)+4,'text-anchor':'end','font-size':9.5,fill:'var(--muted)'},fmt(v,1));});
+    [-4,-2,0,2,4].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+16,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    svgAdd(svg,'line',{x1:px(0),y1:P.y0,x2:px(0),y2:P.y0+P.h,stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'4 4'});
+    svgHalo(svg,px(0),P.y0+12,'m=0：ℓ=ln2≈0.693',{font:9.5,fill:'var(--muted)'});
+    let d='M';
+    for(let k=0;k<=160;k++){const mm=-4+8*k/160;d+=(k===0?'':' L')+px(mm)+','+py(Math.min(loss(mm),2.2));}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
+    svgHalo(svg,px(-2.4),py(2.1)-10,'ℓ(m)=log(1+e^{−m})（现算）',{font:10,fill:'var(--accent)'});
+    const lm=loss(m);
+    svgAdd(svg,'circle',{cx:px(m),cy:py(Math.min(lm,2.2)),r:6.5,fill:'var(--blue)'});
+    svgHalo(svg,px(m)+(m>1?-10:10),py(Math.min(lm,2.2))-12,'m='+fmt(m,1)+'→ℓ='+fmt(lm,3),{font:10.5,fill:'var(--blue)',anchor:m>1?'end':'start'});
+    // sample margins
+    const margins=samples.map(([xx,y])=>y*2*xx);
+    const total=margins.reduce((s,v)=>s+loss(v),0);
+    const q0={x0:600,y0:46};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'四个样本（w=2）');
+    margins.forEach((mg,i)=>{
+      const y=q0.y0+26+i*30;
+      const c=mg>=0?'var(--accent)':'var(--danger)';
+      svgAdd(svg,'circle',{cx:q0.x0+8,cy:y-4,r:5,fill:c});
+      svgAdd(svg,'text',{x:q0.x0+24,y,'font-size':10.5,fill:'var(--ink)'},`(x=${fmt(samples[i][0],1)}, y=${samples[i][1]>0?'+1':'−1'})`);
+      svgAdd(svg,'text',{x:q0.x0+150,y,'font-size':10.5,fill:'var(--muted)'},'m='+fmt(mg,1));
+      svgAdd(svg,'text',{x:q0.x0+215,y,'font-size':10.5,'font-weight':700,fill:c},fmt(loss(mg),3));
+    });
+    svgHalo(svg,q0.x0+100,q0.y0+26+4*30+6,'总损失 Σℓ(mᵢ) = '+fmt(total,3)+'（现算）',{font:11,fill:'var(--ink)'});
+    $('#lvCap').innerHTML=`当前考察 margin m=${fmt(m,1)}：ℓ=${fmt(lm,3)}。参考点：m=2 → ${fmt(loss(2),3)}；m=−1 → ${fmt(loss(-1),3)}（推错一侧损失迅速变大）。四个样本的 margins=(${margins.map(v=>fmt(v,1)).join(', ')})，总损失 <b>${fmt(total,3)}</b>——每个样本按“分数方向是否与标签一致”各自计罚，随机按钮真用 Math.random 重抽。`;
+  }
+  function sync(){$('#lvMval').textContent=fmt(+$('#lvM').value,1);draw();}
+  $('#lvM').addEventListener('input',sync);
+  $('#lvRand').addEventListener('click',()=>{
+    samples=Array.from({length:4},()=>[Math.round((Math.random()*5-2.5)*2)/2,(Math.random()<0.5?1:-1)]);
+    draw();toast('已随机重抽四个样本');
+  });
+  sync();
+})();
+
+/* ---------- §4 likelihood separation ---------- */
+(()=>{
+  const svg=$('#sepViz');
+  const u=[0.5,1.0,1.5,2.0], v=[2.2,2.8,3.0,3.4];
+  const ub=u.reduce((s,x)=>s+x,0)/u.length, vb=v.reduce((s,x)=>s+x,0)/v.length;
+  const A=t=>u.reduce((s,x)=>s+(x-t)*(x-t),0);
+  const B=t=>v.reduce((s,x)=>s+(x-t)*(x-t),0);
+  function draw(){
+    const tx=+$('#spTx').value,ty=+$('#spTy').value;
+    svg.innerHTML='';
+    const axW=700;
+    const ax1={x0:80,y0:70},ax2={x0:80,y0:170};
+    const mapx=t=>ax1.x0+((t+1)/4.5)*axW;
+    const mapy=t=>ax2.x0+((t-1)/3.5)*axW;
+    [[ax1,u,ub,'输入样本 u（A 的数据）',tx,'θx'],[ax2,v,vb,'标签侧样本 v（B 的数据）',ty,'θy']].forEach(([ax,dat,opt,title,cur,lab])=>{
+      svgAdd(svg,'line',{x1:ax.x0,y1:ax.y0,x2:ax.x0+axW,y2:ax.y0,stroke:'var(--line)',strokeWidth:1.5});
+      svgHalo(svg,ax.x0+axW/2,ax.y0-24,title,{font:10.5,fill:'var(--muted)'});
+      dat.forEach(x=>{
+        const mx2=ax===ax1?mapx(x):mapy(x);
+        svgAdd(svg,'circle',{cx:mx2,cy:ax.y0,r:5.5,fill:'var(--accent)',opacity:.85});
+      });
+      const o=mapx(opt),c=mapx(cur);
+      svgAdd(svg,'line',{x1:o,y1:ax.y0-14,x2:o,y2:ax.y0+14,stroke:'var(--gold)',strokeWidth:1.6,strokeDasharray:'4 3'});
+      svgHalo(svg,o,ax.y0+30,'最优 '+lab+'='+fmt(opt,2),{font:10,fill:'var(--gold)'});
+      svgAdd(svg,'line',{x1:c,y1:ax.y0-8,x2:c,y2:ax.y0+8,stroke:'var(--blue)',strokeWidth:2.4});
+      svgHalo(svg,c,ax.y0-12,lab+'='+fmt(cur,2),{font:10.5,fill:'var(--blue)'});
+    });
+    // bars
+    const bv={x0:330,y0:268,w:420};
+    const a=A(tx),b=B(ty),tot=a+b;
+    const amin=A(ub),bmin=B(vb);
+    const mx=Math.max(A(-1),B(1),tot,1e-9);
+    const rows=[
+      ['A(θx)',a,'var(--accent)'],
+      ['B(θy)',b,'var(--blue)'],
+      ['A+B（联合目标）',tot,'var(--warm)']
+    ];
+    rows.forEach((r,i)=>{
+      const y=bv.y0+i*34;
+      svgAdd(svg,'text',{x:bv.x0-12,y:y+13,'text-anchor':'end','font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'rect',{x:bv.x0,y,width:Math.max(r[1]/mx*bv.w,2),height:20,rx:4,fill:r[2],opacity:.85});
+      svgHalo(svg,bv.x0+Math.max(r[1]/mx*bv.w,2)+8,y+16,fmt(r[1],3),{font:10.5,fill:r[2],anchor:'start'});
+    });
+    svgHalo(svg,bv.x0+120,bv.y0-14,`联合最优 = A(θ̂x)+B(θ̂y) = ${fmt(amin,3)}+${fmt(bmin,3)} = ${fmt(amin+bmin,3)}`,{font:11,fill:'var(--muted)'});
+    $('#spCap').innerHTML=`当前 θx=${fmt(tx,2)}、θy=${fmt(ty,2)}：A=${fmt(a,3)}（最优 ${fmt(amin,3)} @ θ̂x=${fmt(ub,2)}），B=${fmt(b,3)}（最优 ${fmt(bmin,3)} @ θ̂y=${fmt(vb,2)}），A+B=${fmt(tot,3)}。转动 θx 只改 A、转动 θy 只改 B——把两个旋钮分别拧到各自最优，总和恰好取到联合最优 ${fmt(amin+bmin,3)}。若强行让 θx=θy 共享一个参数，这种可加性立刻失效（“共享参数不能拆”）。`;
+  }
+  function sync(){$('#spTxval').textContent=fmt(+$('#spTx').value,2);$('#spTyval').textContent=fmt(+$('#spTy').value,2);draw();}
+  ['spTx','spTy'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#spBest').addEventListener('click',()=>{$('#spTx').value=ub.toFixed(2);$('#spTy').value=vb.toFixed(2);sync();toast('已跳到联合最优 θ̂x='+fmt(ub,2)+', θ̂y='+fmt(vb,2));});
+  sync();
+})();
+
+/* ---------- §5 prior moves boundary ---------- */
+(()=>{
+  const svg=$('#priorViz');
+  const N1=(x,mu,s2)=>Math.exp(-((x-mu)*(x-mu))/(2*s2))/Math.sqrt(2*Math.PI*s2);
+  function draw(){
+    const pi=+$('#pvPi').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:30,w:740,h:170};
+    const xMin=-4,xMax=5;
+    const px=v=>P.x0+(v-xMin)/(xMax-xMin)*P.w;
+    let mxp=0;
+    const dens=[];
+    for(let k=0;k<=160;k++){
+      const x=xMin+(xMax-xMin)*k/160;
+      const dp=pi*N1(x,2,1),dm=(1-pi)*N1(x,-1,0.49);
+      dens.push([x,dp,dm]);
+      mxp=Math.max(mxp,dp,dm);
+    }
+    const py=v=>P.y0+P.h-(v/Math.max(mxp,1e-9))*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    let d1='M',d2='M';
+    dens.forEach(([x,dp,dm])=>{d1+=' L'+px(x)+','+py(dp);d2+=' L'+px(x)+','+py(dm);});
+    svgAdd(svg,'path',{d:d1.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'path',{d:d2.replace('M L','M'),fill:'none',stroke:'var(--warm)',strokeWidth:2.4});
+    // posterior curve
+    const Q={x0:70,y0:230,w:740,h:110};
+    const pyq=v=>Q.y0+Q.h-v*Q.h;
+    svgAdd(svg,'rect',{x:Q.x0,y:Q.y0,width:Q.w,height:Q.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.5,1].forEach(v=>{svgAdd(svg,'line',{x1:Q.x0,y1:pyq(v),x2:Q.x0+Q.w,y2:pyq(v),stroke:'var(--line)',opacity:.4});svgAdd(svg,'text',{x:Q.x0-10,y:pyq(v)+4,'text-anchor':'end','font-size':9.5,fill:'var(--muted)'},fmt(v,1));});
+    [-4,-2,0,2,4].forEach(v=>svgAdd(svg,'text',{x:px(v),y:Q.y0+Q.h+16,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    let d3='M';let bx=null,prev=null;
+    dens.forEach(([x])=>{
+      const sP=pi*N1(x,2,1),sM=(1-pi)*N1(x,-1,0.49);
+      const post=sP/(sP+sM);
+      d3+=' L'+px(x)+','+pyq(post);
+      if(prev!==null&&bx===null&&prev<0.5&&post>=0.5){
+        const x0=dens[dens.findIndex(r=>r[0]===x)-1][0];
+        bx=x0+(x-x0)*(0.5-prev)/(post-prev);
+      }
+      prev=post;
+    });
+    svgAdd(svg,'path',{d:d3.replace('M L','M'),fill:'none',stroke:'var(--blue)',strokeWidth:2.4});
+    if(bx!==null){
+      svgAdd(svg,'line',{x1:px(bx),y1:Q.y0,x2:px(bx),y2:Q.y0+Q.h,stroke:'var(--danger)',strokeWidth:1.6,strokeDasharray:'5 4'});
+      svgHalo(svg,px(bx),Q.y0+16,'边界 x*='+fmt(bx,2),{font:11,fill:'var(--danger)'});
+      svgAdd(svg,'line',{x1:px(bx),y1:P.y0,x2:px(bx),y2:P.y0+P.h,stroke:'var(--danger)',strokeWidth:1,strokeDasharray:'5 4',opacity:.5});
+    }
+    svgHalo(svg,200,py(mxp*.9)-10,'π·N(x;2,1)（正类）',{font:10,fill:'var(--accent)'});
+    svgHalo(svg,120,py(mxp*.9)+16,'(1−π)·N(x;−1,0.49)（负类）',{font:10,fill:'var(--warm)'});
+    svgHalo(svg,px(4),pyq(0.9),'p(y=+1|x)',{font:10,fill:'var(--blue)'});
+    $('#pvCap').innerHTML=`当前 π=${fmt(pi,2)}：加权密度交点与后验 0.5 的边界在 <b>x*=${fmt(bx,2)}</b>（网格+线性插值现算）。π=0.5 时边界在 ${fmt(0.24,2)} 附近（偏向先方差差）；把 π 拉到 0.95，正类到处占优、边界冲向左端 ${fmt(bx,2)}；拉到 0.05 则反号。先验不动密度形状，只搬“出场率”——这正是罕见病场景里先验举足轻重的原因。`;
+  }
+  function sync(){$('#pvPival').textContent=fmt(+$('#pvPi').value,2);draw();}
+  $('#pvPi').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §6 2-D GNB ---------- */
+(()=>{
+  const svg=$('#gnb2dViz');
+  const muP=[2,1],muM=[5,4],vP=[1,1],vM=[1,2];
+  const dens=(x,mu,v)=>Math.exp(-(((x[0]-mu[0])**2)/(2*v[0])+((x[1]-mu[1])**2)/(2*v[1])))/(2*Math.PI*Math.sqrt(v[0]*v[1]));
+  function draw(){
+    const t1=+$('#g2T1').value,t2=+$('#g2T2').value;
+    svg.innerHTML='';
+    const P={x0:60,y0:36,w:420,h:330};
+    const xR=[-0.5,7.5],yR=[-1,6.5];
+    const px=v=>P.x0+(v-xR[0])/(xR[1]-xR[0])*P.w;
+    const py=v=>P.y0+P.h-(v-yR[0])/(yR[1]-yR[0])*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    // 1/2 sigma ellipses (axis aligned)
+    [[muP,vP,'var(--accent)','+1'],[muM,vM,'var(--warm)','−1']].forEach(([mu,v,c,lab])=>{
+      [1,2].forEach(k=>{
+        svgAdd(svg,'ellipse',{cx:px(mu[0]),cy:py(mu[1]),rx:k*Math.sqrt(v[0])/(xR[1]-xR[0])*P.w,ry:k*Math.sqrt(v[1])/(yR[1]-yR[0])*P.h,fill:'none',stroke:c,strokeWidth:1.2,strokeDasharray:k===1?'none':'5 4',opacity:.65});
+      });
+      svgAdd(svg,'circle',{cx:px(mu[0]),cy:py(mu[1]),r:5,fill:c});
+      svgHalo(svg,px(mu[0])+12,py(mu[1])-10,'μ'+lab+'=('+mu.join(',')+')',{font:10,fill:c,anchor:'start'});
+    });
+    svgAdd(svg,'line',{x1:px(t1),y1:py(t2)-10,x2:px(t1),y2:py(t2)+10,stroke:'var(--blue)',strokeWidth:2.2});
+    svgAdd(svg,'line',{x1:px(t1)-10,y1:py(t2),x2:px(t1)+10,y2:py(t2),stroke:'var(--blue)',strokeWidth:2.2});
+    svgHalo(svg,px(t1)+12,py(t2)+18,'x=('+fmt(t1,1)+','+fmt(t2,1)+')',{font:10.5,fill:'var(--blue)',anchor:'start'});
+    svgHalo(svg,P.x0+P.w/2,P.y0+P.h+18,'x₁ 甜度 →（↑ x₂ 脂肪；虚线椭圆=2σ）',{font:10.5,fill:'var(--muted)'});
+    // panel
+    const nP=dens([t1,t2],muP,vP),nM=dens([t1,t2],muM,vM);
+    const sP=0.5*nP,sM=0.5*nM;
+    const post=sP/(sP+sM);
+    const q0={x0:540,y0:48};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'Bayes 打分（π=0.5，现算）');
+    const rows=[
+      ['马氏距离² 到 μ₊',fmt(((t1-muP[0])**2)/vP[0]+((t2-muP[1])**2)/vP[1],2)],
+      ['马氏距离² 到 μ₋',fmt(((t1-muM[0])**2)/vM[0]+((t2-muM[1])**2)/vM[1],2)],
+      ['N(x; μ₊,Σ₊)',nP.toExponential(3)],
+      ['N(x; μ₋,Σ₋)',nM.toExponential(3)],
+      ['s₊=π·N',sP.toExponential(3)],
+      ['s₋=(1−π)·N',sM.toExponential(3)],
+      ['P(+1|x)=s₊/(s₊+s₋)',fmt(post,4)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+26+i*27;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:i===6?'var(--accent)':'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+215,y,'font-size':10.5,'font-weight':700,fill:i===6?'var(--accent)':(r[1].includes('e')?'var(--muted)':'var(--accent)')},r[1]);
+    });
+    svgHalo(svg,q0.x0+105,q0.y0+26+7*27+4,'预测 '+(post>=0.5?'+1':'−1')+'（风险 '+fmt(Math.min(post,1-post),4)+'）',{font:11,fill:'var(--warm)'});
+    $('#g2Cap').innerHTML=`测试点 (${fmt(t1,1)}, ${fmt(t2,1)})：到两朵云的马氏距离平方 ${fmt(((t1-muP[0])**2)/vP[0]+((t2-muP[1])**2)/vP[1],2)} vs ${fmt(((t1-muM[0])**2)/vM[0]+((t2-muM[1])**2)/vM[1],2)}；s₊=${sP.toExponential(3)}、s₋=${sM.toExponential(3)}，后验 <b>P(+1|x)=${fmt(post,4)}</b>。讲义默认 [4,3]：离 μ₋ 更近（0.75 vs 4），预测 −1、P(+1|x)≈0.052——注意 GNB 比较的是加权密度分数，不是欧氏距离，负类 y 方向方差更大也在帮忙吸收这个点。`;
+  }
+  function sync(){$('#g2T1val').textContent=fmt(+$('#g2T1').value,1);$('#g2T2val').textContent=fmt(+$('#g2T2').value,1);draw();}
+  ['g2T1','g2T2'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §7 1-D GNB MLE + posterior ---------- */
+(()=>{
+  const svg=$('#mleGnbViz');
+  let data=null;
+  function regen(fixed){
+    if(fixed){data=[{x:1,y:-1},{x:2,y:-1},{x:5,y:1},{x:7,y:1}];return;}
+    const neg=Array.from({length:3},()=>({x:Math.floor(Math.random()*3),y:-1}));
+    const pos=Array.from({length:3},()=>({x:5+Math.floor(Math.random()*4),y:1}));
+    data=[...neg,...pos];
+  }
+  regen(true);
+  const N1=(x,mu,s2)=>Math.exp(-((x-mu)*(x-mu))/(2*s2))/Math.sqrt(2*Math.PI*s2);
+  function fit(){
+    const n=data.length;
+    const neg=data.filter(d=>d.y<0),pos=data.filter(d=>d.y>0);
+    const pi=pos.length/n;
+    const mNeg=neg.reduce((s,d)=>s+d.x,0)/neg.length;
+    const mPos=pos.reduce((s,d)=>s+d.x,0)/pos.length;
+    const vNeg=neg.reduce((s,d)=>s+(d.x-mNeg)**2,0)/neg.length||1e-6;
+    const vPos=pos.reduce((s,d)=>s+(d.x-mPos)**2,0)/pos.length||1e-6;
+    return {pi,mNeg,mPos,vNeg,vPos,nNeg:neg.length,nPos:pos.length};
+  }
+  function draw(){
+    const xq=+$('#mgX').value;
+    svg.innerHTML='';
+    const f=fit();
+    const P={x0:70,y0:60,w:740,h:150};
+    const xMin=-0.5,xMax=8.5;
+    const px=v=>P.x0+(v-xMin)/(xMax-xMin)*P.w;
+    let mxp=0;
+    const dens=[];
+    for(let k=0;k<=160;k++){
+      const x=xMin+(xMax-xMin)*k/160;
+      const dp=f.pi*N1(x,f.mPos,f.vPos),dm=(1-f.pi)*N1(x,f.mNeg,f.vNeg);
+      dens.push([x,dp,dm]);mxp=Math.max(mxp,dp,dm);
+    }
+    const py=v=>P.y0+P.h-(v/Math.max(mxp,1e-9))*.8*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    let d1='M',d2='M';
+    dens.forEach(([x,dp,dm])=>{d1+=' L'+px(x)+','+py(dp);d2+=' L'+px(x)+','+py(dm);});
+    svgAdd(svg,'path',{d:d1.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'path',{d:d2.replace('M L','M'),fill:'none',stroke:'var(--warm)',strokeWidth:2.4});
+    data.forEach(d=>svgAdd(svg,'circle',{cx:px(d.x),cy:P.y0+P.h-14,r:6,fill:d.y>0?'var(--accent)':'var(--warm)'}));
+    svgAdd(svg,'rect',{x:px(xq)-6,y:P.y0+P.h-20,width:12,height:12,transform:`rotate(45 ${px(xq)} ${P.y0+P.h-14})`,fill:'var(--blue)'});
+    svgHalo(svg,px(xq),P.y0+P.h+16,'x⋆='+fmt(xq,1),{font:10.5,fill:'var(--blue)'});
+    svgHalo(svg,px(f.mPos),py(f.pi*N1(f.mPos,f.mPos,f.vPos))-12,'μ̂₊',{font:10.5,fill:'var(--accent)'});
+    svgHalo(svg,px(f.mNeg),py((1-f.pi)*N1(f.mNeg,f.mNeg,f.vNeg))-12,'μ̂₋',{font:10.5,fill:'var(--warm)'});
+    // panel
+    const sP=f.pi*N1(xq,f.mPos,f.vPos),sM=(1-f.pi)*N1(xq,f.mNeg,f.vNeg);
+    const post=sP/(sP+sM);
+    const q0={x0:110,y0:248};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'MLE 参数与后验（现算）');
+    const rows=[
+      ['π̂±=Count/n',fmt(f.pi,2)+' / '+fmt(1-f.pi,2)],
+      ['μ̂₋, μ̂₊',fmt(f.mNeg,2)+' , '+fmt(f.mPos,2)],
+      ['σ̂²₋, σ̂²₊（÷n_y）',fmt(f.vNeg,3)+' , '+fmt(f.vPos,3)],
+      ['s₋=(1−π̂)N(x⋆;μ̂₋,σ̂²₋)',sM.toExponential(4)],
+      ['s₊=π̂N(x⋆;μ̂₊,σ̂²₊)',sP.toExponential(4)],
+      ['P(+1|x⋆)',fmt(post,6)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+26+i*26;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:i>=3&&i<=4?'var(--muted)':'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+255,y,'font-size':10.5,'font-weight':700,fill:i===5?'var(--accent)':'var(--accent)'},r[1]);
+    });
+    svgHalo(svg,q0.x0+130,q0.y0+26+6*26+2,'预测 '+(post>=0.5?'+1':'−1')+'；R(+1|x⋆)='+fmt(1-post,6),{font:11,fill:'var(--warm)'});
+    $('#mgCap').innerHTML=`拟合：π̂=${fmt(f.pi,2)}，μ̂₋=${fmt(f.mNeg,2)}（σ̂²=${fmt(f.vNeg,3)}）、μ̂₊=${fmt(f.mPos,2)}（σ̂²=${fmt(f.vPos,3)}）。x⋆=${fmt(xq,1)}：s₋=${sM.toExponential(4)}、s₊=${sP.toExponential(4)}，<b>P(+1|x⋆)=${fmt(post,6)}</b>。讲义对账（默认数据）：μ̂₋=1.5、μ̂₊=6、σ̂²₋=0.25、σ̂²₊=1；x⋆=4 时 s₋=1.4867e−6、s₊=0.0269955、P=0.999945、R(+1|x)=0.000055。随机换点后注意小样本类的方差可能极小——后验随之过度自信。`;
+  }
+  function sync(){$('#mgXval').textContent=fmt(+$('#mgX').value,1);draw();}
+  $('#mgX').addEventListener('input',sync);
+  $('#mgRand').addEventListener('click',()=>{regen(false);draw();toast('已随机重抽 6 个训练点');});
+  sync();
+})();
+
+/* ---------- §8 boundary hierarchy ---------- */
+(()=>{
+  const svg=$('#boundViz');
+  let mode='shared';
+  const muP=[2,1],muM=[5,4];
+  function covs(){
+    if(mode==='shared')return {P:[1.2,1.6],M:[1.2,1.6],full:null};
+    if(mode==='gnb')return {P:[1,1],M:[1,2],full:null};
+    return {P:null,M:null,full:true,fullP:[[1,.6],[.6,1.2]],fullM:[[1.2,-.5],[-.5,.8]]};
+  }
+  function logdetDiag(v){return Math.log(v[0]*v[1]);}
+  function mahaFull(x,mu,S){
+    const det=S[0][0]*S[1][1]-S[0][1]*S[1][0];
+    const inv=[[S[1][1]/det,-S[0][1]/det],[-S[0][1]/det,S[0][0]/det]];
+    const dx=[x[0]-mu[0],x[1]-mu[1]];
+    return dx[0]*(inv[0][0]*dx[0]+inv[0][1]*dx[1])+dx[1]*(inv[1][0]*dx[0]+inv[1][1]*dx[1]);
+  }
+  function logdetFull(S){return Math.log(S[0][0]*S[1][1]-S[0][1]*S[1][0]);}
+  function gP(x){
+    const c=covs();
+    if(c.full)return -0.5*logdetFull(c.fullP)-0.5*mahaFull(x,muP,c.fullP);
+    return -0.5*logdetDiag(c.P)-0.5*(((x[0]-muP[0])**2)/c.P[0]+((x[1]-muP[1])**2)/c.P[1]);
+  }
+  function gM(x){
+    const c=covs();
+    if(c.full)return -0.5*logdetFull(c.fullM)-0.5*mahaFull(x,muM,c.fullM);
+    return -0.5*logdetDiag(c.M)-0.5*(((x[0]-muM[0])**2)/c.M[0]+((x[1]-muM[1])**2)/c.M[1]);
+  }
+  function post(x){
+    const a=gP(x),b=gM(x);
+    const m=Math.max(a,b);
+    const p=Math.exp(a-m)/(Math.exp(a-m)+Math.exp(b-m));
+    return p;
+  }
+  function draw(){
+    svg.innerHTML='';
+    const P={x0:70,y0:30,w:470,h:350};
+    const xR=[-1.5,8.5],yR=[-1.5,7];
+    const px=v=>P.x0+(v-xR[0])/(xR[1]-xR[0])*P.w;
+    const py=v=>P.y0+P.h-(v-yR[0])/(yR[1]-yR[0])*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.3,stroke:'var(--line)'});
+    const NX=40,NY=26;
+    for(let i=0;i<NX;i++)for(let j=0;j<NY;j++){
+      const x0=xR[0]+(xR[1]-xR[0])*i/NX, x1=xR[0]+(xR[1]-xR[0])*(i+1)/NX;
+      const y0=yR[0]+(yR[1]-yR[0])*j/NY, y1=yR[0]+(yR[1]-yR[0])*(j+1)/NY;
+      const p=post([(x0+x1)/2,(y0+y1)/2]);
+      const col=p>=0.5?`hsl(168,${fmt(30+40*p,0)}%,${fmt(88-38*p,0)}%)`:`hsl(24,${fmt(30+40*(1-p),0)}%,${fmt(88-38*(1-p),0)}%)`;
+      svgAdd(svg,'rect',{x:px(x0),y:py(y1),width:P.w/NX+1,height:P.h/NY+1,fill:col,opacity:.85});
+    }
+    // boundary: per row linear interpolation
+    let d='';
+    for(let j=0;j<=120;j++){
+      const y=yR[0]+(yR[1]-yR[0])*j/120;
+      let bx=null,prev=null;
+      for(let i=0;i<=160;i++){
+        const x=xR[0]+(xR[1]-xR[0])*i/160;
+        const p=post([x,y]);
+        if(prev!==null&&((prev<0.5&&p>=0.5)||(prev>=0.5&&p<0.5))){
+          const xPrev=xR[0]+(xR[1]-xR[0])*(i-1)/160;
+          bx=xPrev+(x-xPrev)*(0.5-prev)/(p-prev);
+          break;
+        }
+        prev=p;
+      }
+      if(bx!==null)d+=(d?' L':'M')+px(bx)+','+py(y);
+    }
+    if(d)svgAdd(svg,'path',{d,fill:'none',stroke:'#fff',strokeWidth:2.6});
+    [[muP,'μ₊','var(--surface)'],[muM,'μ₋','var(--surface)']].forEach(([mu,lab])=>{
+      svgAdd(svg,'circle',{cx:px(mu[0]),cy:py(mu[1]),r:5,fill:'#fff',stroke:'var(--ink)',strokeWidth:1.5});
+      svgHalo(svg,px(mu[0])+12,py(mu[1])-10,lab,{font:10.5,fill:'var(--ink)',anchor:'start'});
+    });
+    svgHalo(svg,P.x0+P.w/2,P.y0+P.h+16,'x₁ →（↑ x₂）色 = P(+1|x)，白线 = 0.5 边界（现算）',{font:10.5,fill:'var(--muted)'});
+    // caption panel
+    const desc=mode==='shared'?'共享对角 Σ=diag(1.2, 1.6)：二次项相消 → 直线（受限线性，LDA 特例）':(mode==='gnb'?'各类对角 Σ₊=diag(1,1)、Σ₋=diag(1,2)：留下 x₁²、x₂² 轴对齐二次项（GNB 边界）':'各类完整 Σ₊=[[1,.6],[.6,1.2]]、Σ₋=[[1.2,−.5],[−.5,.8]]：还有交叉项（一般 QDA）');
+    $('#bdCap').innerHTML=`当前模式：${desc}。热图/边界由当前协方差逐格现算（40×26 网格 + 逐行插值）。logistic 的边界 ⟨w,x⟩=0 恒为直线——它根本不为 x 建模密度，也就无从产生二次项。切到“各类完整”看边界弯曲方向如何跟随椭圆的长轴取向。`;
+  }
+  function setM(m){
+    mode=m;
+    $('#bdShared').classList.toggle('active',m==='shared');
+    $('#bdGnb').classList.toggle('active',m==='gnb');
+    $('#bdQda').classList.toggle('active',m==='qda');
+    draw();
+  }
+  $('#bdShared').addEventListener('click',()=>setM('shared'));
+  $('#bdGnb').addEventListener('click',()=>setM('gnb'));
+  $('#bdQda').addEventListener('click',()=>setM('qda'));
+  draw();
+})();
+
+/* ---------- §9 conditional risk ---------- */
+(()=>{
+  const svg=$('#riskViz');
+  const mC=2,varC=0.6;
+  function draw(){
+    const p=+$('#rkP').value,a=+$('#rkA').value;
+    svg.innerHTML='';
+    // left: 0-1 risk vs p
+    const L={x0:70,y0:40,w:340,h:250};
+    const px=v=>L.x0+ (v-0.01)/0.98*L.w;
+    const py=v=>L.y0+L.h-(v/1.0)*L.h;
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>{svgAdd(svg,'line',{x1:L.x0,y1:py(v),x2:L.x0+L.w,y2:py(v),stroke:'var(--line)',opacity:.4});svgAdd(svg,'text',{x:L.x0-10,y:py(v)+4,'text-anchor':'end','font-size':9,fill:'var(--muted)'},fmt(v,2));});
+    [0.2,0.4,0.5,0.6,0.8].forEach(v=>svgAdd(svg,'text',{x:px(v),y:L.y0+L.h+15,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},fmt(v,1)));
+    svgAdd(svg,'line',{x1:L.x0,y1:py(1-p),x2:L.x0+L.w,y2:py(1-(0.01+0.98)),stroke:'none'});
+    // R(+1)=1-p decreasing, R(-1)=p increasing
+    svgAdd(svg,'line',{x1:px(0.01),y1:py(1-0.01),x2:px(0.99),y2:py(1-0.99),stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'line',{x1:px(0.01),y1:py(0.01),x2:px(0.99),y2:py(0.99),stroke:'var(--warm)',strokeWidth:2.4});
+    svgHalo(svg,px(0.22),py(0.86),'R(+1|x)=1−p',{font:10,fill:'var(--accent)'});
+    svgHalo(svg,px(0.78),py(0.86),'R(−1|x)=p',{font:10,fill:'var(--warm)'});
+    svgAdd(svg,'circle',{cx:px(0.5),cy:py(0.5),r:4,fill:'var(--ink)'});
+    svgHalo(svg,px(0.5),py(0.5)+20,'p=0.5：风险相等',{font:9.5,fill:'var(--muted)'});
+    const rp=1-p,rm=p;
+    svgAdd(svg,'circle',{cx:px(p),cy:py(rp),r:6,fill:'var(--accent)'});svgAdd(svg,'circle',{cx:px(p),cy:py(rm),r:6,fill:'var(--warm)'});
+    svgHalo(svg,px(p)+(p>0.5?-12:12),py(rp)-10,'p='+fmt(p,2),{font:10.5,fill:'var(--blue)',anchor:p>0.5?'end':'start'});
+    svgHalo(svg,L.x0+L.w/2,L.y0-8,'0-1 损失：两条条件风险（现算）',{font:10.5,fill:'var(--muted)'});
+    // right: squared loss parabola
+    const R={x0:520,y0:40,w:300,h:250};
+    const pxa=v=>R.x0+(v/4)*R.w;
+    const pyr=v=>R.y0+R.h-((v)/5.2)*R.h;
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:R.x0,y1:pyr(varC),x2:R.x0+R.w,y2:pyr(varC),stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'5 4'});
+    svgHalo(svg,R.x0+10,pyr(varC)+16,'噪声底 Var=0.6（与 a 无关）',{font:9.5,fill:'var(--muted)',anchor:'start'});
+    let d='M';
+    for(let k=0;k<=80;k++){const aa=k/20;d+=(k===0?'':' L')+pxa(aa)+','+pyr((aa-mC)**2+varC);}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'circle',{cx:pxa(mC),cy:pyr(varC),r:6,fill:'var(--gold)'});
+    svgHalo(svg,pxa(mC),pyr(varC)-14,'最优 a=m(x)=2',{font:10,fill:'var(--gold)'});
+    const cur=(a-mC)**2+varC;
+    svgAdd(svg,'circle',{cx:pxa(a),cy:pyr(Math.min(cur,5.2)),r:6,fill:'var(--blue)'});
+    svgHalo(svg,pxa(a)+(a>2?-12:12),pyr(Math.min(cur,5.2))+20,'a='+fmt(a,2),{font:10.5,fill:'var(--blue)',anchor:a>2?'end':'start'});
+    svgHalo(svg,R.x0+R.w/2,R.y0-8,'平方损失：E[(a−Y)²|x]=（a−m）²+Var（现算）',{font:10,fill:'var(--muted)'});
+    const best=p>=0.5?'+1':'−1';
+    $('#rkCap').innerHTML=`左：p=${fmt(p,2)} → R(+1|x)=${fmt(rp,2)}、R(−1|x)=${fmt(rm,2)}，选 <b>${best}</b>（风险 ${fmt(Math.min(rp,rm),2)}）。讲义两例：0.7 → 风险 0.3；0.51 → 仍选 +1 但风险 0.49。右：当前动作 a=${fmt(a,2)} 的期望平方损失=${fmt(cur,3)}（偏差 ${(a-mC)**2===0?'0':fmt((a-mC)**2,2)} + 噪声 0.6）；最小在 a=E[Y|x]=2，只剩 0.6 的不可消除噪声。`;
+  }
+  function sync(){$('#rkPval').textContent=fmt(+$('#rkP').value,2);$('#rkAval').textContent=fmt(+$('#rkA').value,2);draw();}
+  ['rkP','rkA'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#rkE1').addEventListener('click',()=>{$('#rkP').value=0.7;sync();toast('已载入讲义例 p=0.7');});
+  $('#rkE2').addEventListener('click',()=>{$('#rkP').value=0.51;sync();toast('已载入讲义例 p=0.51（同样预测 +1，风险 0.49）');});
+  sync();
+})();
+
+/* ---------- §10 GNB workbench ---------- */
+(()=>{
+  const svg=$('#labViz');
+  let data=null;
+  function regen(){
+    const c1=[1.5+Math.random()*2,1.5+Math.random()*2];
+    const c2=[4.5+Math.random()*2,3.5+Math.random()*2];
+    const s1=[0.6+Math.random()*0.9,0.6+Math.random()*0.9];
+    const s2=[0.6+Math.random()*0.9,0.6+Math.random()*0.9];
+    const mk=(c,s,y)=>Array.from({length:25},()=>({x:[c[0]+(Math.random()+Math.random()-1)*s[0]*1.6,c[1]+(Math.random()+Math.random()-1)*s[1]*1.6],y}));
+    data=[...mk(c1,s1,1),...mk(c2,s2,-1)];
+  }
+  regen();
+  function fit(){
+    const n=data.length;
+    const pos=data.filter(d=>d.y>0),neg=data.filter(d=>d.y<0);
+    const pi=pos.length/n;
+    const mu=y=>{const g=y>0?pos:neg;return [g.reduce((s,d)=>s+d.x[0],0)/g.length,g.reduce((s,d)=>s+d.x[1],0)/g.length];};
+    const muP=mu(1),muM=mu(-1);
+    const v=(g,m)=>[g.reduce((s,d)=>s+(d.x[0]-m[0])**2,0)/g.length||1e-6,g.reduce((s,d)=>s+(d.x[1]-m[1])**2,0)/g.length||1e-6];
+    return {pi,muP,muM,vP:v(pos,muP),vM:v(neg,muM),nPos:pos.length,nNeg:neg.length};
+  }
+  const N1=(x,m,s2)=>Math.exp(-((x-m)*(x-m))/(2*s2))/Math.sqrt(2*Math.PI*s2);
+  function draw(){
+    svg.innerHTML='';
+    const f=fit();
+    const post=x=>{
+      const sP=f.pi*N1(x[0],f.muP[0],f.vP[0])*N1(x[1],f.muP[1],f.vP[1]);
+      const sM=(1-f.pi)*N1(x[0],f.muM[0],f.vM[0])*N1(x[1],f.muM[1],f.vM[1]);
+      return sP/(sP+sM);
+    };
+    const P={x0:70,y0:30,w:470,h:350};
+    const xR=[-2,9],yR=[-2,8.5];
+    const px=v=>P.x0+(v-xR[0])/(xR[1]-xR[0])*P.w;
+    const py=v=>P.y0+P.h-(v-yR[0])/(yR[1]-yR[0])*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.3,stroke:'var(--line)'});
+    const NX=36,NY=26;
+    for(let i=0;i<NX;i++)for(let j=0;j<NY;j++){
+      const x0=xR[0]+(xR[1]-xR[0])*i/NX, x1=xR[0]+(xR[1]-xR[0])*(i+1)/NX;
+      const y0=yR[0]+(yR[1]-yR[0])*j/NY, y1=yR[0]+(yR[1]-yR[0])*(j+1)/NY;
+      const p=post([(x0+x1)/2,(y0+y1)/2]);
+      const col=p>=0.5?`hsl(168,${fmt(30+40*p,0)}%,${fmt(88-38*p,0)}%)`:`hsl(24,${fmt(30+40*(1-p),0)}%,${fmt(88-38*(1-p),0)}%)`;
+      svgAdd(svg,'rect',{x:px(x0),y:py(y1),width:P.w/NX+1,height:P.h/NY+1,fill:col,opacity:.8});
+    }
+    let d='';
+    for(let j=0;j<=110;j++){
+      const y=yR[0]+(yR[1]-yR[0])*j/110;
+      let bx=null,prev=null;
+      for(let i=0;i<=150;i++){
+        const x=xR[0]+(xR[1]-xR[0])*i/150;
+        const p=post([x,y]);
+        if(prev!==null&&((prev<0.5&&p>=0.5)||(prev>=0.5&&p<0.5))){
+          const xPrev=xR[0]+(xR[1]-xR[0])*(i-1)/150;
+          bx=xPrev+(x-xPrev)*(0.5-prev)/(p-prev);
+          break;
+        }
+        prev=p;
+      }
+      if(bx!==null)d+=(d?' L':'M')+px(bx)+','+py(y);
+    }
+    if(d)svgAdd(svg,'path',{d,fill:'none',stroke:'#fff',strokeWidth:2.4});
+    data.forEach(dd=>svgAdd(svg,'circle',{cx:px(dd.x[0]),cy:py(dd.x[1]),r:3.6,fill:dd.y>0?'var(--accent)':'var(--warm)',stroke:'#fff',strokeWidth:.6}));
+    svgHalo(svg,P.x0+P.w/2,P.y0+P.h+16,'GNB 后验热图 + 0.5 边界 + 训练点（全部现算）',{font:10.5,fill:'var(--muted)'});
+    // panel
+    const q0={x0:590,y0:44};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'拟合参数（÷n_y）');
+    const rows=[
+      ['π̂',fmt(f.pi,2)],
+      ['μ̂₊','('+f.muP.map(v2=>fmt(v2,2)).join(', ')+')'],
+      ['μ̂₋','('+f.muM.map(v2=>fmt(v2,2)).join(', ')+')'],
+      ['σ̂²₊','('+f.vP.map(v2=>fmt(v2,2)).join(', ')+')'],
+      ['σ̂²₋','('+f.vM.map(v2=>fmt(v2,2)).join(', ')+')']
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+26+i*26;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+70,y,'font-size':10.5,'font-weight':700,fill:'var(--accent)'},r[1]);
+    });
+    const acc=data.filter(dd=>(post(dd.x)>=0.5?1:-1)===dd.y).length/data.length;
+    svgHalo(svg,q0.x0+55,q0.y0+26+5*26+2,'训练准确率 '+fmt(acc*100,1)+'%（现算）',{font:11,fill:'var(--warm)'});
+    $('#lbCap').innerHTML=`当前批次：${f.nPos}+/−${f.nNeg}−，π̂=${fmt(f.pi,2)}，μ̂₊=(${f.muP.map(v2=>fmt(v2,2)).join(', ')})，σ̂²₊=(${f.vP.map(v2=>fmt(v2,2)).join(', ')})，μ̂₋=(${f.muM.map(v2=>fmt(v2,2)).join(', ')})，σ̂²₋=(${f.vM.map(v2=>fmt(v2,2)).join(', ')})；训练准确率 <b>${fmt(acc*100,1)}%</b>。两类对角方差差别越大，0.5 边界越弯（§8 的 GNB 层级）；随机多抽几次可以看到准确率与边界形状的真实波动。`;
+  }
+  $('#lbRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽 50 个训练点');});
+  draw();
+})();
+
+/* ---------- §11 logsumexp ---------- */
+(()=>{
+  const svg=$('#lseViz');
+  function draw(){
+    const g1=+$('#lsG1').value,g2=+$('#lsG2').value;
+    svg.innerHTML='';
+    const e1=Math.exp(g1),e2=Math.exp(g2);
+    const naiveSum=e1+e2;
+    const naiveP=naiveSum>0?e1/naiveSum:NaN;
+    const gmax=Math.max(g1,g2);
+    const lse=gmax+Math.log(Math.exp(g1-gmax)+Math.exp(g2-gmax));
+    const stableP=Math.exp(g1-lse);
+    const truth=1/(1+Math.exp(g2-g1));
+    const q0={x0:80,y0:50};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'两种算法对照（现算）');
+    const rows=[
+      ['输入 log-score',`g₁=${fmt(g1,0)}, g₂=${fmt(g2,0)}`],
+      ['直接法：exp(g₁), exp(g₂)',`${e1===0?'0（下溢）':e1.toExponential(3)}, ${e2===0?'0（下溢）':e2.toExponential(3)}`],
+      ['直接法：p₁=e^{g₁}/(e^{g₁}+e^{g₂})',Number.isNaN(naiveP)?'NaN（0/0）':fmt(naiveP,4)],
+      ['稳定法：g_max='+fmt(gmax,0),`logsumexp=${fmt(lse,4)}`],
+      ['稳定法：p₁=exp(g₁−logsumexp)',fmt(stableP,4)],
+      ['解析真值 1/(1+e^{g₂−g₁})',fmt(truth,4)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+30+i*34;
+      const bad=i===2&&Number.isNaN(naiveP);
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':11,fill:bad?'var(--danger)':(i>=3?'var(--accent)':'var(--ink)')},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+300,y,'font-size':11,'font-weight':700,fill:bad?'var(--danger)':(i>=3?'var(--accent)':'var(--ink)')},r[1]);
+    });
+    svgHalo(svg,q0.x0+185,q0.y0+30+6*34+4,Number.isNaN(naiveP)?'✗ 直接法已翻车；✓ 稳定法与真值逐位一致':'两种方法一致（数值都在安全区）',{font:11,fill:Number.isNaN(naiveP)?'var(--danger)':'var(--accent)'});
+    $('#lsCap').innerHTML=`g₁=${fmt(g1,0)}、g₂=${fmt(g2,0)}：直接法 ${Number.isNaN(naiveP)?'exp 下溢为 0，归一化 0/0=NaN':'p₁='+fmt(naiveP,4)+'（尚可）'}；稳定法先提 g_max=${fmt(gmax,0)}，指数只算差值，得 p₁=<b>${fmt(stableP,4)}</b>，与解析真值 ${fmt(truth,4)} 逐位一致。把滑杆拖回 −5 附近两法一致——logsumexp 不改数学，只改“算得出”。`;
+  }
+  function sync(){$('#lsG1val').textContent=fmt(+$('#lsG1').value,0);$('#lsG2val').textContent=fmt(+$('#lsG2').value,0);draw();}
+  ['lsG1','lsG2'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- checklist ---------- */
+(()=>{
+  const items=[
+    '我能说清判别式（p(x)p(y|x)）与生成式（p(y)p(x|y)）各自建模什么、擅长什么。',
+    '我能手算 logistic 概率：w=2 时 x=1 → 0.881、x=−1 → 0.119、x=0 → 0.5。',
+    '我能推导 logistic MLE：负对数似然逐项就是 log(1+e^{−mᵢ})。',
+    '我能解释似然可分的条件（参数乘积空间 + A+B 可加）与失效情形（共享参数/耦合正则）。',
+    '我能写出 Bayes 规则并说明“分子比较、分母归一”的分工。',
+    '我能手算一维 GNB：μ̂₋=1.5、μ̂₊=6、σ̂²₋=0.25、σ̂²₊=1、x⋆=4 → P(+1|x)≈0.9999。',
+    '我知道 GNB 的方差 MLE 除以 n_y 而不是 n_y−1，以及为什么。',
+    '我能说清“naive”的确切含义：给定类别后特征条件独立（Σ 对角）。',
+    '我能推导边界形状的三级层级（共享对角线性 / 类对角轴对齐二次 / 完整 QDA）。',
+    '我知道先验改变会移动后验 0.5 的边界（π 滑杆演示）。',
+    '我能写出平方损失（条件均值）与 0-1 损失（后验 argmax）下的 Bayes 最优预测。',
+    '我能用条件风险解释“0.7 与 0.51 都预测 +1 但可信度不同”。'
+  ];
+  const box=$('#checkList');
+  box.innerHTML=items.map((t,i)=>`<label><input type="checkbox" data-ck="${i}"><span>${t}</span></label>`).join('');
+  const score=$('#checkScore');
+  function upd(){
+    const done=$$('#checkList input').filter(c=>c.checked).length;
+    score.textContent=`已确认 ${done}/${items.length} 项${done===items.length?'——第 20 讲可以收官，向第 21 讲出发。':'。全部勾掉再进入下一讲。'}`;
+    $$('#checkList label').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  }
+  box.addEventListener('change',upd);
+  upd();
+})();
+
+/* ---------- mode system ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    setup:{mode:'core',tag:'问法'},cond:{mode:'core',tag:'logistic'},mle:{mode:'core',tag:'MLE'},
+    joint:{mode:'core',tag:'可分'},gen:{mode:'core',tag:'生成'},gnb:{mode:'core',tag:'GNB'},
+    mlegnb:{mode:'core',tag:'手算'},bound:{mode:'core',tag:'边界'},bayesopt:{mode:'core',tag:'决策'},
+    lab:{mode:'extra',tag:'拓展'},lse:{mode:'extra',tag:'拓展'},
+    confuse:{mode:'core',tag:'误区'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：判别与生成两条支线如何汇到同一个后验、再交给损失。',
+    setup:'同一张图两种问法——先看清两条路线在问什么。',
+    cond:'判别路线的经典模型：sigmoid 把线性分数变成概率。',
+    mle:'对 logistic 做 MLE，logistic loss 的出身就此揭晓。',
+    joint:'条件模型补一个输入模型就拼出联合；参数分开时 MLE 可拆。',
+    gen:'换一个故事：先抽类别再长输入，Bayes 公式负责倒放。',
+    gnb:'生成故事的经典化身：每类一团对角高斯云。',
+    mlegnb:'云团参数的 MLE 加一维手算——后验 0.9999 的完整来历。',
+    bound:'两团云的分水岭：协方差共享层级决定直线还是二次曲线。',
+    bayesopt:'后验到手后，预测=逐点最小化条件期望损失。',
+    lab:'把生成路线串成一台机器：随机数据到边界与准确率。',
+    lse:'把几百量级的 log-score 安全换算回概率的数值技巧。',
+    confuse:'收束前先扫掉七句“听起来对”的话。',
+    takeaway:'最后把两条路线、五个公式、自查清单和下一讲串起来。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    setTimeout(rebuildBridges,0);
+    if(mode==='full'){
+      $$('.control input[type=range]').forEach(r=>r.dispatchEvent(new Event('input',{bubbles:true})));
+    }
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'判别式模型',en:'discriminative model',f:'p(x,y)=p(x)\\,p(y\\mid x)',d:'直接建模条件分布 p(y|x)；联合由条件与边缘拼出。',r:'位置：§1。用处：预测标签、带不确定性的分类。重要：不解释 x 的密度——只关心分类时少一件事可错。'},
+    {t:'生成式模型',en:'generative model',f:'p(x,y)=p(y)\\,p(x\\mid y)',d:'建模先验与类条件密度，得到联合；分类用 Bayes 反推后验。',r:'位置：§1。用处：分类+采样+异常检测+缺失值。重要：代价是必须解释 P(X|Y)，高维时难。'},
+    {t:'logistic 模型',en:'logistic model',f:'p(y\\mid x;w)=\\frac{1}{1+\\exp(-y\\langle w,x\\rangle)}',d:'把线性分数经 sigmoid 压成合法概率的二分类条件模型。',r:'位置：§2。用处：带不确定性的分类概率。重要：给的不只是边界 ⟨w,x⟩=0，还有两侧概率变化。'},
+    {t:'logistic 损失',en:'logistic loss',f:'\\ell(m)=\\log(1+e^{-m}),\\ m=y\\langle w,x\\rangle',d:'logistic 条件模型的负对数似然；对 margin 的软惩罚。',r:'位置：§3。用处：logistic regression 的训练目标。重要：它是 MLE 推导的结果，不是人为规定（对照 hinge）。'},
+    {t:'似然可分',en:'likelihood separation',f:'\\ell(\\theta_x,\\theta_y)=A(\\theta_x)+B(\\theta_y)',d:'参数乘积空间 + 可加目标时，两部分的 MLE 可各自求解。',r:'位置：§4。用处：证明拟合 p(x) 不影响条件分类器的 MLE。重要：共享参数或耦合正则时失效。'},
+    {t:'类别先验',en:'class prior',f:'\\hat\\pi_y=\\operatorname{Count}(Y=y)/n',d:'抽到每个类别的概率；MLE 就是频率。',r:'位置：§5。用处：与类条件密度相乘给出未归一化后验。重要：先验改变会移动后验 0.5 边界。'},
+    {t:'类条件密度',en:'class-conditional density',f:'p(x\\mid y)',d:'给定类别后输入的分布——“这个类的成员长什么样”。',r:'位置：§5。用处：生成故事的核心。重要：它是生成式的额外账单，建错会拖累分类。'},
+    {t:'Bayes 规则',en:'Bayes rule',f:'p(y\\mid x)=\\frac{p(y)p(x\\mid y)}{\\sum_c p(c)p(x\\mid c)}',d:'从先验与类条件密度反推后验；分子比较、分母归一。',r:'位置：§5。用处：生成模型取回分类后验。重要：报概率或算风险必须完成归一化。'},
+    {t:'Gaussian Naive Bayes',en:'Gaussian Naive Bayes',f:'s_y(x)=\\pi_y\\mathcal N(x;\\mu_y,\\operatorname{diag}\\sigma_y^2)',d:'先验+每类对角协方差高斯的生成式分类器。',r:'位置：§6。用处：快速生成式基线。重要：参数量从 d(d+1)/2 降到 d，但特征相关时密度会错。'},
+    {t:'条件独立',en:'conditional independence',f:'p(x\\mid y)=\\prod_j p(x_j\\mid y)',d:'给定类别后各特征独立（naive 假设，Σ_y 对角）。',r:'位置：§6。用处：把联合密度拆成一维乘积。重要：≠特征独立于标签，≠各类共享协方差。'},
+    {t:'log-score',en:'log-score',f:'g_y(x)=\\log\\pi_y+\\log\\mathcal N(x;\\mu_y,\\Sigma_y)',d:'对数未归一化后验；连乘改连加的账本。',r:'位置：§8。用处：比较类别、推导边界形状。重要：还原概率要用 logsumexp，不能把 g 当概率。'},
+    {t:'决策边界',en:'decision boundary',f:'g_{+1}(x)=g_{-1}(x)',d:'两个动作条件风险相等的输入集合；概率分类里即后验相等处。',r:'位置：§8。用处：可视化分类几何。重要：形状由“两类 log-density 相减后剩什么 x 项”决定。'},
+    {t:'Bayes 最优预测',en:'Bayes optimal predictor',f:'f^*(x)=\\arg\\min_a\\mathbb E[\\ell(a,Y)\\mid X=x]',d:'真实分布下逐点最小化条件期望损失的规则。',r:'位置：§9。用处：预测的理论模板与下界。重要：只依赖 P(Y|X)；换损失不用重训模型。'},
+    {t:'条件风险',en:'conditional risk',f:'R(a\\mid x)=\\mathbb E[\\ell(a,Y)\\mid X=x]',d:'固定 x 后动作 a 的期望损失。',r:'位置：§9。用处：预测=逐点选条件风险最小的动作。重要：0-1 损失下 R(+1|x)=P(−1|x)。'},
+    {t:'logsumexp',en:'log-sum-exp trick',f:'\\log\\sum_c e^{g_c}=g_{\\max}+\\log\\sum_c e^{g_c-g_{\\max}}',d:'先减最大值再做 log-sum-exp，避免上溢/下溢。',r:'位置：§11。用处：对数分数到概率的一切实现。重要：不改数学，只改“算得出”。'}
+  ];
+  const KEYS={};
+  G.forEach(c=>KEYS[c.t]=c.t);
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg,.term-ref';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&(p.matches(GLOSS_SKIP)||p.id==='hero'||p.id==='map'))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'logistic regression 为什么可以看成 MLE？',a:'对 logistic 条件模型 $p(y\\mid x;w)=\\big(1+\\exp(-y\\langle w,x\\rangle)\\big)^{-1}$ 写条件似然 $\\prod_i p(y_i\\mid x_i;w)$，取负对数并用 $-\\log(1/a)=\\log a$：逐项化为 $\\log(1+e^{-y_i\\langle w,x_i\\rangle})$——正是 logistic loss。'},
+    {q:'$p(x,y)=p(x)p(y\\mid x)$ 和 $p(x,y)=p(y)p(x\\mid y)$ 哪个正确？',a:'两个都正确——它们是同一个联合分布的两种分解。真正的问题是哪个更容易用简单参数族表示：这是结构假设的选择，不是数学对错。'},
+    {q:'GNB 中 “naive” 指什么？',a:'给定类别后各特征条件独立：$p(x\\mid y)=\\prod_j\\mathcal N(x_j;\\mu_{yj},\\sigma_{yj}^2)$，对应协方差取对角。它删掉 $x_jx_k$ 相关项，不删各特征自身的均值方差。'},
+    {q:'GNB 的类别先验 MLE 是什么？',a:'$\\hat\\pi_y=\\operatorname{Count}(Y=y)/n$——频率就是多项分布的 MLE。'},
+    {q:'为什么 logistic 的决策边界是线性的？',a:'$p(+1\\mid x)=p(-1\\mid x)$ 等价于 sigmoid 参数为零：$\\langle w,x\\rangle=0$（本讲 $b=0$ 特例；一般形式 $w^\\top x+b=0$）——一次方程，直线/超平面。'},
+    {q:'为什么 GNB 的边界可能是非线性的？',a:'比较两类 log-score 时 $x^\\top\\Sigma_y^{-1}x$ 项随类别变化无法相消：对角 $\\Sigma_y$ 留下 $x_1^2,\\ldots,x_d^2$ 轴对齐二次项（受限二次）；完整协方差还产生 $x_jx_k$ 交叉项（一般 QDA）。共享协方差时该项相消，退回线性（LDA 风格）。'},
+    {q:'平方损失下的 Bayes 最优预测是什么？0-1 损失呢？',a:'平方损失：$f^*(x)=\\mathbb E[Y\\mid X=x]$（条件均值；误差=（a−m(x)）²+Var，第二项与动作无关）。0-1 损失：$y^*(x)=\\arg\\max_y P(Y=y\\mid x)$（后验 argmax；边界在后验相等处）。'},
+    {q:'对本讲一维 GNB 的 $x=4$，两个未归一化分数与归一化后验约是多少？',a:'$\\mathcal N(4;1.5,0.25)=2.9734\\times10^{-6}$、$s_-\\approx1.4867\\times10^{-6}$；$\\mathcal N(4;6,1)=0.053991$、$s_+\\approx0.0269955$；归一化 $P(Y{=}{+}1\\mid x=4)\\approx0.999945$（§7 互动逐步复算）。'},
+    {q:'GNB 的协方差 MLE 为什么除以 $n_y$ 而不是 $n_y-1$？',a:'因为这里在最大化给定参数族下的似然——Gaussian MLE 的二阶矩用有效样本数 $n_y$；$n_y-1$ 是无偏样本协方差的频率学修正，不是 MLE。小样本类方差不稳时可用平滑/方差下限。'},
+    {q:'后验 0.7 与 0.51 都预测 +1，有什么本质区别？',a:'条件风险不同：0-1 损失下 $R(+1\\mid x)=1-p$，分别是 0.3 与 0.49——同样的动作，期望损失差 0.19。这也是为什么要保留概率而不只保留预测。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  if(window.renderMathInElement)renderMathInElement(list,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+
+</script>
+</body>
+</html>
