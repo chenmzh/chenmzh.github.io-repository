@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 15 讲 · Clustering（聚类）互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 15 讲 Clustering（聚类）的深度互动讲义：无监督学习、k-means 目标、分配步与更新步、Lloyd 算法、单调性、Voronoi 几何、初始化与 k-means++、肘部法、尺度与形状失败、与 PCA 的连接。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+ .gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px} .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+.control input[type=number],.control select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+pre.codeblock{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;font-size:.82em;line-height:1.65}
+pre.codeblock code{color:inherit;background:none}
+figure{margin:16px 0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure figcaption{margin-top:6px;color:var(--muted);font-size:.84rem;line-height:1.5}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px}
+.gloss{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.gloss h4{margin:0 0 4px;font-size:1rem}
+.gloss .en{display:block;font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--accent);margin-bottom:7px}
+.gloss p{margin:.35em 0;font-size:.88rem}
+.gloss .role{color:var(--warm)}
+.gloss .formula{font-size:.92em;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.legend span::before{content:"●";margin-right:5px;font-size:.9em}
+.legend .l-fwd::before{color:var(--fwd)} .legend .l-bwd::before{color:var(--bwd)} .legend .l-opt::before{color:var(--opt)} .legend .l-tool::before{color:var(--tool)}
+.step-bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-15" title="返回第 15 讲原文">← 返回第 15 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 15 · INTERACTIVE LAB</div>
+      <div class="title">Clustering — 没有标签时如何定义好分组</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 15 讲 / 25 讲</div>
+      <h1>没有标签，<br>怎么把数据<br><span style="color:var(--warm)">分出合理的组</span>？</h1>
+      <p class="subtitle">第 12–14 讲都在回答“<b>有标签</b>时如何学习”（反向传播、训练稳定性、CNN）。这一讲进入<b>非监督学习</b>：手里只有 $x_1,\ldots,x_n$，没有 $y_i$，却要发现结构。本讲聚焦最经典的 partitioning 原型——<b>$k$-means</b>：目标函数、分配步、更新步、Lloyd 算法、单调性、Voronoi 几何、初始化与 $k$ 的选择。它是“无标签表示学习”的第一块拼图，下一讲 PCA 会把离散中心换成连续子空间。</p>
+      <div class="question">💬 本讲核心问题：没有外部标签时，“合理的组”由什么定义？$k$-means 用什么目标、什么算法去找组，又会在哪些地方失败？</div>
+      <div class="answer">一句话答案：$k$-means 把“好的分组”定义为<b>用 $k$ 个代表点（中心）重建所有数据时的总平方误差最小</b>。它交替做两件简单的事——<b>分配步</b>（每个点归给最近中心）和<b>更新步</b>（每个中心取簇内均值），组成 <b>Lloyd 算法</b>。这个目标非凸，所以只能保证单调不增、收敛到局部解；初始化用<b>多次随机重启 / $k$-means++</b>，$k$ 用<b>肘部 + 复杂度 + 稳定性</b>一起选。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">从“无标签整理问题”出发：定义聚类 → 写出 $k$-means 目标 → 推导两个子问题的最优解（最近中心、簇均值）→ Lloyd 交替优化 → 证明损失单调不增 → 看 Voronoi 几何 → 处理初始化、$k$ 选择、尺度与形状失败 → 连接 PCA。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">现实数据常没有标签（用户分群、异常检测、压缩、表示学习）。$k$-means 是理解一切“基于原型的无监督模型”的最小入口：它把<b>相似性建模 = 特征 + 距离 + 目标函数</b>这件事讲透，也第一次展示<b>非凸目标 + 交替优化 + 局部最优</b>的典型结构。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 定义</b>：没有标签，用“到中心的重建误差”定义好分组（§1–§3）。</span>
+            <span class="step"><b>② 子问题</b>：固定中心选最近邻居；固定分组取均值（§4–§5）。</span>
+            <span class="step"><b>③ 算法</b>：Lloyd 交替执行两步，损失单调不增（§6–§7）。</span>
+            <span class="step"><b>④ 几何</b>：Voronoi 边界为什么是直线（§8）。</span>
+            <span class="step"><b>⑤ 实践</b>：初始化 / $k$-means++、选 $k$、尺度与形状失败（§9–§12）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：CNN（L14）→ <b>聚类（L15）</b> → PCA 降维（L16）</span>
+        <span class="pill">🧩 前置：向量内积、欧几里得距离、凸二次函数求梯度</span>
+        <span class="pill">🎯 产出：一套<b>能手算 Lloyd 两轮、看懂 Voronoi、解释初始化/选 $k$</b>的聚类语言</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：无标签问题在这门课里的位置</h2>
+      <p class="sec-lead">第 14 讲刚结束“有标签的深层模型”。第 15 讲转向<b>没有标签</b>：$k$-means 用 $k$ 个离散中心压缩数据；第 16 讲 PCA 把离散中心换成连续线性子空间。下面的地图是第 15 讲内部主线，节点可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 420" role="img" aria-label="第 15 讲概念地图"></svg></div>
+        <div class="caption">概念地图：<span class="tag core">核心</span>环节（目标 → 分配 → 更新 → Lloyd → 单调 → Voronoi → 初始化/选 $k$）构成完整主线；<span class="tag extra">拓展</span>环节回答“什么时候 $k$-means 会失败”。灰色节点是前后讲次。</div>
+      </div>
+    </section>
+
+    <!-- ============ UNSUPERVISED ============ -->
+    <section id="unsup">
+      <h2 class="sec-title"><span class="num">§1</span>没有标签：聚类要自己定义“好分组” <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">监督学习有成对数据 $(x_i,y_i)$，可以拿预测与真实标签比较。聚类只有 $x_1,\ldots,x_n$——没有 $y_i$，所以“相似”不是算法发现的真理，而是<b>由特征表示和距离函数定义的建模选择</b>。同一批照片按颜色、按主题、按时间都可能形成不同但合理的组。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">非监督学习 <span class="en">unsupervised learning · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：从没有外部标签的样本 $\{x_i\}_{i=1}^n$ 中学习结构的学习范式；本讲的结构是“分组”。</p>
+          <p class="plain"><b>白话</b>：没有人告诉你答案，要自己发现谁和谁是一伙的。</p>
+          <p class="plain"><b>干嘛用</b>：探索数据、压缩表示、表示学习、异常检测。</p>
+          <p class="plain"><b>怎么算 / 怎么用</b>：把样本表示成特征向量，定义距离，再交给聚类/降维等算法。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：它和第 12–14 讲的监督学习形成对照；没有 $y$ 意味着必须自己定目标，这正是 §3 的 $J(Z,\mu)$ 要解决的。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">聚类 <span class="en">clustering · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：把样本分成若干簇（cluster），使簇内相似、簇间不相似；相似度由表示与距离决定。</p>
+          <p class="plain"><b>白话</b>：把混在一起的东西按“长得像”归堆。</p>
+          <p class="plain"><b>干嘛用</b>：分群、压缩、探索；也可以为下游提供伪标签。</p>
+          <p class="plain"><b>怎么算 / 怎么用</b>：常见方法分 hierarchical / partitioning / model-based；本讲深入 partitioning 原型的 $k$-means。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：簇编号只是压缩码，没有外部语义保证（§14 误区），所以必须回到目标函数谈好坏。</p>
+        </div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>“好分组”太抽象。下一节用一个一维小数据先建立直觉：为什么 $k$-means 可以理解为<b>用代表点重建数据</b>。</div>
+    </section>
+
+    <!-- ============ HAND PROTOTYPE ============ -->
+    <section id="prototype">
+      <h2 class="sec-title"><span class="num">§2</span>一个可以手算的原型：用两个中心压缩六个点 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">数据是 $1,2,3,10,11,12$。直觉上的两组是 $C_1=\{1,2,3\}$、$C_2=\{10,11,12\}$，中心 $\mu_1=2$、$\mu_2=11$。每个点到最近中心的平方距离之和是
+        $$(1-2)^2+(2-2)^2+(3-2)^2+(10-11)^2+(11-11)^2+(12-11)^2=4.$$
+        如果中心错放成 $\mu_1=1,\mu_2=12$，损失变成 $10$。所以 <b>$k$-means 首先是一种压缩：用少量代表点重建全部数据，重建误差越小越紧凑</b>。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动两个中心，观察“用最近中心重建”的损失</h4>
+        <div class="svg-wrap"><svg id="manualCost" viewBox="0 0 780 260" role="img" aria-label="k-means 损失手算互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>中心 $\mu_1$</label><input type="range" id="mcMu1" min="0" max="14" step="0.1" value="2"><div class="val" id="mcMu1val">2.0</div></div>
+          <div class="control"><label>中心 $\mu_2$</label><input type="range" id="mcMu2" min="0" max="14" step="0.1" value="11"><div class="val" id="mcMu2val">11.0</div></div>
+        </div>
+        <div class="caption" id="mcCap">损失 $J=\sum_i\min_j|x_i-\mu_j|^2$ 由当前中心现算；每个点连接到它当前最近的中心，连接长短就是它的重建误差。把 $\mu_1$ 放到 $2$、$\mu_2$ 放到 $11$，损失应为 $4$。</div>
+      </div>
+      <div class="def">
+        <div class="term">重建误差 <span class="en">reconstruction error · first mentioned: §2</span></div>
+        <p class="plain"><b>是什么</b>：用代表点（中心）近似原始样本时产生的误差，这里取平方欧几里得距离。</p>
+        <p class="plain"><b>白话</b>：每个点“报一个最近代表的名字”，代表也不是它自己，所以有误差；误差越小，压缩越不丢信息。</p>
+        <p class="plain"><b>干嘛用</b>：把“分组好坏”变成可计算的标量。</p>
+        <p class="plain"><b>怎么算</b>：对点 $x$，最近中心 $\mu$，误差 $\lVert x-\mu\rVert_2^2$；对所有点求和。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：§3 的完整目标就是它的严格化；第 16 讲 PCA 会继续用“重建误差”讲降维。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>直觉有了，但“哪个点归谁、中心放哪”必须写成精确目标。下一节给出完整定义 $J(Z,\mu_1,\ldots,\mu_k)$。</div>
+    </section>
+
+    <!-- ============ OBJECTIVE ============ -->
+    <section id="objective">
+      <h2 class="sec-title"><span class="num">§3</span>$k$-means 的精确定义：同时优化离散分配与连续中心 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">设 $n$ 个样本 $x_i\in\mathbb{R}^d$，簇数 $k$，第 $j$ 个中心 $\mu_j\in\mathbb{R}^d$。用二值变量 $z_{ij}$ 表示分配：当点 $x_i$ 属于簇 $j$ 时 $z_{ij}=1$，否则 $0$；每个点必须且只能属于一个簇：
+        $$z_{ij}\in\{0,1\},\qquad \sum_{j=1}^{k}z_{ij}=1.$$
+        完整目标为
+        $$J(Z,\mu_1,\ldots,\mu_k)=\sum_{i=1}^{n}\sum_{j=1}^{k}z_{ij}\,\lVert x_i-\mu_j\rVert_2^2.$$</p>
+      <div class="card compact">
+        <p class="plain small"><b>记号提醒（先声明，避免混淆）</b>：这里有两个相似记号——<b>样本下标 $i$ 与数字 1</b>、<b>簇下标的 $j$</b>；以后还会出现 <b>层号 $l$ 无关，但聚类里没有损失 $\ell$，所以不必担心</b>。另外 $Z$ 是 $n\times k$ 的 0/1 矩阵，$z_{ij}$ 是它的第 $i$ 行第 $j$ 列元素；<b>不要写成 $z_i$ 当标量</b>。</p>
+        <p class="plain small"><b>这条目标同时在求两类未知量</b>：$Z$ 决定每个点由哪个中心负责（离散），$\mu_1,\ldots,\mu_k$ 决定中心放哪（连续）。联合问题整体非凸；课件指出一般情形求全局最优是 NP-hard。</p>
+      </div>
+      <div class="card compact">
+        <h3 style="margin-top:0">先消去 $Z$，看中心视角</h3>
+        <p class="plain small">对固定中心，样本 $i$ 那一行 $z_{i1},\ldots,z_{ik}$ 只能选一个 1，所以最小贡献是 $k$ 个平方距离中的最小值：
+          $$\min_{z_{i1},\ldots,z_{ik}}\sum_j z_{ij}\lVert x_i-\mu_j\rVert_2^2=\min_{1\le j\le k}\lVert x_i-\mu_j\rVert_2^2.$$
+          把所有样本相加，得到只含中心的等价目标
+          $$J(\mu_1,\ldots,\mu_k)=\sum_{i=1}^n\min_{1\le j\le k}\lVert x_i-\mu_j\rVert_2^2.$$</p>
+        <p class="plain small"><b>人话</b>：“谁是最近中心”会随中心移动而突然切换，所以这个目标分段二次、非凸；不能像普通线性回归那样一步求全局最优。</p>
+      </div>
+      <div class="def">
+        <div class="term">$k$-means 目标 <span class="en">k-means objective · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：$J(Z,\mu)=\sum_{i}\sum_j z_{ij}\lVert x_i-\mu_j\rVert_2^2$，用 one-hot 分配 $Z$ 与中心 $\mu$ 表示的总重建误差。</p>
+        <p class="plain"><b>白话</b>：每个点只认一个中心负责，误差是它到那个中心的平方距离；目标就是总误差最小。</p>
+        <p class="plain"><b>干嘛用</b>：把聚类写成可优化的标量，是 Lloyd 算法和选 $k$ 的判据。</p>
+        <p class="plain"><b>怎么算</b>：先固定 $Z$ 求 $\mu$，或固定 $\mu$ 求 $Z$；两者交替就是 Lloyd。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：“最近中心平方距离”直接决定几何假设——Voronoi 直线边界（§8）、均值更新（§5）、对非球形失败（§12）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>联合优化很难，但把变量拆成两块后，每一块都有精确解。先看第一块：<b>中心固定时，为什么每个点必须选最近中心</b>。</div>
+    </section>
+
+
+    <!-- ============ ASSIGNMENT ============ -->
+    <section id="assign">
+      <h2 class="sec-title"><span class="num">§4</span>分配步：给定中心时，选最近的中心 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">这一步只求分配 $Z$，中心 $\mu_1,\ldots,\mu_k$ 暂时不动。总目标对样本求和，且每个样本的 one-hot 约束彼此独立，所以可以逐点求解。对固定点 $x_i$，它只在 $j_i^\star$ 处取 1，其中
+        $$j_i^\star\in\arg\min_{\ell\in\{1,\ldots,k\}}\lVert x_i-\mu_\ell\rVert_2^2,\qquad z_{ij}^\star=\mathbf{1}[j=j_i^\star].$$</p>
+      <div class="card compact">
+        <p class="plain small"><b>例子</b>：三个平方距离是 $(4,9,1)$，允许的 one-hot 只有 $(1,0,0),(0,1,0),(0,0,1)$，对应贡献是 $4,9,1$；显然选第三个。平方函数在非负数上单调，所以比较平方距离与比较普通欧几里得距离给出相同分配。</p>
+        <p class="plain small"><b>平局规则</b>：若两个中心距离相等，必须规定可复现的规则，例如选编号较小的中心。</p>
+      </div>
+      <div class="def">
+        <div class="term">分配步 <span class="en">assignment step · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：固定中心，把每个样本分给最近中心（最近中心规则）。</p>
+        <p class="plain"><b>白话</b>：中心先站好位置，每个点挑“离自己最近的那根旗杆”。</p>
+        <p class="plain"><b>干嘛用</b>：把一个组合优化子问题化成 $n$ 次最近中心查询。</p>
+        <p class="plain"><b>怎么算</b>：对每个 $x_i$ 计算 $k$ 个 $\lVert x_i-\mu_\ell\rVert_2^2$，取最小；平局按固定规则。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它把离散变量 $Z$ 精确优化到当前中心下的最优，是 Lloyd 损失不增的第一半（§7）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>反过来，如果分组已经固定，中心应该放哪？下一节用凸二次函数证明：<b>最优中心就是簇内均值</b>。</div>
+    </section>
+
+    <!-- ============ UPDATE ============ -->
+    <section id="update">
+      <h2 class="sec-title"><span class="num">§5</span>更新步：固定分组时，中心是簇内均值 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">固定分组后，只问第 $j$ 个中心放哪能让它负责的点总平方误差最小。设非空簇有 $m$ 个点 $x_1,\ldots,x_m\in\mathbb{R}^d$，未知中心 $\mu\in\mathbb{R}^d$，解
+        $$\min_{\mu\in\mathbb{R}^d} S(\mu),\qquad S(\mu)=\sum_{r=1}^{m}\lVert x_r-\mu\rVert_2^2.$$</p>
+      <div class="card compact">
+        <h3 style="margin-top:0">三步证明</h3>
+        <p class="plain small"><b>① 展开</b>：$\lVert x_r-\mu\rVert_2^2=x_r^\top x_r-2\mu^\top x_r+\mu^\top\mu$；<b>② 求梯度</b>：$\nabla_\mu S(\mu)=-2\sum_r x_r+2m\mu$；<b>③ 令梯度为零</b>：$2m\mu=2\sum_r x_r$，得
+          $$\mu^\star=\frac{1}{m}\sum_{r=1}^{m}x_r.$$
+          Hessian 是 $2m I_d$，正定，所以这是唯一全局最小点。</p>
+        <p class="plain small"><b>另一种解释</b>：令 $\bar x=m^{-1}\sum_r x_r$，有
+          $$\sum_{r=1}^{m}\lVert x_r-\mu\rVert_2^2=\sum_r\lVert x_r-\bar x\rVert_2^2+m\lVert\mu-\bar x\rVert_2^2.$$
+          第一项与 $\mu$ 无关，第二项是“把中心从均值挪开”的额外代价，只在 $\mu=\bar x$ 时为零。</p>
+      </div>
+      <div class="def">
+        <div class="term">更新步 / 均值更新 <span class="en">update step · centroid update · first mentioned: §5</span></div>
+        <p class="plain"><b>是什么</b>：固定分组，把每个簇的中心更新为该簇内所有点的均值。</p>
+        <p class="plain"><b>白话</b>：这组点现在选出了自己的“代表”，代表的位置取它们的平均。</p>
+        <p class="plain"><b>干嘛用</b>：它是固定分组下平方距离目标的最优闭式解。</p>
+        <p class="plain"><b>怎么算</b>：$\mu_j^{(t+1)}=\sum_i z_{ij}^{(t+1)}x_i/n_j^{(t+1)}$，其中 $n_j=\sum_i z_{ij}$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：“mean”来自平方损失，不是聚类的普遍法则；若把损失改成绝对距离，最优点会变成中位数（§14 误区）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>两个子问题都有了精确解，把它们交替执行就是 <b>Lloyd 算法</b>。下一节给出手算全过程和可交互的逐步演示。</div>
+    </section>
+
+    <!-- ============ LLOYD ============ -->
+    <section id="lloyd">
+      <h2 class="sec-title"><span class="num">§6</span>Lloyd 算法：交替优化两块变量 + 完整手算 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">Lloyd 算法是<b>块坐标下降</b>的离散–连续版本：联合优化 $(Z,\mu)$ 很难，就固定一块、把另一块精确优化到当前最优，然后交换角色。形式化地：</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Assignment step（分配步）</h3>
+          <p class="plain">给定中心 $\mu_j^{(t)}$：
+            $$j_i^{(t+1)}\in\arg\min_{\ell}\lVert x_i-\mu_\ell^{(t)}\rVert_2^2,\quad z_{ij}^{(t+1)}=\mathbf{1}[j=j_i^{(t+1)}].$$</p>
+        </div>
+        <div class="card">
+          <h3>Update step（更新步）</h3>
+          <p class="plain">令 $n_j^{(t+1)}=\sum_i z_{ij}^{(t+1)}$；若簇非空：
+            $$\mu_j^{(t+1)}=\frac{\sum_{i=1}^{n}z_{ij}^{(t+1)}x_i}{n_j^{(t+1)}}.$$</p>
+        </div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>空簇处理</b>：簇为空时均值没有定义。实践中可把中心重置到当前误差最大的点、随机选一个点或删除该簇；<b>具体策略要记录</b>，因为它影响可复现性。</p>
+        <p class="plain small"><b>“最优”的范围</b>：每一步只在当前另一块固定的意义下最优；两步交替保证损失不增，但不保证全局最优（§7）。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：一维六点两轮 Lloyd 逐步手算</h4>
+        <div class="svg-wrap"><svg id="lloydViz" viewBox="0 0 780 320" role="img" aria-label="Lloyd 两轮手算演示"></svg></div>
+        <div class="label-row">
+          <button class="btn primary" id="lloydNext" type="button">▶ 下一步</button>
+          <button class="btn ghost" id="lloydReset" type="button">↺ 重置</button>
+          <span class="small" id="lloydStepName">第 0 步：初始中心</span>
+        </div>
+        <div class="caption" id="lloydCap">数据 $1,2,3,10,11,12$，$k=2$，初始中心 $\mu_1^{(0)}=1,\mu_2^{(0)}=3$，平局归编号较小中心。点击“下一步”逐步走完两轮 assignment/update，并观察目标值 $J$ 的变化。</div>
+      </div>
+      <div class="def">
+        <div class="term">Lloyd 算法 <span class="en">Lloyd’s algorithm · block coordinate descent · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：$k$-means 最常用的求解算法：交替执行分配步（最近中心）和更新步（簇均值）。</p>
+        <p class="plain"><b>白话</b>：先让中心说话、点站队；再让点说话、中心搬到队形中央；反复直到不动。</p>
+        <p class="plain"><b>干嘛用</b>：把联合非凸优化换成两个可精确求解的子问题。</p>
+        <p class="plain"><b>怎么算</b>：重复：①每个点分给最近中心；②每个簇取均值；直到分配不再变化。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是块坐标下降的代表；§7 证明它单调不增，§9 说明为何仍可能停在局部最优。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>手算中每一步损失都在下降：分配步和更新步各自都不会增加 $J$。下一节把这个观察写成两个不等式。</div>
+    </section>
+
+    <!-- ============ MONOTONE ============ -->
+    <section id="monotone">
+      <h2 class="sec-title"><span class="num">§7</span>为什么 Lloyd 的损失单调不增（但未必全局最优） <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">设一轮开始变量为 $(Z^{(t)},\mu^{(t)})$。分配步中，中心固定，新标签选择贡献最小的中心，所以
+        $$J(Z^{(t+1)},\mu^{(t)})\le J(Z^{(t)},\mu^{(t)}).$$
+        更新步中，标签固定，均值是平方距离和的最小点，所以
+        $$J(Z^{(t+1)},\mu^{(t+1)})\le J(Z^{(t+1)},\mu^{(t)}).$$
+        合并得
+        $$J^{(t+1)}\le J^{(t)}.$$</p>
+      <div class="card compact">
+        <p class="plain small"><b>这句话证明了什么</b>：目标值非负，单调不增且有下界；分配模式只有有限种，所以在固定平局规则下算法最终停在稳定分配。稳定只表示“只改 $Z$ 或只改 $\mu$ 都不能继续下降”。</p>
+        <p class="plain small"><b>没证明什么</b>：不排除同时大改分组和中心得到更低损失；因此不同初始化可能到达不同局部解。这正是 §9 多次重启与 $k$-means++ 的理由。</p>
+      </div>
+      <div class="def">
+        <div class="term">稳定点 / 局部最优 <span class="en">stable assignment · local optimum · first mentioned: §7</span></div>
+        <p class="plain"><b>是什么</b>：Lloyd 停下的状态：任何单步分配或单步更新都不能再降低 $J$。</p>
+        <p class="plain"><b>白话</b>：每个点都已经在最近中心名下，每个中心也已经在簇均值位置；但换个全局方案可能更好。</p>
+        <p class="plain"><b>干嘛用</b>：解释“收敛 ≠ 全局最优”，并引出多次重启。</p>
+        <p class="plain"><b>怎么算</b>：重复 Lloyd 直到分配不变；记录最终 $J$ 作为该初始化的解质量。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是理解初始化敏感性的核心（§9），也是“算法停住了但答案不一定好”的典型例子。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>为什么最近中心规则会把空间切成直线边界？下一节看 Voronoi 几何，这会直接解释 $k$-means 的形状偏好。</div>
+    </section>
+
+
+    <!-- ============ VORONOI ============ -->
+    <section id="voronoi">
+      <h2 class="sec-title"><span class="num">§8</span>Voronoi 几何：为什么边界是直线 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">固定两个中心 $\mu_a,\mu_b\in\mathbb{R}^d$。点 $x$ 分给 $\mu_a$ 的条件是 $\lVert x-\mu_a\rVert_2^2\le\lVert x-\mu_b\rVert_2^2$。展开两端，$x^\top x$ 抵消，得到线性不等式
+        $$2x^\top(\mu_b-\mu_a)\le\lVert\mu_b\rVert_2^2-\lVert\mu_a\rVert_2^2.$$
+        等号对应一个超平面，也就是两个中心连线的<b>垂直平分超平面</b>。例如中心 $(0,0)$ 与 $(4,0)$ 时，边界是 $x_1=2$；每个区域是凸多面体。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动两个中心，看垂直平分边界</h4>
+        <div class="svg-wrap"><svg id="voronoiViz" viewBox="0 0 780 420" role="img" aria-label="Voronoi 边界演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$\mu_a$ 的 x</label><input type="range" id="vorAx" min="1" max="9" step="0.2" value="2"><div class="val" id="vorAxval">2.0</div></div>
+          <div class="control"><label>$\mu_a$ 的 y</label><input type="range" id="vorAy" min="1" max="9" step="0.2" value="2"><div class="val" id="vorAyval">2.0</div></div>
+          <div class="control"><label>$\mu_b$ 的 x</label><input type="range" id="vorBx" min="1" max="9" step="0.2" value="6"><div class="val" id="vorBxval">6.0</div></div>
+          <div class="control"><label>$\mu_b$ 的 y</label><input type="range" id="vorBy" min="1" max="9" step="0.2" value="5"><div class="val" id="vorByval">5.0</div></div>
+        </div>
+        <div class="caption" id="vorCap">蓝色实心圆是 $\mu_a$，橙色实心圆是 $\mu_b$；虚线是垂直平分线。边界上的任何点到两中心距离相等。由于边界始终是直线/超平面，$k$-means 无法自然分开同心环这类非凸结构。</div>
+      </div>
+      <div class="def">
+        <div class="term">Voronoi 分区 <span class="en">Voronoi partition · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：由最近中心规则诱导的空间划分：每个点属于离它最近的中心所在区域。</p>
+        <p class="plain"><b>白话</b>：把平面按“离谁最近”画地盘，边界是两块地盘的中线。</p>
+        <p class="plain"><b>干嘛用</b>：可视化 $k$-means 的决策边界，也解释它的形状偏好。</p>
+        <p class="plain"><b>怎么算</b>：对两个中心，解 $\lVert x-\mu_a\rVert^2=\lVert x-\mu_b\rVert^2$ 得垂直平分超平面。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：直线边界意味着簇近似球形、大小相近；对非凸/各向异性数据会失败（§12）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>目标非凸 + 交替优化 = 对初始化敏感。下一节回答：<b>怎样初始化才不容易掉进坏局部解</b>。</div>
+    </section>
+
+    <!-- ============ INITIALIZATION ============ -->
+    <section id="init">
+      <h2 class="sec-title"><span class="num">§9</span>初始化、局部最优与 $k$-means++ <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">坏初始化可能让两个中心落在同一大团，另一个大团没有中心，边界随后稳定在较差位置。因此实践常做<b>多次随机重启</b>：每次初始化 → 跑到收敛 → 比较最终 $J$，取损失较小且解释稳定的结果。下面这个互动对同一数据集做 5 次随机重启，每次都是真随机。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：五次随机重启的最终损失与簇划分</h4>
+        <div class="svg-wrap"><svg id="restartViz" viewBox="0 0 780 420" role="img" aria-label="k-means 随机重启演示"></svg></div>
+        <div class="label-row">
+          <button class="btn warm" id="restartRun" type="button">🎲 随机重启 5 次</button>
+          <span class="small" id="restartResult"></span>
+        </div>
+        <div class="caption" id="restartCap">数据是固定的三个团加噪声。每次点击独立用 Math.random() 从数据点中抽初始中心，跑 Lloyd 到收敛，记录 5 个最终 $J$；图中展示损失最小的那次分组。连点多次，结果应随随机性变化。</div>
+      </div>
+      <details>
+        <summary>拓展 9.1：farthest-points heuristic 的风险</summary>
+        <div class="inner">
+          <p class="plain">“先选一个中心，以后总是选离已有中心最远的数据点”鼓励中心分散，但一个 outlier 可能比真正的第二个群体还远，从而抢走一个中心名额。这个启发式没有利用“远处区域有多少点”的信息。</p>
+        </div>
+      </details>
+      <details>
+        <summary>拓展 9.2：$k$-means++ 抽样规则与手算</summary>
+        <div class="inner">
+          <p class="plain">设已选中心集合 $C$。定义 $D_i^2=\min_{\mu\in C}\lVert x_i-\mu\rVert_2^2$；第一个中心均匀抽取，之后按
+            $$\Pr(\text{选择 }x_i)=\frac{D_i^2}{\sum_{\ell=1}^{n}D_\ell^2}$$
+            抽取下一个中心。课件给出期望初始化代价相对最优代价 $O(\log k)$ 倍的理论保证。</p>
+          <p class="plain small"><b>例子</b>：数据 $0,1,2,10,11,12$，第一个中心选到 $\mu_1=1$。各点 $D_i^2$ 为 $1,0,1,81,100,121$，权重总和 304，所以 $\Pr(12)=121/304$、$\Pr(11)=100/304$、$\Pr(0)=1/304$。右侧群体整体被选中的概率很高，但单个离群点并不是必然获选。</p>
+          <div class="viz">
+            <h4 style="margin-top:0">互动：$k$-means++ 权重与按概率抽取</h4>
+            <div class="svg-wrap"><svg id="ppViz" viewBox="0 0 780 260" role="img" aria-label="k-means++ 抽样演示"></svg></div>
+            <div class="label-row">
+              <button class="btn warm" id="ppRun" type="button">🎲 按权重抽下一个中心</button>
+              <button class="btn ghost" id="ppReset" type="button">↺ 重置</button>
+            </div>
+            <div class="caption" id="ppCap">已选中心为 $1$ 时，柱高是 $D_i^2$，概率是权重占比。点击“按权重抽下一个中心”使用 Math.random() 真随机抽取一次；连点多次结果应不同。</div>
+          </div>
+        </div>
+      </details>
+      <div class="def">
+        <div class="term">初始化 / 多次重启 / $k$-means++ <span class="en">initialization · k-means++ · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：算法开始时的中心位置；多次重启指多个随机初始点各跑一次取最优；$k$-means++ 按 $D_i^2$ 加权抽样初始化。</p>
+        <p class="plain"><b>白话</b>：起点不同，下山到的谷可能不同；多试几个起点，再挑最矮的谷。</p>
+        <p class="plain"><b>干嘛用</b>：缓解非凸目标对初始化的敏感。</p>
+        <p class="plain"><b>怎么算</b>：随机重启：对 $r=1,\ldots,R$ 随机初始化并 Lloyd，保留最小 $J$；$k$-means++：第一个均匀，其后按 $D_i^2/\sum D^2$ 抽样。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它直接回应 §7 的“局部最优”；报告聚类时必须说明初始化策略和稳定性（§9.1 拓展）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>算法会跑到局部解，还有一个更上层的选择：<b>$k$ 到底设多少</b>。下一节看肘部法与为什么不能只看损失。</div>
+    </section>
+
+    <!-- ============ CHOOSE K ============ -->
+    <section id="choosek">
+      <h2 class="sec-title"><span class="num">§10</span>怎么选 $k$：肘部启发式与“为什么不能只看损失” <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">对多个 $k$ 分别运行多次 $k$-means，记录最好的训练损失。训练损失必然随 $k$ 增大而下降：若允许增加一个中心，可以保留原来的 $k$ 个中心，再把新中心放在任一点让它暂时不承担点，因此最优值 $J_{k+1}^\star\le J_k^\star$。极端地 $k=n$ 时损失为零。所以选择 $k$ 要看<b>边际收益</b>、复杂度与任务目标。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：真实在页面里跑 $k=1,\ldots,6$ 的 Lloyd，看肘部</h4>
+        <div class="svg-wrap"><svg id="elbowViz" viewBox="0 0 780 360" role="img" aria-label="elbow 选 k 演示"></svg></div>
+        <div class="label-row">
+          <button class="btn warm" id="elbowRun" type="button">🎲 重新生成数据并计算</button>
+        </div>
+        <div class="caption" id="elbowCap">每次点击用 Math.random() 生成同一种三团结构；对每个 $k$ 做多次随机重启 Lloyd，取最小损失。左图是 $J_k^\star$ 随 $k$ 的曲线，右图是边际下降 $\Delta_k=J_{k-1}^\star-J_k^\star$。肘部是“边际收益明显变小”的位置，不是定理。</div>
+      </div>
+      <div class="def">
+        <div class="term">肘部法 <span class="en">elbow method · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：画出 $J_k^\star$ 对 $k$ 的曲线，选边际损失下降明显变缓的 $k$。</p>
+        <p class="plain"><b>白话</b>：多一个中心带来的“省误差”突然变小的地方，就是够用的点。</p>
+        <p class="plain"><b>干嘛用</b>：给 $k$ 一个可视化的启发式候选。</p>
+        <p class="plain"><b>怎么算</b>：对每个 $k$ 多次随机重启取最优损失；计算边际收益；结合业务成本。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：训练损失单调下降，普通交叉验证也不能直接套用（测试集最近中心距离通常也随 $k$ 下降）；所以要用更抽象的正则化思路，如 $\operatorname{score}(k)=J_k+\lambda k$。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>即使 $k$ 选好、初始化做好，$k$-means 仍可能因<b>特征尺度</b>和<b>簇形状</b>失败。这两个是“模型假设”而不是“代码 bug”，放在下一节扩展。</div>
+    </section>
+
+    <!-- ============ SCALE & SHAPE ============ -->
+    <section id="scale">
+      <h2 class="sec-title"><span class="num">§11</span>尺度与形状：$k$-means 什么时候失败 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">两个特征若分别代表年龄和收入，收入的数值范围可能远大于年龄，欧几里得距离会被收入主导。常见标准化是 $x_{ij}'=(x_{ij}-\bar x_j)/s_j$，其中 $\bar x_j,s_j$ 是第 $j$ 个特征的均值与标准差。但标准化不是机械步骤：如果绝对单位本身代表业务重要性，缩放会改变问题。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：同一批二维数据，标准化前后聚类结果对比</h4>
+        <div class="svg-wrap"><svg id="scaleViz" viewBox="0 0 780 380" role="img" aria-label="标准化前后聚类对比"></svg></div>
+        <div class="label-row">
+          <button class="btn primary" id="scaleToggle" type="button">切换到：标准化后</button>
+          <span class="small" id="scaleResult"></span>
+        </div>
+        <div class="caption" id="scaleCap">数据固定：特征 1 在 $0$–$10$，特征 2 在 $0$–$1000$，天然形成两个斜向团。左边原始尺度会几乎只看特征 2，右边标准化后两个特征权重相近。按钮在两种尺度间切换，聚类由页面内的 Lloyd 现算。</div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：同心环上的 Voronoi 切分</h4>
+        <div class="svg-wrap"><svg id="shapeViz" viewBox="0 0 780 380" role="img" aria-label="同心环 k-means 失败"></svg></div>
+        <div class="label-row">
+          <button class="btn primary" id="shapeRun" type="button">🔄 重新运行 $k$-means</button>
+          <span class="small" id="shapeResult"></span>
+        </div>
+        <div class="caption" id="shapeCap">数据是两个同心圆环。任取若干中心，最近中心规则只能产生线性 Voronoi 切分，无法沿圆环自然分开；每次重跑用 Math.random() 初始化，边界仍是若干直线段（这里用采样点着色近似显示）。</div>
+      </div>
+      <div class="def">
+        <div class="term">特征尺度 / 标准化 <span class="en">feature scaling · standardization · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：把每个特征减去均值、除以标准差，使各维有相近尺度。</p>
+        <p class="plain"><b>白话</b>：别让“收入”因为数字大就压过“年龄”。</p>
+        <p class="plain"><b>干嘛用</b>：让欧几里得距离不过度偏向大数值特征。</p>
+        <p class="plain"><b>怎么算</b>：对每列 $j$ 算 $\bar x_j,s_j$，替换 $x_{ij}\leftarrow (x_{ij}-\bar x_j)/s_j$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：选择距离就是选择特征权重；它和 §3 的目标绑定在一起——改了尺度就等于改了问题。</p>
+      </div>
+      <div class="def conn">
+        <div class="term">非球形簇 / 异常点 <span class="en">non-spherical clusters · outlier · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：簇形状不是高斯球、或存在远离主要结构的点；Voronoi 超平面边界无法自然表达环/半月/细长流形。</p>
+        <p class="plain"><b>白话</b>：$k$-means 只会用“直尺切豆腐”，切不了甜甜圈。</p>
+        <p class="plain"><b>干嘛用</b>：诊断为什么聚类结果奇怪。</p>
+        <p class="plain"><b>怎么算</b>：检查簇形状、尺度、异常点；必要时改变表示或换模型。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：失败来自模型假设（§8 的直线边界），不是代码问题；最近中心距离 $s(x)=\min_j\lVert x-\mu_j\rVert_2^2$ 可作异常分数，但要结合领域知识解释。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>失败模式看完了，回到课程主线：$k$-means 和下一讲 PCA 都是“无标签压缩”。下一节对比离散中心与连续子空间。</div>
+    </section>
+
+
+    <!-- ============ PCA CONNECTION ============ -->
+    <section id="pca">
+      <h2 class="sec-title"><span class="num">§12</span>与第 16 讲 PCA 的连接：两种无标签压缩 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">$k$-means 与 PCA 都在无标签条件下寻找压缩表示，但编码约束不同：</p>
+      <table class="data">
+        <thead><tr><th>方法</th><th>表示</th><th>重建形式</th><th>主要约束</th></tr></thead>
+        <tbody>
+          <tr><td>$k$-means</td><td>离散簇编号 / one-hot 向量</td><td>$x_i\approx\mu_{z_i}$</td><td>中心是有限个代表点</td></tr>
+          <tr><td>PCA</td><td>连续向量 $z_i\in\mathbb{R}^k$</td><td>$x_i\approx Wz_i$</td><td>$W^\top W=I_k$，线性子空间</td></tr>
+        </tbody>
+      </table>
+      <p class="sec-lead">两者都在最小化重建误差，但一个把数据压到离散原型，一个把数据压到连续线性子空间。第 16 讲将把“中心/代表点”改成“主方向/投影”，并证明最小重建误差等价于最大投影方差。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>下面是本讲最容易误解的七句话；每一条都能对照前面的公式。读完它们再来自测。</div>
+    </section>
+
+    <!-- ============ MISCONCEPTIONS ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">§13</span>常见误区：这些“听起来对”的话为什么不对 <span class="sec-tag core">核心</span></h2>
+      <div class="misconception"><div class="truth">“$k$-means 会发现真实类别。”</div><div>不一定。它优化的是当前表示下的平方距离目标；类别是外部概念，不是算法输出。</div></div>
+      <div class="misconception"><div class="truth">“损失最小的 $k$ 一定最好。”</div><div>不对。$k=n$ 时训练损失为零；还要看复杂度、稳定性和任务。</div></div>
+      <div class="misconception"><div class="truth">“初始化只是小细节。”</div><div>不对。非凸目标会让不同初始化落到不同局部解；要多次重启或 $k$-means++。</div></div>
+      <div class="misconception"><div class="truth">“只要画图看起来成团，距离就合理。”</div><div>不对。尺度、投影和特征工程决定了距离。</div></div>
+      <div class="misconception"><div class="truth">“聚类编号就是标签。”</div><div>不对。编号可任意置换，也没有外部语义保证。</div></div>
+      <div class="misconception"><div class="truth">“Lloyd 收敛意味着全局最优。”</div><div>不对。单调下降只保证停在一个稳定点。</div></div>
+      <div class="misconception"><div class="truth">“均值更新适合所有距离。”</div><div>不对。均值由平方欧几里得损失产生；改用绝对损失会得到中位数型更新。</div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>现在用自测题验证：能否手算均值、两步 Lloyd、Voronoi 边界和 $k$-means++ 权重？</div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <h2 class="sec-title"><span class="num">§14</span>自测题：先写答案，再展开参考答案 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">以下题目覆盖本讲核心计算：均值更新、两步 Lloyd、单调性、Voronoi、$k$-means++ 权重与选 $k$。</p>
+      <div id="quizList"></div>
+      <div class="small" id="quizScore" style="display:none;margin-top:10px"></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>答完题，最后一节把“带走的结论”串起来，并明确接上第 16 讲。</div>
+    </section>
+
+    <!-- ============ TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§15</span>收束总结：核心问题、关键公式与下一讲 <span class="sec-tag core">核心</span></h2>
+      <div class="grid2">
+        <div class="card">
+          <h3 style="margin-top:0">核心问题 → 答案</h3>
+          <p class="plain"><b>没有标签时怎样定义好分组？</b>用“$k$ 个中心重建数据的总平方误差”作为目标。最近中心规则决定分组，簇均值决定中心；Lloyd 交替执行两者使损失单调不增，但因目标非凸只能保证局部解。</p>
+          <p class="plain"><b>实践上要注意什么？</b>多次随机重启或 $k$-means++；选 $k$ 看边际收益与复杂度；尺度/距离是模型的一部分；非球形数据要换表示或模型。</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">最重要的 5 个结论/公式</h3>
+          <ul class="plain" style="line-height:1.9;padding-left:18px">
+            <li>目标：$J(Z,\mu)=\sum_i\sum_j z_{ij}\lVert x_i-\mu_j\rVert_2^2$</li>
+            <li>分配步：$j_i^\star=\arg\min_\ell\lVert x_i-\mu_\ell\rVert_2^2$</li>
+            <li>更新步：$\mu_j=(1/n_j)\sum_{i:z_{ij}=1}x_i$</li>
+            <li>单调性：$J(Z^{(t+1)},\mu^{(t+1)})\le J(Z^{(t+1)},\mu^{(t)})\le J(Z^{(t)},\mu^{(t)})$</li>
+            <li>Voronoi：两中心边界是垂直平分超平面（线性）</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">可勾选自查清单</h3>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能写出 $k$-means 完整目标并解释 $z_{ij}$ 的 one-hot 约束</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能证明更新步为什么是均值（梯度为零 + Hessian 正定）</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能手算一维六点两轮 Lloyd 的分配、中心和 $J$</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能解释“单调不增”为什么不是“全局最优”</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能画出两中心的垂直平分线，并说明 $k$-means 的形状假设</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能说出为什么 $k=n$ 时损失为零、不能只看损失选 $k$</label>
+        <label class="check-item" style="display:block;margin:.3em 0"><input type="checkbox"> 能解释 $k$-means 与 PCA 都是“无标签压缩”但编码不同</label>
+      </div>
+      <div class="conn" style="border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-radius:10px;padding:14px 18px;margin:18px 0">
+        <p class="plain" style="margin:0"><b>与下一讲的连接</b>：$k$-means 用离散中心 $\mu_{z_i}$ 重建；第 16 讲 PCA 把“中心/代表点”换成“主方向/投影”，用连续向量 $z_i\in\mathbb{R}^k$ 和正交矩阵 $W$ 重建 $x_i\approx Wz_i$。两者都回答“无标签时如何压缩”，只是把离散原型换成连续子空间；第 18 讲再放松线性假设。</p>
+      </div>
+    </section>
+
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function svgLine(parent,x1,y1,x2,y2,opts={}){
+  const o=Object.assign({color:'var(--line)',width:1.5,dash:false,marker:null},opts);
+  return svgAdd(parent,'line',{x1,y1,x2,y2,stroke:o.color,strokeWidth:o.width,strokeDasharray:o.dash?'6 4':'none',markerEnd:o.marker||''});
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L15) ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n14',x:20,y:110,w:160,h:66,t:'第 14 讲',s:'CNN 有标签',target:'index.html#lecture-14',col:'#8a938b'},
+    {id:'unsup',x:240,y:20,w:160,h:62,t:'聚类定义',s:'没有标签怎么分组',target:'#unsup',col:'#176653'},
+    {id:'obj',x:450,y:20,w:190,h:62,t:'k-means 目标',s:'重建误差',target:'#objective',col:'#176653'},
+    {id:'assign',x:690,y:20,w:180,h:62,t:'分配步 + 更新步',s:'最近中心 / 均值',target:'#assign',col:'#176653'},
+    {id:'lloyd',x:920,y:20,w:180,h:62,t:'Lloyd 算法',s:'交替优化 · 手算',target:'#lloyd',col:'#176653'},
+    {id:'mono',x:1150,y:20,w:170,h:62,t:'单调不增',s:'局部最优',target:'#monotone',col:'#176653'},
+    {id:'vor',x:240,y:150,w:160,h:62,t:'Voronoi 几何',s:'直线边界',target:'#voronoi',col:'#176653'},
+    {id:'init',x:450,y:150,w:190,h:62,t:'初始化 / k-means++',s:'多次重启',target:'#init',col:'#176653'},
+    {id:'k',x:690,y:150,w:180,h:62,t:'选 k',s:'肘部不是定理',target:'#choosek',col:'#176653'},
+    {id:'pca',x:920,y:150,w:180,h:62,t:'PCA 连接',s:'离散 vs 连续',target:'#pca',col:'#176653'},
+    {id:'fail',x:240,y:280,w:250,h:62,t:'尺度 / 形状失败',s:'模型假设',target:'#scale',col:'#6c4fa1'},
+    {id:'take',x:540,y:280,w:250,h:62,t:'自测 / 收束',s:'带回五句话',target:'#takeaway',col:'#176653'},
+    {id:'n16',x:1150,y:280,w:170,h:66,t:'第 16 讲',s:'PCA 线性子空间',target:'index.html#lecture-16',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  route([[180,140],[240,140]],'#8a938b',mkG,'',0,0);
+  route([[400,51],[450,51]],'#176653',mk,'',0,0);
+  route([[640,51],[690,51]],'#176653',mk,'',0,0);
+  route([[870,51],[920,51]],'#176653',mk,'',0,0);
+  route([[1100,51],[1150,51]],'#176653',mk,'',0,0);
+  route([[320,162],[320,140]],'#176653',mk,'',0,0);
+  route([[545,162],[545,140]],'#176653',mk,'',0,0);
+  route([[780,162],[780,140]],'#176653',mk,'',0,0);
+  route([[1010,162],[1010,140]],'#176653',mk,'',0,0);
+  route([[320,282],[320,212]],'#6c4fa1',mkV,'',0,0);
+  route([[665,282],[665,212]],'#6c4fa1',mkV,'',0,0);
+  route([[1235,140],[1235,60],[1320,60],[1320,100]],'#8a938b',mkG,'下一讲',1290,84,'start');
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- manual cost ---------- */
+(()=>{
+  const svg=$('#manualCost'), data=[1,2,3,10,11,12];
+  function xOf(v){return 54+(v-0)*((720-24)/14);} // map 0..14 -> 54..720
+  function draw(){
+    const mu1=+$('#mcMu1').value,mu2=+$('#mcMu2').value;
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:34,y1:150,x2:744,y2:150,stroke:'var(--line)',strokeWidth:1.5});
+    const centers=[mu1,mu2];
+    let J=0, counts=[0,0], sums=[0,0];
+    data.forEach((v,i)=>{
+      const d0=Math.pow(v-mu1,2), d1=Math.pow(v-mu2,2);
+      const j=d0<=d1?0:1; J+=Math.min(d0,d1); counts[j]++; sums[j]+=v;
+      const x=xOf(v), y=150-16;
+      svgAdd(svg,'circle',{cx:x,cy:y,r:6,fill:j===0?'var(--accent)':'var(--warm)',opacity:.9});
+      svgAdd(svg,'line',{x1:x,y1:y+6,x2:xOf(centers[j]),y2:150,stroke:j===0?'var(--accent)':'var(--warm)',strokeWidth:1.2,opacity:.5});
+    });
+    centers.forEach((mu,j)=>{
+      const x=xOf(mu); const c=j===0?'var(--accent)':'var(--warm)';
+      svgAdd(svg,'polygon',{points:`${x},142 ${x-9},158 ${x+9},158`,fill:c});
+      const close=Math.abs(mu1-mu2)<0.6;
+      const ly=close?(j===0?116:144):128;
+      svgHalo(svg,x,ly,'μ'+(j+1)+'='+fmt(mu,1),{fill:c,font:10.5});
+    });
+    [0,2,4,6,8,10,12,14].forEach(v=>{svgAdd(svg,'text',{x:xOf(v),y:170,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},fmt(v,0));});
+    const mean0=counts[0]?sums[0]/counts[0]:0,mean1=counts[1]?sums[1]/counts[1]:0;
+    $('#mcCap').textContent=`当前损失 J=${fmt(J,3)}（${fmt(mu1,1)} 负责 ${counts[0]} 个点，${fmt(mu2,1)} 负责 ${counts[1]} 个点）。把中心放到 2 和 11 时 J=4。${counts[0]&&counts[1]?'簇均值分别为 '+fmt(mean0,2)+' 和 '+fmt(mean1,2):''}`;
+  }
+  function sync(){['mcMu1','mcMu2'].forEach(id=>{$('#'+id+'val').textContent=fmt(+$('#'+id).value,1);});draw();}
+  ['mcMu1','mcMu2'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  draw();
+})();
+
+/* ---------- Lloyd step-through ---------- */
+(()=>{
+  const svg=$('#lloydViz'), data=[1,2,3,10,11,12];
+  const seq=['初始中心','第 1 轮 assignment','第 1 轮 update','第 2 轮 assignment','第 2 轮 update','收敛检查'];
+  let state={idx:0,mu:[1,3]};
+  function assign(mu){return data.map(v=>{const d0=Math.pow(v-mu[0],2),d1=Math.pow(v-mu[1],2);return d0<=d1?0:1;});}
+  function Jof(mu){return data.reduce((s,v)=>s+Math.min(Math.pow(v-mu[0],2),Math.pow(v-mu[1],2)),0);}
+  function xOf(v){return 54+(v-1)*((720-36)/11);} // 1..12
+  function draw(){
+    const idx=state.idx, mu=state.mu, asg=assign(mu);
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:34,y1:190,x2:744,y2:190,stroke:'var(--line)',strokeWidth:1.5});
+    const colors=['var(--accent)','var(--warm)'];
+    data.forEach((v,i)=>{
+      const x=xOf(v);
+      const showAsg=idx>=1;
+      const fill=showAsg?colors[asg[i]]:'var(--muted)';
+      svgAdd(svg,'circle',{cx:x,cy:190-18,r:7,fill,opacity:.9});
+      svgAdd(svg,'text',{x,y:190-32,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},String(v));
+    });
+    mu.forEach((m,j)=>{
+      const x=xOf(m);
+      svgAdd(svg,'polygon',{points:`${x},176 ${x-9},194 ${x+9},194`,fill:colors[j],stroke:'var(--line)'});
+      svgHalo(svg,x,142,'μ'+(j+1)+'='+fmt(m,2),{fill:colors[j],font:10.5});
+    });
+    let cap;
+    if(idx===0){cap=`初始中心 μ=[${fmt(mu[0],2)}, ${fmt(mu[1],2)}]，初始损失（用旧中心最近距离）J(0)=${fmt(Jof(mu),2)}。`;}
+    else if(idx===1){cap=`分配步：6 个点按最近中心分给 μ1 或 μ2；这里平局归 μ1。分组为 C1={1,2}, C2={3,10,11,12}，相对旧中心损失 J(0)=${fmt(Jof([mu[0],mu[1]]),2)}。点击下一步更新中心。`;}
+    else if(idx===2){const na=[ (1+2)/2, (3+10+11+12)/4 ];state.nextMu=na;cap=`更新步：μ1←(1+2)/2=${fmt(na[0],2)}，μ2←(3+10+11+12)/4=${fmt(na[1],2)}。新中心下（若保留本轮分组）损失 J(1)=${fmt(data.reduce((s,v)=>s+Math.pow(v-(v<=2?na[0]:na[1]),2),0),2)}。`;}
+    else if(idx===3){state.mu=state.nextMu||state.mu;cap=`第 2 轮分配步：用 μ=[${fmt(mu[0],2)}, ${fmt(mu[1],2)}] 重新分配：C1={1,2,3}, C2={10,11,12}。`;}
+    else if(idx===4){const na=[(1+2+3)/3,(10+11+12)/3];state.nextMu=na;cap=`更新步：μ1→${fmt(na[0],2)}，μ2→${fmt(na[1],2)}。目标值 J(2)=${fmt(data.reduce((s,v)=>s+Math.pow(v-(v<=6?na[0]:na[1]),2),0),2)}。`;}
+    else {state.mu=state.nextMu||state.mu;cap=`再做一次 assignment 不变：C1={1,2,3}, C2={10,11,12}，μ=[${fmt(mu[0],2)}, ${fmt(mu[1],2)}]，J=${fmt(Jof(mu),2)}。算法收敛。`;}
+    $('#lloydStepName').textContent='第 '+idx+' 步：'+seq[Math.min(idx,seq.length-1)];
+    $('#lloydCap').textContent=cap;
+  }
+  $('#lloydNext').addEventListener('click',()=>{
+    if(state.idx<5){state.idx++;draw();} else {toast('已收敛，点“重置”可重走');}
+  });
+  $('#lloydReset').addEventListener('click',()=>{state={idx:0,mu:[1,3],nextMu:null};draw();});
+  draw();
+})();
+
+/* ---------- Voronoi ---------- */
+(()=>{
+  const svg=$('#voronoiViz');
+  function sx(v){return 50+(v-1)*((720-40)/8);} // 1..9 -> 50..720
+  function sy(v){return 380-(v-1)*((340-30)/8);} // y inverse
+  function draw(){
+    const ax=+$('#vorAx').value,ay=+$('#vorAy').value,bx=+$('#vorBx').value,by=+$('#vorBy').value;
+    svg.innerHTML='';
+    const mx=(sx(ax)+sx(bx))/2,my=(sy(ay)+sy(by))/2;
+    const dx=sx(bx)-sx(ax),dy=sy(by)-sy(ay);
+    // perpendicular line through midpoint
+    const len=420, nx=-dy, ny=dx, norm=Math.hypot(nx,ny)||1;
+    const p1x=mx+nx/norm*len, p1y=my+ny/norm*len*0.6, p2x=mx-nx/norm*len, p2y=my-ny/norm*len*0.6;
+    svgLine(svg,p1x,p1y,p2x,p2y,{color:'var(--violet)',width:2,dash:true});
+    [1,3,5,7,9].forEach(v=>{svgAdd(svg,'text',{x:sx(v),y:398,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},String(v));});
+    [1,3,5,7,9].forEach(v=>{svgAdd(svg,'text',{x:28,y:sy(v)+3,'text-anchor':'end','font-size':9,fill:'var(--muted)'},String(v));});
+    const pts=[[2,2],[4,4],[6,2],[2,6],[6,6],[8,4],[3,7],[7,3]];
+    pts.forEach(([gx,gy])=>{
+      const da=Math.hypot(gx-ax,gy-ay),db=Math.hypot(gx-bx,gy-by);
+      const c=da<=db?'#176653':'#b45a2b';
+      svgAdd(svg,'circle',{cx:sx(gx),cy:sy(gy),r:5,fill:'color-mix(in srgb, '+c+' 65%, var(--surface))',stroke:c,strokeWidth:1});
+    });
+    const cax=sx(ax), cay=sy(ay), cbx=sx(bx), cby=sy(by);
+    if(Math.hypot(cbx-cax,cby-cay)<45){
+      svgHalo(svg,cax-16,cay-18,'μa',{fill:'var(--blue)',font:12});
+      svgHalo(svg,cbx+16,cby-18,'μb',{fill:'var(--warm)',font:12});
+    } else {
+      svgHalo(svg,cax,cay-14,'μa',{fill:'var(--blue)',font:12});
+      svgHalo(svg,cbx,cby-14,'μb',{fill:'var(--warm)',font:12});
+    }
+    svgAdd(svg,'circle',{cx:sx(ax),cy:sy(ay),r:11,fill:'var(--blue)',opacity:.9});
+    svgAdd(svg,'circle',{cx:sx(bx),cy:sy(by),r:11,fill:'var(--warm)',opacity:.9});
+    $('#vorCap').textContent=`边界是两中心连线的垂直平分线。当前 μa=(${fmt(ax,1)},${fmt(ay,1)}), μb=(${fmt(bx,1)},${fmt(by,1)})。边界上的点满足到两点距离相等；边界始终是直线。`;
+  }
+  function sync(){['vorAx','vorAy','vorBx','vorBy'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,1));draw();}
+  ['vorAx','vorAy','vorBx','vorBy'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  draw();
+})();
+
+/* ---------- kmeans helper / restart ---------- */
+(()=>{
+  function kmeansRun(pts,k,restarts=5){
+    function run(){
+      let centers=[];
+      const used=new Set();
+      while(centers.length<k){const i=Math.floor(Math.random()*pts.length);if(!used.has(i)){used.add(i);centers.push({x:pts[i].x,y:pts[i].y});}}
+      let assign=new Array(pts.length).fill(0);
+      for(let it=0;it<120;it++){
+        let changed=false;
+        for(let i=0;i<pts.length;i++){
+          let best=0,bd=Infinity;
+          for(let j=0;j<k;j++){const dx=pts[i].x-centers[j].x,dy=pts[i].y-centers[j].y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=j;}}
+          if(assign[i]!==best){assign[i]=best;changed=true;}
+        }
+        const sums=centers.map(()=>({x:0,y:0,c:0}));
+        pts.forEach((p,i)=>{sums[assign[i]].x+=p.x;sums[assign[i]].y+=p.y;sums[assign[i]].c++;});
+        let moved=false;
+        for(let j=0;j<k;j++){
+          if(sums[j].c===0){centers[j]={x:pts[Math.floor(Math.random()*pts.length)].x,y:pts[Math.floor(Math.random()*pts.length)].y};moved=true;}
+          else {const nx=sums[j].x/sums[j].c,ny=sums[j].y/sums[j].c;if(Math.abs(nx-centers[j].x)>1e-9||Math.abs(ny-centers[j].y)>1e-9){centers[j]={x:nx,y:ny};moved=true;}}
+        }
+        if(!changed&&!moved)break;
+      }
+      let J=0;pts.forEach((p,i)=>{const dx=p.x-centers[assign[i]].x,dy=p.y-centers[assign[i]].y;J+=dx*dx+dy*dy;});
+      return {centers,assign,J};
+    }
+    let best=null;
+    for(let r=0;r<restarts;r++){const res=run();if(!best||res.J<best.J)best=res;}
+    return best;
+  }
+  window.kmeansRun=kmeansRun;
+
+  const svg=$('#restartViz');
+  const pts=[
+    [3.5,3.0],[4.0,2.4],[2.7,3.5],[4.3,4.0],[3.2,2.1],[4.6,3.4],
+    [6.8,6.2],[7.2,7.6],[6.4,6.9],[7.9,7.0],[6.0,7.9],[7.6,6.0],
+    [2.0,7.0],[2.6,6.1],[1.5,7.3],[3.0,6.6],[1.8,5.8],[2.3,7.9]
+  ].map(([x,y])=>({x,y}));
+  const colors=['var(--accent)','var(--warm)','var(--blue)'];
+  function draw(){
+    const L=kmeansRun(pts,3,5);
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:50,y1:20,x2:50,y2:390,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:50,y1:390,x2:750,y2:390,stroke:'var(--line)'});
+    for(let v=0;v<=10;v+=2){const x=50+v*70,y=390-v*37;svgAdd(svg,'text',{x:x,y:y+4,'text-anchor':'end','font-size':9,fill:'var(--muted)'},String(v));svgAdd(svg,'text',{x:x+35,y:406,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},String(v));}
+    pts.forEach((p,i)=>{
+      svgAdd(svg,'circle',{cx:50+p.x*70,cy:390-p.y*37,r:6,fill:colors[L.assign[i]],opacity:.85,stroke:'var(--surface)',strokeWidth:1});
+    });
+    L.centers.forEach((c,j)=>{svgAdd(svg,'polygon',{points:`${50+c.x*70},${390-c.y*37-12} ${50+c.x*70-9},${390-c.y*37+8} ${50+c.x*70+9},${390-c.y*37+8}`,fill:colors[j],stroke:'var(--line)'});});
+    // 5-run J list (computed fresh for info)
+    const runs=[];
+    for(let r=0;r<5;r++){const q=kmeansRun(pts,3,1);runs.push(q.J);}
+    $('#restartResult').textContent='5 次单重启损失：'+runs.map(v=>fmt(v,1)).join(', ')+'；最佳多重启 J='+fmt(L.J,1);
+    $('#restartCap').textContent='数据固定为三个团。每次点击都会重新抽取初始中心并跑 Lloyd；即使最终分组常收敛到同一好解，5 次单重启的 J 列表也会随 Math.random() 变化。';
+  }
+  $('#restartRun').addEventListener('click',draw);
+  draw();
+})();
+
+/* ---------- kmeans++ weighted sampling ---------- */
+(()=>{
+  const svg=$('#ppViz'), data=[0,1,2,10,11,12];
+  let selected=[1]; // first center index
+  function sx(v){return 60+(v-0)*((700-30)/12);}
+  function draw(){
+    svg.innerHTML='';
+    const D=data.map((v,i)=>{
+      const d=Math.min(...selected.map(c=>Math.pow(v-c,2)));
+      return {i,v,d,chosen:selected.includes(v)};
+    });
+    const sum=D.reduce((s,o)=>s+o.d,0);
+    const maxD=Math.max(...D.map(o=>o.d),1);
+    const base=210;
+    D.forEach((o,idx)=>{
+      const x=sx(o.v), h=(o.d/maxD)*130;
+      svgAdd(svg,'rect',{x:x-16,y:base-h,width:32,height:h,rx:5,fill:o.chosen?'var(--violet)':'color-mix(in srgb, var(--violet) 45%, var(--surface))',stroke:o.chosen?'var(--violet)':'var(--line)'});
+      svgAdd(svg,'circle',{cx:x,cy:base+14,r:5,fill:o.chosen?'var(--violet)':'var(--muted)',opacity:.9});
+      svgAdd(svg,'text',{x,y:base+30,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},String(o.v));
+      const prob=sum>0?o.d/sum:0;
+      const label=o.d===0?'0':fmt(prob*100,0)+'%';
+      svgHalo(svg,x,base-h-12,label,{font:9.5,fill:'var(--ink)'});
+    });
+    $('#ppCap').textContent='已选中心：'+selected.join(', ')+'。柱高是 $D_i^2$（到已选中心的最小平方距离），百分比是该点被抽中的概率。点击按钮用 Math.random() 按此分布抽取下一个中心；抽满 3 个后重置。';
+  }
+  $('#ppRun').addEventListener('click',()=>{
+    if(selected.length>=3){selected=[1];draw();toast('已抽满 3 个，重置为仅中心 1');return;}
+    const candidates=data.map((v,i)=>({i,v})).filter(o=>!selected.includes(o.v));
+    const weights=candidates.map(o=>Math.min(...selected.map(c=>Math.pow(o.v-c,2))));
+    const sum=weights.reduce((a,b)=>a+b,0);
+    let r=Math.random()*sum, idx=0;
+    for(let j=0;j<weights.length;j++){r-=weights[j];if(r<=0){idx=j;break;}}
+    selected.push(candidates[idx].v);
+    draw();
+  });
+  $('#ppReset').addEventListener('click',()=>{selected=[1];draw();});
+  draw();
+})();
+
+/* ---------- elbow ---------- */
+(()=>{
+  const svg=$('#elbowViz');
+  function randn(){return (Math.random()+Math.random()+Math.random()-1.5)*0.8;}
+  function gen(){const pts=[];const cs=[[3,3],[7,7],[3,7],[7,3]];cs.forEach(([cx,cy])=>{for(let i=0;i<9;i++){pts.push({x:cx+randn(),y:cy+randn()});}});return pts;}
+  function draw(){
+    const pts=gen();
+    const Js=[];
+    for(let k=1;k<=6;k++){Js.push(kmeansRun(pts,k,8).J);}
+    svg.innerHTML='';
+    const left={x0:50,x1:330,y0:310,y1:40};
+    svgAdd(svg,'line',{x1:left.x0,y1:left.y0,x2:left.x1,y2:left.y0,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:left.x0,y1:left.y0,x2:left.x0,y2:left.y1,stroke:'var(--line)'});
+    const maxJ=Math.max(...Js), minJ=Math.min(...Js);
+    const yOf=v=>left.y0-(v-minJ)/(maxJ-minJ||1)*(left.y0-left.y1);
+    const xs=k=>left.x0+(k-1)*(left.x1-left.x0)/5;
+    const d=`M${xs(1)},${yOf(Js[0])} `+[2,3,4,5,6].map(k=>`L${xs(k)},${yOf(Js[k-1])}`).join(' ');
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.2});
+    Js.forEach((v,k)=>svgAdd(svg,'circle',{cx:xs(k+1),cy:yOf(v),r:4.5,fill:'var(--accent)'}));
+    [1,2,3,4,5,6].forEach(k=>svgAdd(svg,'text',{x:xs(k),y:left.y0+18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(k)));
+    svgHalo(svg,(left.x0+left.x1)/2,left.y1-12,'训练损失 J_k*',{font:11,fill:'var(--accent)'});
+    // right: marginal
+    const rx0=390,rx1=730,ry0=310,ry1=40;
+    const deltas=[null];
+    for(let k=2;k<=6;k++)deltas.push(Js[k-2]-Js[k-1]);
+    const maxD=Math.max(...deltas.slice(1),1);
+    const barW=44;
+    const xs2=k=>rx0+(k-2)*(rx1-rx0)/5+barW/2;
+    svgAdd(svg,'line',{x1:rx0-10,y1:ry0,x2:rx1+10,y2:ry0,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:rx0-5,y1:ry0,x2:rx0-5,y2:ry1,stroke:'var(--line)'});
+    for(let k=2;k<=6;k++){const h=(deltas[k-1]/maxD)*(ry0-ry1);const x=xs2(k)-barW/2;svgAdd(svg,'rect',{x,y:ry0-h,width:barW,height:h,rx:4,fill:'color-mix(in srgb, var(--warm) 75%, var(--surface))'});svgAdd(svg,'text',{x:xs2(k),y:ry0+16,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},String(k));}
+    svgHalo(svg,(rx0+rx1)/2,ry1-12,'边际下降',{font:11,fill:'var(--warm)'});
+    const maxDval=Math.max(...deltas.slice(1));
+    let cand=6;for(let k=2;k<=6;k++){if(deltas[k]<maxDval*0.4){cand=k;break;}}
+    $('#elbowCap').textContent=`本轮数据对 k=1..6 的最优训练损失：${Js.map((v,k)=>'J_'+ (k+1)+'='+fmt(v,1)).join('， ')}；边际下降为 ${deltas.slice(1).map((v,k)=>'Δ'+(k+2)+'='+fmt(v,1)).join('， ')}。按“边际低于最大边际 40%”的简单规则，候选 k=${cand}。注意这只是一种启发式，不是定理。`;
+  }
+  $('#elbowRun').addEventListener('click',draw);
+  draw();
+})();
+
+/* ---------- feature scaling demo ---------- */
+(()=>{
+  const svg=$('#scaleViz');
+  const raw=[];
+  const centersC=[[2.5,180],[7.5,260],[5,800]];
+  centersC.forEach(([cx,cy])=>{for(let i=0;i<8;i++){raw.push({x:cx+(Math.random()-0.5)*1.6,y:cy+(Math.random()-0.5)*80});}});
+  let mode='both';
+  const colors=['var(--accent)','var(--warm)','var(--blue)'];
+  function draw(){
+    const standard=raw.map(p=>{ const xs=raw.map(q=>q.x), ys=raw.map(q=>q.y); const mx=xs.reduce((a,b)=>a+b,0)/xs.length, my=ys.reduce((a,b)=>a+b,0)/ys.length; const vx=xs.reduce((a,v)=>a+Math.pow(v-mx,2),0)/xs.length, vy=ys.reduce((a,v)=>a+Math.pow(v-my,2),0)/ys.length; return {x:(p.x-mx)/Math.sqrt(vx),y:(p.y-my)/Math.sqrt(vy)}; });
+    const panels=mode==='both'?[{label:'原始尺度',pts:raw,ox:0,ow:360},{label:'标准化后',pts:standard,ox:400,ow:360}]:[{label:'标准化后',pts:standard,ox:0,ow:740}];
+    svg.innerHTML='';
+    panels.forEach((panel,idx)=>{
+      const x0=panel.ox+30,x1=panel.ox+panel.ow-20,y0=320,y1=30;
+      svgAdd(svg,'rect',{x:panel.ox+10,y:12,width:panel.ow-20,height:340,rx:10,fill:'var(--surface2)',opacity:.4});
+      svgAdd(svg,'text',{x:panel.ox+panel.ow/2,y:30,'text-anchor':'middle','font-size':13,fontWeight:700,fill:'var(--ink)'},panel.label);
+      const L=kmeansRun(panel.pts,2,8);
+      const xs=panel.pts.map(p=>p.x),ys=panel.pts.map(p=>p.y);
+      const minX=Math.min(...xs,0),maxX=Math.max(...xs,10),minY=Math.min(...ys,0),maxY=Math.max(...ys,1000);
+      if(mode==='both'&&idx===0){ /* keep raw range */ } else { const s=Math.max(Math.abs(minX),Math.abs(maxX),Math.abs(minY),Math.abs(maxY),3); }
+      const xOf=v=>x0+8+(v-(mode==='both'&&idx===0?minX:-3))*((x1-x0-16)/((mode==='both'&&idx===0?maxX-minX:6)||1));
+      const yOf=v=>y0-20-(v-(mode==='both'&&idx===0?minY:minY))*((y0-y1-25)/((mode==='both'&&idx===0?maxY-minY:(maxY-minY))||1));
+      // simpler mapping per panel based on actual ranges
+      const xr = mode==='both' && idx===0 ? [Math.min(...xs,0),Math.max(...xs,10)] : [-3,3];
+      const yr = mode==='both' && idx===0 ? [Math.min(...ys,0),Math.max(...ys,1000)] : [-3,3];
+      const X=v=>x0+12+(v-xr[0])*(x1-x0-24)/(xr[1]-xr[0]||1);
+      const Y=v=>y0-12-(v-yr[0])*(y0-y1-30)/(yr[1]-yr[0]||1);
+      panel.pts.forEach((p,i)=>{
+        svgAdd(svg,'circle',{cx:X(p.x),cy:Y(p.y),r:5,fill:colors[L.assign[i]],opacity:.85});
+      });
+      L.centers.forEach((c,j)=>{svgAdd(svg,'polygon',{points:`${X(c.x)},${Y(c.y)-10} ${X(c.x)-7},${Y(c.y)+6} ${X(c.x)+7},${Y(c.y)+6}`,fill:colors[j],stroke:'var(--line)'});});
+      svgAdd(svg,'text',{x:panel.ox+panel.ow/2,y:y0+8,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'J='+fmt(L.J,1));
+    });
+    $('#scaleToggle').textContent=mode==='both'?'切换到：只看标准化':'切换到：双栏对比';
+    const Lr=kmeansRun(raw,2,8), Ls=kmeansRun(standard,2,8);
+    $('#scaleResult').textContent='原始 J='+fmt(Lr.J,1)+'；标准化 J='+fmt(Ls.J,1);
+    $('#scaleCap').textContent='同一批点（三个团：x≈2.5/y≈180、x≈7.5/y≈260、x≈5/y≈800）。原始尺度下 y 的方差主导距离；标准化后两维权重更均衡，聚类结果可能改变。图中颜色由页面内 Lloyd 现算，J 随随机重启略有波动。';
+  }
+  $('#scaleToggle').addEventListener('click',()=>{mode=mode==='both'?'std':'both';draw();});
+  draw();
+})();
+
+/* ---------- concentric rings failure ---------- */
+(()=>{
+  const svg=$('#shapeViz');
+  function gen(){const pts=[];const ns=[3,6];ns.forEach(r=>{for(let a=0;a<Math.PI*2;a+=0.22){const rr=r+(Math.random()-0.5)*0.18;pts.push({x:4+rr*Math.cos(a),y:4+rr*Math.sin(a)});}});return pts;}
+  const colors=['var(--accent)','var(--warm)','var(--blue)','var(--violet)'];
+  function draw(){
+    const pts=gen(); const L=kmeansRun(pts,4,8);
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:40,y1:20,x2:40,y2:360,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:40,y1:360,x2:760,y2:360,stroke:'var(--line)'});
+    for(let v=0;v<=8;v+=2){const x=40+v*90,y=360-v*42.5;svgAdd(svg,'text',{x:x,y:y+4,'text-anchor':'end','font-size':9,fill:'var(--muted)'},String(v));svgAdd(svg,'text',{x:x+40,y:374,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},String(v));}
+    pts.forEach((p,i)=>svgAdd(svg,'circle',{cx:40+p.x*90,cy:360-p.y*42.5,r:4,fill:colors[L.assign[i]],opacity:.8}));
+    L.centers.forEach((c,j)=>{svgAdd(svg,'polygon',{points:`${40+c.x*90},${360-c.y*42.5-10} ${40+c.x*90-7},${360-c.y*42.5+6} ${40+c.x*90+7},${360-c.y*42.5+6}`,fill:colors[j],stroke:'var(--line)'});});
+    $('#shapeResult').textContent='J='+fmt(L.J,1)+' · 簇大小：'+[0,1,2,3].map(j=>L.assign.filter(a=>a===j).length).join('/');
+    $('#shapeCap').textContent='两个同心圆环。k-means 的 Voronoi 边界是直线，所以它把圆环切成扇形而不是沿环分开；每次重跑用 Math.random() 初始化，扇形切法会变但“无法沿环分开”不变。';
+  }
+  $('#shapeRun').addEventListener('click',draw);
+  draw();
+})();
+
+/* ---------- core/full mode, bridges, tags ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    unsup:{mode:'core',tag:'无标签'},prototype:{mode:'core',tag:'原型'},objective:{mode:'core',tag:'目标'},
+    assign:{mode:'core',tag:'分配'},update:{mode:'core',tag:'更新'},lloyd:{mode:'core',tag:'Lloyd'},
+    monotone:{mode:'core',tag:'单调'},voronoi:{mode:'core',tag:'Voronoi'},init:{mode:'core',tag:'初始化'},
+    choosek:{mode:'core',tag:'选 k'},scale:{mode:'extra',tag:'拓展'},pca:{mode:'core',tag:'PCA 连接'},
+    confuse:{mode:'core',tag:'误区'},quiz:{mode:'core',tag:'自测'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：第 15 讲在整门课的位置，以及无标签学习的主线。',
+    unsup:'从“没有标签”出发，才知道聚类为什么要自己定义好分组。',
+    prototype:'先用手算建立“用中心重建数据”的直觉，再严格化。',
+    objective:'直觉的严格化：把聚类写成可优化的目标函数。',
+    assign:'目标里有两块变量；先看固定中心时分配怎么解。',
+    update:'再看固定分组时，为什么中心的最优解是均值。',
+    lloyd:'两块子问题都有精确解，交替执行就是 Lloyd 算法。',
+    monotone:'手算显示损失只降不升；这里给出两个不等式。',
+    voronoi:'最近中心规则会产生线性边界，这是 k-means 的几何前提。',
+    init:'非凸目标对起点敏感；需要多次重启或 k-means++。',
+    choosek:'算法给定后，k 是另一个关键选择：肘部与正则化。',
+    pca:'看完失败模式，回到课程主线：k-means 与 PCA 都是无标签压缩。',
+    confuse:'收束前先扫掉七句“听起来对”的常见误区。',
+    quiz:'误区扫完，用自测题确认计算和概念都带走。',
+    takeaway:'最后把核心问题、公式、自查清单和下一讲串起来。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    rebuildBridges();
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'非监督学习',en:'unsupervised learning',f:'\\{x_i\\}_{i=1}^n',d:'从没有外部标签的样本中学习结构的范式；聚类是其中一种结构。',r:'位置：§1。用处：探索、压缩、表示学习、异常检测。重要：没有 y，就必须自己定义目标。'},
+    {t:'聚类',en:'clustering',f:'x_i\\in\\mathbb{R}^d',d:'把样本分成簇，使簇内相似、簇间不相似；相似度由表示与距离定义。',r:'位置：§1。用处：分群、压缩、伪标签。重要：簇编号本身没有外部语义。'},
+    {t:'重建误差',en:'reconstruction error',f:'\\lVert x-\\mu\\rVert_2^2',d:'用代表点近似原始样本的平方距离误差。',r:'位置：§2。用处：把分组好坏变成标量。重要：k-means 和 PCA 都最小化重建误差。'},
+    {t:'k-means 目标',en:'k-means objective',f:'J(Z,\\mu)=\\sum_{i,j}z_{ij}\\lVert x_i-\\mu_j\\rVert_2^2',d:'总平方重建误差；Z 是 one-hot 分配，μ 是中心。',r:'位置：§3。用处：聚类的可优化标量。重要：整体非凸，只能交替优化。'},
+    {t:'分配步',en:'assignment step',f:'j_i^\\star=\\arg\\min_\\ell\\lVert x_i-\\mu_\\ell\\rVert_2^2',d:'固定中心，把每个点分给最近的中心。',r:'位置：§4。用处：精确优化离散变量 Z。重要：是 Lloyd 损失不增的一半。'},
+    {t:'均值更新',en:'centroid update',f:'\\mu_j=\\frac{1}{n_j}\\sum_{i:z_{ij}=1}x_i',d:'固定分组，把中心更新为该簇内点的均值。',r:'位置：§5。用处：固定分组下平方距离目标的最优解。重要：均值来自平方损失，不是普遍法则。'},
+    {t:'Lloyd 算法',en:"Lloyd's algorithm",f:'(Z,\\mu)\\to(Z^{(t+1)},\\mu^{(t+1)})',d:'交替执行分配步和更新步的块坐标下降算法。',r:'位置：§6。用处：求解 k-means。重要：单调不增但只保证局部解。'},
+    {t:'局部最优',en:'local optimum',f:'J(\\bar Z,\\bar\\mu)\\le J(Z,\\mu)\\ \\text{(局部)}',d:'不能被单步分配或更新改进，但不一定是全局最优的稳定点。',r:'位置：§7。用处：解释初始化敏感。重要：收敛 ≠ 全局最优。'},
+    {t:'Voronoi 分区',en:'Voronoi partition',f:'\\lVert x-\\mu_a\\rVert^2=\\lVert x-\\mu_b\\rVert^2',d:'由最近中心诱导的空间划分，边界是垂直平分超平面。',r:'位置：§8。用处：可视化决策边界。重要：直线边界导致非球形失败。'},
+    {t:'k-means++',en:'k-means++',f:'\\Pr(x_i)=\\frac{D_i^2}{\\sum D_\\ell^2}',d:'按到已选中心最小平方距离 D_i^2 加权抽样的初始化方法。',r:'位置：§9。用处：更好的随机起点。重要：有 O(log k) 期望近似保证。'},
+    {t:'肘部法',en:'elbow method',f:'\\operatorname{score}(k)=J_k+\\lambda k',d:'看训练损失随 k 下降的边际收益，选收益明显变小的 k。',r:'位置：§10。用处：选择 k 的启发式。重要：不是定理，不能只看损失。'},
+    {t:'标准化',en:'standardization',f:"x'_{ij}=\\frac{x_{ij}-\\bar x_j}{s_j}",d:'每个特征减均值除标准差，使各维尺度相近。',r:'位置：§11。用处：防止大数值特征主导距离。重要：选择距离就是选择特征权重。'},
+    {t:'异常点',en:'outlier',f:'s(x)=\\min_j\\lVert x-\\mu_j\\rVert_2^2',d:'远离当前主要结构的点；最近中心距离可作异常分数。',r:'位置：§11。用处：诊断与异常检测。重要：大距离不等于数据错误，要结合领域。'}
+  ];
+  const KEYS={'非监督学习':'非监督学习','聚类':'聚类','重建误差':'重建误差','k-means 目标':'k-means 目标','分配步':'分配步','均值更新':'均值更新','Lloyd 算法':'Lloyd 算法','局部最优':'局部最优','Voronoi 分区':'Voronoi 分区','k-means++':'k-means++','肘部法':'肘部法','标准化':'标准化','异常点':'异常点'};
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&p.matches(GLOSS_SKIP))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:c.k||KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'给定一维簇 C={2,4,8}，平方距离目标的最优中心是多少？最小损失是多少？',a:'最优中心是均值 (2+4+8)/3=14/3；最小损失 (2−14/3)²+(4−14/3)²+(8−14/3)² = 56/3。'},
+    {q:'数据 0,2,4,10，k=2，初始中心 0 和 10。按最近中心分配并更新一次，写出两个新中心。',a:'分配：0,2,4 归 0；10 归 10。更新：μ1=(0+2+4)/3=2，μ2=10。'},
+    {q:'为什么固定中心的 assignment step 和固定分组的 update step 都不会增加 J？',a:'分配步逐点选最小平方距离；更新步均值是固定分组下平方距离和的全局最小点。两者相加分别使 J 不增。'},
+    {q:'两个二维中心是 μ1=(0,0)、μ2=(4,0)。等距边界是什么？点 (1,3) 属于哪一侧？',a:'边界 x1=2；(1,3) 的 x1<2，更接近 μ1。'},
+    {q:'若已选中心为 0，候选点 1,2,5 的 k-means++ 抽样权重是什么？',a:'D² 为 1,4,25；权重和 30，概率分别为 1/30, 4/30, 25/30。'},
+    {q:'为什么 J_k* 随 k 增大不升，但不能只选使 J 最小的 k？',a:'可保留旧中心并让新中心不接管任何点，所以最优值不升；k=n 时损失为 0，说明过度使用代表点，应结合边际收益、复杂度、稳定性与任务。'},
+    {q:'收入范围约为年龄的 1000 倍，或数据是两个同心圆，分别指出普通 k-means 的问题和一个合理诊断。',a:'收入主导距离→尝试标准化并看每维贡献；同心圆→Voronoi 直线边界切不了环，检查表示或换聚类模型。'},
+    {q:'同一个 k 重跑十次得到不同分组，列出至少三项检查。',a:'多次重启的最终损失；特征中心化/标准化与异常点；不同 k；空簇处理；簇大小极端；可解释一致性。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
