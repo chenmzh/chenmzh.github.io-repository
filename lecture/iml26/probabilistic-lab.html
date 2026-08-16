@@ -117,6 +117,9 @@ details .inner{padding:12px 16px}
 .tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
 .tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
 svg text{font-family:Menlo,Monaco,monospace}
+.katex-display{overflow-x:auto;overflow-y:hidden;max-width:100%;padding:.25em 0;-webkit-overflow-scrolling:touch}
+.katex-display::-webkit-scrollbar{height:6px}
+.katex-display::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--line) 80%,transparent);border-radius:3px}
 .svg-wrap{width:100%;overflow:auto}
 .small{font-size:.82rem;color:var(--muted)}
 .quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
@@ -167,8 +170,8 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
     </div>
   </div>
   <div class="actions">
-    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
-    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+    <button class="btn" id="resetAll" type="button">重置全部</button>
+    <button class="btn ghost" id="themeToggle" type="button" aria-label="切换明暗主题">主题</button>
   </div>
 </header>
 <div class="layout">
@@ -188,19 +191,19 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 19 讲 / 25 讲</div>
       <h1>函数给你一个答案，<br>分布给你一张地图</h1>
       <p class="subtitle">第 16、18 讲的降维教我们从数据里找低维结构；这一讲换一个目标：<b>直接从数据里估计一个概率分布 $P$</b>。我们从直方图和 KDE 两种非参数密度估计出发，再进入参数化分布族与最大似然估计（MLE），最后得到本讲最重要的连接：<b>高斯噪声下的回归 MLE = 最小二乘</b>。</p>
-      <div class="question">💬 <b>本讲核心问题：</b>以前我们学的是“从数据里学一个函数”，现在为什么要改成“从数据里学一个概率分布”？</div>
+      <div class="question">Q. <b>本讲核心问题：</b>以前我们学的是“从数据里学一个函数”，现在为什么要改成“从数据里学一个概率分布”？</div>
       <div class="answer">一句话答案：函数只告诉你一个答案；分布告诉你答案、可能性、置信程度、异常程度，以及如何生成新样本。本讲先学两种非参数密度估计（直方图 / KDE），再学参数化分布族 + MLE，最后把平方损失回归重新解释为高斯噪声下的 MLE。</div>
       <div class="overview-grid">
         <div class="overview-card">
-          <h3>📌 今天讲什么</h3>
+          <h3>今天讲什么</h3>
           <p class="small">函数视角 → 分布视角 → 分布能做的四件事 → 直方图密度估计 → KDE 与 bandwidth → 参数分布族 → MLE 与 log-likelihood → 高斯均值/方差 MLE → 条件分布 → MLE = 最小二乘 → 一个一维回归手算 → 常见误区与下一讲连接。</p>
         </div>
         <div class="overview-card">
-          <h3>🔥 为什么重要</h3>
+          <h3>为什么重要</h3>
           <p class="small">概率模型不是“多背几个分布”，而是把预测、不确定性、异常检测、采样生成和决策统一在同一套语言里。MLE 是本讲的第一种推断工具，也是后续 logistic 回归、贝叶斯推断、GMM 与 EM 的地基。</p>
         </div>
         <div class="overview-card">
-          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <h3>主线逻辑（整讲五步）</h3>
           <div class="steps">
             <span class="step"><b>① 换问</b>：从学函数 $f$ 换成学分布 $P$（§1–§2）。</span>
             <span class="step"><b>② 非参数</b>：直方图与 KDE 直接描述 $p(x)$，但平滑参数难选（§3–§4）。</span>
@@ -361,7 +364,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
             <label for="kdeSigma">带宽 σ <span class="val" id="kdeSigmaVal"></span></label>
             <input id="kdeSigma" type="range" min="2" max="60" step="1" value="18">
           </div>
-          <button class="btn" id="kdeRandom" type="button">🎲 随机换一批样本</button>
+          <button class="btn" id="kdeRandom" type="button">随机换一批样本</button>
         </div>
         <svg id="kdeViz" viewBox="0 0 760 340" role="img" aria-label="核密度估计"></svg>
         <p class="caption" id="kdeCap"></p>
@@ -527,7 +530,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
             <label for="lsW">候选斜率 w <span class="val" id="lsWVal"></span></label>
             <input id="lsW" type="range" min="-0.5" max="4" step="0.05" value="1.6">
           </div>
-          <button class="btn" id="lsRandom" type="button">🎲 随机换一批点</button>
+          <button class="btn" id="lsRandom" type="button">随机换一批点</button>
         </div>
         <svg id="lsViz" viewBox="0 0 760 340" role="img" aria-label="高斯回归与最小二乘"></svg>
         <p class="caption" id="lsCap"></p>
