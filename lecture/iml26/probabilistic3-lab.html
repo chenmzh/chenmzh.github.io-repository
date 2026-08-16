@@ -1,0 +1,1727 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 21 讲 · Probabilistic Modeling III 互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 21 讲 Probabilistic Modeling III 的深度互动讲义：动作空间与非对称损失阈值（1/21）、分位数损失、拒判区间、Bayes 更新与离散手算、Beta-Bernoulli 共轭（Beta(5,4)、MAP 4/7、预测 5/9）、高斯均值后验（16/9、4/9）与两种 90% 区间、MAP=Ridge/Lasso、plug-in vs 后验预测（13/9）、可信/预测/频率派三种区间、aleatoric 与 epistemic、医疗决策台与覆盖率蒙特卡洛。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+.gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:.92rem}
+.checklist label:hover{border-color:var(--accent)}
+.checklist input{margin-top:5px;accent-color:var(--accent)}
+.checklist label.done{opacity:.62;text-decoration:line-through}
+.check-score{margin-top:10px;font-weight:700;color:var(--accent)}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-21" title="返回第 21 讲原文">← 返回第 21 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 21 · INTERACTIVE LAB</div>
+      <div class="title">Probabilistic Modeling III — 在不确定性下做决策，把参数也看成不确定</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 21 讲 / 25 讲</div>
+      <h1>概率算出来了，<br>然后呢？<br><span style="color:var(--warm)">动作由代价决定</span></h1>
+      <p class="subtitle">第 20 讲拿到了后验 $P(Y\mid X)$；这一讲先把它用足：改代价（非对称损失）、改动作空间（可以不回答），“最优动作”公式一个字不变。然后掉转镜头看参数：frequentist 认为它固定未知，Bayesian 给它先验分布、用数据更新成后验——于是 MLE、MAP、后验预测三种估计姿势，以及两种不确定性的分解，都整齐地排成一列。</p>
+      <div class="question">💬 本讲核心问题：同一个后验，为什么漏诊和误报代价不同时阈值会从 0.5 变成 $\frac{c_{\mathrm{FP}}}{c_{\mathrm{FP}}+c_{\mathrm{FN}}}$？模型什么时候应该“我不确定，交给人”？参数本身的不确定性又该怎么进入预测——压成一个 MAP 点，还是整个平均进去？</div>
+      <div class="answer">一句话答案：预测、非对称分类、拒判、复查转诊，全是同一个公式 $a^*(x)=\arg\min_a\mathbb E[\ell(a,Y)\mid X=x]$——变的只是动作空间 $A$ 与损失 $\ell$，<b>不用重训模型</b>。参数侧：Bayes 更新“相乘再归一化”，离散例算出 MAP=2/3、预测 5/9；Beta–Bernoulli 与高斯均值都有闭式后验（precision 相加、均值按 precision 加权）；高斯先验的 MAP 就是 Ridge、Laplace 先验就是 Lasso。把参数积分掉的后验预测比 plug-in 多出一层 epistemic 方差——两种 $90\%$ 区间因此一窄一宽。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">体检决策引入动作空间 → 非对称损失阈值（1/21 手算）→ 分位数损失（τ 分位数 ≠ 均值）→ 拒判区间 → Bayes 更新与离散手算 → Beta–Bernoulli 共轭（Beta(5,4)）→ 高斯均值后验（16/9）与两种区间 → MAP=Ridge/Lasso → plug-in vs 后验预测 → 三种区间对照 → aleatoric vs epistemic → 覆盖率蒙特卡洛。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">这是把概率模型“变现”的一讲：业务/医疗代价可以显式换算成阈值；拒判给高风险场景一个安全阀；Bayesian 视角让“参数还没定”这件事进入预测方差——小样本时区间更诚实。下一组 GMM/EM 的 responsibility 就是本讲的后验概率在新场景的化身。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 用</b>：后验 + 代价 → 最优动作（§1–§2）。</span>
+            <span class="step"><b>② 扩</b>：分位数损失、拒判——同一公式换 $\ell$ 与 $A$（§3–§4）。</span>
+            <span class="step"><b>③ 转</b>：参数也是随机变量——prior × likelihood → posterior（§5–§6）。</span>
+            <span class="step"><b>④ 算</b>：共轭闭式、precision 相加、MAP=正则化（§7–§8）。</span>
+            <span class="step"><b>⑤ 测</b>：plug-in vs 后验预测、两种区间、两种不确定性（§9–§11）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：判别/生成与 Bayes 决策（L20）→ <b>决策论与 Bayesian 推断（L21）</b> → GMM 与 EM（L22）</span>
+        <span class="pill">🧩 前置：L20 的后验与条件风险；求导与 argmin；高斯密度</span>
+        <span class="pill">🎯 产出：能<b>手算 1/21 阈值、离散/Beta 后验、高斯 μ_n=16/9 与两种 90% 区间</b>，能讲清 MAP=正则化与两层不确定性</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：一条公式，两重不确定性</h2>
+      <p class="sec-lead">第 20 讲把后验立为通用货币；本讲上排把它兑换成各种代价下的动作，下排把“参数不确定”引入预测；第 22 讲的 EM 会直接复用这里的后验语言。节点可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 350" role="img" aria-label="第 21 讲概念地图"></svg></div>
+        <div class="caption">概念地图：<b style="color:var(--accent)">核心</b>环节构成主线（上排：决策论支线；下排：Bayesian 支线与区间/不确定性收束）；<span style="color:var(--violet);font-weight:700">拓展</span>环节是医疗决策台与覆盖率模拟。灰色节点是前后讲次。</div>
+      </div>
+    </section>
+
+    <!-- ============ §1 DECISION ============ -->
+    <section id="decision">
+      <h2 class="sec-title"><span class="num">§1</span>从体检决策开始：动作不只两个 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">假设模型给一个病人输出 $P(\text{有病}\mid x)=0.12$、$P(\text{无病}\mid x)=0.88$。0-1 分类会说“预测无病”；但医生的动作是<b>不处理、安排复查、立即治疗</b>——代价各不相同，漏诊严重疾病的代价远高于多做一次检查。真正需要的是：<b>给定概率分布和代价，选择期望代价最小的动作</b>。</p>
+      <div class="def">
+        <div class="term">决策规则 <span class="en">decision rule · first mentioned: §1</span></div>
+        <p class="plain"><b>是什么</b>：从输入 $x$ 到动作 $a$ 的函数；最优版本是 $a^*(x)=\arg\min_{a\in A}\mathbb E[\ell(a,Y)\mid X=x]$。</p>
+        <p class="plain"><b>白话</b>：一张“看到什么就做什么”的对照表——好的表按期望代价写。</p>
+        <p class="plain"><b>干嘛用</b>：把概率输出兑换成行动。</p>
+        <p class="plain"><b>怎么算</b>：对每个候选动作算条件风险 $R(a\mid x)=\sum_y\ell(a,y)P(Y=y\mid x)$，再取最小者；离散情形就是按后验概率加权求和。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：若动作就是预测标签，它是第 20 讲的 Bayes optimal predictor；若动作可以包含复查、转人工，就是更一般的 Bayes optimal decision rule。<b>公式不变，变的是动作空间</b>：label space → action space。后验相同、代价或动作一变，最优决策就可能变——不需要重新训练概率模型。</p>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>0-1 损失只是最简单的代价</b>：$R(+1\mid x)=1-p$、$R(-1\mid x)=p$，选 $+1$ 当且仅当 $p>\frac12$——普通分类阈值。下一节把这个 0.5 掰开，看代价结构如何改写它。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §2 ASYMMETRIC ============ -->
+    <section id="asym">
+      <h2 class="sec-title"><span class="num">§2</span>非对称损失：漏诊和误报不一样 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要推导的是<b>新的决策阈值</b>，不是新的分类概率：模型输出仍是 $p=P(Y{=}{+}1\mid x)$，只改变错误代价。把 $+1$ 错判为 $-1$（漏诊，false negative）的代价记 $c_{\mathrm{FN}}$，把 $-1$ 错判为 $+1$（误报，false positive）记 $c_{\mathrm{FP}}$。</p>
+      <div class="card">
+        <h3 style="margin-top:0">三行推出新阈值</h3>
+        <p class="plain">$$R(+1\mid x)=c_{\mathrm{FP}}(1-p),\qquad R(-1\mid x)=c_{\mathrm{FN}}\,p,$$
+          选 $+1$ 当且仅当 $c_{\mathrm{FP}}(1-p)<c_{\mathrm{FN}}p$，整理：
+          $$p>\frac{c_{\mathrm{FP}}}{c_{\mathrm{FP}}+c_{\mathrm{FN}}}.$$</p>
+        <p class="plain small">第二步把含 $p$ 的项移到右边；两种错误代价之和为正，除以它不等号方向不变。<b>直觉</b>：漏诊代价 $c_{\mathrm{FN}}$ 越大，分母越大、阈值越低，模型越早采取正类动作。这个公式的用途不是证明某个固定阈值永远正确，而是把业务或医疗代价<b>显式转换</b>成阈值。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动两种代价，看阈值离开 0.5（曲线与区间现算）</h4>
+        <div class="svg-wrap"><svg id="asymViz" viewBox="0 0 880 380" role="img" aria-label="非对称损失阈值"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>误报代价 $c_{\mathrm{FP}}$</label><input type="range" id="asFP" min="0.5" max="10" step="0.5" value="1"><div class="val" id="asFPval"></div></div>
+          <div class="control"><label>漏诊代价 $c_{\mathrm{FN}}$</label><input type="range" id="asFN" min="0.5" max="30" step="0.5" value="20"><div class="val" id="asFNval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn ghost" id="asExam" type="button">载入讲义例（1, 20）</button></div>
+        </div>
+        <div class="caption" id="asCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算</b>：$c_{\mathrm{FN}}=20$、$c_{\mathrm{FP}}=1$ 时阈值 $=\frac{1}{1+20}=\frac1{21}\approx0.048$——患病概率超过 4.8% 就该采取“有病”相关动作。若模型给 $P(\text{有病}\mid x)=0.12$：0-1 分类预测<b>无病</b>；非对称损失下预测<b>有病</b>（或至少安排检查）。0.12 大于 1/21 ✓，但小于 0.5——这就是代价改写决策的直接例子。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §3 QUANTILE ============ -->
+    <section id="quantile">
+      <h2 class="sec-title"><span class="num">§3</span>连续目标：分位数不是均值 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">同一思想用于回归：令 $\tau\in(0,1)$，分位数损失（pinball loss）为 $\ell_\tau(a,y)=(y-a)\big(\tau-\mathbf 1\{y<a\}\big)$——高估与低估的代价不对称。</p>
+      <div class="def">
+        <div class="term">分位数损失 <span class="en">quantile / pinball loss · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：$\ell_\tau(a,y)=(y-a)(\tau-\mathbf 1\{y<a\})$；低估（$y>a$）罚 $\tau$ 倍差、高估罚 $1-\tau$ 倍差的分段线性损失。</p>
+        <p class="plain"><b>白话</b>：一把倾斜的天平——哪边更怕错，就往哪边压砝码。</p>
+        <p class="plain"><b>干嘛用</b>：想要条件分布的第 $\tau$ 分位数而非均值时（库存、风险值）。</p>
+        <p class="plain"><b>怎么算</b>：条件风险求导得 $\frac{dR}{da}=F(a\mid x)-\tau$（积分上限的边界项为零，因为在 $y=a$ 处损失因子为零），令其为零：最优动作满足 $F(a^\star\mid x)=\tau$——<b>条件 $\tau$ 分位数</b>。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它再次印证本讲主线——损失改变，最优统计量随之改变；平方损失给均值（L19）、0-1 给众数/argmax（L20）、pinball 给分位数。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动 $\tau$，看最优动作在四个等概率点上怎么跳（均值纹丝不动）</h4>
+        <div class="svg-wrap"><svg id="quantViz" viewBox="0 0 880 380" role="img" aria-label="分位数损失互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>分位数水平 $\tau$</label><input type="range" id="qvTau" min="0.05" max="0.95" step="0.05" value="0.75"><div class="val" id="qvTauval"></div></div>
+        </div>
+        <div class="caption" id="qvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算</b>：$Y\mid X=x$ 在四个等概率点 $1,2,4,8$ 上取值。$\tau=0.75$ 时，最小满足 $F(a\mid x)\ge0.75$ 的动作是 $a^\star=4$（$F(4)=0.75$）；平均数却是 $3.75$。把 $\tau$ 拖到 0.3 试试——最优动作跳到 2，均值还是 3.75。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §4 REJECT ============ -->
+    <section id="reject">
+      <h2 class="sec-title"><span class="num">§4</span>拒判：模型可以选择“不回答” <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">动作空间变成 $A=\{-1,+1,r\}$，$r$ 表示 reject/abstain——模型说“这个点我不确定，交给别人”。损失：预测错 1、预测对 0、拒判 $c$（$0\le c\le1$）。$c$ 很低时模型更愿意拒判；很高时更愿意硬猜。</p>
+      <div class="def">
+        <div class="term">拒判 <span class="en">abstention / reject · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：动作空间增加“暂不回答”选项；0-1 损失下三个风险为 $R(+1)=1-p$、$R(-1)=p$、$R(r)=c$。</p>
+        <p class="plain"><b>白话</b>：给模型一个“弃权”按钮，按一次付 $c$。</p>
+        <p class="plain"><b>干嘛用</b>：高风险场景（医疗、法务）把不确定样本转人工。</p>
+        <p class="plain"><b>怎么算</b>：拒判当且仅当 $c<\min\{1-p,\,p\}$，即 $c<p<1-c$——<b>只发生在决策边界附近</b>，因为那里两类概率都不够确定。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：边界条件 $c>\frac12$ 时区间 $c<p<1-c$ 为空——拒判比硬猜更贵，永远不弃权。三个例子：$c=0.49$ 只在非常接近边界时弃权；$c=0.25$ 中等不确定都弃权；$c=0.02$ 几乎只在极其确定时才预测。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动拒判代价 $c$ 与当前后验 $p$，看三段色带与最优动作</h4>
+        <div class="svg-wrap"><svg id="rejViz" viewBox="0 0 880 340" role="img" aria-label="拒判区间互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>拒判代价 $c$</label><input type="range" id="rjC" min="0.01" max="0.6" step="0.01" value="0.25"><div class="val" id="rjCval"></div></div>
+          <div class="control"><label>当前 $p=P(Y{=}{+}1\mid x)$</label><input type="range" id="rjP" min="0.01" max="0.99" step="0.01" value="0.5"><div class="val" id="rjPval"></div></div>
+        </div>
+        <div class="step-bar">
+          <button class="btn ghost" id="rjE1" type="button">c=0.49</button>
+          <button class="btn ghost" id="rjE2" type="button">c=0.25</button>
+          <button class="btn ghost" id="rjE3" type="button">c=0.02</button>
+        </div>
+        <div class="caption" id="rjCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>统一公式</b>：预测、非对称分类、拒判，本质都是 $a^*(x)=\arg\min_{a\in A}\mathbb E[\ell(a,Y)\mid X=x]$——差别只在 $A$ 是什么、$\ell$ 怎么定义、后验是否可靠。<b>这就是概率模型有用的地方</b>：只有硬标签时无法轻松改代价；有完整分布，改损失后重算最优动作即可。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §5 BAYES UPDATE ============ -->
+    <section id="bayes">
+      <h2 class="sec-title"><span class="num">§5</span>Bayes 更新：参数也是随机变量 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">MLE 的世界里参数固定但未知（$X\sim\operatorname{Bernoulli}(\theta^*)$，$\theta^*$ 是自然界真值，数据随机）——这是 frequentist 视角。Bayesian 视角说：$\theta$ 本身也是随机变量。这里的“随机”首先是<b>认识论</b>的表达：观察者对固定但未知参数的知识不确定性；观测噪声则是数据生成机制里的另一重不确定性（§11 会给两者起名字）。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">先验分布 <span class="en">prior · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：观察数据前对参数的分布 $\theta\sim P_\Theta$。</p>
+          <p class="plain"><b>白话</b>：开考前对各答案的押注。</p>
+          <p class="plain"><b>干嘛用</b>：表达数据之外的 knowledge/偏好，进入 Bayes 更新。</p>
+          <p class="plain"><b>怎么算</b>：与 likelihood 相乘再归一化：$p(\theta\mid D)=\frac{p(D\mid\theta)p(\theta)}{p(D)}\propto p(D\mid\theta)p(\theta)$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：likelihood 表示数据对候选参数的支持、先验是观察前的权重、证据 $p(D)$ 只负责归一——三角色分开后，MAP 取峰、后验预测取平均（§9）。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">后验分布 <span class="en">posterior · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：观察数据后参数的分布 $P(\theta\mid D)$；数据增多时通常会集中。</p>
+          <p class="plain"><b>白话</b>：看完证据之后重新下的注。</p>
+          <p class="plain"><b>干嘛用</b>：所有 Bayesian 估计与预测的原料。</p>
+          <p class="plain"><b>怎么算</b>：离散情形逐值相乘再除以总和（下方表格逐步演示）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：没有它，问“$\theta$ 本身有多可能”无从谈起——MLE 只回答“哪个 $\theta$ 让数据最可能”。</p>
+        </div>
+      </div>
+      <div class="card compact why">
+        <div class="term">为什么“最可能的 θ”需要先验分布</div>
+        <p class="plain small">只观察一个点 $x=1$ 时，MLE 给 $\hat\theta=1$（因为 $p(x{=}1\mid\theta)=\theta$ 在 $\theta=1$ 最大）。但这不是“$\theta$ 的概率最大”——是“这个 $\theta$ 让数据 likelihood 最大”。要说 $\theta$ 本身有多可能，必须先给它一个先验分布。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：逐步点亮离散 Bayes 更新（θ∈{1/3, 2/3}，可换观察值）</h4>
+        <div class="svg-wrap"><svg id="discViz" viewBox="0 0 880 330" role="img" aria-label="离散 Bayes 更新表"></svg></div>
+        <div class="step-bar">
+          <button class="btn primary" id="dcNext" type="button">下一步 ▸</button>
+          <button class="btn ghost" id="dcReset" type="button">↺ 重新演示</button>
+          <button class="btn ghost" id="dcFlip" type="button">换成观察 x=0</button>
+        </div>
+        <div class="caption" id="dcCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算（观察 $x=1$）</b>：先验各 $\tfrac12$；likelihood $\tfrac13$ 与 $\tfrac23$；联合 $\tfrac13\cdot\tfrac12=\tfrac16$、$\tfrac23\cdot\tfrac12=\tfrac13$；证据 $=\tfrac16+\tfrac13=\tfrac12$；后验 $=\left(\tfrac13,\tfrac23\right)$；$\theta_{\mathrm{MAP}}=\tfrac23$。换成 $x=0$：likelihood 变 $1-\theta$，后验反转为 $\left(\tfrac23,\tfrac13\right)$、MAP 变 $\tfrac13$——同一先验，一个比特的证据就把结论翻过来。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §6 BETA-BERNOULLI ============ -->
+    <section id="beta">
+      <h2 class="sec-title"><span class="num">§6</span>Beta–Bernoulli 共轭与 MAP <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">离散先验便于看公式，连续参数更常用 Beta：设 $\theta\sim\operatorname{Beta}(\alpha,\beta)$、$X_i\mid\theta\sim\operatorname{Bernoulli}(\theta)$，数据含 $s$ 次成功、$f$ 次失败，则 $p(\theta\mid D)\propto\theta^{\alpha+s-1}(1-\theta)^{\beta+f-1}$——仍是 Beta。</p>
+      <div class="def">
+        <div class="term">共轭 <span class="en">conjugacy · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：先验与 likelihood 相乘后仍是同一族分布：$\operatorname{Beta}(\alpha,\beta)+$ 数据 $(s,f)\Rightarrow\operatorname{Beta}(\alpha+s,\beta+f)$。</p>
+        <p class="plain"><b>白话</b>：先验像“虚拟数据”——Beta(2,2) 等于预存了 1 成 1 败。</p>
+        <p class="plain"><b>干嘛用</b>：后验有闭式，更新变成数数。</p>
+        <p class="plain"><b>怎么算</b>：形状参数直接相加；后验均值 $\frac{\alpha+s}{\alpha+\beta+s+f}$、MAP $\frac{\alpha+s-1}{\alpha+\beta+s+f-2}$（当两形状参数都大于 1）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：共轭不是魔法——“两个指数二次函数相乘仍是指数二次函数”（§7 高斯例同理）；不共轭时只能数值方法或近似。</p>
+      </div>
+      <div class="def why">
+        <div class="term">MAP 估计 <span class="en">maximum a posteriori · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：后验密度最大的参数：$\theta_{\mathrm{MAP}}=\arg\max_\theta p(D\mid\theta)p(\theta)$（证据 $p(D)$ 与 $\theta$ 无关，可丢）。</p>
+        <p class="plain"><b>白话</b>：看完数据后，押注最集中的那一个参数值。</p>
+        <p class="plain"><b>干嘛用</b>：把后验压成一个点估计。</p>
+        <p class="plain"><b>怎么算</b>：负对数形式 $\arg\min_\theta[-\log p(D\mid\theta)-\log p(\theta)]$——第一项数据拟合，第二项先验诱导的正则化（§8 的 Ridge/Lasso 出处）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：先验平坦（常数密度）时 MAP 退化为 MLE；先验不平坦则把解拉向高密度区。数据越多 likelihood 越强，但先验不会神秘消失，只是相对影响变小。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动先验与数据，看 Beta 曲线更新（MAP / 均值 / 预测并列）</h4>
+        <div class="svg-wrap"><svg id="betaViz" viewBox="0 0 880 400" role="img" aria-label="Beta 先验到后验"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>先验 $\alpha$</label><input type="range" id="bvA" min="0.5" max="10" step="0.5" value="2"><div class="val" id="bvAval"></div></div>
+          <div class="control"><label>先验 $\beta$</label><input type="range" id="bvB" min="0.5" max="10" step="0.5" value="2"><div class="val" id="bvBval"></div></div>
+          <div class="control"><label>成功次数 $s$</label><input type="range" id="bvS" min="0" max="20" step="1" value="3"><div class="val" id="bvSval"></div></div>
+          <div class="control"><label>失败次数 $f$</label><input type="range" id="bvF" min="0" max="20" step="1" value="2"><div class="val" id="bvFval"></div></div>
+        </div>
+        <div class="step-bar">
+          <button class="btn ghost" id="bvExam" type="button">载入讲义例 Beta(2,2)+3/2</button>
+        </div>
+        <div class="caption" id="bvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算</b>：先验 $\operatorname{Beta}(2,2)$，五次试验三成两败 → $\theta\mid D\sim\operatorname{Beta}(5,4)$；均值 $=\frac59\approx0.5556$；两形状参数都大于 1，MAP $=\frac{5-1}{5+4-2}=\frac47\approx0.5714$；下一次成功的后验预测 $=\mathbb E[\theta\mid D]=\frac59$（§9 会解释为何不是 $\frac47$）。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §7 GAUSSIAN MEAN ============ -->
+    <section id="gauss">
+      <h2 class="sec-title"><span class="num">§7</span>高斯均值的 Bayesian 更新 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要算的不是点估计，而是完整的 $p(\mu\mid D)$。设 $X_i\mid\mu\sim\mathcal N(\mu,\sigma^2)$、$\mu\sim\mathcal N(\mu_0,\tau_0^2)$（方差已知）：likelihood 与先验对 $\mu$ 都是指数二次，相乘仍能整理成高斯。</p>
+      <div class="def">
+        <div class="term">precision <span class="en">precision（方差倒数） · first mentioned: §7</span></div>
+        <p class="plain"><b>是什么</b>：方差的倒数。高斯均值后验满足 precision 相加、均值按 precision 加权：
+          $$\tau_n^2=\Big(\frac1{\tau_0^2}+\frac n{\sigma^2}\Big)^{-1},\qquad \mu_n=\tau_n^2\Big(\frac{\mu_0}{\tau_0^2}+\frac{\sum_i x_i}{\sigma^2}\Big).$$</p>
+        <p class="plain"><b>白话</b>：谁的信息多（方差小），谁的话语权大；话语权直接相加。</p>
+        <p class="plain"><b>干嘛用</b>：一眼读出后验集中程度与先验/数据的拉锯。</p>
+        <p class="plain"><b>怎么算</b>：由 Bayes 公式合并两个指数、完成平方 $A\mu^2-2B\mu=A(\mu-B/A)^2-B^2/A$，后验 precision $=A$、均值 $=B/A$。$\sigma^2=1$、$\tau_0^2=1$ 时简化为 $\mathcal N\big(\frac{\mu_0+\sum x_i}{n+1},\frac1{n+1}\big)$——先验像一个“伪样本”。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：数据多或噪声小时后验靠近样本均值；先验更精确时靠近 $\mu_0$。数据越多，对 $\mu$ 的不确定性越小。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动先验与数据量，看三条曲线与两种 90% 区间（现算）</h4>
+        <div class="svg-wrap"><svg id="gaussViz" viewBox="0 0 880 450" role="img" aria-label="高斯均值更新"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>先验均值 $\mu_0$</label><input type="range" id="gvM0" min="-3" max="3" step="0.1" value="0"><div class="val" id="gvM0val"></div></div>
+          <div class="control"><label>先验方差 $\tau_0^2$</label><input type="range" id="gvT0" min="0.5" max="8" step="0.5" value="4"><div class="val" id="gvT0val"></div></div>
+          <div class="control"><label>样本数 $n$（数据池前 n 个）</label><input type="range" id="gvN" min="0" max="6" step="1" value="2"><div class="val" id="gvNval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="gvRand" type="button">🎲 随机换数据池</button></div>
+        </div>
+        <div class="caption" id="gvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义手算</b>：$\mu_0=0$、$\tau_0^2=4$、$\sigma^2=1$、数据 $x_1=1,x_2=3$。$\tau_n^2=(\tfrac14+2)^{-1}=\tfrac49$，$\mu_n=\tfrac49(0+4)=\tfrac{16}9\approx1.778$（高斯后验众数=均值，故 MAP 同值）。点估计代入的预测为 $\mathcal N(\tfrac{16}9,1)$；后验预测还要对 $\mu$ 积分：$\mathcal N(\tfrac{16}9,1+\tfrac49)=\mathcal N(\tfrac{16}9,\tfrac{13}9)$。取 $z_{0.95}\approx1.645$：参数的 90% 区间 $\tfrac{16}9\pm1.645\sqrt{\tfrac49}\approx[0.68,2.87]$；未来观测的区间 $\tfrac{16}9\pm1.645\sqrt{\tfrac{13}9}\approx[-0.20,3.76]$——更宽，因为它还含新观测的噪声。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §8 MAP = REG ============ -->
+    <section id="mapreg">
+      <h2 class="sec-title"><span class="num">§8</span>MAP 作为正则化：Ridge 与 Lasso <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">线性回归 $y=Xw+\varepsilon$、$\varepsilon\sim\mathcal N(0,I)$：负 log-likelihood 是 $\tfrac12\lVert y-Xw\rVert_2^2$。给权重加先验，MAP 目标就多出一项 $-\log p(w)$。</p>
+      <div class="grid2">
+        <div class="card compact">
+          <h3 style="margin:.2em 0 .4em">高斯先验 → Ridge</h3>
+          <p class="plain small">$w\sim\mathcal N(0,\sigma_w^2I)$，负 log 先验 $=\frac{1}{2\sigma_w^2}\lVert w\rVert_2^2$，于是
+            $$\min_w\ \tfrac12\lVert y-Xw\rVert_2^2+\lambda\lVert w\rVert_2^2$$
+            ——正是 Ridge：$\lambda$ 与先验精度成正比。</p>
+        </div>
+        <div class="card compact">
+          <h3 style="margin:.2em 0 .4em">Laplace 先验 → Lasso</h3>
+          <p class="plain small">$p(w_j)\propto\exp(-|w_j|/b)$，负 log 先验 $=\text{常数}+\frac1b\lVert w\rVert_1$，于是
+            $$\min_w\ \tfrac12\lVert y-Xw\rVert_2^2+\lambda\lVert w\rVert_1$$
+            ——正是 Lasso；Laplace 在 0 附近尖，鼓励稀疏。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：切换先验族，看惩罚形状与等值线（现算）</h4>
+        <div class="svg-wrap"><svg id="regViz" viewBox="0 0 880 330" role="img" aria-label="先验与正则化对应"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:300px"><label>先验族</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost active" id="rvG" type="button">高斯 → ‖w‖₂²（Ridge）</button>
+              <button class="btn ghost" id="rvL" type="button">Laplace → ‖w‖₁（Lasso）</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption" id="rvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>读图</b>：左为一维先验密度（高斯的抛物线负 log vs Laplace 在 0 处的尖角）；右为二维惩罚等值线（圆 vs 菱形）。菱形的尖角容易与损失等值线在坐标轴上相切——这正是 Lasso 产生稀疏解的几何；圆没有尖角，Ridge 只缩小不清零。MAP 与 MLE 的桥不是一句“加了先验”，而是目标里多了明确的一项 $-\log p(\theta)$。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §9 PREDICTIVE ============ -->
+    <section id="pred">
+      <h2 class="sec-title"><span class="num">§9</span>plug-in vs 后验预测 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">Bayesian 推断后有两个常见输出。第一种 plug-in：$\hat\theta_{\mathrm{MAP}}\to P(\cdot\mid\hat\theta_{\mathrm{MAP}})$——和 MLE 类似，只是点估计换成 MAP。第二种：</p>
+      <div class="grid2">
+      <div class="def">
+        <div class="term">plug-in 预测 <span class="en">plug-in predictive · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：把后验压成一个点再代入模型：$\hat\theta_{\mathrm{MAP}}\to P(\cdot\mid\hat\theta_{\mathrm{MAP}})$——与 MLE 预测同型，只是点估计换成 MAP。</p>
+        <p class="plain"><b>白话</b>：从所有还说得通的模型里挑一个最顺眼的，只听它一个人发言。</p>
+        <p class="plain"><b>干嘛用</b>：简单、快速的预测；后验集中时损失很小。</p>
+        <p class="plain"><b>怎么算</b>：高斯例中代入 $\mathcal N(\tfrac{16}9,1)$——方差只含观测噪声。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它通常漏掉全方差分解的第二项（参数不确定）；§13 的覆盖率实验里，它的 90% 区间实际只盖住约 82%——欠覆盖的定量证据。</p>
+      </div>
+      <div class="def">
+        <div class="term">后验预测分布 <span class="en">posterior predictive · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：$P(z_{\mathrm{new}}\mid D)=\int P(z_{\mathrm{new}}\mid\theta)\,p(\theta\mid D)\,d\theta$——对每个候选参数先算新样本分布，再按后验加权（全概率公式）。</p>
+        <p class="plain"><b>白话</b>：不急着选一个模型，把所有还说得通的模型平均起来再预测。</p>
+        <p class="plain"><b>干嘛用</b>：把参数不确定性反映进预测的均值、方差或尾部。</p>
+        <p class="plain"><b>怎么算</b>：离散例 $\sum_\theta P(X_{\mathrm{new}}{=}1\mid\theta)P(\theta\mid x_{\mathrm{old}})=\tfrac13\cdot\tfrac13+\tfrac23\cdot\tfrac23=\tfrac59$；一般地它<b>不是</b>把参数平均后代入：$\int p(z\mid\theta)p(\theta\mid D)d\theta\ne p(z\mid\mathbb E[\theta\mid D])$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：本例从 MAP 的 $\tfrac23$ 拉回到 $\tfrac59$——不是永远“更保守”，而是按后验权重平均；数据很多、后验集中时两者接近。全方差分解给出结构：$\operatorname{Var}(Z\mid D)=\underbrace{\mathbb E[\operatorname{Var}(Z\mid\theta)]}_{\text{观测噪声}}+\underbrace{\operatorname{Var}(\mathbb E[Z\mid\theta])}_{\text{参数不确定}}$——点估计代入时通常漏掉第二项。</p>
+      </div>
+    </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动后验宽度，看两条预测曲线分开（讲义例联动）</h4>
+        <div class="svg-wrap"><svg id="predViz" viewBox="0 0 880 340" role="img" aria-label="两种预测分布"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>参数后验方差 $\tau_n^2$（均值固定 16/9）</label><input type="range" id="pvT" min="0.05" max="3" step="0.05" value="0.444"><div class="val" id="pvTval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn ghost" id="pvExam" type="button">载入讲义例 τ²=4/9</button></div>
+        </div>
+        <div class="caption" id="pvCap2"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义例</b>：$\mu_n=\tfrac{16}9$、$\tau_n^2=\tfrac49$。点估计代入的预测 $\mathcal N(\tfrac{16}9,1)$（方差只含观测噪声 1）；后验预测 $\mathcal N(\tfrac{16}9,\tfrac{13}9)$（多出的 $\tfrac49$ 是参数不确定）。方差的分解与相加：可写 $X_{\mathrm{new}}=\mu+\varepsilon$，后验下 $\mu$ 的方差 $\tfrac49$ 与新噪声方差 1 条件独立，故相加——这正是下一节两种不确定性的原型。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §10 INTERVALS ============ -->
+    <section id="intervals">
+      <h2 class="sec-title"><span class="num">§10</span>三种区间：先说清“包谁、概率对谁取” <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">讨论区间之前先问：区间包围的对象是参数 $\theta$、未来观测 $Y_{\mathrm{new}}$，还是一个 plug-in 模型的条件分布——对象不同，概率来源和正确解释也不同。</p>
+      <div class="def">
+        <div class="term">可信区间 <span class="en">credible interval · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：针对参数 $\theta$ 的 Bayesian 区间：$P(\theta\in C_D\mid D)=1-\alpha$——数据固定，概率来自后验；例如由后验 2.5% 与 97.5% 分位数构造。</p>
+        <p class="plain"><b>白话</b>：看完这批数据后，哪些参数值还说得通。</p>
+        <p class="plain"><b>干嘛用</b>：报告参数的剩余不确定性。</p>
+        <p class="plain"><b>怎么算</b>：高斯后验 $\mu_n\pm z_{1-\alpha/2}\,\tau_n$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：针对<b>未来观测</b>时则称后验预测区间（对 $p(Y_{\mathrm{new}}\mid\theta)$ 与后验一起积分）；prior 或模型错设时可信区间也可能误导。</p>
+      </div>
+      <div class="def conn">
+        <div class="term">频率派预测区间 <span class="en">frequentist prediction interval · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：评价“从随机训练集产生区间”的程序在重复使用时的覆盖率：$P_{D,\,P_{Y\mid X;\theta^*}}(Y_{\mathrm{new}}\in \mathrm{PI}_D(x))\ge1-\alpha$。</p>
+        <p class="plain"><b>白话</b>：换 100 次训练集、每次都给区间，长期至少 90% 的新观测落在各自那次的区间里。</p>
+        <p class="plain"><b>干嘛用</b>：给预测区间一个不依赖 prior 的保证。</p>
+        <p class="plain"><b>怎么算</b>：可利用估计量抽样分布、$t$ 分布、bootstrap、conformal 校准把参数估计不确定性纳入覆盖率。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：frequentist 不把 $\theta^*$ 当随机变量——给定一份已观察的 $D$，不能把 $P(\theta^*\in \mathrm{PI}_D\mid D)$ 当作它的解释。<b>一句话区分三者</b>：可信区间包参数、概率来自后验；后验预测区间包未来观测、条件在当前数据；频率派预测区间也包未来观测、保证来自重复抽样覆盖率。</p>
+      </div>
+      <div class="card compact">
+        <table class="data">
+          <tr><th>问题</th><th>Frequentist</th><th>Bayesian</th></tr>
+          <tr><td>参数</td><td>固定但未知</td><td>随机变量</td></tr>
+          <tr><td>需要 prior</td><td>不需要</td><td>需要</td></tr>
+          <tr><td>典型点估计</td><td>MLE</td><td>MAP</td></tr>
+          <tr><td>不确定性来源</td><td>重复采样的 $D$</td><td>posterior</td></tr>
+          <tr><td>预测分布</td><td>naive plug-in、抽样分布或校准方法</td><td>后验预测</td></tr>
+          <tr><td>优点</td><td>少主观假设</td><td>表达模型不确定性自然</td></tr>
+          <tr><td>风险</td><td>区间解释不直观</td><td>prior 与计算成本</td></tr>
+        </table>
+        <p class="plain small" style="margin-bottom:0"><b>谨慎区分三种说法</b>：naive plug-in 区间固定一个估计值再用 $p(y_{\mathrm{new}}\mid x,\hat\theta)$ 构造，通常忽略参数估计误差、主要反映观测噪声，且不自动具有目标覆盖率；但“一般 frequentist 区间”可以用抽样分布/bootstrap/conformal 把估计不确定性纳入保证——是否覆盖，取决于具体构造方法，不由标签自动决定。高斯同尺度下后验预测区间通常比针对均值的可信区间宽；不同目标量或非高斯时不能机械比宽度。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §11 UNCERTAINTY ============ -->
+    <section id="uncer">
+      <h2 class="sec-title"><span class="num">§11</span>两种不确定性：aleatoric vs epistemic <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">后验预测方差的全方差分解恰好给两种不确定性各留了一个座位。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">偶然不确定性 <span class="en">aleatoric uncertainty · first mentioned: §11</span></div>
+          <p class="plain"><b>是什么</b>：数据生成机制里的观测噪声；即使知道真参数也无法消除。</p>
+          <p class="plain"><b>白话</b>：骰子本身的抖动——再多数据也压不住。</p>
+          <p class="plain"><b>干嘛用</b>：给预测区间一个“地板”。</p>
+          <p class="plain"><b>怎么算</b>：全方差分解第一项 $\mathbb E[\operatorname{Var}(Z\mid\theta,D)]$；高斯例中恒为 $\sigma^2=1$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：它是 §9 两条曲线共有的底部方差。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">认知不确定性 <span class="en">epistemic uncertainty · first mentioned: §11</span></div>
+          <p class="plain"><b>是什么</b>：数据不足导致的参数（或模型）不确定；数据更多时可以减少。</p>
+          <p class="plain"><b>白话</b>：还没学会的部分——多上课就能缩小。</p>
+          <p class="plain"><b>干嘛用</b>：衡量“还要不要收集数据”。</p>
+          <p class="plain"><b>怎么算</b>：全方差分解第二项 $\operatorname{Var}(\mathbb E[Z\mid\theta,D])$；高斯例中即 $\tau_n^2$，随 $n$ 收缩到 0。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：Bayesian 后验预测天然含它（前提 prior 与模型合理）；§5 开头对“参数随机”的认识论解释说的就是它。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动样本量，看 epistemic 层收缩而 aleatoric 层不动（现算）</h4>
+        <div class="svg-wrap"><svg id="uncViz" viewBox="0 0 880 340" role="img" aria-label="两层不确定性堆叠"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>样本量 $n$（$\tau_0^2=4$、$\sigma^2=1$）</label><input type="range" id="uvN" min="0" max="20" step="1" value="2"><div class="val" id="uvNval"></div></div>
+        </div>
+        <div class="caption" id="uvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>读图</b>：堆叠条形的总高 = 后验预测方差 $1+\tau_n^2$，其中 $\tau_n^2=(\tfrac14+\tfrac n1)^{-1}$。$n=2$ 时 epistemic $=\tfrac49$（讲义例）；$n\to20$ 时只剩约 0.05——数据把认知不确定性挤干，但底部那层 $\sigma^2=1$ 的噪声永远在。曲线为 $\tau_n^2$ 随 $n$ 的收缩轨迹（现算）。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §12 CLINIC (EXTRA) ============ -->
+    <section id="clinic">
+      <h2 class="sec-title"><span class="num">§12</span>医疗决策台：三个动作的完整损失矩阵 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">把 §1 的体检故事做成机器：状态 $y\in\{$无病， 有病$\}$，动作 $a\in\{$回家观察， 安排复查， 立即治疗$\}$，损失矩阵可调，后验 $p$ 可拖——每个动作的条件风险与最优动作全部现算。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="clinicViz" viewBox="0 0 880 420" role="img" aria-label="医疗决策台"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>漏诊代价 $\ell(\text{回家},\text{有病})$</label><input type="range" id="clMiss" min="2" max="40" step="1" value="20"><div class="val" id="clMissval"></div></div>
+          <div class="control"><label>复查代价 $\ell(\text{复查},\cdot)$</label><input type="range" id="clTest" min="0.5" max="8" step="0.5" value="2"><div class="val" id="clTestval"></div></div>
+          <div class="control"><label>误治代价 $\ell(\text{治疗},\text{无病})$</label><input type="range" id="clOver" min="0.5" max="10" step="0.5" value="3"><div class="val" id="clOverval"></div></div>
+          <div class="control"><label>患病后验 $p$</label><input type="range" id="clP" min="0.01" max="0.99" step="0.01" value="0.12"><div class="val" id="clPval"></div></div>
+        </div>
+        <div class="caption" id="clCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>默认设置</b>：漏诊 20、复查 2、误治 3（治对/回家对为 0），$p=0.12$。三个风险 $R(\text{回家})=20p$、$R(\text{复查})=2$、$R(\text{治疗})=3(1-p)$——默认下 $2.4$ vs $2$ vs $2.64$，最优是<b>复查</b>：既不像 0-1 分类那样直接回家（漏诊风险 2.4 已经超过复查成本），也不立刻治疗（误治 2.64 更贵）。交叉点 $p=\frac{c_{\text{复查}}}{20}$ 与 $p=1-\frac{c_{\text{复查}}}3$ 随滑杆实时移动——这就是 §1 三动作故事的完整数值版。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §13 COVERAGE (EXTRA) ============ -->
+    <section id="coverage">
+      <h2 class="sec-title"><span class="num">§13</span>覆盖率实验室：蒙特卡洛检验两种区间 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">§10 的频率派保证可以用实验直接看：真参数 $\mu^*=2$ 固定，每次抽训练集 $D$（$n=2$ 个观测）、拟合 $\hat\mu$、构造两种 90% 区间，再抽新观测 $Y_{\mathrm{new}}$ 看是否落入——重复很多次，统计经验覆盖率。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="covViz" viewBox="0 0 880 400" role="img" aria-label="覆盖率蒙特卡洛"></svg></div>
+        <div class="label-row">
+          <div class="control" style="justify-content:flex-end"><button class="btn primary" id="cvRun" type="button">▶ 再抽 100 次实验</button></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn ghost" id="cvReset" type="button">↺ 清零重跑</button></div>
+        </div>
+        <div class="caption" id="cvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>两种区间</b>：plug-in $\hat\mu\pm1.645\cdot1$（只用观测噪声）vs 预测式 $\hat\mu\pm1.645\sqrt{1+1/n}$（把参数估计误差也计入，$n=2$ 时半宽 $\times1.225$）。<b>理论值</b>：$Y-\hat\mu\sim\mathcal N(0,1+\tfrac1n)$，plug-in 覆盖率 $=\Phi\big(\tfrac{1.645}{\sqrt{1.5}}\big)-\Phi\big({-\tfrac{1.645}{\sqrt{1.5}}}\big)\approx0.821$——欠覆盖；预测式恰好 $0.900$。点“再抽 100 次”真用 Math.random 累积，经验值向理论值收敛；每一次实验的两种区间与 $Y_{\mathrm{new}}$ 都画在上方条带里（落入=实心点，落空=空心叉）。</p>
+      </div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §14 MISCONCEPTIONS ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">§14</span>常见误区 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">每一条都先给出“听起来对”的说法，再给真相。</p>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 1</b>：Bayesian 就一定更准确。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：prior 差、模型错，Bayesian 也会错（§10 表格的“风险”列）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 2</b>：MLE 是“最可能的参数”。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：frequentist 里参数不是随机变量；更准确的说法是——MLE 是<b>让观测数据最可能</b>的参数（§5 的 $\hat\theta=1$ 例子）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 3</b>：MAP 总是比 MLE 好。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：MAP 加入 prior 就是加入偏好——偏好合理时有帮助，错误时伤害（§6）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 4</b>：后验预测一定和 likelihood 同族。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：不一定——Poisson likelihood + Gamma 后验的后验预测是 negative binomial；Beta–Bernoulli 恰好同为 Beta 型预测只是共轭巧合的体现。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 5</b>：拒判是模型能力不足的表现，能不用就不用。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：拒判是<b>决策</b>的一部分——当弃权代价低于两类错误的期望代价时，弃权就是最优动作（§4）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 6</b>：区间越宽越诚实。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：先要写清区间覆盖的对象——参数、未来观测还是 plug-in 条件分布；对象不同，宽度不可直接比较（§10）。</p></div></div>
+      <div class="next-bridge-placeholder"></div>
+    </section>
+
+    <!-- ============ §15 TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§15</span>收束：第 21 讲真正要带走的东西 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">概率模型的价值不止是输出一个更漂亮的概率——它让我们能把问题写成“给定不确定性和代价，选择最优动作”；同时提醒我们：不确定性不只在 $y$ 里，也在模型参数里。</p>
+      <div class="card">
+        <h3 style="margin-top:0">核心问题 → 答案回顾</h3>
+        <p class="plain"><b>代价改了，决策怎么变？</b>同一个 $\arg\min_a\mathbb E[\ell(a,Y)\mid x]$：非对称损失给阈值 $\frac{c_{\mathrm{FP}}}{c_{\mathrm{FP}}+c_{\mathrm{FN}}}$（例 1/21），分位数损失给条件 $\tau$ 分位数，拒判给区间 $c<p<1-c$——都不用重训模型。<b>参数不确定怎么进预测？</b>先验 × likelihood → 后验；Beta–Bernoulli 与高斯均值有闭式（precision 相加），MAP 把后验压成一点（高斯先验=Ridge、Laplace=Lasso），后验预测把参数积分掉（5/9 vs 2/3；13/9 vs 1）。<b>区间怎么读？</b>先说清包谁、概率对谁取：可信区间（参数，后验）、后验预测区间（未来观测，条件在数据）、频率派预测区间（未来观测，重复抽样覆盖率——蒙特卡洛里 plug-in 0.82 欠覆盖、预测式 0.90 达标）。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">最重要的五个公式</h3>
+        <p class="plain">$$a^*(x)=\arg\min_{a\in A}\mathbb E[\ell(a,Y)\mid X=x] \quad\text{（预测/非对称/拒判/复查，同一公式）}$$
+          $$p>\frac{c_{\mathrm{FP}}}{c_{\mathrm{FP}}+c_{\mathrm{FN}}} \quad\text{（代价→阈值；例 1/21≈0.048）}$$
+          $$p(\theta\mid D)\propto p(D\mid\theta)\,p(\theta) \quad\text{（相乘再归一化；Beta(α,β)+(s,f)→Beta(α+s,β+f)）}$$
+          $$\tau_n^2=\Big(\tfrac1{\tau_0^2}+\tfrac n{\sigma^2}\Big)^{-1},\qquad \mu_n=\tau_n^2\Big(\tfrac{\mu_0}{\tau_0^2}+\tfrac{\sum x_i}{\sigma^2}\Big) \quad\text{（precision 相加；例 16/9, 4/9）}$$
+          $$\operatorname{Var}(Z\mid D)=\mathbb E[\operatorname{Var}(Z\mid\theta)]+\operatorname{Var}(\mathbb E[Z\mid\theta]) \quad\text{（aleatoric + epistemic；例 1 + 4/9）}$$</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自查清单（勾掉才算带走）</h3>
+        <div class="checklist" id="checkList"></div>
+        <div class="check-score" id="checkScore"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自测题（先自己算，再看答案）</h3>
+        <div id="quizList"></div>
+        <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="card conn">
+        <h3 style="margin-top:0">与下一讲的连接</h3>
+        <p class="plain">本讲把“后验”从标签扩展到了参数；第 22 讲的 Gaussian Mixture Models 把它再扩展到<b>隐变量</b>：观测 $X$ 背后有一个不可见的成分标签 $Z$，EM 算法里的 responsibility $P(Z=j\mid X=x)$ 就是一种后验概率——E 步算它、M 步用它加权更新参数。本讲的 Bayes 更新、共轭、logsumexp 都会直接复用。</p>
+        <p class="plain" style="margin-bottom:0"><a href="index.html#lecture-22"><b>→ 回到课程目录，进入第 22 讲：Gaussian Mixture Models</b></a></p>
+      </div>
+    </section>
+
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function spreadLabels(items,minGap){
+  const arr=items.slice().sort((a,b)=>a.y-b.y);
+  for(let i=1;i<arr.length;i++){ if(arr[i].y-arr[i-1].y<minGap) arr[i].y=arr[i-1].y+minGap; }
+  return arr;
+}
+/* symmetric eigendecomposition via Jacobi rotations: returns {vals (desc), vecs (columns aligned) } */
+function jacobiEig(M){
+  const n=M.length;
+  let A=M.map(r=>r.slice());
+  let V=M.map((r,i)=>r.map((_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<80;sweep++){
+    let off=0;
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=A[i][j]*A[i][j];
+    if(off<1e-20)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(A[p][q])<1e-14)continue;
+      const theta=(A[q][q]-A[p][p])/(2*A[p][q]);
+      const t=(theta>=0?1:-1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+      const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const akp=A[k][p],akq=A[k][q];A[k][p]=c*akp-s*akq;A[k][q]=s*akp+c*akq;}
+      for(let k=0;k<n;k++){const apk=A[p][k],aqk=A[q][k];A[p][k]=c*apk-s*aqk;A[q][k]=s*apk+c*aqk;}
+      for(let k=0;k<n;k++){const vkp=V[k][p],vkq=V[k][q];V[k][p]=c*vkp-s*vkq;V[k][q]=s*vkp+c*vkq;}
+    }
+  }
+  const order=A.map((r,i)=>i).sort((i,j)=>A[j][j]-A[i][j]);
+  const vals=order.map(i=>A[i][i]);
+  const vecs=order.map(i=>V.map(row=>row[i])); // vecs[r] is eigenvector for vals[r]
+  return {vals,vecs};
+}
+/* solve dense linear system M x = b (n small) */
+function solveLin(M,b){
+  const n=b.length;const A=M.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){
+    let piv=c;
+    for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[piv][c]))piv=r;
+    const tmp=A[c];A[c]=A[piv];A[piv]=tmp;
+    const d=A[c][c]||1e-12;
+    for(let j=c;j<=n;j++)A[c][j]/=d;
+    for(let r=0;r<n;r++)if(r!==c){const f=A[r][c];for(let j=c;j<=n;j++)A[r][j]-=f*A[c][j];}
+  }
+  return A.map(r=>r[n]);
+}
+const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
+/* generate Swiss roll (t along roll, h height) */
+function swissRoll(n){
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const t=0.6+ (3*Math.PI-1.2)*i/(n-1);
+    const h=(i/(n-1))*6-3;
+    pts.push({t, h, x:t*Math.cos(t)/4.6, y:h/2.6, z:t*Math.sin(t)/4.6});
+  }
+  return pts;
+}
+
+
+
+function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L21) ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n20',x:20,y:120,w:150,h:66,t:'第 20 讲',s:'后验 / Bayes 决策',target:'index.html#lecture-20',col:'#8a938b'},
+    {id:'decision',x:220,y:20,w:160,h:62,t:'动作空间',s:'label→action',target:'#decision',col:'#176653'},
+    {id:'asym',x:410,y:20,w:160,h:62,t:'非对称损失',s:'阈值 1/21',target:'#asym',col:'#176653'},
+    {id:'quantile',x:610,y:20,w:160,h:62,t:'分位数损失',s:'τ 分位数',target:'#quantile',col:'#176653'},
+    {id:'reject',x:810,y:20,w:160,h:62,t:'拒判',s:'c<p<1−c',target:'#reject',col:'#176653'},
+    {id:'bayes',x:220,y:120,w:160,h:62,t:'Bayes 更新',s:'prior×lik',target:'#bayes',col:'#176653'},
+    {id:'beta',x:410,y:120,w:160,h:62,t:'Beta 共轭',s:'MAP 4/7',target:'#beta',col:'#176653'},
+    {id:'gauss',x:610,y:120,w:160,h:62,t:'高斯均值',s:'16/9, 4/9',target:'#gauss',col:'#176653'},
+    {id:'mapreg',x:810,y:120,w:160,h:62,t:'MAP=正则化',s:'Ridge/Lasso',target:'#mapreg',col:'#176653'},
+    {id:'pred',x:220,y:250,w:160,h:62,t:'两种预测',s:'13/9 vs 1',target:'#pred',col:'#176653'},
+    {id:'intervals',x:410,y:250,w:170,h:62,t:'三种区间',s:'包谁·对谁',target:'#intervals',col:'#176653'},
+    {id:'uncer',x:620,y:250,w:160,h:62,t:'两层不确定性',s:'alea+epi',target:'#uncer',col:'#176653'},
+    {id:'takeaway',x:810,y:250,w:160,h:62,t:'收束 / 自测',s:'一条公式',target:'#takeaway',col:'#176653'},
+    {id:'clinic',x:20,y:250,w:160,h:62,t:'医疗决策台',s:'三动作',target:'#clinic',col:'#6c4fa1'},
+    {id:'coverage',x:1020,y:250,w:160,h:62,t:'覆盖率实验',s:'0.82 vs 0.90',target:'#coverage',col:'#6c4fa1'},
+    {id:'n22',x:1230,y:120,w:170,h:66,t:'第 22 讲',s:'GMM · EM',target:'index.html#lecture-22',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  route([[170,153],[195,153],[195,51],[220,51]],'#8a938b',mkG,'',0,0);
+  route([[380,51],[410,51]],'#176653',mk,'',0,0);
+  route([[570,51],[610,51]],'#176653',mk,'',0,0);
+  route([[770,51],[810,51]],'#176653',mk,'',0,0);
+  route([[890,82],[890,105],[300,105],[300,120]],'#176653',mk,'换镜头：参数',595,98);
+  route([[380,151],[410,151]],'#176653',mk,'',0,0);
+  route([[570,151],[610,151]],'#176653',mk,'',0,0);
+  route([[770,151],[810,151]],'#176653',mk,'',0,0);
+  route([[890,182],[890,215],[300,215],[300,250]],'#176653',mk,'参数不确定进预测',700,208);
+  route([[380,281],[410,281]],'#176653',mk,'',0,0);
+  route([[580,281],[620,281]],'#176653',mk,'',0,0);
+  route([[780,281],[810,281]],'#176653',mk,'',0,0);
+  route([[180,281],[220,281]],'#6c4fa1',mkV,'',0,0);
+  route([[890,281],[1020,281]],'#6c4fa1',mkV,'',0,0);
+  route([[960,151],[1230,151]],'#8a938b',mkG,'下一讲',1090,140);
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- §2 asymmetric threshold ---------- */
+(()=>{
+  const svg=$('#asymViz');
+  function draw(){
+    const cFP=+$('#asFP').value,cFN=+$('#asFN').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:40,w:470,h:250};
+    const px=v=>P.x0+v*P.w;
+    const py=v=>P.y0+P.h-(v/Math.max(cFN,1e-9))*P.h;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.5,1].forEach(v=>{svgAdd(svg,'line',{x1:P.x0,y1:py(v*cFN),x2:P.x0+P.w,y2:py(v*cFN),stroke:'var(--line)',opacity:.35});});
+    [0,0.25,0.5,0.75,1].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+16,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,2)));
+    // risk lines
+    svgAdd(svg,'line',{x1:px(0),y1:py(cFP),x2:px(1),y2:py(0),stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'line',{x1:px(0),y1:py(0),x2:px(1),y2:py(cFN),stroke:'var(--warm)',strokeWidth:2.4});
+    svgHalo(svg,px(0.1),clamp(py(cFP*0.87)-10,P.y0+14,P.y0+P.h-42),'R(+1)=c_FP(1−p)',{font:10,fill:'var(--accent)'});
+    svgHalo(svg,px(0.8),py(cFN*0.8)-10,'R(−1)=c_FN·p',{font:10,fill:'var(--warm)'});
+    const t=cFP/(cFP+cFN);
+    svgAdd(svg,'line',{x1:px(t),y1:P.y0,x2:px(t),y2:P.y0+P.h,stroke:'var(--blue)',strokeWidth:2});
+    svgHalo(svg,px(t)+(t>0.75?-10:10),P.y0+16,'阈值 '+fmt(t,3),{font:11,fill:'var(--blue)',anchor:t>0.75?'end':'start'});
+    svgAdd(svg,'line',{x1:px(0.5),y1:P.y0,x2:px(0.5),y2:P.y0+P.h,stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'4 4'});
+    svgHalo(svg,px(0.5),P.y0+P.h-8,'0.5（0-1 损失）',{font:9.5,fill:'var(--muted)'});
+    // shading: p>t -> predict +1
+    svgAdd(svg,'rect',{x:px(t),y:P.y0,width:px(1)-px(t),height:P.h,fill:'var(--accent)',opacity:.08});
+    svgAdd(svg,'rect',{x:px(0),y:P.y0,width:px(t),height:P.h,fill:'var(--warm)',opacity:.08});
+    svgHalo(svg,px((t+1)/2),P.y0+P.h-26,'预测 +1（有病）',{font:10,fill:'var(--accent)'});
+    svgHalo(svg,px(t/2),P.y0+P.h-26,'预测 −1',{font:10,fill:'var(--warm)'});
+    // p=0.12 marker
+    const pc=0.12;
+    svgAdd(svg,'line',{x1:px(pc),y1:P.y0,x2:px(pc),y2:P.y0+P.h,stroke:'var(--danger)',strokeWidth:1.4,strokeDasharray:'5 3'});
+    svgHalo(svg,px(pc)+(pc>t?10:-10),P.y0+34,'p=0.12 → '+(pc>t?'+1':'−1'),{font:10,fill:'var(--danger)',anchor:pc>t?'start':'end'});
+    // panel
+    const q0={x0:600,y0:48};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'读数（现算）');
+    const rows=[
+      ['c_FP / c_FN',fmt(cFP,1)+' / '+fmt(cFN,1)],
+      ['阈值 = c_FP/(c_FP+c_FN)',fmt(t,4)],
+      ['0.5 对应的 (c_FP,c_FN)',cFP===cFN?'当前即是':'等代价时'],
+      ['R(+1|p=0.12)',fmt(cFP*0.88,2)],
+      ['R(−1|p=0.12)',fmt(cFN*0.12,2)],
+      ['p=0.12 的决策',pc>t?'有病（'+fmt(cFN*0.12,1)+'<'+fmt(cFP*0.88,1)+'）':'无病']
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+28+i*28;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:i===5?'var(--warm)':'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+195,y,'font-size':10.5,'font-weight':700,fill:i===5?'var(--warm)':'var(--accent)'},r[1]);
+    });
+    $('#asCap').innerHTML=`当前 c_FP=${fmt(cFP,1)}、c_FN=${fmt(cFN,1)}：最优阈值 <b>${fmt(t,4)}</b>（0-1 损失的 0.5 用虚线对照）。漏诊代价越大阈值越低——正类动作越容易被触发。讲义例（1, 20）给 1/21≈0.048：模型输出 p=0.12 时，0-1 分类说“无病”，这里说<b>有病</b>（风险 ${fmt(cFP*0.88,2)} vs ${fmt(cFN*0.12,2)}）。`;
+  }
+  function sync(){$('#asFPval').textContent=fmt(+$('#asFP').value,1);$('#asFNval').textContent=fmt(+$('#asFN').value,1);draw();}
+  ['asFP','asFN'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#asExam').addEventListener('click',()=>{$('#asFP').value=1;$('#asFN').value=20;sync();toast('已载入讲义例：阈值 1/21≈0.048');});
+  sync();
+})();
+
+/* ---------- §3 quantile / pinball ---------- */
+(()=>{
+  const svg=$('#quantViz');
+  const ys=[1,2,4,8];
+  const F=a=>ys.filter(v=>v<a+1e-9).length/4; // right-continuous step at points
+  const R=(a,tau)=>ys.reduce((s,y)=>s+(y-a)*(tau-(y<a?1:0)),0)/4;
+  function draw(){
+    const tau=+$('#qvTau').value;
+    svg.innerHTML='';
+    // left: CDF staircase + tau
+    const L={x0:70,y0:40,w:360,h:250};
+    const px=v=>L.x0+(v/9)*L.w;
+    const py=v=>L.y0+L.h-v*L.h;
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>{svgAdd(svg,'line',{x1:L.x0,y1:py(v),x2:L.x0+L.w,y2:py(v),stroke:'var(--line)',opacity:.35});svgAdd(svg,'text',{x:L.x0-10,y:py(v)+4,'text-anchor':'end','font-size':9,fill:'var(--muted)'},fmt(v,2));});
+    [1,2,4,8].forEach(v=>svgAdd(svg,'text',{x:px(v),y:L.y0+L.h+15,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    // staircase path
+    let d=`M${px(0)},${py(0)}`;
+    [[1,0.25],[2,0.5],[4,0.75],[8,1]].forEach(([x,f])=>{d+=` L${px(x)},${py(f)}`;});
+    d+=` L${px(9)},${py(1)}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.2});
+    svgAdd(svg,'line',{x1:L.x0,y1:py(tau),x2:L.x0+L.w,y2:py(tau),stroke:'var(--warm)',strokeWidth:1.4,strokeDasharray:'5 4'});
+    svgHalo(svg,px(0.35),py(tau)+(tau>0.8?16:-8),'τ='+fmt(tau,2),{font:10,fill:'var(--warm)',anchor:'start'});
+    ys.forEach(v=>svgAdd(svg,'circle',{cx:px(v),cy:py(F(v)),r:4,fill:'var(--accent)'}));
+    // optimal a*: smallest y with F>=tau
+    const astar=ys.find(v=>F(v)>=tau-1e-9);
+    if(astar!==undefined){
+      svgAdd(svg,'line',{x1:px(astar),y1:L.y0,x2:px(astar),y2:L.y0+L.h,stroke:'var(--blue)',strokeWidth:1.6});
+      svgHalo(svg,px(astar),L.y0+14,'a*='+fmt(astar,0),{font:10.5,fill:'var(--blue)'});
+    }
+    svgHalo(svg,L.x0+L.w/2,L.y0-8,'条件 CDF（等概率四点）',{font:10.5,fill:'var(--muted)'});
+    // right: R(a)
+    const Rp={x0:520,y0:40,w:300,h:250};
+    const qx=v=>Rp.x0+(v/9)*Rp.w;
+    let rmax=0;
+    const rs=[];
+    for(let k=0;k<=180;k++){const a=k/20;const r=R(a,tau);rs.push([a,r]);rmax=Math.max(rmax,r);}
+    const qy=v=>Rp.y0+Rp.h-(v/Math.max(rmax,1e-9))*(Rp.h-30);
+    svgAdd(svg,'rect',{x:Rp.x0,y:Rp.y0,width:Rp.w,height:Rp.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    let d2='M';
+    rs.forEach(([a,r])=>{d2+=' L'+qx(a)+','+qy(r);});
+    svgAdd(svg,'path',{d:d2.replace('M L','M'),fill:'none',stroke:'var(--violet)',strokeWidth:2.2});
+    const mean=3.75;
+    svgAdd(svg,'line',{x1:qx(mean),y1:Rp.y0,x2:qx(mean),y2:Rp.y0+Rp.h,stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'4 4'});
+    svgHalo(svg,qx(mean),Rp.y0+Rp.h-8,'均值 3.75',{font:9.5,fill:'var(--muted)'});
+    if(astar!==undefined){
+      svgAdd(svg,'circle',{cx:qx(astar),cy:qy(R(astar,tau)),r:6,fill:'var(--blue)'});
+      svgHalo(svg,qx(astar)+(astar>5?-10:10),qy(R(astar,tau))-12,'a*='+fmt(astar,0)+'：R='+fmt(R(astar,tau),2),{font:10,fill:'var(--blue)',anchor:astar>5?'end':'start'});
+    }
+    svgHalo(svg,Rp.x0+Rp.w/2,Rp.y0-8,'期望 pinball 损失 R(a)（现算）',{font:10.5,fill:'var(--muted)'});
+    $('#qvCap').innerHTML=`当前 τ=${fmt(tau,2)}：最优动作是满足 F(a)≥τ 的最小取值 <b>a*=${astar}</b>（右图 R(a) 的折点最低处），而均值恒为 <b>3.75</b>。τ=0.75 时 a*=4（讲义手算）；把 τ 拖到 0.3 → a*=2；拖到 0.9 → a*=8。导数版本：dR/da=F(a)−τ，最优处恰好穿越 0。`;
+  }
+  function sync(){$('#qvTauval').textContent=fmt(+$('#qvTau').value,2);draw();}
+  $('#qvTau').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §4 reject band ---------- */
+(()=>{
+  const svg=$('#rejViz');
+  function draw(){
+    const c=+$('#rjC').value,p=+$('#rjP').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:90,w:740,h:70};
+    const px=v=>P.x0+v*P.w;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    const lo=Math.min(c,0.5),hi=Math.max(1-c,0.5);
+    svgAdd(svg,'rect',{x:px(0),y:P.y0,width:px(lo)-px(0),height:P.h,fill:'var(--warm)',opacity:.3});
+    if(hi>lo)svgAdd(svg,'rect',{x:px(lo),y:P.y0,width:px(hi)-px(lo),height:P.h,fill:'var(--muted)',opacity:.35});
+    svgAdd(svg,'rect',{x:px(hi),y:P.y0,width:px(1)-px(hi),height:P.h,fill:'var(--accent)',opacity:.3});
+    svgHalo(svg,px(0.13),P.y0+P.h+26,'预测 −1（R=p）',{font:10.5,fill:'var(--warm)'});
+    if(hi>lo)svgHalo(svg,px((lo+hi)/2),P.y0+P.h+26,'拒判区 c<p<1−c',{font:10.5,fill:'var(--muted)'});
+    svgHalo(svg,px(0.87),P.y0+P.h+26,'预测 +1（R=1−p）',{font:10.5,fill:'var(--accent)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0-10,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,2)));
+    // current p marker
+    svgAdd(svg,'line',{x1:px(p),y1:P.y0-4,x2:px(p),y2:P.y0+P.h+4,stroke:'var(--blue)',strokeWidth:2.2});
+    svgHalo(svg,px(p),P.y0-22,'p='+fmt(p,2),{font:11,fill:'var(--blue)'});
+    // three risks
+    const rP=1-p,rM=p,rR=c;
+    const best=Math.min(rP,rM,rR);
+    const act=best===rR?'拒判':(best===rP?'+1':'−1');
+    const B={x0:120,y0:230,w:420,h:70};
+    const bx=v=>B.x0+(v/1)*B.w;
+    const rows=[['R(+1)=1−p',rP,'var(--accent)'],['R(−1)=p',rM,'var(--warm)'],['R(拒判)=c',rR,'var(--muted)']];
+    rows.forEach((r,i)=>{
+      const y=B.y0+i*30;
+      svgAdd(svg,'text',{x:B.x0-12,y:y+13,'text-anchor':'end','font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'rect',{x:B.x0,y,width:Math.max(bx(r[1]),2),height:18,rx:4,fill:r[2],opacity:best===r[1]?1:.5});
+      svgHalo(svg,B.x0+Math.max(bx(r[1]),2)+8,y+14,fmt(r[1],2),{font:10.5,fill:r[2],anchor:'start'});
+    });
+    svgHalo(svg,B.x0+B.w/2,B.y0+95,'最优动作：'+act,{font:12.5,fill:'var(--blue)'});
+    $('#rjCap').innerHTML=`当前 c=${fmt(c,2)}、p=${fmt(p,2)}：三个风险 ${fmt(rP,2)} / ${fmt(rM,2)} / ${fmt(rR,2)}，最优 <b>${act}</b>。拒判区间是 (${fmt(lo,2)}, ${fmt(hi,2)})${c>0.5?'——c>1/2，区间为空，永远不弃权':''}。讲义三例：c=0.49 → (0.49,0.51) 只在极近边界弃权；c=0.25 → (0.25,0.75) 中等不确定都弃权；c=0.02 → (0.02,0.98) 几乎只在极其确定时才预测。`;
+  }
+  function sync(){$('#rjCval').textContent=fmt(+$('#rjC').value,2);$('#rjPval').textContent=fmt(+$('#rjP').value,2);draw();}
+  ['rjC','rjP'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#rjE1').addEventListener('click',()=>{$('#rjC').value=0.49;sync();toast('c=0.49：只在非常接近边界时弃权');});
+  $('#rjE2').addEventListener('click',()=>{$('#rjC').value=0.25;sync();toast('c=0.25：中等不确定都弃权');});
+  $('#rjE3').addEventListener('click',()=>{$('#rjC').value=0.02;sync();toast('c=0.02：高风险场景，几乎只在极其确定时才预测');});
+  sync();
+})();
+
+/* ---------- §5 discrete Bayes table ---------- */
+(()=>{
+  const svg=$('#discViz');
+  let step=-1, obs=1;
+  function draw(){
+    svg.innerHTML='';
+    const lik=obs===1?[1/3,2/3]:[2/3,1/3];
+    const pri=[0.5,0.5];
+    const joint=lik.map((l,i)=>l*pri[i]);
+    const ev=joint[0]+joint[1];
+    const post=joint.map(j=>j/ev);
+    const mapIdx=post[0]>post[1]?0:1;
+    const theta=[1/3,2/3];
+    const predictive=theta[0]*post[0]+theta[1]*post[1];
+    const col0={x0:250,y0:36};
+    const headers=['','θ=1/3','θ=2/3'];
+    headers.forEach((hd,i)=>{
+      if(i>0)svgAdd(svg,'rect',{x:col0.x0+(i-1)*180,y:col0.y0,width:170,height:34,rx:6,fill:'var(--surface2)',stroke:'var(--line)'});
+      if(i>0)svgAdd(svg,'text',{x:col0.x0+(i-1)*180+85,y:col0.y0+22,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--ink)'},hd);
+    });
+    const rows=[
+      {t:'先验分布 P(θ)',vals:pri,fmtv:v=>fmt(v,3)},
+      {t:'likelihood P(x='+obs+'|θ)',vals:lik,fmtv:v=>fmt(v,3)},
+      {t:'联合 P(x,θ)',vals:joint,fmtv:v=>fmt(v,3)},
+      {t:'后验分布 P(θ|x)',vals:post,fmtv:v=>fmt(v,3)}
+    ];
+    rows.forEach((r,i)=>{
+      const done=i<=step;
+      const y=col0.y0+50+i*44;
+      svgAdd(svg,'text',{x:col0.x0-14,y:y+21,'text-anchor':'end','font-size':11,fill:done?'var(--ink)':'var(--muted)'},r.t);
+      r.vals.forEach((v,j)=>{
+        svgAdd(svg,'rect',{x:col0.x0+j*180,y,width:170,height:34,rx:6,fill:done?'color-mix(in srgb,'+(j===mapIdx&&i===3?'var(--blue)':'var(--accent)')+' 10%, var(--surface))':'var(--surface)',stroke:done?(i===3&&j===mapIdx?'var(--blue)':'var(--accent)'):'var(--line)',strokeWidth:done?1.6:1});
+        svgAdd(svg,'text',{x:col0.x0+j*180+85,y:y+22,'text-anchor':'middle','font-size':12,'font-weight':700,fill:done?'var(--ink)':'var(--muted)'},done?r.fmtv(v):'?');
+      });
+    });
+    const yE=col0.y0+50+4*44+6;
+    if(step>=2)svgAdd(svg,'text',{x:col0.x0+85,y:yE+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'证据 P(x='+obs+')='+fmt(ev,3));
+    else svgAdd(svg,'text',{x:col0.x0+85,y:yE+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'证据 = 联合相加');
+    if(step>=3){
+      svgAdd(svg,'text',{x:col0.x0+475,y:yE+18,'font-size':11.5,'font-weight':700,fill:'var(--blue)'},'MAP = '+(mapIdx===0?'1/3':'2/3')+'；后验预测 P(新=1|x)='+fmt(predictive,3));
+    }
+    $('#dcCap').innerHTML=`观察 x=${obs}：likelihood ${obs===1?'(1/3, 2/3)':'(2/3, 1/3)'}，联合 ${joint.map(v=>fmt(v,3)).join(' / ')}，证据 ${fmt(ev,3)}，后验 <b>(${fmt(post[0],3)}, ${fmt(post[1],3)})</b>，MAP=${mapIdx===0?'1/3':'2/3'}，后验预测=${fmt(predictive,3)}${obs===1?'（=5/9，讲义例）':'（=4/9）'}。逐步点亮：先验 → likelihood → 相乘 → 归一化。`;
+  }
+  $('#dcNext').addEventListener('click',()=>{step=Math.min(step+1,3);draw();});
+  $('#dcReset').addEventListener('click',()=>{step=-1;draw();});
+  $('#dcFlip').addEventListener('click',()=>{obs=obs===1?0:1;step=3;draw();toast('换成观察 x='+obs+'：后验反转');});
+  draw();
+})();
+
+/* ---------- §6 Beta-Bernoulli ---------- */
+(()=>{
+  const svg=$('#betaViz');
+  function betaGrid(a,b){
+    // numerically normalized Beta density on 400 grid points
+    const N=400,xs=[],raw=[];
+    let mx=-1e9;
+    for(let i=0;i<=N;i++){
+      const x=i/N;
+      const lv=(a-1)*Math.log(Math.max(x,1e-12))+(b-1)*Math.log(Math.max(1-x,1e-12));
+      xs.push(x);raw.push(lv);mx=Math.max(mx,lv);
+    }
+    const dens=raw.map(l=>Math.exp(l-mx));
+    let s=0;
+    for(let i=0;i<N;i++)s+=(dens[i]+dens[i+1])/2*(1/N);
+    return {xs,dens:dens.map(d=>d/s)};
+  }
+  function draw(){
+    const a=+$('#bvA').value,b=+$('#bvB').value,ss=+$('#bvS').value,ff=+$('#bvF').value;
+    svg.innerHTML='';
+    const A=a+ss,B=b+ff;
+    const pri=betaGrid(a,b),post=betaGrid(A,B);
+    const P={x0:70,y0:36,w:500,h:250};
+    const px=v=>P.x0+v*P.w;
+    let mx=Math.max(...pri.dens,...post.dens,1e-9);
+    const py=v=>P.y0+P.h-(v/mx)*(P.h-24);
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+15,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,2)));
+    let d1='M',d2='M';
+    pri.xs.forEach((x,i)=>{d1+=' L'+px(x)+','+py(pri.dens[i]);});
+    post.xs.forEach((x,i)=>{d2+=' L'+px(x)+','+py(post.dens[i]);});
+    svgAdd(svg,'path',{d:d1.replace('M L','M'),fill:'none',stroke:'var(--muted)',strokeWidth:1.8,strokeDasharray:'6 4'});
+    svgAdd(svg,'path',{d:d2.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
+    const mean=A/(A+B);
+    const mapV=(A>1&&B>1)?(A-1)/(A+B-2):null;
+    svgAdd(svg,'line',{x1:px(mean),y1:P.y0,x2:px(mean),y2:P.y0+P.h,stroke:'var(--blue)',strokeWidth:1.4});
+    svgHalo(svg,px(mean),P.y0+16,'均值 '+fmt(mean,4),{font:10,fill:'var(--blue)'});
+    if(mapV!==null){
+      svgAdd(svg,'line',{x1:px(mapV),y1:P.y0,x2:px(mapV),y2:P.y0+P.h,stroke:'var(--gold)',strokeWidth:1.2,strokeDasharray:'4 3'});
+      svgHalo(svg,px(mapV),P.y0+32,'MAP '+fmt(mapV,4),{font:10,fill:'var(--gold)'});
+    }
+    svgHalo(svg,px(0.82),py(mx*0.75),'后验 Beta('+fmt(A,1)+','+fmt(B,1)+')',{font:10.5,fill:'var(--accent)'});
+    svgHalo(svg,px(0.2),py(mx*0.75),'先验 Beta('+fmt(a,1)+','+fmt(b,1)+')',{font:10,fill:'var(--muted)'});
+    // panel
+    const q0={x0:640,y0:44};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'三个数（现算）');
+    const rows=[
+      ['后验',`Beta(${fmt(A,1)}, ${fmt(B,1)})`],
+      ['后验均值 E[θ|D]',fmt(mean,4)],
+      ['MAP（α,β>1）',mapV===null?'—':fmt(mapV,4)],
+      ['后验预测 P(新=1|D)',fmt(mean,4)],
+      ['MLE s/(s+f)',ss+ff>0?fmt(ss/(ss+ff),4):'—']
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+28+i*28;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+165,y,'font-size':10.5,'font-weight':700,fill:'var(--accent)'},r[1]);
+    });
+    $('#bvCap').innerHTML=`先验 Beta(${fmt(a,1)},${fmt(b,1)}) + 数据（${ss} 成 ${ff} 败）→ 后验 <b>Beta(${fmt(A,1)},${fmt(B,1)})</b>：形状参数直接相加。均值=${fmt(mean,4)}${mapV!==null?'，MAP='+fmt(mapV,4)+'（偏左，因为后验右偏）':''}，后验预测=均值 ${fmt(mean,4)}，MLE=${ss+ff>0?fmt(ss/(ss+ff),4):'—'}。讲义例 Beta(2,2)+3/2：Beta(5,4)，均值 5/9=0.556，MAP 4/7=0.571。`;
+  }
+  function sync(){['bvA','bvB','bvS','bvF'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,id.startsWith('bvS')||id.startsWith('bvF')?0:1));draw();}
+  ['bvA','bvB','bvS','bvF'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#bvExam').addEventListener('click',()=>{$('#bvA').value=2;$('#bvB').value=2;$('#bvS').value=3;$('#bvF').value=2;sync();toast('已载入讲义例：Beta(2,2)+3/2 → Beta(5,4)');});
+  sync();
+})();
+
+/* ---------- §7 Gaussian mean update ---------- */
+(()=>{
+  const svg=$('#gaussViz');
+  let pool=[1,3];
+  function regen(){pool=Array.from({length:6},()=>2+randn());}
+  function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const N0=(x,m,v)=>Math.exp(-((x-m)*(x-m))/(2*v))/Math.sqrt(2*Math.PI*v);
+  function draw(){
+    const m0=+$('#gvM0').value,t0=+$('#gvT0').value,n=+$('#gvN').value;
+    svg.innerHTML='';
+    const xs=pool.slice(0,n);
+    const sig2=1;
+    const tn2=1/(1/t0+n/sig2);
+    const mun=tn2*(m0/t0+xs.reduce((s,x)=>s+x,0)/sig2);
+    const P={x0:70,y0:36,w:500,h:230};
+    const xMin=-3.5,xMax=5;
+    const px=v=>P.x0+(v-xMin)/(xMax-xMin)*P.w;
+    const dens=[];
+    let mx=1e-9;
+    for(let k=0;k<=300;k++){
+      const x=xMin+(xMax-xMin)*k/300;
+      const dp=N0(x,m0,t0),dq=n>0?N0(x,xs.reduce((s,x2)=>s+x2,0)/n,sig2/Math.max(n,1)):0,dr=N0(x,mun,tn2);
+      dens.push([x,dp,dq,dr]);
+      mx=Math.max(mx,dp,dq,dr);
+    }
+    const py=v=>P.y0+P.h-(v/mx)*(P.h-20);
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [-3,-2,-1,0,1,2,3,4,5].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+15,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},fmt(v,0)));
+    xs.forEach(x=>svgAdd(svg,'circle',{cx:px(x),cy:P.y0+P.h-10,r:5,fill:'var(--warm)',opacity:.9}));
+    if(n>0)svgHalo(svg,px(xs.reduce((s,x2)=>s+x2,0)/n),P.y0+16,'样本均值 '+fmt(xs.reduce((s,x2)=>s+x2,0)/n,2),{font:9.5,fill:'var(--warm)'});
+    let dp='M',dl='M',dr2='M';
+    dens.forEach(([x,a,b,c])=>{dp+=' L'+px(x)+','+py(a);if(n>0)dl+=' L'+px(x)+','+py(b);dr2+=' L'+px(x)+','+py(c);});
+    svgAdd(svg,'path',{d:dp.replace('M L','M'),fill:'none',stroke:'var(--muted)',strokeWidth:1.8,strokeDasharray:'6 4'});
+    if(n>0)svgAdd(svg,'path',{d:dl.replace('M L','M'),fill:'none',stroke:'var(--warm)',strokeWidth:1.8,strokeDasharray:'3 3'});
+    svgAdd(svg,'path',{d:dr2.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.8});
+    svgHalo(svg,px(m0),py(N0(m0,m0,t0))-10,'先验',{font:10,fill:'var(--muted)'});
+    svgHalo(svg,px(mun)+(mun>2?-10:10),py(N0(mun,mun,tn2))+22,'后验 N('+fmt(mun,2)+','+fmt(tn2,2)+')',{font:10.5,fill:'var(--accent)',anchor:mun>2?'end':'start'});
+    // intervals on a number line
+    const z=1.645;
+    const cLo=mun-z*Math.sqrt(tn2),cHi=mun+z*Math.sqrt(tn2);
+    const pLo=mun-z*Math.sqrt(1+tn2),pHi=mun+z*Math.sqrt(1+tn2);
+    const Qy1=320,Qy2=352;
+    svgAdd(svg,'line',{x1:px(xMin),y1:Qy1,x2:px(xMax),y2:Qy1,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:px(xMin),y1:Qy2,x2:px(xMax),y2:Qy2,stroke:'var(--line)'});
+    svgAdd(svg,'rect',{x:px(cLo),y:Qy1-7,width:px(cHi)-px(cLo),height:14,rx:5,fill:'var(--blue)',opacity:.75});
+    svgAdd(svg,'circle',{cx:px(mun),cy:Qy1,r:4,fill:'var(--blue)'});
+    svgHalo(svg,px(4.7),Qy1-14,'参数 μ 的 90% 可信区间：['+fmt(cLo,2)+', '+fmt(cHi,2)+']',{font:10,fill:'var(--blue)',anchor:'end'});
+    svgAdd(svg,'rect',{x:px(pLo),y:Qy2-7,width:px(pHi)-px(pLo),height:14,rx:5,fill:'var(--violet)',opacity:.7});
+    svgAdd(svg,'circle',{cx:px(mun),cy:Qy2,r:4,fill:'var(--violet)'});
+    svgHalo(svg,px(4.7),Qy2+20,'未来观测的后验预测区间：['+fmt(pLo,2)+', '+fmt(pHi,2)+']',{font:10,fill:'var(--violet)',anchor:'end'});
+    // panel
+    const q0={x0:640,y0:44};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'precision 账本');
+    const prec=1/tn2;
+    const rows=[
+      ['1/τ₀²（先验）',fmt(1/t0,3)],
+      ['n/σ²（数据）',fmt(n/sig2,3)],
+      ['precision 相加',fmt(prec,3)],
+      ['τ_n² = 1/precision',fmt(tn2,4)],
+      ['μ_n',fmt(mun,4)],
+      ['后验预测方差 1+τ_n²',fmt(1+tn2,4)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+28+i*28;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+165,y,'font-size':10.5,'font-weight':700,fill:'var(--accent)'},r[1]);
+    });
+    $('#gvCap').innerHTML=`μ₀=${fmt(m0,1)}、τ₀²=${fmt(t0,1)}、n=${n}（数据 ${xs.map(x=>fmt(x,1)).join(', ')||'空'}）：precision ${fmt(1/t0,2)}+${fmt(n,0)}=${fmt(prec,3)} → τ_n²=<b>${fmt(tn2,4)}</b>，μ_n=<b>${fmt(mun,4)}</b>（MAP 同值）。90% 区间：参数 [${fmt(cLo,2)}, ${fmt(cHi,2)}] vs 未来观测 [${fmt(pLo,2)}, ${fmt(pHi,2)}]。讲义例（0,4,n=2,x=1,3）：τ_n²=4/9、μ_n=16/9≈1.7778，区间 [0.68,2.87] 与 [−0.20,3.76]。`;
+  }
+  function sync(){$('#gvM0val').textContent=fmt(+$('#gvM0').value,1);$('#gvT0val').textContent=fmt(+$('#gvT0').value,1);$('#gvNval').textContent=$('#gvN').value;draw();}
+  ['gvM0','gvT0','gvN'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#gvRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽数据池');});
+  sync();
+})();
+
+/* ---------- §8 prior -> regularizer ---------- */
+(()=>{
+  const svg=$('#regViz');
+  let mode='gauss';
+  function draw(){
+    svg.innerHTML='';
+    // left: 1-D prior densities
+    const L={x0:70,y0:40,w:340,h:230};
+    const px=v=>L.x0+(v+4)/8*L.w;
+    let mx;
+    const dens=[];
+    if(mode==='gauss'){
+      for(let k=0;k<=160;k++){const w=-4+8*k/160;dens.push([w,Math.exp(-w*w/2)]);}
+      mx=1;
+    }else{
+      for(let k=0;k<=160;k++){const w=-4+8*k/160;dens.push([w,Math.exp(-Math.abs(w)/1.2)]);}
+      mx=1;
+    }
+    const py=v=>L.y0+L.h-(v/mx)*(L.h-24);
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    let d='M';dens.forEach(([w,v])=>{d+=' L'+px(w)+','+py(v);});
+    svgAdd(svg,'path',{d:d.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.4});
+    svgAdd(svg,'line',{x1:px(0),y1:L.y0,x2:px(0),y2:L.y0+L.h,stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'4 4'});
+    svgHalo(svg,px(0),L.y0+16,'w=0',{font:9.5,fill:'var(--muted)'});
+    svgHalo(svg,L.x0+L.w/2,L.y0-8,mode==='gauss'?'高斯先验密度（平滑的钟形）':'Laplace 先验密度（0 处的尖角）',{font:10.5,fill:'var(--muted)'});
+    svgHalo(svg,px(-2.6),py(0.5),mode==='gauss'?'−log ∝ w²':'−log ∝ |w|',{font:10,fill:'var(--accent)'});
+    // right: 2-D contours
+    const R={x0:520,y0:40,w:280,h:230};
+    const cx=R.x0+R.w/2,cy=R.y0+R.h/2,r=88;
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    if(mode==='gauss'){
+      [1,0.62,0.3].forEach(f=>{
+        svgAdd(svg,'ellipse',{cx,cy,rx:r*f,ry:r*f*0.8,fill:'none',stroke:'var(--accent)',strokeWidth:1.6});
+      });
+    }else{
+      [1,0.62,0.3].forEach(f=>{
+        const pts=[];
+        const rr=r*f;
+        pts.push([cx,cy-rr*0.8],[cx+rr,cy],[cx,cy+rr*0.8],[cx-rr,cy]);
+        let d2='M'+pts.map(p=>p.join(',')).join(' L')+' Z';
+        svgAdd(svg,'path',{d:d2,fill:'none',stroke:'var(--accent)',strokeWidth:1.6});
+      });
+    }
+    svgAdd(svg,'line',{x1:R.x0+10,y1:cy,x2:R.x0+R.w-10,y2:cy,stroke:'var(--line)',opacity:.5});
+    svgAdd(svg,'line',{x1:cx,y1:R.y0+10,x2:cx,y2:R.y0+R.h-10,stroke:'var(--line)',opacity:.5});
+    svgHalo(svg,cx+r+20,cy-r*0.8+6,mode==='gauss'?'惩罚等值线：圆':'惩罚等值线：菱形（尖角在轴上）',{font:10,fill:'var(--accent)',anchor:'start'});
+    $('#rvCap').innerHTML=`当前先验：${mode==='gauss'?'高斯 → 负 log 是 ‖w‖₂² → MAP = Ridge（λ 与先验 precision 成正比）':'Laplace → 负 log 是 ‖w‖₁ → MAP = Lasso'}。右图等值线${mode==='gauss'?'是圆：与损失等值线相切处一般不在坐标轴上，权重被缩小但很少恰好为零':'是菱形，尖角落在坐标轴上：损失等值线容易恰好在尖角处相切，另一些权重保持 0——稀疏性的几何来源'}。切换按钮对比两种形状。`;
+  }
+  function setM(m){mode=m;$('#rvG').classList.toggle('active',m==='gauss');$('#rvL').classList.toggle('active',m==='laplace');draw();}
+  $('#rvG').addEventListener('click',()=>setM('gauss'));
+  $('#rvL').addEventListener('click',()=>setM('laplace'));
+  draw();
+})();
+
+/* ---------- §9 plug-in vs posterior predictive ---------- */
+(()=>{
+  const svg=$('#predViz');
+  const N0=(x,m,v)=>Math.exp(-((x-m)*(x-m))/(2*v))/Math.sqrt(2*Math.PI*v);
+  function draw(){
+    const t2=+$('#pvT').value;
+    svg.innerHTML='';
+    const P={x0:70,y0:40,w:470,h:240};
+    const m=16/9;
+    const xMin=-3,xMax=6.5;
+    const px=v=>P.x0+(v-xMin)/(xMax-xMin)*P.w;
+    const v1=1,v2=1+t2;
+    const mx=N0(m,m,v1);
+    const py=v=>P.y0+P.h-(v/mx)*(P.h-24);
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [-2,0,2,4,6].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0+P.h+15,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    let d1='M',d2='M';
+    for(let k=0;k<=280;k++){
+      const x=xMin+(xMax-xMin)*k/280;
+      d1+=' L'+px(x)+','+py(N0(x,m,v1));
+      d2+=' L'+px(x)+','+py(N0(x,m,v2));
+    }
+    svgAdd(svg,'path',{d:d2.replace('M L','M'),fill:'none',stroke:'var(--violet)',strokeWidth:2.2});
+    svgAdd(svg,'path',{d:d1.replace('M L','M'),fill:'none',stroke:'var(--accent)',strokeWidth:2.2});
+    svgAdd(svg,'line',{x1:px(m),y1:P.y0,x2:px(m),y2:P.y0+P.h,stroke:'var(--muted)',strokeWidth:1,strokeDasharray:'4 4'});
+    svgHalo(svg,P.x0+P.w-14,P.y0+18,'— plug-in：N(16/9, 1)',{font:10.5,fill:'var(--accent)',anchor:'end'});
+    svgHalo(svg,P.x0+P.w-14,P.y0+36,'— 后验预测：N(16/9, '+(1+t2).toFixed(2)+')',{font:10.5,fill:'var(--violet)',anchor:'end'});
+    // panel
+    const q0={x0:620,y0:48};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'方差账本（现算）');
+    const rows=[
+      ['σ²（观测噪声）','1.000'],
+      ['τ_n²（参数不确定）',fmt(t2,3)],
+      ['plug-in 方差',fmt(v1,3)],
+      ['后验预测方差',fmt(v2,3)],
+      ['90% 半宽比',fmt(1.645*Math.sqrt(v2)/(1.645*Math.sqrt(v1)),3)+'×']
+    ];
+    rows.forEach((r,i)=>{
+      const y=q0.y0+28+i*28;
+      svgAdd(svg,'text',{x:q0.x0,y,'font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:q0.x0+160,y,'font-size':10.5,'font-weight':700,fill:'var(--accent)'},r[1]);
+    });
+    $('#pvCap2').innerHTML=`当前 τ_n²=${fmt(t2,3)}：plug-in 只用观测噪声（方差 1），后验预测方差 1+τ_n²=<b>${fmt(v2,3)}</b>——多出的 ${fmt(t2,3)} 正是把参数不确定性积分进来的代价，两条曲线${t2<0.15?'几乎重合（后验已集中）':'明显分开'}。讲义例 τ_n²=4/9：方差 13/9≈1.444，90% 半宽比 1.202×。数据很多、后验集中时两者接近；数据少时后验预测更诚实地宽。`;
+  }
+  function sync(){$('#pvTval').textContent=fmt(+$('#pvT').value,3);draw();}
+  $('#pvT').addEventListener('input',sync);
+  $('#pvExam').addEventListener('click',()=>{$('#pvT').value=0.444;sync();toast('已载入讲义例 τ_n²=4/9 → 方差 13/9');});
+  sync();
+})();
+
+/* ---------- §11 two uncertainties ---------- */
+(()=>{
+  const svg=$('#uncViz');
+  function draw(){
+    const n=+$('#uvN').value;
+    svg.innerHTML='';
+    const t02=4,s2=1;
+    const tn2=1/(1/t02+n/s2);
+    const B={x0:150,y0:60,w:150};
+    const scale=90;
+    const y0=B.y0+scale;
+    // stacked bar
+    svgAdd(svg,'rect',{x:B.x0,y:y0-tn2*scale,width:B.w,height:tn2*scale,rx:3,fill:'var(--violet)',opacity:.85});
+    svgAdd(svg,'rect',{x:B.x0,y:y0-s2*scale,width:B.w,height:s2*scale,rx:3,fill:'var(--warm)',opacity:.8});
+    svgAdd(svg,'line',{x1:B.x0-30,y1:y0,x2:B.x0+B.w+30,y2:y0,stroke:'var(--ink)',strokeWidth:1.5});
+    svgHalo(svg,B.x0+B.w+14,y0-tn2*scale/2,'epistemic τ_n²='+fmt(tn2,3),{font:10.5,fill:'var(--violet)',anchor:'start'});
+    svgHalo(svg,B.x0+B.w+14,y0-s2*scale/2,'aleatoric σ²=1（恒定）',{font:10.5,fill:'var(--warm)',anchor:'start'});
+    svgHalo(svg,B.x0+B.w/2,y0+16,'总 = 后验预测方差 '+fmt(1+tn2,3),{font:10.5,fill:'var(--muted)'});
+    // shrink curve
+    const C={x0:560,y0:40,w:280,h:190};
+    const px=v=>C.x0+(v/20)*C.w;
+    const py=v=>C.y0+C.h-(v/4)*(C.h-20);
+    svgAdd(svg,'rect',{x:C.x0,y:C.y0,width:C.w,height:C.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,1,2,3,4].forEach(v=>{svgAdd(svg,'line',{x1:C.x0,y1:py(v),x2:C.x0+C.w,y2:py(v),stroke:'var(--line)',opacity:.35});svgAdd(svg,'text',{x:C.x0-10,y:py(v)+4,'text-anchor':'end','font-size':9,fill:'var(--muted)'},fmt(v,0));});
+    [0,5,10,15,20].forEach(v=>svgAdd(svg,'text',{x:px(v),y:C.y0+C.h+15,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,0)));
+    let d='M';
+    for(let k=0;k<=100;k++){
+      const nn=k/5;
+      const t=1/(1/t02+nn/s2);
+      d+=(k===0?'':' L')+px(nn)+','+py(t);
+    }
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--violet)',strokeWidth:2.4});
+    svgAdd(svg,'circle',{cx:px(n),cy:py(tn2),r:6.5,fill:'var(--blue)'});
+    svgHalo(svg,px(n)+(n>13?-10:10),py(tn2)-12,'n='+n+'：'+fmt(tn2,3),{font:10.5,fill:'var(--blue)',anchor:n>13?'end':'start'});
+    svgHalo(svg,C.x0+C.w/2,C.y0-8,'τ_n² 随 n 的收缩（现算）',{font:10.5,fill:'var(--muted)'});
+    svgHalo(svg,C.x0+8,py(3.4),'数据挤干认知不确定性',{font:9.5,fill:'var(--muted)',anchor:'start'});
+    $('#uvCap').innerHTML=`当前 n=${n}：τ_n²=(1/4+n)^{-1}=<b>${fmt(tn2,3)}</b>，后验预测方差 1+τ_n²=${fmt(1+tn2,3)}。n=2 时 epistemic=${fmt(1/(0.25+2),3)}（讲义例 4/9）；n=20 只剩 ${fmt(1/(0.25+20),3)}——认知层几乎被挤干，而 aleatoric 层（σ²=1）纹丝不动。该不该再收数据？看紫层还有多少。`;
+  }
+  function sync(){$('#uvNval').textContent=$('#uvN').value;draw();}
+  $('#uvN').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §12 clinic workbench ---------- */
+(()=>{
+  const svg=$('#clinicViz');
+  function draw(){
+    const miss=+$('#clMiss').value,test=+$('#clTest').value,over=+$('#clOver').value,p=+$('#clP').value;
+    svg.innerHTML='';
+    const rH=miss*p,rT=test,rTr=over*(1-p);
+    const best=Math.min(rH,rT,rTr);
+    const act=best===rH?'回家观察':(best===rT?'安排复查':'立即治疗');
+    // loss matrix
+    const M={x0:70,y0:40};
+    const cols=['无病 (1−p)','有病 (p)'];
+    const rowsM=[['回家观察','0',fmt(miss,1)],['安排复查',fmt(test,1),fmt(test,1)],['立即治疗',fmt(over,1),'0']];
+    cols.forEach((c,j)=>{
+      svgAdd(svg,'rect',{x:M.x0+120+j*130,y:M.y0,width:120,height:28,rx:5,fill:'var(--surface2)',stroke:'var(--line)'});
+      svgAdd(svg,'text',{x:M.x0+180+j*130,y:M.y0+19,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},c);
+    });
+    rowsM.forEach((r,i)=>{
+      const y=M.y0+36+i*34;
+      const hl=(i===0&&act==='回家观察')||(i===1&&act==='安排复查')||(i===2&&act==='立即治疗');
+      svgAdd(svg,'rect',{x:M.x0-8,y:y-2,width:116,height:30,rx:5,fill:hl?'color-mix(in srgb,var(--accent) 12%, var(--surface))':'transparent',stroke:hl?'var(--accent)':'transparent'});
+      svgAdd(svg,'text',{x:M.x0+50,y:y+18,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},r[0]);
+      r.slice(1).forEach((v,j)=>{
+        svgAdd(svg,'rect',{x:M.x0+120+j*130,y:y-2,width:120,height:30,rx:5,fill:'var(--surface)',stroke:'var(--line)'});
+        svgAdd(svg,'text',{x:M.x0+180+j*130,y:y+18,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},v);
+      });
+    });
+    svgHalo(svg,M.x0+185,M.y0+36+3*34+14,'损失矩阵 ℓ(a, y)（可调三格）',{font:10.5,fill:'var(--muted)'});
+    // risk bars
+    const B={x0:520,y0:46,w:240};
+    const mxr=Math.max(rH,rT,rTr,1e-9);
+    const rowsB=[['回家 R=漏诊·p',rH,'var(--warm)'],['复查 R=常数',rT,'var(--blue)'],['治疗 R=误治·(1−p)',rTr,'var(--accent)']];
+    rowsB.forEach((r,i)=>{
+      const y=B.y0+i*44;
+      svgAdd(svg,'text',{x:B.x0-8,y:y,'text-anchor':'end','font-size':10,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'rect',{x:B.x0,y:y-14,width:Math.max(r[1]/mxr*230,3),height:20,rx:4,fill:r[2],opacity:best===r[1]?1:.5});
+      svgHalo(svg,B.x0+Math.max(r[1]/mxr*230,3)+8,y+1,fmt(r[1],2),{font:10.5,fill:r[2],anchor:'start'});
+    });
+    svgHalo(svg,B.x0+120,B.y0+3*44+16,'最优动作：'+act,{font:13,fill:'var(--accent)'});
+    // p band with crossover regions
+    const P={x0:70,y0:230,w:690,h:46};
+    const px=v=>P.x0+v*P.w;
+    svgAdd(svg,'rect',{x:P.x0,y:P.y0,width:P.w,height:P.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    const x1=Math.min(test/miss,1),x2=Math.max(1-test/over,0);
+    const seg=(a,b,c)=>{if(b>a)svgAdd(svg,'rect',{x:px(a),y:P.y0,width:px(b)-px(a),height:P.h,fill:c,opacity:.3});};
+    if(x2>x1){seg(0,x1,'var(--warm)');seg(x1,x2,'var(--blue)');seg(x2,1,'var(--accent)');}
+    else{seg(0,1,'var(--blue)');}
+    svgHalo(svg,px(x1/2),P.y0+P.h+20,'回家',{font:10,fill:'var(--warm)'});
+    if(x2>x1)svgHalo(svg,px((x1+x2)/2),P.y0+P.h+20,'复查',{font:10,fill:'var(--blue)'});
+    svgHalo(svg,px((x2+1)/2),P.y0+P.h+20,'治疗',{font:10,fill:'var(--accent)'});
+    svgAdd(svg,'line',{x1:px(p),y1:P.y0-6,x2:px(p),y2:P.y0+P.h+6,stroke:'var(--danger)',strokeWidth:2});
+    svgHalo(svg,px(p),P.y0-14,'p='+fmt(p,2),{font:10.5,fill:'var(--danger)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>svgAdd(svg,'text',{x:px(v),y:P.y0-24,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},fmt(v,2)));
+    $('#clCap').innerHTML=`当前（漏诊 ${fmt(miss,0)}、复查 ${fmt(test,1)}、误治 ${fmt(over,1)}，p=${fmt(p,2)}）：R(回家)=${fmt(rH,2)}、R(复查)=${fmt(rT,2)}、R(治疗)=${fmt(rTr,2)} → 最优 <b>${act}</b>。两个交叉点 p=${fmt(x1,3)}（回家 vs 复查）与 p=${fmt(Math.max(x2,0),3)}（复查 vs 治疗）随滑杆移动。默认设置下 p=0.12 落在复查区——既不冒漏诊风险，也不付误治代价。`;
+  }
+  function sync(){['clMiss','clTest','clOver','clP'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,+id==='clMiss'?0:(+id==='clP'?2:1)));draw();}
+  ['clMiss','clTest','clOver','clP'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §13 coverage Monte Carlo ---------- */
+(()=>{
+  const svg=$('#covViz');
+  const MU=2,N=2,Z=1.645;
+  let trials=[],hits1=0,hits2=0;
+  const state={count:0};
+  function randn(){let u=0,v=0;while(u===0)u=Math.random();while(v===0)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  function erf(x){const s=x<0?-1:1;x=Math.abs(x);const t=1/(1+0.3275911*x);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return s*y;}
+  function Phi(x){return 0.5*(1+erf(x/Math.SQRT2));}
+  const thPlug=2*Phi(Z/Math.sqrt(1+1/N))-1;
+  function runBatch(k){
+    for(let i=0;i<k;i++){
+      const xs=[randn()+MU,randn()+MU];
+      const muHat=(xs[0]+xs[1])/2;
+      const yNew=randn()+MU;
+      const in1=Math.abs(yNew-muHat)<=Z*1;
+      const in2=Math.abs(yNew-muHat)<=Z*Math.sqrt(1+1/N);
+      if(in1)hits1++;if(in2)hits2++;
+      trials.push({muHat,yNew,in1,in2});
+    }
+    state.count+=k;
+    if(trials.length>36)trials=trials.slice(-36);
+    draw();
+  }
+  function draw(){
+    svg.innerHTML='';
+    const S={x0:70,y0:26,w:740,h:150};
+    const xMin=-2,xMax=6.5;
+    const px=v=>S.x0+(v-xMin)/(xMax-xMin)*S.w;
+    trials.forEach((t,i)=>{
+      const y=S.y0+8+(i%18)*8;
+      svgAdd(svg,'line',{x1:px(t.muHat-Z),y1:y,x2:px(t.muHat+Z),y2:y,stroke:'var(--accent)',strokeWidth:1.6});
+      svgAdd(svg,'line',{x1:px(t.muHat-Z*Math.sqrt(1+1/N)),y1:y+3.5,x2:px(t.muHat+Z*Math.sqrt(1+1/N)),y2:y+3.5,stroke:'var(--violet)',strokeWidth:1.6});
+      svgAdd(svg,'circle',{cx:px(t.yNew),cy:y+1.7,r:2.6,fill:t.in2?'var(--ink)':'none',stroke:t.in2?'none':'var(--danger)',strokeWidth:1.4});
+    });
+    svgHalo(svg,S.x0+S.w/2,S.y0-8,'每次实验：上=plug-in 区间，下=预测式区间（空心点=plug-in 没盖住的 Y）',{font:10,fill:'var(--muted)'});
+    svgAdd(svg,'text',{x:px(MU),y:S.y0+S.h+14,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'μ*=2');
+    const B={x0:170,y0:225,w:380};
+    const c1=state.count?hits1/state.count:0;
+    const c2=state.count?hits2/state.count:0;
+    const rows=[['plug-in 经验覆盖',c1,thPlug,'var(--accent)'],['预测式经验覆盖',c2,0.9,'var(--violet)']];
+    rows.forEach((r,i)=>{
+      const y=B.y0+i*50;
+      svgAdd(svg,'text',{x:B.x0-10,y:y+4,'text-anchor':'end','font-size':10.5,fill:'var(--ink)'},r[0]);
+      svgAdd(svg,'rect',{x:B.x0,y:y-10,width:Math.max(r[1]*380,2),height:20,rx:4,fill:r[3],opacity:.85});
+      svgHalo(svg,B.x0+Math.max(r[1]*380,2)+8,y+4,fmt(r[1],3)+'（理论 '+fmt(r[2],3)+'）',{font:10.5,fill:r[3],anchor:'start'});
+      svgAdd(svg,'line',{x1:B.x0+r[2]*380,y1:y-16,x2:B.x0+r[2]*380,y2:y+16,stroke:'var(--danger)',strokeWidth:1.6});
+    });
+    svgAdd(svg,'line',{x1:B.x0,y1:B.y0+100,x2:B.x0+380,y2:B.y0+100,stroke:'var(--line)'});
+    [0,0.3,0.6,0.9,1].forEach(v=>svgAdd(svg,'text',{x:B.x0+v*380,y:B.y0+118,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(v,1)));
+    svgHalo(svg,B.x0+190,B.y0+142,'实验总数：'+state.count+'（红竖线=理论覆盖率）',{font:10.5,fill:'var(--muted)'});
+    $('#cvCap').innerHTML=`已做 ${state.count} 次实验：plug-in 覆盖 <b>${fmt(c1,3)}</b>（理论 ${fmt(thPlug,3)}，欠覆盖）、预测式覆盖 <b>${fmt(c2,3)}</b>（理论 0.900）。原因：Y−μ̂ 的真实标准差是 √(1+1/n)≈1.225，plug-in 只按 1 算——半宽少了 22.5%。点"再抽 100 次"看经验值向红线收敛（真随机）；清零重跑可看波动。`;
+  }
+  $('#cvRun').addEventListener('click',()=>{runBatch(100);toast('又完成 100 次实验（累计 '+(state.count)+' 次）');});
+  $('#cvReset').addEventListener('click',()=>{state.count=0;trials=[];hits1=0;hits2=0;draw();toast('已清零');});
+  draw();
+})();
+
+/* ---------- checklist ---------- */
+(()=>{
+  const items=[
+    '我能写出决策论统一公式，并说清“变的只是动作空间与损失”。',
+    '我能推导非对称阈值 c_FP/(c_FP+c_FN)，并手算漏诊 20/误报 1 时的 1/21≈0.048。',
+    '我能解释分位数损失的最优动作是条件 τ 分位数（手算四点例 τ=0.75 → a*=4 ≠ 均值 3.75）。',
+    '我能写出拒判区间 c<p<1−c，并说明 c>1/2 时永远不弃权。',
+    '我能逐步算离散 Bayes 更新（θ∈{1/3,2/3}，x=1 → 后验 (1/3,2/3)，MAP=2/3）。',
+    '我能算 Beta(2,2)+三成两败 → Beta(5,4)：均值 5/9、MAP 4/7、后验预测 5/9。',
+    '我能用 precision 相加算高斯均值后验（讲义例 μ_n=16/9、τ_n²=4/9）。',
+    '我能解释 MAP=Ridge（高斯先验）与 MAP=Lasso（Laplace 先验）的推导。',
+    '我能说清 plug-in 与后验预测的差别（方差 1 vs 13/9；全方差分解两项）。',
+    '我能区分三种区间：可信区间、后验预测区间、频率派预测区间（包谁、概率对谁取）。',
+    '我能解释 aleatoric 与 epistemic 的差别，以及哪个随 n 收缩。',
+    '我能复述覆盖率实验的结论：plug-in 90% 区间实际约 0.82，预测式约 0.90。'
+  ];
+  const box=$('#checkList');
+  box.innerHTML=items.map((t,i)=>`<label><input type="checkbox" data-ck="${i}"><span>${t}</span></label>`).join('');
+  const score=$('#checkScore');
+  function upd(){
+    const done=$$('#checkList input').filter(c=>c.checked).length;
+    score.textContent=`已确认 ${done}/${items.length} 项${done===items.length?'——第 21 讲可以收官，向第 22 讲出发。':'。全部勾掉再进入下一讲。'}`;
+    $$('#checkList label').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  }
+  box.addEventListener('change',upd);
+  upd();
+})();
+
+/* ---------- mode system ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    decision:{mode:'core',tag:'动作'},asym:{mode:'core',tag:'非对称'},
+    quantile:{mode:'core',tag:'分位数'},reject:{mode:'core',tag:'拒判'},
+    bayes:{mode:'core',tag:'更新'},beta:{mode:'core',tag:'共轭'},
+    gauss:{mode:'core',tag:'高斯'},mapreg:{mode:'core',tag:'正则化'},
+    pred:{mode:'core',tag:'预测'},intervals:{mode:'core',tag:'区间'},uncer:{mode:'core',tag:'不确定性'},
+    clinic:{mode:'extra',tag:'拓展'},coverage:{mode:'extra',tag:'拓展'},
+    confuse:{mode:'core',tag:'误区'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：决策论支线与 Bayesian 支线如何从同一个后验出发。',
+    decision:'一切从“动作不只两个”开始——公式不变，动作空间变大。',
+    asym:'代价不对称时，0.5 阈值被改写成成本比。',
+    quantile:'连续目标的同一思想：损失一变，最优统计量从均值变分位数。',
+    reject:'给模型一个弃权按钮：弃权何时比硬猜便宜。',
+    bayes:'换镜头看参数：先验乘似然再归一化。',
+    beta:'连续参数的闭式更新：形状参数直接相加。',
+    gauss:'高斯均值的后验：precision 相加、均值按 precision 加权。',
+    mapreg:'MAP 的负对数先验就是正则项——Ridge 与 Lasso 的出身。',
+    pred:'参数压成点还是积分掉：两种预测分布的分岔。',
+    intervals:'区间先说清包谁、概率对谁取——三种区间一次分清。',
+    uncer:'全方差分解给两种不确定性各留一个座位。',
+    clinic:'把开头的体检故事做成三动作决策台。',
+    coverage:'蒙特卡洛检验两种区间的真实覆盖率。',
+    confuse:'收束前先扫掉六句“听起来对”的话。',
+    takeaway:'最后把一条公式、五个公式、自查清单和下一讲串起来。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    setTimeout(rebuildBridges,0);
+    if(mode==='full'){
+      $$('.control input[type=range]').forEach(r=>r.dispatchEvent(new Event('input',{bubbles:true})));
+    }
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'决策规则',en:'decision rule',f:'a^*(x)=\\arg\\min_{a\\in A}\\mathbb E[\\ell(a,Y)\\mid X=x]',d:'从输入到动作的函数；最优版本逐点最小化条件期望损失。',r:'位置：§1。用处：把概率兑换成行动。重要：公式不变，变的只是动作空间与损失——不用重训模型。'},
+    {t:'非对称损失',en:'asymmetric loss',f:'p>\\frac{c_{\\mathrm{FP}}}{c_{\\mathrm{FP}}+c_{\\mathrm{FN}}}',d:'漏诊与误报代价不同时的损失结构；最优阈值变成成本比。',r:'位置：§2。用处：把业务/医疗代价显式换算成阈值。重要：讲义例 1/21≈0.048，p=0.12 时改判有病。'},
+    {t:'分位数损失',en:'quantile / pinball loss',f:'\\ell_\\tau(a,y)=(y-a)(\\tau-\\mathbf 1\\{y<a\\})',d:'高估与低估不对称惩罚的分段线性损失；最优动作是条件 τ 分位数。',r:'位置：§3。用处：要分位数而非均值的回归。重要：dR/da=F(a)−τ；四点例 τ=0.75 → a*=4≠均值。'},
+    {t:'拒判',en:'abstention / reject',f:'c<p<1-c',d:'动作空间增加“暂不回答”；弃权代价 c 低于两类期望错误代价时弃权最优。',r:'位置：§4。用处：高风险场景转人工。重要：只发生在决策边界附近；c>1/2 时永不弃权。'},
+    {t:'先验分布',en:'prior',f:'\\theta\\sim P_\\Theta',d:'观察数据前对参数的分布，进入 Bayes 更新的“观察前权重”。',r:'位置：§5。用处：表达数据之外的偏好/知识。重要：没有它，“θ 本身有多可能”无从谈起。'},
+    {t:'后验分布',en:'posterior',f:'p(\\theta\\mid D)\\propto p(D\\mid\\theta)p(\\theta)',d:'观察数据后参数的分布；数据增多通常更集中。',r:'位置：§5。用处：一切 Bayesian 估计与预测的原料。重要：相乘再归一化；离散例 (1/3,2/3)。'},
+    {t:'共轭',en:'conjugacy',f:'\\operatorname{Beta}(\\alpha,\\beta)+(s,f)\\Rightarrow\\operatorname{Beta}(\\alpha+s,\\beta+f)',d:'先验与 likelihood 相乘仍是同族；更新变成数数。',r:'位置：§6。用处：闭式后验。重要：本质是“两个同形指数相乘仍同形”，不是魔法。'},
+    {t:'MAP 估计',en:'maximum a posteriori',f:'\\theta_{\\mathrm{MAP}}=\\arg\\max_\\theta p(D\\mid\\theta)p(\\theta)',d:'后验密度最大的参数；负对数形式=数据项+先验正则项。',r:'位置：§6。用处：把后验压成一个点。重要：平坦先验时退化为 MLE；Beta(5,4) 例给 4/7。'},
+    {t:'precision',en:'precision（方差倒数）',f:'\\tau_n^2=\\big(\\tfrac1{\\tau_0^2}+\\tfrac n{\\sigma^2}\\big)^{-1}',d:'方差的倒数；高斯均值后验 precision 相加、均值按 precision 加权。',r:'位置：§7。用处：一眼读出先验与数据的拉锯。重要：讲义例 τ_n²=4/9、μ_n=16/9。'},
+    {t:'后验预测分布',en:'posterior predictive',f:'P(z\\mid D)=\\int P(z\\mid\\theta)p(\\theta\\mid D)d\\theta',d:'对每个候选参数算新样本分布再按后验加权（全概率）。',r:'位置：§9。用处：把参数不确定性反映进预测。重要：≠参数平均后代入；离散例 5/9 vs plug-in 2/3。'},
+    {t:'可信区间',en:'credible interval',f:'P(\\theta\\in C_D\\mid D)=1-\\alpha',d:'针对参数的 Bayesian 区间；数据固定、概率来自后验。',r:'位置：§10。用处：报告参数剩余不确定性。重要：与包未来观测的区间严格分开。'},
+    {t:'频率派预测区间',en:'frequentist prediction interval',f:'P_{D,Y}(Y_{\\mathrm{new}}\\in \\mathrm{PI}_D)\\ge1-\\alpha',d:'对“随机训练集+新观测”重复抽样的覆盖率保证。',r:'位置：§10。用处：不依赖 prior 的区间保证。重要：θ* 不是随机变量；解释靠重复实验。'},
+    {t:'偶然不确定性',en:'aleatoric uncertainty',f:'\\mathbb E[\\operatorname{Var}(Z\\mid\\theta)]',d:'数据生成机制里的观测噪声；知道真参数也无法消除。',r:'位置：§11。用处：预测方差的地板。重要：高斯例中恒为 σ²=1，n 再大也不缩。'},
+    {t:'认知不确定性',en:'epistemic uncertainty',f:'\\operatorname{Var}(\\mathbb E[Z\\mid\\theta])',d:'数据不足导致的参数/模型不确定；数据更多时减少。',r:'位置：§11。用处：衡量还要不要收数据。重要：高斯例中即 τ_n²，随 n 收缩到 0。'},
+    {t:'plug-in 预测',en:'plug-in predictive',f:'\\hat\\theta_{\\mathrm{MAP}}\\to P(\\cdot\\mid\\hat\\theta)',d:'把参数压成一个点再代入模型；通常漏掉参数不确定项。',r:'位置：§9。用处：简单快速的预测。重要：覆盖率实验中 90% 区间实际约 0.82——欠覆盖。'}
+  ];
+  const KEYS={};
+  G.forEach(c=>KEYS[c.t]=c.t);
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg,.term-ref';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&(p.matches(GLOSS_SKIP)||p.id==='hero'||p.id==='map'))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'非对称二分类中，为什么阈值不一定是 0.5？',a:'最优动作最小化期望代价：$R(+1)=c_{\\mathrm{FP}}(1-p)$、$R(-1)=c_{\\mathrm{FN}}p$，两者相等给出 $p>\\frac{c_{\\mathrm{FP}}}{c_{\\mathrm{FP}}+c_{\\mathrm{FN}}}$。漏诊代价越大阈值越低；讲义例 1/21≈0.048。'},
+    {q:'拒判代价为 $c$ 时，什么时候应该拒判？',a:'0-1 损失加拒判代价下，当 $c<p<1-c$ 时弃权的风险 $c$ 低于两个硬猜风险的较小者——只发生在决策边界附近；$c>\\tfrac12$ 时区间为空，永不弃权。'},
+    {q:'MLE 和 MAP 的目标函数差在哪里？',a:'MLE 只最大化 likelihood $p(D\\mid\\theta)$；MAP 最大化 $p(D\\mid\\theta)p(\\theta)$，负对数形式多出 $-\\log p(\\theta)$ 一项（先验诱导的正则化）。平坦先验时两者相同。'},
+    {q:'为什么高斯先验会导出 Ridge？Laplace 呢？',a:'高斯先验 $w\\sim\\mathcal N(0,\\sigma_w^2I)$ 的负 log 与 $\\lVert w\\rVert_2^2$ 成正比 → Ridge；Laplace 先验的负 log 与 $\\lVert w\\rVert_1$ 成正比 → Lasso（0 附近的尖角鼓励稀疏）。'},
+    {q:'后验预测和 plug-in 预测有什么区别？',a:'plug-in 把参数压成一个点（$\\hat\\theta_{\\mathrm{MAP}}$）再代入；后验预测 $\\int P(z\\mid\\theta)p(\\theta\\mid D)d\\theta$ 对所有参数按后验加权，保留参数不确定性——小样本时更宽，且 $\\ne p(z\\mid\\mathbb E[\\theta])$。'},
+    {q:'aleatoric 与 epistemic 各是什么意思？',a:'aleatoric 是观测噪声（知道真参数也无法消除，骰子的抖动）；epistemic 是数据不足带来的参数/模型不确定（多收数据可减少）。全方差分解 $\\operatorname{Var}(Z\\mid D)=\\mathbb E[\\operatorname{Var}(Z\\mid\\theta)]+\\operatorname{Var}(\\mathbb E[Z\\mid\\theta])$ 各占一项。'},
+    {q:'可信区间和频率派预测区间的概率解释有什么不同？',a:'可信区间：给定数据 $D$，后验认为参数落在区间中的概率是 $1-\\alpha$（数据固定、参数随机）。频率派预测区间：对“随机训练集+新观测”重复抽样，长期至少 $1-\\alpha$ 的新观测落入各自区间（参数固定、程序随机）。后验预测区间包未来观测且条件在当前数据上。'},
+    {q:'对 $\\operatorname{Beta}(2,2)$ 先验和三次成功、两次失败，posterior、MAP 和下一次成功概率分别是多少？',a:'posterior 是 $\\operatorname{Beta}(5,4)$；MAP $=\\frac{5-1}{5+4-2}=\\frac47\\approx0.5714$；下一次成功概率=后验均值 $\\frac59\\approx0.5556$（不是 MAP——后验预测保留了参数不确定性）。'},
+    {q:'在本讲高斯均值例子中，$\\mu_n$、$\\tau_n^2$ 和后验预测方差分别是多少？',a:'$\\tau_n^2=(\\tfrac14+2)^{-1}=\\tfrac49$，$\\mu_n=\\tfrac49(0+4)=\\tfrac{16}9\\approx1.7778$；后验预测方差 $=1+\\tfrac49=\\tfrac{13}9$。90% 区间：参数 $[0.68,2.87]$，未来观测 $[-0.20,3.76]$。'},
+    {q:'分位数损失的最优动作由条件分布的什么量决定？',a:'条件 $\\tau$ 分位数：$\\frac{dR}{da}=F(a\\mid x)-\\tau=0\\Rightarrow F(a^\\star\\mid x)=\\tau$。四点等概率例中 $\\tau=0.75$ 给 $a^\\star=4$，而均值是 3.75——损失改变，最优统计量随之改变。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  if(window.renderMathInElement)renderMathInElement(list,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+
+</script>
+</body>
+</html>
