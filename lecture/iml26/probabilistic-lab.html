@@ -755,23 +755,23 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     svgHalo(svg,dx+dw/2,dy+73,'P(Y | X=120)',{font:10,anchor:'middle',fill:'var(--muted)'});
     svgAdd(svg,'line',{x1:px+12+30,y1:fy+50,x2:dx,y2:dy+50,stroke:'#b45a2b',strokeWidth:2,markerEnd:svgMarker(svg,'sfC','#b45a2b')});
     // curve area
-    const cx=700,cy=115,scaleX=26,scaleY=150;
+    const cx=700,cy=118,scaleX=45,scaleY=52;
     const mu=1.2,sig=0.22;
     let d='';
     for(let i=0;i<=80;i++){
       const t=i/80;
-      const v=0.5+t*1.6;
+      const v=0.4+t*1.6;
       const p=v===mu?gauss(mu,mu,sig):gauss(v,mu,sig);
-      const x=cx-90+(v-0.5)*scaleX;
+      const x=cx+(v-mu)*scaleX;
       const y=cy-p*scaleY;
       d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
     }
     svgAdd(svg,'path',{d,fill:'none',stroke:'#b45a2b',strokeWidth:2.5});
-    svgHalo(svg,cx,cy-105,'密度曲线',{font:10,fill:'#b45a2b',anchor:'middle'});
-    svgHalo(svg,cx,cy-88,'均值 = 1.2',{font:10,anchor:'middle',fill:'var(--muted)'});
-    svgHalo(svg,cx,cy-71,'方差 = σ²',{font:10,anchor:'middle',fill:'var(--muted)'});
-    svgHalo(svg,852,45,'一张地图',{font:11,fill:'var(--muted)',anchor:'start'});
-    svgAdd(svg,'line',{x1:700,y1:115,x2:700,y2:52,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
+    svgHalo(svg,cx+78,cy-95,'密度曲线',{font:10,fill:'#b45a2b',anchor:'start'});
+    svgHalo(svg,cx+78,cy-78,'均值 = 1.2',{font:10,anchor:'start',fill:'var(--muted)'});
+    svgHalo(svg,cx+78,cy-61,'方差 = σ²',{font:10,anchor:'start',fill:'var(--muted)'});
+    svgHalo(svg,840,45,'一张地图',{font:11,fill:'var(--muted)',anchor:'start'});
+    svgAdd(svg,'line',{x1:700,y1:cy,x2:700,y2:cy-88,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
   }
   draw();
 })();
@@ -936,7 +936,7 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     const x0=70,y0=230,plotW=560,plotH=170;
     const ds=[];
     for(let i=1;i<=12;i++)ds.push(i);
-    const maxR=Math.pow(0.1,1);
+    const maxR=Math.pow(0.1,1/ds.length);
     const gridCells=Math.pow(10,d);
     const r=Math.pow(0.1,1/d);
     svgAdd(svg,'rect',{x:x0,y:y0-plotH,width:plotW,height:plotH,fill:'var(--surface2)',opacity:.25,stroke:'var(--line)'});
@@ -994,8 +994,9 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     const cur=vals.find(v=>Math.abs(v.m-mu)<0.5);
     const cx=x0+(mu-range[0])*scaleX;
     svgAdd(svg,'line',{x1:cx,y1:base,x2:cx,y2:base-H,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
-    svgHalo(svg,cx,20,`候选 μ=${fmt(mu,0)}`,{font:11,fill:'#b45a2b',anchor:'middle'});
-    svgHalo(svg,cx,base-40,`SS=${fmt(cur?cur.ss:0,0)}`,{font:10,fill:'var(--ink)',anchor:'middle'});
+    const labelAnchor=cx>x1-70?'end':cx<x0+70?'start':'middle';
+    svgHalo(svg,cx,20,`候选 μ=${fmt(mu,0)}`,{font:11,fill:'#b45a2b',anchor:labelAnchor});
+    svgHalo(svg,cx,base-40,`SS=${fmt(cur?cur.ss:0,0)}`,{font:10,fill:'var(--ink)',anchor:labelAnchor});
     svgHalo(svg,x0+30,base-160,'ℓ(μ) ∝ -½·SS',{font:10,fill:'#176653',anchor:'start'});
     svgHalo(svg,x0+30,base+20,'100',{font:9,anchor:'middle',fill:'var(--muted)'});
     svgHalo(svg,x1-25,base+20,'220',{font:9,anchor:'middle',fill:'var(--muted)'});
@@ -1026,20 +1027,24 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
   function draw(){
     svg.innerHTML='';
     const x0=70,x1=720,base=260,H=210;
-    let d='';
+    const steps=[];
     for(let i=0;i<=200;i++){
       const sig2=0.1+i/200*1.9;
       const ll=-n/2*Math.log(2*Math.PI*sig2)-rss/(2*sig2);
-      const x=x0+(sig2-0.1)/1.9*(x1-x0);
-      const y=base-(ll+2.8)/3.3*H;
-      d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+      steps.push({sig2,ll,x:x0+(sig2-0.1)/1.9*(x1-x0)});
     }
+    const minLL=Math.min(...steps.map(s=>s.ll));
+    const maxLL=Math.max(...steps.map(s=>s.ll));
+    const padTop=45;
+    steps.forEach(s=>{s.y=base-(s.ll-minLL)/(maxLL-minLL)*(H-padTop);});
+    let d=steps.map((s,i)=>(i?'L':'M')+s.x.toFixed(1)+','+s.y.toFixed(1)).join('');
     svgAdd(svg,'line',{x1:x0,y1:base,x2:x1,y2:base,stroke:'var(--line)',strokeWidth:1});
     svgAdd(svg,'path',{d,fill:'none',stroke:'#176653',strokeWidth:2.5});
     const mle=2/3,unb=1;
     function vline(v,color){
       const x=x0+(v-0.1)/1.9*(x1-x0);
-      svgAdd(svg,'line',{x1:x,y1:base,x2:x,y2:base-40,stroke:color,strokeWidth:1.5,strokeDasharray:'4 3'});
+      const s=steps.reduce((a,b)=>Math.abs(b.sig2-v)<Math.abs(a.sig2-v)?b:a);
+      svgAdd(svg,'line',{x1:x,y1:base,x2:x,y2:s.y,stroke:color,strokeWidth:1.5,strokeDasharray:'4 3'});
       return x;
     }
     const xm=vline(mle,'#176653'), xu=vline(unb,'#b45a2b');
@@ -1061,7 +1066,7 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     svg.innerHTML='';
     const pts=[{x:1,y:2},{x:2,y:3},{x:3,y:5}];
     const w=23/14,b=0;
-    const x0=55,y0=230,scaleX=170,scaleY=38;
+    const x0=55,y0=250,scaleX=170,scaleY=26;
     // axis
     svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0+scaleX*3.6,y2:y0,stroke:'var(--line)',strokeWidth:1});
     svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0,y2:y0-scaleY*5.6,stroke:'var(--line)',strokeWidth:1});
@@ -1072,24 +1077,28 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     svgHalo(svg,x0+2.3*scaleX,ly1-18,`y = (23/14)x`,{font:11,fill:'#176653',anchor:'middle'});
     // conditional densities at each x
     pts.forEach((p,i)=>{
-      const cx=x0+p.x*scaleX, cy=y0-p.y*scaleY;
-      const mix=p.y-0.25,sig=0.38,maxH=0.9;
+      const fit=w*p.x;
+      const cx=x0+p.x*scaleX, cy=y0-fit*scaleY;
+      const sig=0.38,maxH=0.9;
       let d='';
       for(let j=0;j<=40;j++){
         const t=j/40;
-        const v=p.y-0.6+t*0.8;
-        const dens=gauss(v,p.y,sig)/maxH;
-        const x=cx+(v-p.y)*55;
+        const v=fit-0.6+t*0.8;
+        const dens=gauss(v,fit,sig)/maxH;
+        const x=cx+(v-fit)*55;
         const y=cy-dens*70;
         d+=(j?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
       }
       svgAdd(svg,'path',{d,fill:'none',stroke:'#b45a2b',strokeWidth:2});
-      svgAdd(svg,'circle',{cx,cy,r:5,fill:'#b45a2b'});
+      // observed point and fitted center on the regression line
+      const oy=y0-p.y*scaleY;
+      svgAdd(svg,'circle',{cx,cy:oy,r:4.5,fill:'var(--surface)',stroke:'#b45a2b','stroke-width':1.5});
+      svgAdd(svg,'circle',{cx,cy,r:4,fill:'#176653',stroke:'var(--surface)','stroke-width':1.5});
       svgHalo(svg,cx,cy-105,`Y|X=${p.x}`,{font:9,fill:'#b45a2b',anchor:'middle'});
     });
     svgHalo(svg,x0+2.0*scaleX,y0+22,'面积 x →',{font:10,anchor:'middle',fill:'var(--muted)'});
     svgHalo(svg,x0-18,y0-2.6*scaleY,'价格 y',{font:10,anchor:'start',fill:'var(--muted)'});
-    $('#regressCap').innerHTML=`三个点由 $x=(1,2,3), y=(2,3,5)$ 画成。橙色轮廓是每个 $X=x$ 处 $Y\\mid X=x\\sim\\mathcal N(\\frac{23}{14}x,\\sigma^2)$ 的条件密度切片（$\sigma$ 取示意值 0.38）；点预测是中心，条件方差描述每一个竖切片的宽度。`;
+    $('#regressCap').innerHTML=`三个点由 $x=(1,2,3), y=(2,3,5)$ 画成。橙色轮廓是每个 $X=x$ 处 $Y\\mid X=x\\sim\\mathcal N(\\frac{23}{14}x,\\sigma^2)$ 的条件密度切片（$\sigma$ 取示意值 0.38）；绿色实心点是条件均值（点预测），橙色空心点是观测值，条件方差描述每一个竖切片的宽度。`;
   }
   draw();
 })();
@@ -1117,8 +1126,11 @@ function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);con
     const w=+$('#lsW').value;
     $('#lsWVal').textContent=fmt(w,2);
     const st=stats();
-    const x0=60,y0=220,scaleX=58,scaleY=34,plotW=430,plotH=170;
-    const xMin=0,xMax=4,yMin=-1,yMax=6;
+    const x0=60,y0=220,plotW=430,plotH=170;
+    const xMin=0,xMax=4;
+    const rawYs=[0,w*4,...data.map(p=>p.y),...data.map(p=>w*p.x)];
+    const yMin=Math.min(-1,...rawYs)-0.5;
+    const yMax=Math.max(6,...rawYs)+0.5;
     const px=x=>x0+(x-xMin)/(xMax-xMin)*plotW;
     const py=y=>y0-(y-yMin)/(yMax-yMin)*plotH;
     // axis
