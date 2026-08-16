@@ -887,13 +887,13 @@ const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
     xs.forEach((x,i)=>{
       svgAdd(svg,'circle',{cx:px(x),cy:py(clamp(ys[i],lo,hi)),r:5.5,fill:i===4?'var(--danger)':'var(--warm)',opacity:.92});
     });
-    svgHalo(svg,px(2),py(clamp(ys[4],lo,hi))-12,'异常点',{font:10,fill:'var(--danger)'});
+    svgHalo(svg,px(2),Math.max(py(clamp(ys[4],lo,hi))-12,46),'异常点',{font:10,fill:'var(--danger)'});
     // error stems
     xs.forEach((x,i)=>{
       const fv=f(x,al);
       svgAdd(svg,'line',{x1:px(x),y1:py(clamp(ys[i],lo,hi)),x2:px(x),y2:py(clamp(fv,lo,hi)),stroke:'var(--blue)',strokeWidth:1,opacity:.5});
     });
-    svgHalo(svg,440,y0-10,'f(x)=Σ αᵢ k_σ(xᵢ,x)，σ 固定，α=(K+λI)⁻¹y 现算（200 采样点）',{font:10,fill:'var(--muted)'});
+    svgHalo(svg,440,368,'f(x)=Σ αᵢ k_σ(xᵢ,x)，σ 固定，α=(K+λI)⁻¹y 现算（200 采样点）',{font:10,fill:'var(--muted)'});
     // metrics
     const mse=xs.reduce((s,x,i)=>s+(ys[i]-f(x,al))**2,0)/xs.length;
     const mid=(f(1.75,al)+f(2.25,al))/2;
@@ -1218,7 +1218,8 @@ const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
       const h=v/mx*100;
       svgAdd(svg,'rect',{x:bx,y:h>=0?y0+120-h:y0+120,width:bwid,height:Math.abs(h),rx:3,fill:v>=0?'var(--accent)':'var(--danger)'});
       svgAdd(svg,'text',{x:bx+bwid/2,y:y0+136,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'λ'+(i+1));
-      svgHalo(svg,bx+bwid/2,h>=0?y0+120-h-6:y0+120+Math.abs(h)+12,fmt(v,2),{font:9.5,fill:v>=0?'var(--ink)':'var(--danger)'});
+      if(v>=0)svgHalo(svg,bx+bwid/2,y0+120-h-6,fmt(v,2),{font:9.5,fill:'var(--ink)'});
+      else svgHalo(svg,bx+bwid+3,y0+132,fmt(v,2),{font:9.5,fill:'var(--danger)',anchor:'start'});
     });
     svgHalo(svg,x0+w/2,y0-16,label+' 的 Gram 特征值（6 个输入点，Jacobi 现算）',{font:11,fill:'var(--muted)'});
     // verdict
