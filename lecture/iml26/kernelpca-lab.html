@@ -1,0 +1,1675 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 18 讲 · 非线性降维（Kernel PCA 与 Autoencoder）互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 18 讲 Dimensionality Reduction II 的深度互动讲义：Swiss roll 诊断、feature space PCA、representer 形式与 K_c 特征分解、√λ 归一化、kernel 双中心化、三点手算例、out-of-sample projection、RBF 带宽、线性 autoencoder 与 PCA 子空间等价、非线性 autoencoder 的能力与代价、评估陷阱。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+.gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:.92rem}
+.checklist label:hover{border-color:var(--accent)}
+.checklist input{margin-top:5px;accent-color:var(--accent)}
+.checklist label.done{opacity:.62;text-decoration:line-through}
+.check-score{margin-top:10px;font-weight:700;color:var(--accent)}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-18" title="返回第 18 讲原文">← 返回第 18 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 18 · INTERACTIVE LAB</div>
+      <div class="title">非线性降维 — 弯曲的数据，直不了的投影</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 18 讲 / 25 讲</div>
+      <h1>数据是弯的，<br>投影是直的，<br><span style="color:var(--warm)">怎么办？</span></h1>
+      <p class="subtitle">第 16 讲的 PCA 只会做<b>正交投影到线性子空间</b>：卷起来的 Swiss roll 被压扁后不同层互相重叠。这一讲走两条非线性路线：<b>kernel PCA</b>——把数据先送进隐式特征空间，在那里做“线性” PCA，全程只用 kernel 值；<b>autoencoder</b>——用带瓶颈的网络同时学习编码与解码。本讲把中心化 Gram matrix、$\sqrt{\lambda}$ 归一化、新点投影，以及“线性 autoencoder 学到的正是 PCA 子空间”这些可手算的细节串成一条主线。</p>
+      <div class="question">💬 本讲核心问题：当数据的低维结构是<b>弯曲的</b>，为什么普通 PCA 必然失败？在看不到 $\phi(x)$ 的前提下，怎么正确地中心化、归一化、并把新点投进去？另一条路——autoencoder——又分别在线性与非线性时学到了什么？</div>
+      <div class="answer">一句话答案：PCA 失败不是数值问题而是<b>函数类太简单</b>——线性映射只能产生平面坐标。kernel PCA 把 PCA 的目标搬到特征空间：方向写成训练特征的组合 $u=\sum_i\alpha_i\tilde\phi_i$，一切内积换成 kernel 值，问题归结为中心化 Gram matrix $K_c=HKH$ 的特征分解；坐标是 $z_r(x_i)=\sqrt{\lambda_r}\,v_{ir}$（系数必须除以 $\sqrt{\lambda_r}$ 而不是 $\lambda_r$），新点用同一套训练均值做四项中心化后投影。autoencoder 用瓶颈施加压缩：线性 + 平方重构 + 中心化数据时，最优重建子空间与 PCA 前 $k$ 维<b>完全相同</b>；非线性激活才换来拟合弯曲流形的能力（和一整套新代价）。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">Swiss roll 诊断 → 在特征空间里写同一个 PCA 目标 → representer 形式把方向换成 $n$ 个系数 → 双中心化 $K_c=HKH$ → 三点手算例 → $\sqrt\lambda$ 归一化与训练坐标 → 新点的四项中心化投影 → RBF 带宽两极 → 换路线：autoencoder 瓶颈与重构损失 → 线性情形 = PCA 子空间 → 非线性能力与评估陷阱。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">真实数据（图像、基因表达、传感器）的低维结构常常是弯曲流形。kernel PCA 给出“把第 9–10 讲的 kernel 工具直接接到第 16 讲的 PCA 上”的标准范式；autoencoder 则是现代自监督表示学习的原型。两者互补：前者可审计、有闭式解；后者可扩展到 mini-batch 与大数据。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 病</b>：线性投影压弯为平，卷层重叠（§1–§2）。</span>
+            <span class="step"><b>② 搬</b>：把 PCA 目标搬进特征空间，方向用系数表示（§3）。</span>
+            <span class="step"><b>③ 算</b>：双中心化 $K_c$、特征分解、$\sqrt\lambda$ 归一化（§4–§5）。</span>
+            <span class="step"><b>④ 用</b>：训练坐标与样本外投影共用训练均值（§6–§7）。</span>
+            <span class="step"><b>⑤ 替</b>：autoencoder——线性时回到 PCA 子空间，非线性时弯曲展开（§8–§10）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：PCA（L16）→ <b>kernel PCA 与 autoencoder（L18）</b> → 概率建模（L19）</span>
+        <span class="pill">🧩 前置：L16 的 PCA/特征分解/SVD 低秩近似；L9–L10 的 kernel、Gram matrix、representer 论证</span>
+        <span class="pill">🎯 产出：能<b>手算三点例的 $K_c$、$\alpha_1$ 与 $z_1(x_\star)=-2\sqrt2$</b>，能解释双中心化、$\sqrt\lambda$、样本外投影与线性等价性</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：两条非线性路线</h2>
+      <p class="sec-lead">第 16 讲用特征分解选线性子空间；本讲把“选子空间”这件事分别搬进隐式特征空间（kernel PCA）和神经网络（autoencoder）；第 19 讲转向概率建模——给数据一个可以采样的生成模型。节点可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 350" role="img" aria-label="第 18 讲概念地图"></svg></div>
+        <div class="caption">概念地图：<b style="color:var(--accent)">核心</b>环节构成两条主线（上排：kernel PCA 五步；下排：autoencoder 三步）；<span style="color:var(--violet);font-weight:700">拓展</span>环节是聚类连接与实践工作流。灰色节点是前后讲次（课程无第 17 讲）。</div>
+      </div>
+    </section>
+
+    <!-- ============ §1 SWISS ROLL ============ -->
+    <section id="swiss">
+      <h2 class="sec-title"><span class="num">§1</span>从 Swiss roll 诊断线性 PCA <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">把一张二维纸卷成三维 Swiss roll：每个样本在观测空间是 $x_i\in\mathbb R^3$，但在纸面上的内在自由度仍接近二维。普通 PCA 只能选一个二维平面做正交投影——卷起来的不同层可能互相重叠，于是原本在纸面上相距很远的点会在投影中靠近。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">Swiss roll <span class="en">Swiss roll · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：把二维平面卷成三维螺旋得到的经典数据集；点 $(t\cos t,\ h,\ t\sin t)$ 由内在坐标 $(t,h)$ 生成。</p>
+          <p class="plain"><b>白话</b>：一张卷起来的地毯——本身是平的，但住在三维世界里。</p>
+          <p class="plain"><b>干嘛用</b>：检验降维方法能否“展开”弯曲结构。</p>
+          <p class="plain"><b>怎么算</b>：参数 $t$ 沿卷曲方向、$h$ 沿高度；颜色按 $t$ 着色即可看出展开是否成功（下方互动）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：PCA 在它上面的失败不是数值错误，而是<b>函数类太简单</b>——线性映射 $f(x)=W^\top x$ 只能产生平面坐标，不能把弯曲纸面展开。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">流形 <span class="en">manifold · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：局部看似低维、整体可能弯曲的结构；Swiss roll 是二维流形嵌入三维的例子。</p>
+          <p class="plain"><b>白话</b>：地球表面——局部像平面，整体是个球。</p>
+          <p class="plain"><b>干嘛用</b>：给“高维数据其实只有几个自由度”提供几何语言。</p>
+          <p class="plain"><b>怎么算</b>：无显式公式；通过降维方法寻找内在坐标。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：本讲标题“非线性降维”的目标就是恢复流形坐标——kernel PCA 靠特征空间把它“拉直”，autoencoder 靠非线性编码把它“展开”。</p>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">非线性降维 <span class="en">nonlinear dimensionality reduction · first mentioned: §1</span></div>
+        <p class="plain"><b>是什么</b>：用非线性映射获得低维表示的方法族；本讲的两条路线是 kernel PCA 与 autoencoder。</p>
+        <p class="plain"><b>白话</b>：不再用直尺量弯路——先想办法把路抻直，或者学会“看形状抄近路”。</p>
+        <p class="plain"><b>干嘛用</b>：可视化、去冗余、为聚类/下游任务准备特征。</p>
+        <p class="plain"><b>怎么算</b>：kernel 路线 = 特征空间线性 PCA（§2–§7）；网络路线 = 瓶颈重构（§8–§10）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：第 16 讲的 PCA 是它的线性特例；选路线时要同时看样本量、kernel/架构先验与计算预算。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：旋转 Swiss roll，再看线性 PCA 把它压成什么样</h4>
+        <div class="svg-wrap"><svg id="swissViz" viewBox="0 0 880 380" role="img" aria-label="Swiss roll 与线性 PCA 投影"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>视角方位角（左图旋转）</label><input type="range" id="svAz" min="0" max="6.28" step="0.05" value="0.9"><div class="val" id="svAzval"></div></div>
+        </div>
+        <div class="caption" id="svCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>怎么读图</b>：颜色 = 纸面内在坐标 $t$（卷曲方向）。左图旋转视角可以亲眼确认“卷”；右图是线性 PCA 前两个主成分平面上的投影——<b>颜色大面积混杂</b>，因为卷层被压到了一起。面板里“PCA 最近邻的平均 $|\Delta t|$”由当前数据现算：它远大于纸面上相邻点的 $|\Delta t|$，这就是“相距很远的点在投影中靠近”的定量版本。展开需要非线性（§2 起步）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §2 FEATURE SPACE PCA ============ -->
+    <section id="fspace">
+      <h2 class="sec-title"><span class="num">§2</span>把同一个 PCA 目标搬进特征空间 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要解决的不是“再发明一种 PCA”，而是把普通 PCA 的同一个问题搬到非线性特征空间：仍想找一个单位方向，使样本投影后的平方坐标尽量大；困难只是特征向量 $\phi(x)$ 可能维度极高、甚至写不出来。</p>
+      <div class="card">
+        <h3 style="margin-top:0">同一条目标，两个世界</h3>
+        <p class="plain">第 16 讲的一维 PCA 是 $\max_{\lVert w\rVert_2=1}\sum_i(w^\top x_i)^2$。给定特征映射 $\phi:\mathcal X\to\mathcal H$（可以是很高维的 Hilbert space），保留中心化原则：
+          $$\bar\phi=\frac1n\sum_i\phi(x_i),\qquad \tilde\phi_i=\phi(x_i)-\bar\phi,\qquad
+          \max_{\lVert u\rVert_{\mathcal H}=1}\sum_{i=1}^n\langle u,\tilde\phi_i\rangle_{\mathcal H}^2.$$</p>
+        <p class="plain small">把 $C_\phi=\frac1n\sum_i\tilde\phi_i\otimes\tilde\phi_i$ 看成特征空间里的协方差算子，这个最大化就是在找 $C_\phi$ 的最大特征方向——但我们<b>不需要写出 $C_\phi$ 的矩阵</b>，kernel trick 的目的正是绕开这个可能无限维的对象：只要求内积 $k(x,x')=\langle\phi(x),\phi(x')\rangle_{\mathcal H}$（线性、多项式 $(x^\top x'+c)^p$、RBF $\exp(-\lVert x-x'\rVert^2/2\sigma^2)$ 等）。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：同心环——线性方向重叠，加一个 $\lVert x\rVert^2$ 特征就分开</h4>
+        <div class="svg-wrap"><svg id="ringViz" viewBox="0 0 880 330" role="img" aria-label="同心环的特征分离"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:320px"><label>一维表示方式</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost active" id="rvLin" type="button">线性 PC1</button>
+              <button class="btn ghost" id="rvQuad" type="button">只用 $\lVert x\rVert^2$ 特征</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption" id="rvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>图的意思</b>：原空间两个同心环在任何线性方向上的投影都重叠（左/中）；但“到中心的距离平方”$\lVert x\rVert^2$ 本身就是一个现成的非线性特征——两个环在这个坐标上完全分开（右）。kernel PCA 做的事，就是<b>自动且隐式地</b>使用一整族这样的非线性特征（$\phi$ 的所有坐标），而不必手工挑出 $\lVert x\rVert^2$。可分性数值（类间均值差 / 类内标准差）由当前随机环现算。</p>
+      </div>
+    </section>
+
+    <!-- ============ §3 REPRESENTER + NORMALIZATION ============ -->
+    <section id="reparam">
+      <h2 class="sec-title"><span class="num">§3</span>Representer 形式：方向换成 $n$ 个系数 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要找 $u\in\mathcal H$，但最终只解一个 $n\times n$ 矩阵的特征值问题。为什么只需要考虑训练样本张成的方向？把任意 $u$ 分解为 $u=u_\parallel+u_\perp$（$u_\parallel\in\operatorname{span}\{\tilde\phi_1,\ldots,\tilde\phi_n\}$，$u_\perp$ 与每个 $\tilde\phi_i$ 正交），则 $\langle u,\tilde\phi_i\rangle=\langle u_\parallel,\tilde\phi_i\rangle$——$u_\perp$ 不改变任何训练点的投影，却占用单位范数预算，所以最优方向可以取在训练特征的张成空间内。</p>
+      <div class="def">
+        <div class="term">中心化 Gram 矩阵 <span class="en">centered Gram matrix · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：$K_c\in\mathbb R^{n\times n}$，$(K_c)_{ij}=\langle\tilde\phi_i,\tilde\phi_j\rangle_{\mathcal H}$——中心化训练特征的两两内积（§4 给出仅用 kernel 值的计算）。</p>
+        <p class="plain"><b>白话</b>：去掉均值之后的“谁和谁像”表格。</p>
+        <p class="plain"><b>干嘛用</b>：kernel PCA 的全部计算对象——特征分解就是对它做的。</p>
+        <p class="plain"><b>怎么算</b>：由 $K_c v_r=\lambda_r v_r$（$\lambda_1\ge\lambda_2\ge\cdots\ge0$）得到方向系数；第 $j$ 个训练点的投影坐标为 $\langle u,\tilde\phi_j\rangle=\sum_i\alpha_i\langle\tilde\phi_i,\tilde\phi_j\rangle=(K_c\alpha)_j$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：$v_r$ 活在样本索引空间 $\mathbb R^n$、$u_r$ 才活在特征空间 $\mathcal H$，两者不要混成同一个向量；若写成协方差算子的特征方程 $C_\phi u=\gamma u$，则 $K_c\alpha=n\gamma\alpha$——$K_c$ 的特征值与“平均协方差”能量相差一个 $n$ 的约定，本讲直接对 $K_c$ 分解并沿用此约定。</p>
+      </div>
+      <div class="def why">
+        <div class="term">归一化系数 <span class="en">normalization α_r = v_r/√λ_r · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：特征空间方向 $u_r=\sum_i\alpha_{ir}\tilde\phi_i$ 要有单位范数，必须取 $\alpha_r=\dfrac{v_r}{\sqrt{\lambda_r}}$（$\lambda_r>0$）。</p>
+        <p class="plain"><b>白话</b>：特征向量 $v_r$ 是单位长的，但它组合出的 $u_r$ 不是——差一个 $\sqrt{\lambda_r}$ 的刻度。</p>
+        <p class="plain"><b>干嘛用</b>：保证坐标尺度正确，训练坐标才能写成 $z_r(x_i)=(K_c\alpha_r)_i=\sqrt{\lambda_r}\,v_{ir}$。</p>
+        <p class="plain"><b>怎么算</b>：四步验证 $\lVert u_r\rVert_{\mathcal H}^2=\alpha_r^\top K_c\alpha_r=\frac1{\lambda_r}v_r^\top(\lambda_rv_r)=v_r^\top v_r=1$（依次用：范数=Gram 二次型、代入 $\alpha_r$、特征方程、$v_r$ 单位化）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：分母是 $\sqrt{\lambda_r}$ <b>不是</b> $\lambda_r$——只记住“分解 $K_c$”而忘了范数约束，坐标会被特征值额外缩放，可视化和新点投影全用错尺度（下方互动现场对账三种缩放）。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：三种缩放的对照——只有 $v/\sqrt\lambda$ 给出单位范数</h4>
+        <div class="svg-wrap"><svg id="normViz" viewBox="0 0 880 340" role="img" aria-label="归一化系数对照"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:340px"><label>系数取法</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost active" id="nvRoot" type="button">α = v₁/√λ₁（正确）</button>
+              <button class="btn ghost" id="nvLam" type="button">α = v₁/λ₁（常见错误）</button>
+              <button class="btn ghost" id="nvRaw" type="button">α = v₁</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption" id="nvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>数据</b>：三点例（§5 会完整手算）$x=(-1,0,1)$、$k(x,x')=(xx'+1)^2$，其 $K_c$ 的最大特征对为 $\lambda_1=4$、$v_1=(1,0,-1)^\top/\sqrt2$。正确缩放给出 $\lVert u_1\rVert^2=\alpha^\top K_c\alpha=1$；另外两种缩放分别把它变成 $1/\lambda_1=0.25$ 与 $\lambda_1=4$——训练坐标 $z_1(x_i)$ 也随之整体缩放（面板数值现算）。$\lambda=0$ 的方向 $v/\sqrt\lambda$ 无法定义，实现中直接丢弃。</p>
+      </div>
+    </section>
+
+    <!-- ============ §4 CENTERING ============ -->
+    <section id="centering">
+      <h2 class="sec-title"><span class="num">§4</span>kernel centering：双中心化，不是减一个常数 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要计算 $\langle\phi(x_i)-\bar\phi,\phi(x_j)-\bar\phi\rangle$，但看不到 $\phi(x_i)$，只能查询 $K_{ij}=k(x_i,x_j)$——必须把“在特征空间减均值”完全改写成 $K$ 的运算。</p>
+      <div class="def">
+        <div class="term">中心矩阵 <span class="en">centering matrix H · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：$H=I_n-\frac1n\mathbf 1\mathbf 1^\top$（$\mathbf 1$ 为全一向量），中心化 Gram 矩阵由 $K_c=HKH$ 给出。</p>
+        <p class="plain"><b>白话</b>：一台“每行每列都减掉自己均值”的机器，左乘管行、右乘管列。</p>
+        <p class="plain"><b>干嘛用</b>：在不接触 $\phi$ 的前提下实现特征空间中心化。</p>
+        <p class="plain"><b>怎么算</b>：元素级展开是四项：$(K_c)_{ij}=K_{ij}-\frac1n\sum_\ell K_{i\ell}-\frac1n\sum_\ell K_{\ell j}+\frac1{n^2}\sum_{\ell,m}K_{\ell m}$——原值、行均值、列均值、总体均值。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：这四项正好对应内积展开 $\langle\phi_i-\bar\phi,\phi_j-\bar\phi\rangle$ 的四项；结果满足 $K_c\mathbf 1=0$ 且 $\mathbf 1^\top K_c=0$（每行每列均值为零）。<b>不能</b>把每个元素减同一个常数——不同训练点与“平均训练点”的相似度通常不同。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：亲眼看 $K$ 变 $K_c$——行/列均值归零（数据可换、可随机）</h4>
+        <div class="svg-wrap"><svg id="centerViz" viewBox="0 0 880 400" role="img" aria-label="双中心化热图"></svg></div>
+        <div class="label-row">
+          <div class="control" style="min-width:300px"><label>数据与 kernel</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost active" id="cvPoly" type="button">三点多项式例</button>
+              <button class="btn ghost" id="cvRbf" type="button">六点 RBF</button>
+              <button class="btn warm" id="cvRand" type="button">🎲 随机换点</button>
+            </div>
+          </div>
+          <div class="control"><label>RBF 带宽 $\sigma$</label><input type="range" id="cvSig" min="0.3" max="3" step="0.05" value="1"><div class="val" id="cvSigval"></div></div>
+        </div>
+        <div class="caption" id="cvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>检查什么</b>：右下数值面板列出 $K$ 的行均值向量与总体均值，以及 $K_c$ 的行均值——应全部为 0.00（现算，含浮点残差量级 $10^{-16}$）。三点多项式模式下 $\sigma$ 滑杆无效（kernel 固定为 $(xx'+1)^2$）；RBF 模式与随机按钮把 6 个输入点重抽。热图用发散色标：蓝正、红负、零为白——中心化后红蓝必然按行列平衡。</p>
+      </div>
+    </section>
+
+    <!-- ============ §5 WORKED EXAMPLE ============ -->
+    <section id="worked">
+      <h2 class="sec-title"><span class="num">§5</span>worked example：三点的完整手算 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">取一维训练点 $x_1=-1,\ x_2=0,\ x_3=1$，二次多项式 kernel $k(x,x')=(xx'+1)^2$。逐项计算得 $K=\begin{pmatrix}4&1&0\\1&1&1\\0&1&4\end{pmatrix}$（例：$k(x_1,x_1)=((-1)(-1)+1)^2=4$）。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：六步点亮整个推导（所有数值由页面内公式现算）</h4>
+        <div class="svg-wrap"><svg id="workedViz" viewBox="0 0 880 330" role="img" aria-label="三点例逐步计算"></svg></div>
+        <div class="step-bar">
+          <button class="btn primary" id="wkNext" type="button">下一步 ▸</button>
+          <button class="btn ghost" id="wkReset" type="button">↺ 重新演示</button>
+        </div>
+        <div class="caption" id="wkCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义对账</b>：$n=3$ 时 $H=I_3-\frac13\mathbf 1\mathbf 1^\top$，双中心化得 $K_c=\begin{pmatrix}19/9&-2/9&-17/9\\-2/9&4/9&-2/9\\-17/9&-2/9&19/9\end{pmatrix}$（每行每列和为零）；非零特征值 $4$ 与 $2/3$（$\operatorname{tr}K_c=\frac{42}9=4+\frac23$ 自检）；$\lambda_1=4$ 的单位特征向量 $v_1=(1,0,-1)^\top/\sqrt2$，于是 $\alpha_1=v_1/\sqrt4=(1,0,-1)^\top/(2\sqrt2)$，且 $\alpha_1^\top K_c\alpha_1=1$。训练坐标 $z_1(x_i)=\sqrt{\lambda_1}\,v_{i1}=(\sqrt2,0,-\sqrt2)$。点“下一步”逐步核对每个数。</p>
+      </div>
+    </section>
+
+    <!-- ============ §6 OUT-OF-SAMPLE ============ -->
+    <section id="oos">
+      <h2 class="sec-title"><span class="num">§6</span>out-of-sample projection：把新点投进已学的方向 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">训练阶段已经学到方向 $u_j$。给一个从未参与特征分解的新点 $x$，要算 $z_j(x)=\langle u_j,\phi(x)-\bar\phi\rangle_{\mathcal H}$——其中 $\bar\phi$ <b>始终是训练集均值</b>：不能使用包含新点的新均值，否则每来一个样本，已经学好的坐标系都会改变。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">样本外投影 <span class="en">out-of-sample projection · first mentioned: §6</span></div>
+          <p class="plain"><b>是什么</b>：把新点投到已学得的 kernel 主方向：$z_j(x)=\alpha_j^\top k_c(x)=\dfrac{v_j^\top k_c(x)}{\sqrt{\lambda_j}}$。</p>
+          <p class="plain"><b>白话</b>：老坐标系列一张“新访客登记表”——用训练时的均值口径给新点定坐标。</p>
+          <p class="plain"><b>干嘛用</b>：kernel PCA 训练完成后对任意新数据可用。</p>
+          <p class="plain"><b>怎么算</b>：先算中心化 kernel 向量（右侧卡片），再与 $\alpha_j$ 点积、除以 $\sqrt{\lambda_j}$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：需要新点与所有训练点的 kernel 值，存储和计算都与 $n$ 有关——这解释了为什么 kernel PCA 训练后<b>不能</b>像普通 PCA 那样只保存一个固定的 $d\times k$ 投影矩阵。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">中心化 kernel 向量 <span class="en">centered kernel vector k_c(x) · first mentioned: §6</span></div>
+          <p class="plain"><b>是什么</b>：$k_c(x)=k_X(x)-m_{\mathrm{row}}-\big(\frac1n\mathbf 1^\top k_X(x)\big)\mathbf 1+\bar k\,\mathbf 1$，其中 $k_X(x)_i=k(x_i,x)$、$m_{{\mathrm{row}},i}=\frac1n\sum_\ell K_{i\ell}$、$\bar k=\frac1{n^2}\sum_{\ell,m}K_{\ell m}$。</p>
+          <p class="plain"><b>白话</b>：四项登记——原始相似度、训练行均值、新点与全体训练点的平均相似度、训练总体均值。</p>
+          <p class="plain"><b>干嘛用</b>：新点版的“减均值”，与训练中心化同一口径。</p>
+        <p class="plain"><b>怎么算</b>：它就是 $\langle\tilde\phi_i,\phi(x)-\bar\phi\rangle$ 逐项展开——与 $K_c=HKH$ 的四项完全平行。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：每一项都必须用<b>训练阶段保存</b>的行均值与总体均值，不能对当前 batch 重新中心化；默认 $\lambda_j>0$，零特征值方向无法定义、应丢弃。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：滑动新点 $x_\star$，逐步算 $k_c(x_\star)$ 与 $z_1(x_\star)$（曲线现算）</h4>
+        <div class="svg-wrap"><svg id="oosViz" viewBox="0 0 880 430" role="img" aria-label="新点投影互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>新点 $x_\star$</label><input type="range" id="ooX" min="-2" max="3" step="0.05" value="2"><div class="val" id="ooXval"></div></div>
+        </div>
+        <div class="caption" id="ooCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>讲义对账（$x_\star=2$）</b>：$k_X=(1,1,9)^\top$；行均值 $(5/3,1,5/3)^\top$；总体均值 $13/9$；新向量均值 $11/3$；四项相减得 $k_c(x_\star)=(-26/9,-20/9,46/9)^\top$；$z_1=\alpha_1^\top k_c=\frac1{2\sqrt2}(-\frac{26}9-\frac{46}9)=-2\sqrt2\approx-2.828$。若省略中心化、或把 $\alpha_1$ 错写成 $v_1/\lambda_1$，坐标的数值和尺度都会变——面板里的每个数随滑杆现算，可与这行手算逐位核对。</p>
+      </div>
+    </section>
+
+    <!-- ============ §7 CAPACITY / RBF ============ -->
+    <section id="capacity">
+      <h2 class="sec-title"><span class="num">§7</span>为什么能表达非线性：RBF 的带宽两极 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">在原空间中，弯曲结构可能没有一个好的线性方向；在特征空间中，合适的 $\phi$ 可以把原空间的非线性关系变成线性变化。kernel PCA 的完整流程是：<b>选正定 kernel → 算 $K$ 并双中心化 → 分解 $K_c$ → 用 $\alpha_r=v_r/\sqrt{\lambda_r}$ 算坐标 → 可视化或接下游任务</b>。它适用于样本量中等、kernel 先验可信的场景。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：$\sigma$ 的两个极端——谱形态现场翻转</h4>
+        <div class="svg-wrap"><svg id="rbfViz" viewBox="0 0 880 300" role="img" aria-label="RBF 带宽与谱"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>带宽 $\sigma$</label><input type="range" id="rbSig" min="0.2" max="3" step="0.05" value="0.8"><div class="val" id="rbSigval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="rbRand" type="button">🎲 随机换 6 个点</button></div>
+        </div>
+        <div class="caption" id="rbCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>读图</b>：RBF kernel 可以在同心圆等问题上提供弯曲相似性，但带宽 $\sigma$ 过小会让每个点只像自己——$K\approx I$、谱几乎全为 1、任何方向都没有方差结构；过大又会让所有点几乎一样——$K\approx\mathbf 1\mathbf 1^\top$、只剩一个主导特征值。特征值由 Jacobi 旋转对当前 6 个点现算；$k(0,1)$ 的数值随 $\sigma$ 现算显示。两种极端都让 kernel PCA 失去分辨力——带宽要用验证目标选，这与第 9–10 讲的教训一致。</p>
+      </div>
+    </section>
+
+    <!-- ============ §9 AUTOENCODER ============ -->
+    <section id="ae">
+      <h2 class="sec-title"><span class="num">§8</span>Autoencoder：用瓶颈学编码和解码 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">换一条路线：不再借助特征空间，而是让神经网络自己学一个压缩—解压的流程，在中间设置 bottleneck，训练目标是让输出重建输入。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">自编码器 <span class="en">autoencoder · first mentioned: §8</span></div>
+          <p class="plain"><b>是什么</b>：近似 identity function 但中间带瓶颈的网络：
+            $$z=f_{\mathrm{enc}}(x;\theta_{\mathrm{enc}})\in\mathbb R^k,\qquad \hat x=f_{\mathrm{dec}}(z;\theta_{\mathrm{dec}})\in\mathbb R^d,\qquad k\ll d,$$
+            目标 $\min\frac1n\sum_i\ell(x_i,\hat x_i)$；连续数据常用平方重构 $\ell=\lVert x_i-\hat x_i\rVert_2^2$。</p>
+          <p class="plain"><b>白话</b>：把一句话压缩成暗号再让同伴还原——暗号必须抓住要点。</p>
+          <p class="plain"><b>干嘛用</b>：无标签学表示、去噪、可视化。</p>
+          <p class="plain"><b>怎么算</b>：mini-batch SGD + backprop；一次更新 = encoder 前向 → decoder 前向 → loss → 反传 → 学习率 $\eta$ 更新。与 PCA 的特征分解不同，非线性情形通常没有闭式全局解。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：若输入是 $[0,1]$ 像素并把每像素当 Bernoulli 目标，有时用 binary cross-entropy——<b>这改变了重建目标</b>，不能与平方误差结论混用。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">编码器 <span class="en">encoder / decoder · first mentioned: §8</span></div>
+          <p class="plain"><b>是什么</b>：编码器把 $x\in\mathbb R^d$ 映到 $z\in\mathbb R^k$；解码器把 $z$ 映回 $\hat x\in\mathbb R^d$。两者串联构成自编码器。</p>
+          <p class="plain"><b>白话</b>：一个打包、一个拆包；拆装之后还能认出原物，说明包装抓住了本质。</p>
+          <p class="plain"><b>干嘛用</b>：$z$ 就是学到的低维表示。</p>
+          <p class="plain"><b>怎么算</b>：可以任意非线性（多层 + 激活）；线性特例在 §9 精确求解。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：即使重建映射固定，编码/解码的因子分解也不唯一——任意可逆 $R\in\mathbb R^{k\times k}$ 都满足 $(BA)=(BR^{-1})(RA)$，latent 坐标随之改变。</p>
+        </div>
+      </div>
+      <div class="def why">
+        <div class="term">瓶颈 <span class="en">bottleneck · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：维度远低于输入的中间层（$k\ll d$），对可传递信息施加硬约束。</p>
+        <p class="plain"><b>白话</b>：独木桥——想过桥就得扔掉行李里不重要的东西。</p>
+        <p class="plain"><b>干嘛用</b>：制造压缩压力，逼网络保留数据中“最值钱”的变化方向。</p>
+        <p class="plain"><b>怎么算</b>：$k$ 是超参数：过小丢信息，过大压缩压力弱、甚至记忆训练样本。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：线性情形下它把重建问题限制为“保留哪 $k$ 个正交变化方向”——§9 将证明最优选择恰好是 PCA 的前 $k$ 维。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：瓶颈结构 + 重构误差随 $k$ 的阶梯（数据可随机）</h4>
+        <div class="svg-wrap"><svg id="aeViz" viewBox="0 0 880 330" role="img" aria-label="瓶颈与重构误差"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>瓶颈维度 $k$（右图标点）</label><input type="range" id="aeK" min="0" max="2" step="1" value="1"><div class="val" id="aeKval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="aeRand" type="button">🎲 随机换数据</button></div>
+        </div>
+        <div class="caption" id="aeCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>图的意思</b>：左侧是 $d\to k\to d$ 的瓶颈示意（encoder/decoder 标注）；右侧对一组各向异性的二维数据画“重构误差 vs $k$”阶梯——线性自编码器的误差正是 $\sum_{j>k}\sigma_j^2$（保留前 $k$ 个奇异方向），数据由当前随机种子现算。二维里 $k=1$ 通常已把误差压到第二方差那么小；$k=2$ 恒为零（无损）。</p>
+      </div>
+    </section>
+
+    <!-- ============ §10 LINEAR AE = PCA ============ -->
+    <section id="lae">
+      <h2 class="sec-title"><span class="num">§9</span>线性 autoencoder 学到的正是 PCA 子空间 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要证明的不是“网络参数等于 PCA 特征向量”，而是一个更精确的结论：在特定条件下，线性 autoencoder 最终重建数据所用的 $k$ 维子空间，与 PCA 的前 $k$ 维主子空间<b>相同</b>；encoder、decoder 的具体参数与 latent 坐标仍可能不同。</p>
+      <div class="card">
+        <h3 style="margin-top:0">先来一个零误差的手算例</h3>
+        <p class="plain">取第 16 讲的四个点 $x_i\in\mathbb R^2$，都在方向 $w=\frac1{\sqrt2}(1,1)^\top$ 的直线上。一维线性 encoder/decoder：
+          $$z=w^\top x,\qquad \hat x=wz=ww^\top x.$$
+          对 $x=(2,2)^\top$：$z=\frac4{\sqrt2}=2\sqrt2$，$\hat x=2\sqrt2\cdot\frac1{\sqrt2}(1,1)^\top=(2,2)^\top$——零重构误差。瓶颈维度为 1 却保留了全部数据，因为数据本来就在一维线性子空间上。</p>
+      </div>
+      <div class="def">
+        <div class="term">低秩重建 <span class="en">rank-k reconstruction · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：线性 encoder/decoder 记为 $z=Ax,\ \hat x=BAx$（$A\in\mathbb R^{k\times d}$、$B\in\mathbb R^{d\times k}$），整体重建矩阵 $M=BA$ 满足 $\operatorname{rank}(M)\le k$。对中心化数据 $X_c$：
+          $$\min_{A,B}\sum_i\lVert x_i-BAx_i\rVert^2=\min_{M:\operatorname{rank}M\le k}\lVert X_c-MX_c\rVert_F^2,$$
+          由截断 SVD 的最佳低秩近似，最优 $M^\star=U_kU_k^\top$，误差 $=\sum_{j>k}\sigma_j^2$。</p>
+        <p class="plain"><b>白话</b>：线性网络能做的所有事，就是“挑 $k$ 个正交方向保留、其余归零”——最优挑法正是方差最大的那 $k$ 个。</p>
+        <p class="plain"><b>干嘛用</b>：把“线性 AE 等价于 PCA”从口号变成可检验的命题。</p>
+        <p class="plain"><b>怎么算</b>：选别的 $k$ 维子空间会把至少一部分更大的奇异值能量丢掉，误差不可能更小。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：<b>等价的三个前提</b>——中心化数据（或带合适 bias）、线性激活、平方重构损失；“等价”的对象是最优重建子空间而非唯一坐标：$A,B$ 分解不唯一（$(BR^{-1})(RA)$），若 $\lambda_k=\lambda_{k+1}$ 连最优子空间本身也不唯一。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动 $k$，看点云被投影到前 $k$ 个主方向（误差对账现算）</h4>
+        <div class="svg-wrap"><svg id="laeViz" viewBox="0 0 880 360" role="img" aria-label="低秩重建演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>保留的主方向数 $k$</label><input type="range" id="laK" min="0" max="2" step="1" value="1"><div class="val" id="laKval"></div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="laRand" type="button">🎲 随机换数据</button></div>
+        </div>
+        <div class="caption" id="laCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>对账逻辑</b>：实心点是中心化数据，空心点是 $M=U_kU_k^\top$ 的重建，连线即被丢掉的分量。面板同时显示 $\lVert X_c-U_kU_k^\top X_c\rVert_F^2$ 与 $\sum_{j>k}\sigma_j^2$（由当前数据的 2×2 协方差特征分解现算）——两数逐位一致。$k=0$ 全部塌到原点；$k=2$ 无损。若输入未中心化，须把均值加回解码结果，否则零均值结论不能直接套用。</p>
+      </div>
+    </section>
+
+    <!-- ============ §11 NONLINEAR AE ============ -->
+    <section id="nlae">
+      <h2 class="sec-title"><span class="num">§10</span>非线性 autoencoder：新能力与新代价 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">若 encoder、decoder 含非线性激活，多层网络可以学习弯曲的编码—解码映射，例如把 Swiss roll 的三维坐标映射到纸面的二维坐标、再从二维坐标重建卷曲形状。</p>
+      <div class="grid2">
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">能力</h3><p class="plain small">表示灵活（能贴合弯曲流形）；可处理图像等大数据；可用 mini-batch 训练，扩展性远好于 $O(n^2)$ 的 kernel 方法。</p></div>
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">代价</h3><p class="plain small">非凸优化、初始化与学习率敏感、超参数多、可解释性弱；网络够强时可能<b>记忆训练样本</b>而不是学到稳定结构。</p></div>
+      </div>
+      <div class="def why">
+        <div class="term">去噪自编码器 <span class="en">denoising autoencoder · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：给输入加噪声、要求从带噪版本重建干净输入的训练变体；与 sparse、contractive、weight-decay 一样，都是在规定“什么样的表示才算好”。</p>
+        <p class="plain"><b>白话</b>：故意把字迹弄糊再让它认——逼它学会字的骨架而不是墨点。</p>
+        <p class="plain"><b>干嘛用</b>：防止记忆训练集、学到更稳健的特征。</p>
+        <p class="plain"><b>怎么算</b>：$\min\frac1n\sum_i\lVert x_i-f_{\mathrm{dec}}(f_{\mathrm{enc}}(\tilde x_i))\rVert^2$，$\tilde x_i$ 为加噪版本。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：“能重建 Swiss roll”不等于“latent 坐标就是纸面真值”——任何对 latent 的可逆重参数化（甚至局部折叠）都可能保持相近误差；只有额外约束才规定了我们希望表示具有的性质。</p>
+      </div>
+      <div class="card compact">
+        <h3 style="margin:.2em 0 .4em">评估陷阱（目标 × 指标 × 注意事项）</h3>
+        <table class="data">
+          <tr><th>目标</th><th>可观察指标</th><th>需要注意</th></tr>
+          <tr><td>压缩</td><td>验证集重建误差、码率</td><td>低误差不等于可解释</td></tr>
+          <tr><td>邻域探索</td><td>邻域保持、稳定性</td><td>局部指标可能扭曲全局距离</td></tr>
+          <tr><td>下游分类</td><td>独立验证集性能</td><td>不能把无标签重构误差当监督最优</td></tr>
+          <tr><td>去噪</td><td>干净数据上的重建</td><td>训练/测试噪声分布要一致</td></tr>
+        </table>
+        <p class="plain small" style="margin-bottom:0"><b>两条路线的成本对照</b>：kernel PCA 的新点嵌入依赖与<b>所有</b>训练点的 kernel 值、受 $n^2$ 内存限制，但特征分解直接；autoencoder 对新点只需一次 encoder 前向、可 mini-batch，但要操心优化与模型选择。非线性 autoencoder 的二维散点图应解释为“对重建目标有用的坐标”，而不是未经验证的流形真值。</p>
+      </div>
+    </section>
+
+    <!-- ============ §8(EXTRA) CLUSTERING CONNECTION ============ -->
+    <section id="clus">
+      <h2 class="sec-title"><span class="num">§11</span>限制与谱聚类的边界 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">kernel PCA 的账本与邻居：它跟哪些“听起来一样”的方法其实不是一回事。</p>
+      <div class="def why">
+        <div class="term">pre-image 问题 <span class="en">pre-image problem · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：特征空间中的低维点没有简单的原空间逆映射，寻找原空间代表点称为 pre-image problem。</p>
+        <p class="plain"><b>白话</b>：能把数据投影到好坐标，却画不出“这个坐标对应哪张原图”。</p>
+        <p class="plain"><b>干嘛用</b>：去噪、生成时需要回到输入空间。</p>
+        <p class="plain"><b>怎么算</b>：无闭式解，常用近似迭代或优化。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：与 $O(n^2)$ 存储、逐训练点求 kernel 一起构成 kernel PCA 的三大实用限制。</p>
+      </div>
+      <div class="def conn">
+        <div class="term">谱聚类 <span class="en">spectral clustering · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：先构造相似度图，对（归一化或未归一化）图 Laplacian 取特征向量，通常对行归一化后的谱嵌入跑 $k$-means。</p>
+        <p class="plain"><b>白话</b>：把“谁和谁连边”变成图，再沿图的特征向量切团伙。</p>
+        <p class="plain"><b>干嘛用</b>：非凸形状的簇（如同心环）。</p>
+        <p class="plain"><b>怎么算</b>：图 → Laplacian → 特征向量 → 行归一化 → $k$-means。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：与 “kernel PCA + $k$-means”“kernel $k$-means” 有共同的“相似度 → 谱表示 → 分组”直觉但<b>不是同一个算法</b>——矩阵、归一化与目标都不同（下方三卡对照）。</p>
+      </div>
+      <div class="grid3">
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">kernel PCA + $k$-means</h3><p class="plain small">先对中心化 Gram matrix 做 kernel PCA，再在保留的 kernel-PC 坐标上跑普通欧氏 $k$-means；结果依赖保留了多少个主成分。</p></div>
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">kernel $k$-means</h3><p class="plain small">直接把 $k$-means 的距离目标写成 kernel 内积、按 kernel 距离更新分组——<b>不等价于</b>任意截断 kernel-PCA 坐标上的 $k$-means。</p></div>
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">spectral clustering</h3><p class="plain small">矩阵是图 Laplacian 而非 Gram matrix，归一化与优化目标都不同；报告结果应写清用了哪个矩阵、保留多少维、最后的分组步骤，不能只称“kernel 聚类”。</p></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>更大的家族</b>：LLE、MDS、t-SNE、UMAP 等其他非线性嵌入方法保留的结构不同——有的强调局部邻域，有的强调距离或拓扑；不能把所有二维图都解释成“保留了原空间的全部几何”。</p>
+      </div>
+    </section>
+
+    <!-- ============ §13(EXTRA) WORKFLOW ============ -->
+    <section id="workflow">
+      <h2 class="sec-title"><span class="num">§12</span>一个完整的工作流 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">假设有 $10000$ 张无标签、每张展平为 $x_i\in\mathbb R^{4096}$ 的细胞显微图像。一个可审计的流程是：</p>
+      <div class="card compact">
+        <ol style="margin:.4em 0 .2em;padding-left:22px">
+          <li>根据图像强度和批次效应决定中心化、标准化或归一化；</li>
+          <li>用 PCA 检查主要线性变化，并视计算资源把表示压到中等维度；</li>
+          <li>比较二维 PCA 与非线性 embedding，记录 kernel 参数或网络随机种子；</li>
+          <li>若用 autoencoder，划分训练/验证样本、监控<b>验证</b>重建误差，避免只看训练误差；</li>
+          <li>对低维编码做聚类，检查簇内代表图像而非只看散点颜色；</li>
+          <li>用邻域保持、重建、稳定性和领域知识共同解释结果。</li>
+        </ol>
+        <p class="plain small" style="margin-bottom:0">这条流程把第 15、16、18 讲连接起来：$k$-means 选离散原型，PCA 选线性子空间，kernel PCA / autoencoder 选非线性表示。没有标签时，必须明确自己希望保留的是重构细节、局部邻域、全局距离还是下游任务信息。</p>
+      </div>
+    </section>
+
+    <!-- ============ §14 MISCONCEPTIONS ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">§13</span>常见误区 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">每一条都先给出“听起来对”的说法，再给真相。</p>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 1</b>：kernel PCA 一定比 PCA 好。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：kernel 和超参数选错时可能更差，且计算更贵（§7 的两个极端）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 2</b>：中心化只要把 $K$ 的每个元素减去一个常数。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：正确操作是 $K_c=HKH$，同时处理行均值、列均值和总体均值（§4）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 3</b>：kernel PCA 的系数是 $v_r/\lambda_r$。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：单位特征空间方向需要 $\alpha_r=v_r/\sqrt{\lambda_r}$（§3 的三缩放对照）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 4</b>：新点直接用 $k(x_i,x)$ 投影即可。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：必须使用与训练均值一致的中心化 kernel 向量（§6 的四项公式）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 5</b>：autoencoder 重建好就代表学到语义。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：重建目标可能鼓励低层细节或训练集记忆（§10 的评估表）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 6</b>：线性 autoencoder 比 PCA 更有表达力。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：对中心化数据（或含适当 bias）、相同瓶颈、线性激活和平方损失，最优重建子空间就是 PCA 子空间；灵活性来自非线性和架构（§9）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 7</b>：二维非线性图上的所有距离都可信。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：很多方法优先保留局部邻域，全局距离可能失真（§11 的 t-SNE/UMAP 家族）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 8</b>：无标签 autoencoder 是普通监督学习。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：输入自身作为目标，更准确地说是非监督 / 自监督式重建（§8）。</p></div></div>
+    </section>
+
+    <!-- ============ §15 TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§14</span>收束：第 18 讲真正要带走的东西 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">PCA 失败是因为函数类太简单；两条路线分别在隐式特征空间和神经网络里找回弯曲结构。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">两条路线的收束链</h4>
+        <div class="svg-wrap"><svg id="chainViz" viewBox="0 0 880 220" role="img" aria-label="两条路线收束"></svg></div>
+        <div class="caption">上排：kernel PCA 五步；下排：autoencoder 三步——线性时回到 PCA 子空间，非线性时展开弯曲流形。左端是第 16 讲，右端是第 19 讲。</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">核心问题 → 答案回顾</h3>
+        <p class="plain"><b>弯曲数据为什么让 PCA 失败？</b>线性映射只能产生平面坐标，卷层被压到一起。<b>看不到 $\phi$ 怎么做 PCA？</b>方向限制在训练特征张成空间内（$u=\sum\alpha_i\tilde\phi_i$），一切内积换成 kernel 值，最终只解 $K_c=HKH$ 的特征分解；坐标 $z_r(x_i)=\sqrt{\lambda_r}v_{ir}$（系数除以 $\sqrt{\lambda_r}$）；新点用训练均值做四项中心化后投影 $z_r(x)=v_r^\top k_c(x)/\sqrt{\lambda_r}$。<b>autoencoder 学到什么？</b>线性 + 中心化 + 平方损失时：最优重建子空间 = PCA 前 $k$ 维（误差 $\sum_{j>k}\sigma_j^2$）；非线性时能展开弯曲流形，但 latent 坐标不是自动的流形真值，需要额外约束与谨慎评估。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">最重要的五个公式</h3>
+        <p class="plain">$$K_c=HKH,\qquad H=I_n-\tfrac1n\mathbf 1\mathbf 1^\top \quad\text{（双中心化：行、列、总体三均值一次到位）}$$
+          $$K_cv_r=\lambda_r v_r\ \Longrightarrow\ u_r=\textstyle\sum_i\alpha_{ir}\tilde\phi_i,\quad \alpha_r=\frac{v_r}{\sqrt{\lambda_r}} \quad\text{（系数归一化）}$$
+          $$z_r(x_i)=\sqrt{\lambda_r}\,v_{ir} \quad\text{（训练坐标）}$$
+          $$k_c(x)=k_X(x)-m_{\mathrm{row}}-\big(\tfrac1n\mathbf 1^\top k_X(x)\big)\mathbf 1+\bar k\,\mathbf 1,\qquad z_r(x)=\frac{v_r^\top k_c(x)}{\sqrt{\lambda_r}} \quad\text{（样本外投影）}$$
+          $$\min_{\operatorname{rank}M\le k}\lVert X_c-MX_c\rVert_F^2=\sum_{j>k}\sigma_j^2 \quad\text{（线性 AE = PCA 子空间）}$$</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自查清单（勾掉才算带走）</h3>
+        <div class="checklist" id="checkList"></div>
+        <div class="check-score" id="checkScore"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自测题（先自己算，再看答案）</h3>
+        <div id="quizList"></div>
+        <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="card conn">
+        <h3 style="margin-top:0">与下一讲的连接</h3>
+        <p class="plain">至此，降维三讲（16：线性子空间；18：kernel 与网络两条非线性路线）把“无标签找结构”的几何路线走完。第 19 讲转入<b>概率建模</b>：不再只找低维坐标或重建映射，而是给数据一个显式的联合分布 $p(x)$——最大似然、先验/后验、以及可以从模型里采样的生成式视角。kernel 与 autoencoder 学到的表示，常常正是概率模型的输入或对照基线。</p>
+        <p class="plain" style="margin-bottom:0"><a href="index.html#lecture-19"><b>→ 回到课程目录，进入第 19 讲：Probabilistic Modeling</b></a></p>
+      </div>
+    </section>
+
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function spreadLabels(items,minGap){
+  const arr=items.slice().sort((a,b)=>a.y-b.y);
+  for(let i=1;i<arr.length;i++){ if(arr[i].y-arr[i-1].y<minGap) arr[i].y=arr[i-1].y+minGap; }
+  return arr;
+}
+/* symmetric eigendecomposition via Jacobi rotations: returns {vals (desc), vecs (columns aligned) } */
+function jacobiEig(M){
+  const n=M.length;
+  let A=M.map(r=>r.slice());
+  let V=M.map((r,i)=>r.map((_,j)=>i===j?1:0));
+  for(let sweep=0;sweep<80;sweep++){
+    let off=0;
+    for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)off+=A[i][j]*A[i][j];
+    if(off<1e-20)break;
+    for(let p=0;p<n;p++)for(let q=p+1;q<n;q++){
+      if(Math.abs(A[p][q])<1e-14)continue;
+      const theta=(A[q][q]-A[p][p])/(2*A[p][q]);
+      const t=(theta>=0?1:-1)/(Math.abs(theta)+Math.sqrt(theta*theta+1));
+      const c=1/Math.sqrt(t*t+1),s=t*c;
+      for(let k=0;k<n;k++){const akp=A[k][p],akq=A[k][q];A[k][p]=c*akp-s*akq;A[k][q]=s*akp+c*akq;}
+      for(let k=0;k<n;k++){const apk=A[p][k],aqk=A[q][k];A[p][k]=c*apk-s*aqk;A[q][k]=s*apk+c*aqk;}
+      for(let k=0;k<n;k++){const vkp=V[k][p],vkq=V[k][q];V[k][p]=c*vkp-s*vkq;V[k][q]=s*vkp+c*vkq;}
+    }
+  }
+  const order=A.map((r,i)=>i).sort((i,j)=>A[j][j]-A[i][j]);
+  const vals=order.map(i=>A[i][i]);
+  const vecs=order.map(i=>V.map(row=>row[i])); // vecs[r] is eigenvector for vals[r]
+  return {vals,vecs};
+}
+/* solve dense linear system M x = b (n small) */
+function solveLin(M,b){
+  const n=b.length;const A=M.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){
+    let piv=c;
+    for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[piv][c]))piv=r;
+    const tmp=A[c];A[c]=A[piv];A[piv]=tmp;
+    const d=A[c][c]||1e-12;
+    for(let j=c;j<=n;j++)A[c][j]/=d;
+    for(let r=0;r<n;r++)if(r!==c){const f=A[r][c];for(let j=c;j<=n;j++)A[r][j]-=f*A[c][j];}
+  }
+  return A.map(r=>r[n]);
+}
+const rbf=(a,b,s)=>Math.exp(-((a-b)*(a-b))/(2*s*s));
+/* generate Swiss roll (t along roll, h height) */
+function swissRoll(n){
+  const pts=[];
+  for(let i=0;i<n;i++){
+    const t=0.6+ (3*Math.PI-1.2)*i/(n-1);
+    const h=(i/(n-1))*6-3;
+    pts.push({t, h, x:t*Math.cos(t)/4.6, y:h/2.6, z:t*Math.sin(t)/4.6});
+  }
+  return pts;
+}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L18) ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n16',x:20,y:120,w:150,h:66,t:'第 16 讲',s:'线性 PCA',target:'index.html#lecture-16',col:'#8a938b'},
+    {id:'swiss',x:220,y:20,w:160,h:62,t:'Swiss roll 诊断',s:'卷层重叠',target:'#swiss',col:'#176653'},
+    {id:'fspace',x:410,y:20,w:170,h:62,t:'特征空间 PCA',s:'同一个目标',target:'#fspace',col:'#176653'},
+    {id:'reparam',x:610,y:20,w:170,h:62,t:'Representer + K_c',s:'√λ 归一化',target:'#reparam',col:'#176653'},
+    {id:'centering',x:810,y:20,w:150,h:62,t:'双中心化',s:'K_c=HKH',target:'#centering',col:'#176653'},
+    {id:'worked',x:220,y:120,w:160,h:62,t:'三点手算',s:'λ=4, 2/3',target:'#worked',col:'#176653'},
+    {id:'oos',x:410,y:120,w:170,h:62,t:'样本外投影',s:'四项中心化',target:'#oos',col:'#176653'},
+    {id:'capacity',x:610,y:120,w:170,h:62,t:'带宽两极',s:'σ 的边界',target:'#capacity',col:'#176653'},
+    {id:'takeaway',x:810,y:120,w:150,h:62,t:'收束 / 自测',s:'两条路线',target:'#takeaway',col:'#176653'},
+    {id:'ae',x:220,y:250,w:160,h:62,t:'自编码器',s:'瓶颈 k',target:'#ae',col:'#176653'},
+    {id:'lae',x:410,y:250,w:170,h:62,t:'线性 = PCA 子空间',s:'Σσ² 对账',target:'#lae',col:'#176653'},
+    {id:'nlae',x:610,y:250,w:170,h:62,t:'非线性 AE',s:'弯曲 / 代价',target:'#nlae',col:'#176653'},
+    {id:'clus',x:810,y:250,w:150,h:62,t:'聚类边界',s:'谱 / pre-image',target:'#clus',col:'#6c4fa1'},
+    {id:'flow',x:1010,y:250,w:150,h:62,t:'工作流',s:'4096 维图像',target:'#workflow',col:'#6c4fa1'},
+    {id:'n19',x:1230,y:120,w:170,h:66,t:'第 19 讲',s:'概率建模',target:'index.html#lecture-19',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  route([[170,153],[195,153],[195,51],[220,51]],'#8a938b',mkG,'',0,0);
+  route([[380,51],[410,51]],'#176653',mk,'',0,0);
+  route([[580,51],[610,51]],'#176653',mk,'',0,0);
+  route([[780,51],[810,51]],'#176653',mk,'',0,0);
+  route([[885,82],[885,105],[300,105],[300,120]],'#176653',mk,'主线落到手算',600,98);
+  route([[380,151],[410,151]],'#176653',mk,'',0,0);
+  route([[580,151],[610,151]],'#176653',mk,'',0,0);
+  route([[780,151],[810,151]],'#176653',mk,'',0,0);
+  route([[960,151],[1230,151]],'#8a938b',mkG,'下一讲',1095,140);
+  route([[300,182],[300,250]],'#176653',mk,'换路线：网络',345,216,'start');
+  route([[380,281],[410,281]],'#176653',mk,'',0,0);
+  route([[580,281],[610,281]],'#176653',mk,'',0,0);
+  route([[780,281],[810,281]],'#6c4fa1',mkV,'',0,0);
+  route([[960,281],[1000,281]],'#6c4fa1',mkV,'',0,0);
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- §1 Swiss roll ---------- */
+(()=>{
+  const svg=$('#swissViz');
+  const pts=swissRoll(90);
+  // PCA on 3D data (centered)
+  const n=pts.length;
+  const mean=[0,1,2].map(a=>pts.reduce((s,p)=>s+[p.x,p.y,p.z][a],0)/n);
+  const cov=Array.from({length:3},()=>[0,0,0]);
+  for(let a=0;a<3;a++)for(let b=0;b<3;b++){
+    cov[a][b]=pts.reduce((s,p)=>s+(([p.x,p.y,p.z][a]-mean[a])*([p.x,p.y,p.z][b]-mean[b])),0)/n;
+  }
+  const {vals,vecs}=jacobiEig(cov);
+  const PC1=vecs[0],PC2=vecs[1];
+  const proj=p=>[PC1[0]*p.x+PC1[1]*p.y+PC1[2]*p.z, PC2[0]*p.x+PC2[1]*p.y+PC2[2]*p.z];
+  // nearest-neighbor |dt| in PCA plane vs intrinsic
+  const P=pts.map(proj);
+  let pcaNn=0;
+  pts.forEach((p,i)=>{
+    let best=-1,bd=1e9;
+    P.forEach((q,j)=>{if(i===j)return;const dd=(P[i][0]-q[0])**2+(P[i][1]-q[1])**2;if(dd<bd){bd=dd;best=j;}});
+    pcaNn+=Math.abs(pts[i].t-pts[best].t);
+  });
+  pcaNn/=n;
+  const dt=(3*Math.PI-1.2)/(n-1);
+  function draw(){
+    const az=+$('#svAz').value;
+    svg.innerHTML='';
+    // left: pseudo-3D
+    const L={x0:40,y0:34,w:360,h:300};
+    const S=44;
+    const cx=L.x0+L.w/2,cy=L.y0+L.h/2;
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    pts.forEach(p=>{
+      const sx=cx+(p.x*Math.cos(az)+p.z*Math.sin(az))*S;
+      const sy=cy+(p.y-(p.x*Math.sin(az)-p.z*Math.cos(az))*0.55)*S;
+      svgAdd(svg,'circle',{cx:sx,cy:sy,r:3.4,fill:`hsl(${fmt(p.t*36,0)},72%,46%)`});
+    });
+    svgHalo(svg,cx,L.y0+16,'观测空间 ℝ³（可旋转）',{font:11,fill:'var(--muted)'});
+    // right: PCA projection
+    const R={x0:460,y0:34,w:360,h:300};
+    let lo1=1e9,hi1=-1e9,lo2=1e9,hi2=-1e9;
+    P.forEach(q=>{lo1=Math.min(lo1,q[0]);hi1=Math.max(hi1,q[0]);lo2=Math.min(lo2,q[1]);hi2=Math.max(hi2,q[1]);});
+    const px=v=>R.x0+30+ (v-lo1)/(hi1-lo1)*(R.w-60);
+    const py=v=>R.y0+30+ (1-(v-lo2)/(hi2-lo2))*(R.h-70);
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    pts.forEach((p,i)=>{
+      svgAdd(svg,'circle',{cx:px(P[i][0]),cy:py(P[i][1]),r:3.4,fill:`hsl(${fmt(p.t*36,0)},72%,46%)`});
+    });
+    svgHalo(svg,R.x0+R.w/2,R.y0+16,'线性 PCA 前两个主成分平面',{font:11,fill:'var(--muted)'});
+    svgHalo(svg,R.x0+R.w/2,R.y0+R.h-10,'颜色 = 内在坐标 t：大面积混杂 = 卷层被压到一起',{font:10,fill:'var(--muted)'});
+    $('#svCap').innerHTML=`左图方位角 ${fmt(az*180/Math.PI,0)}°（可拖动确认“卷”）。右侧 PCA 投影里，每个点的最近邻与它的内在坐标平均相差 <b>|Δt|=${fmt(pcaNn,2)}</b>，而纸面上真正相邻的点只差 |Δt|=${fmt(dt,2)}——相差 ${fmt(pcaNn/dt,1)} 倍。两个数据无关（同色不相邻、异色成邻居）正是线性子空间装不下弯曲流形的定量证据；3D 协方差的特征值现算为 (${vals.map(v=>fmt(v,3)).join(', ')})，前两个方向再大也只是平面。`;
+  }
+  function sync(){$('#svAzval').textContent=fmt(+$('#svAz').value*180/Math.PI,0)+'°';draw();}
+  $('#svAz').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §2 concentric rings ---------- */
+(()=>{
+  const svg=$('#ringViz');
+  let mode='lin';
+  function gen(){
+    const pts=[];
+    for(let i=0;i<22;i++){const a=i/22*2*Math.PI+(Math.random()-.5)*.2;const r=1+(Math.random()-.5)*.14;pts.push({x:r*Math.cos(a),y:r*Math.sin(a),c:0});}
+    for(let i=0;i<22;i++){const a=i/22*2*Math.PI+(Math.random()-.5)*.2;const r=2.3+(Math.random()-.5)*.14;pts.push({x:r*Math.cos(a),y:r*Math.sin(a),c:1});}
+    return pts;
+  }
+  let pts=gen();
+  function stats(vals,cls){
+    const a=vals.filter((v,i)=>cls[i]===0),b=vals.filter((v,i)=>cls[i]===1);
+    const m1=a.reduce((s,v)=>s+v,0)/a.length,m2=b.reduce((s,v)=>s+v,0)/b.length;
+    const s1=Math.sqrt(a.reduce((s,v)=>s+(v-m1)**2,0)/a.length),s2=Math.sqrt(b.reduce((s,v)=>s+(v-m2)**2,0)/b.length);
+    return {m1,m2,gap:Math.abs(m1-m2)/((s1+s2)/2||1e-9)};
+  }
+  function draw(){
+    svg.innerHTML='';
+    const cls=pts.map(p=>p.c);
+    // left: input space
+    const L={x0:44,y0:36,w:280,h:260};
+    const cx=L.x0+L.w/2,cy=L.y0+L.h/2,S=46;
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    pts.forEach(p=>svgAdd(svg,'circle',{cx:cx+p.x*S,cy:cy-p.y*S,r:4,fill:p.c?'var(--warm)':'var(--accent)',opacity:.85}));
+    svgHalo(svg,cx,L.y0+16,'输入空间：两个同心环',{font:10.5,fill:'var(--muted)'});
+    // middle/right: 1D representation
+    let vals;
+    if(mode==='lin'){
+      // PC1 of the 2D data
+      const mx=pts.reduce((s,p)=>s+p.x,0)/pts.length,my=pts.reduce((s,p)=>s+p.y,0)/pts.length;
+      const cov=[[0,0],[0,0]];
+      pts.forEach(p=>{cov[0][0]+=(p.x-mx)**2;cov[0][1]+=(p.x-mx)*(p.y-my);cov[1][1]+=(p.y-my)**2;});
+      cov[0][0]/=pts.length;cov[0][1]/=pts.length;cov[1][1]/=pts.length;
+      const {vecs}=jacobiEig(cov);
+      const w=vecs[0];
+      vals=pts.map(p=>p.x*w[0]+p.y*w[1]);
+    }else{
+      vals=pts.map(p=>p.x*p.x+p.y*p.y);
+    }
+    const st=stats(vals,cls);
+    const R={x0:400,y0:36,w:440,h:260};
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    let lo=Math.min(...vals),hi=Math.max(...vals);
+    const pad=(hi-lo)*0.08;lo-=pad;hi+=pad;
+    const px=v=>R.x0+24+(v-lo)/(hi-lo)*(R.w-48);
+    const y0=R.y0+R.h/2;
+    svgAdd(svg,'line',{x1:R.x0+16,y1:y0,x2:R.x0+R.w-16,y2:y0,stroke:'var(--muted)',strokeWidth:1.2});
+    vals.forEach((v,i)=>{
+      const jit=(i%7-3)*6;
+      svgAdd(svg,'circle',{cx:px(v),cy:y0+jit-26,r:4,fill:cls[i]?'var(--warm)':'var(--accent)',opacity:.8});
+    });
+    svgHalo(svg,R.x0+R.w/2,R.y0+16,mode==='lin'?'线性 PC1 上的投影：两类重叠':'坐标 ‖x‖²：两类完全分开',{font:11,fill:mode==='lin'?'var(--danger)':'var(--accent)'});
+    svgHalo(svg,R.x0+R.w/2,R.y0+R.h-12,`可分性（类间均值差 / 类内标准差）= ${fmt(st.gap,2)}`,{font:11,fill:st.gap>3?'var(--accent)':'var(--danger)'});
+    $('#rvCap').innerHTML=`当前表示：${mode==='lin'?'线性 PC1（由当前数据的 2×2 协方差特征分解现算）':'‖x‖² 这一个非线性特征'}。类均值 ${fmt(st.m1,2)} vs ${fmt(st.m2,2)}，可分性 ${fmt(st.gap,2)}${st.gap>3?'（干净分开）':'（严重重叠）'}。环这种“半径才重要、角度不重要”的结构没有任何线性方向能区分——而 ‖x‖² 一个特征就够。kernel PCA 等于自动使用一整族这样的非线性特征。`;
+  }
+  $('#rvLin').addEventListener('click',()=>{mode='lin';$('#rvLin').classList.add('active');$('#rvQuad').classList.remove('active');draw();});
+  $('#rvQuad').addEventListener('click',()=>{mode='quad';$('#rvQuad').classList.add('active');$('#rvLin').classList.remove('active');draw();});
+  draw();
+})();
+
+/* ---------- §3 normalization scaling ---------- */
+(()=>{
+  const svg=$('#normViz');
+  // three-point example (computed live)
+  const xs=[-1,0,1];
+  const K=xs.map(a=>xs.map(b=>(a*b+1)*(a*b+1)));
+  const n=3;
+    // build Kc = HKH properly
+  const Kc=K.map((r,i)=>r.map((v,j)=>{
+    const rowAvg=r.reduce((s,x)=>s+x,0)/n;
+    const colAvg=K.reduce((s,row)=>s+row[j],0)/n;
+    const tot=K.reduce((s,row)=>s+row.reduce((a,b)=>a+b,0),0)/(n*n);
+    return v-rowAvg-colAvg+tot;
+  }));
+  const {vals,vecs}=jacobiEig(Kc);
+  const lam=vals[0]; // 4
+  let v1=vecs[0].slice();
+  if(v1[0]<0)v1=v1.map(x=>-x); // align with (1,0,-1)/sqrt2
+  let mode='root';
+  function alphaOf(){
+    if(mode==='root')return v1.map(x=>x/Math.sqrt(lam));
+    if(mode==='lam')return v1.map(x=>x/lam);
+    return v1.slice();
+  }
+  function draw(){
+    svg.innerHTML='';
+    const al=alphaOf();
+    const q=al[0]*(Kc[0][0]*al[0]+Kc[0][1]*al[1]+Kc[0][2]*al[2])+al[1]*(Kc[1][0]*al[0]+Kc[1][1]*al[1]+Kc[1][2]*al[2])+al[2]*(Kc[2][0]*al[0]+Kc[2][1]*al[1]+Kc[2][2]*al[2]);
+    const coords=Kc.map(r=>al[0]*r[0]+al[1]*r[1]+al[2]*r[2]);
+    const p0={x0:60,y0:40};
+    svgAdd(svg,'text',{x:p0.x0,y:p0.y0,'font-size':11.5,'font-weight':700,fill:'var(--muted)'},'三点例（K_c 与特征对现算）');
+    const rows=[
+      ['λ₁',fmt(lam,3)],
+      ['v₁','('+v1.map(x=>fmt(x,3)).join(', ')+')'],
+      ['α = '+ (mode==='root'?'v₁/√λ₁':(mode==='lam'?'v₁/λ₁':'v₁')),'('+al.map(x=>fmt(x,4)).join(', ')+')'],
+      ['αᵀK_cα（=‖u₁‖²）',fmt(q,4)],
+      ['训练坐标 z₁(xᵢ)=(K_cα)ᵢ','('+coords.map(x=>fmt(x,3)).join(', ')+')']
+    ];
+    rows.forEach((r,i)=>{
+      const y=p0.y0+28+i*30;
+      svgAdd(svg,'text',{x:p0.x0,y,'font-size':11,fill:i===3?(Math.abs(q-1)<1e-9?'var(--accent)':'var(--danger)'):'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:p0.x0+240,y,'font-size':11,'font-weight':700,fill:i===3?(Math.abs(q-1)<1e-9?'var(--accent)':'var(--danger)'):'var(--accent)'},r[1]);
+    });
+    // verdict + coordinate bars
+    const ok=Math.abs(q-1)<1e-9;
+    svgHalo(svg,p0.x0,p0.y0+28+5*30+8,ok?'✓ 单位范数：尺度正确':'✗ 范数 ≠ 1：坐标整体被缩放 '+fmt(q,2)+' 倍',{font:11,fill:ok?'var(--accent)':'var(--danger)',anchor:'start'});
+    const b0={x0:600,y0:56};
+    svgAdd(svg,'text',{x:b0.x0,y:b0.y0-14,'font-size':11,'font-weight':700,fill:'var(--muted)'},'训练坐标 z₁(xᵢ)');
+    const mx=Math.max(...coords.map(Math.abs),1e-9);
+    coords.forEach((c,i)=>{
+      const y=b0.y0+24+i*44;
+      const h=c/mx*52;
+      svgAdd(svg,'rect',{x:b0.x0+70,y:h>=0?y+40-h:y+40,width:26,height:Math.abs(h),rx:2,fill:c>=0?'var(--accent)':'var(--warm)'});
+      svgAdd(svg,'text',{x:b0.x0+56,y:y+44,'text-anchor':'end','font-size':10,fill:'var(--muted)'},'x'+(i+1));
+      svgHalo(svg,b0.x0+110,y+44,fmt(c,3),{font:10.5,fill:'var(--ink)',anchor:'start'});
+    });
+    svgAdd(svg,'line',{x1:b0.x0+50,y1:b0.y0+40,x2:b0.x0+50+130,y2:b0.y0+40,stroke:'var(--muted)',strokeWidth:1});
+    $('#nvCap').innerHTML=`当前取法 α=${mode==='root'?'v₁/√λ₁（讲义正确写法）':(mode==='lam'?'v₁/λ₁（常见错误：多除了一个 √λ₁）':'v₁（忘了归一化）')}：αᵀK_cα=${fmt(q,4)}${ok?'（=1 ✓）':`（应为 1，现在是 ${fmt(q,2)}）`}，训练坐标 z₁=(${coords.map(x=>fmt(x,3)).join(', ')})${ok?'=√λ₁·v₁ ✓':'（整体缩放错误）'}。正确坐标应为 (${fmt(Math.sqrt(lam)*v1[0],3)}, ${fmt(Math.sqrt(lam)*v1[1],3)}, ${fmt(Math.sqrt(lam)*v1[2],3)})。`;
+  }
+  function setMode(m){mode=m;['nvRoot','nvLam','nvRaw'].forEach(id=>$('#'+id).classList.remove('active'));
+    $(m==='root'?'#nvRoot':(m==='lam'?'#nvLam':'#nvRaw')).classList.add('active');draw();}
+  $('#nvRoot').addEventListener('click',()=>setMode('root'));
+  $('#nvLam').addEventListener('click',()=>setMode('lam'));
+  $('#nvRaw').addEventListener('click',()=>setMode('raw'));
+  draw();
+})();
+
+/* ---------- §4 centering heatmap ---------- */
+(()=>{
+  const svg=$('#centerViz');
+  let mode='poly';
+  let pts=[0,0.9,2.1,3.2,4.3,5.1];
+  function regen(){pts=Array.from({length:6},()=>Math.random()*5);}
+  function kernel(a,b){return mode==='poly'?(a*b+1)*(a*b+1):rbf(a,b,+$('#cvSig').value);}
+  function centered(K){
+    const n=K.length;
+    return K.map((r,i)=>r.map((v,j)=>{
+      const ra=r.reduce((s,x)=>s+x,0)/n;
+      const ca=K.reduce((s,row)=>s+row[j],0)/n;
+      const tot=K.reduce((s,row)=>s+row.reduce((a,b)=>a+b,0),0)/(n*n);
+      return v-ra-ca+tot;
+    }));
+  }
+  function diverge(v,mx){
+    const t=clamp(v/mx,-1,1);
+    if(t>=0)return `hsl(215,${fmt(20+50*t,0)}%,${fmt(96-48*t,0)}%)`;
+    return `hsl(8,${fmt(20+50*(-t),0)}%,${fmt(96-48*(-t),0)}%)`;
+  }
+  function draw(){
+    svg.innerHTML='';
+    const n=mode==='poly'?3:6;
+    const xs=mode==='poly'?[-1,0,1]:pts.slice(0,6);
+    const K=xs.map(a=>xs.map(b=>kernel(a,b)));
+    const Kc=centered(K);
+    const mxA=Math.max(...K.flat(),1e-9);
+    const mxC=Math.max(...Kc.flat().map(Math.abs),1e-9);
+    const drawHeat=(M,mx,x0,y0,cell,title,divg)=>{
+      const w=M.length*cell;
+      svgAdd(svg,'rect',{x:x0-8,y:y0-30,width:w+16,height:M.length*cell+52,rx:10,fill:'var(--surface2)',opacity:.4,stroke:'var(--line)'});
+      svgHalo(svg,x0+w/2,y0-14,title,{font:11,fill:'var(--muted)'});
+      M.forEach((r,i)=>r.forEach((v,j)=>{
+        svgAdd(svg,'rect',{x:x0+j*cell,y:y0+i*cell,width:cell-2,height:cell-2,rx:3,fill:divg?diverge(v,mx):(v>=0?`hsl(215,${fmt(20+55*v/mx,0)}%,${fmt(96-46*v/mx,0)}%)`:'#fff'),stroke:'var(--line)',strokeWidth:.6});
+        svgAdd(svg,'text',{x:x0+j*cell+cell/2-1,y:y0+i*cell+cell/2+3,'text-anchor':'middle','font-size':M.length>3?8.5:10,fill:Math.abs(v)/mx>0.6?'#fff':'#333'},fmt(v,M.length>3?1:2));
+      }));
+    };
+    const cell=mode==='poly'?62:40;
+    drawHeat(K,mxA,70,56,cell,'K（未中心化）',false);
+    drawHeat(Kc,mxC,70+cell*K.length+120,56,cell,'K_c = HKH（双中心化）',true);
+    // numeric panel
+    const rowAvg=K.map(r=>r.reduce((s,x)=>s+x,0)/K.length);
+    const tot=K.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0)/(K.length*K.length);
+    const rowAvgC=Kc.map(r=>r.reduce((s,x)=>s+x,0)/Kc.length);
+    const py0=56+cell*K.length+50;
+    svgAdd(svg,'text',{x:70,y:py0,'font-size':10.5,fill:'var(--ink)'},`K 行均值 = (${rowAvg.map(v=>fmt(v,2)).join(', ')})，总体均值 = ${fmt(tot,3)}`);
+    svgAdd(svg,'text',{x:70,y:py0+22,'font-size':10.5,fill:'var(--accent)'},`K_c 行均值 = (${rowAvgC.map(v=>fmt(v,2)).join(', ')}) —— 全部 ≈ 0 ✓（行列均值归零）`);
+    svgAdd(svg,'text',{x:70,y:py0+44,'font-size':10.5,fill:'var(--muted)'},mode==='poly'?'三点多项式例：K_c(1,1)=19/9≈2.11、K_c(1,3)=−17/9≈−1.89（与 §5 手算一致）':'RBF 模式：拖动 σ 或随机换点，行/列均值始终归零');
+    $('#cvCap').innerHTML=`当前：${mode==='poly'?'三点多项式例 k(x,z)=(xz+1)²':'六点 RBF（σ='+fmt(+$('#cvSig').value,2)+'）'}。左：未中心化 K（色标 0..${fmt(mxA,2)}）；右：K_c（发散色标 ±${fmt(mxC,2)}，蓝正红负）。双中心化 = 每个元素减行均值、减列均值、加总体均值——${K.length}×${K.length} 矩阵的行均值向量在中心化后为 (${rowAvgC.map(v=>fmt(v,2)).join(', ')})。`;
+  }
+  function sync(){$('#cvSigval').textContent=fmt(+$('#cvSig').value,2);draw();}
+  $('#cvPoly').addEventListener('click',()=>{mode='poly';$('#cvPoly').classList.add('active');$('#cvRbf').classList.remove('active');draw();});
+  $('#cvRbf').addEventListener('click',()=>{mode='rbf';$('#cvRbf').classList.add('active');$('#cvPoly').classList.remove('active');draw();});
+  $('#cvSig').addEventListener('input',sync);
+  $('#cvRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽 6 个输入点');});
+  sync();
+})();
+
+/* ---------- §5 worked example steps ---------- */
+(()=>{
+  const svg=$('#workedViz');
+  const xs=[-1,0,1];
+  const K=xs.map(a=>xs.map(b=>(a*b+1)*(a*b+1)));
+  const n=3;
+  const Kc=K.map((r,i)=>r.map((v,j)=>{
+    const ra=r.reduce((s,x)=>s+x,0)/n, ca=K.reduce((s,row)=>s+row[j],0)/n;
+    const tot=K.reduce((s,row)=>s+row.reduce((a,b)=>a+b,0),0)/(n*n);
+    return v-ra-ca+tot;
+  }));
+  const {vals,vecs}=jacobiEig(Kc);
+  const lam=vals[0];
+  let v1=vecs[0].slice(); if(v1[0]<0)v1=v1.map(x=>-x);
+  const al=v1.map(x=>x/Math.sqrt(lam));
+  const nrm=al[0]*(Kc[0][0]*al[0]+Kc[0][1]*al[1]+Kc[0][2]*al[2])+al[1]*(Kc[1][0]*al[0]+Kc[1][1]*al[1]+Kc[1][2]*al[2])+al[2]*(Kc[2][0]*al[0]+Kc[2][1]*al[1]+Kc[2][2]*al[2]);
+  const coords=Kc.map(r=>al[0]*r[0]+al[1]*r[1]+al[2]*r[2]);
+  const Hmat=[[2/3,-1/3,-1/3],[-1/3,2/3,-1/3],[-1/3,-1/3,2/3]];
+  const STEPS=[
+    {t:'第 1 步：K=ΦΦᵀ（逐项 k(xᵢ,xⱼ)=(xᵢxⱼ+1)²）',rows:[[ 'k(x₁,x₁)=(1+1)²','4'],['k(x₁,x₂)=(0+1)²','1'],['k(x₁,x₃)=(−1+1)²','0'],['矩阵','[[4,1,0],[1,1,1],[0,1,4]]']],note:'对角元 k(xᵢ,xᵢ)=(xᵢ²+1)²：4,1,4。'},
+    {t:'第 2 步：中心矩阵 H=I₃−⅓·11ᵀ',rows:[['H','[[2/3,−1/3,−1/3],[−1/3,2/3,−1/3],[−1/3,−1/3,2/3]]'],['H·1','0（把任何向量换成减均值版）']],note:'H 幂等且 H1=0，这是 K_c1=0 的来源。'},
+    {t:'第 3 步：K_c=HKH',rows:[['K_c(1,1)=4−5/3−5/3+13/9','19/9 ≈ '+fmt(Kc[0][0],3)],['K_c(1,2)=1−5/3−1+13/9','−2/9 ≈ '+fmt(Kc[0][1],3)],['K_c(1,3)=0−5/3−5/3+13/9','−17/9 ≈ '+fmt(Kc[0][2],3)],['K_c(2,2)=1−1−1+13/9','4/9 ≈ '+fmt(Kc[1][1],3)],['矩阵','[[19,−2,−17],[−2,4,−2],[−17,−2,19]]/9']],note:'每行每列之和为零；迹 = 42/9 = 4+2/3。'},
+    {t:'第 4 步：K_c 的特征值（Jacobi 现算）',rows:[['λ₁',fmt(vals[0],3)+'（=4）'],['λ₂',fmt(vals[1],3)+'（=2/3）'],['λ₃',fmt(vals[2],3)+'（=0，丢弃）'],['检验 tr(K_c)=λ₁+λ₂+λ₃',fmt(Kc[0][0]+Kc[1][1]+Kc[2][2],3)]],note:'λ₃=0：数据中心化后只剩两个方向有方差。'},
+    {t:'第 5 步：v₁ 与 α₁=v₁/√λ₁',rows:[['v₁（符号对齐）','('+v1.map(x=>fmt(x,3)).join(', ')+')'],['√λ₁',fmt(Math.sqrt(lam),3)],['α₁','('+al.map(x=>fmt(x,4)).join(', ')+')（= (1,0,−1)/(2√2)）']],note:'α₁ 的范数刻度来自特征值的平方根。'},
+    {t:'第 6 步：验证与训练坐标',rows:[['α₁ᵀK_cα₁',fmt(nrm,4)+'（=1 ✓）'],['z₁(xᵢ)=√λ₁·v₁ᵢ','('+coords.map(x=>fmt(x,3)).join(', ')+')（=(√2,0,−√2)）']],note:'归一化正确、坐标尺度正确——§6 的新点将沿用这套 α₁。'}
+  ];
+  let idx=-1;
+  function draw(){
+    svg.innerHTML='';
+    STEPS.forEach((st,i)=>{
+      const done=i<=idx;
+      const y=22+i*50;
+      svgAdd(svg,'rect',{x:30,y,width:820,height:44,rx:8,fill:done?'color-mix(in srgb,var(--accent) 8%, var(--surface))':'var(--surface)',stroke:done?'var(--accent)':'var(--line)',strokeWidth:done?1.8:1});
+      svgAdd(svg,'circle',{cx:52,cy:y+22,r:11,fill:done?'var(--accent)':'var(--surface2)',stroke:'var(--line)'});
+      svgAdd(svg,'text',{x:52,y:y+26,'text-anchor':'middle','font-size':11,fill:done?'#fff':'var(--muted)','font-weight':700},String(i+1));
+      svgAdd(svg,'text',{x:74,y:y+19,'font-size':11.5,'font-weight':700,fill:done?'var(--ink)':'var(--muted)'},st.t);
+      svgAdd(svg,'text',{x:74,y:y+36,'font-size':10,fill:'var(--muted)'},done?st.rows.map(r=>r[0]+' = '+r[1]).join('   |   ').slice(0,112):st.note.slice(0,80));
+    });
+    const st=idx>=0?STEPS[idx]:null;
+    $('#wkCap').innerHTML=st?`<b>${st.t}</b> — ${st.note}<br>${st.rows.map(r=>r[0]+' = '+r[1]).join('；')}。当前已完成 ${idx+1}/${STEPS.length} 步。`:`点击“下一步”逐步点亮六步计算；K、K_c、特征对、α₁、验证全部由页面内公式现算（Jacobi 特征分解），可先自己手算再对答案。`;
+  }
+  $('#wkNext').addEventListener('click',()=>{idx=Math.min(idx+1,STEPS.length-1);draw();});
+  $('#wkReset').addEventListener('click',()=>{idx=-1;draw();});
+  draw();
+})();
+
+/* ---------- §6 out-of-sample ---------- */
+(()=>{
+  const svg=$('#oosViz');
+  const xs=[-1,0,1];
+  const K=xs.map(a=>xs.map(b=>(a*b+1)*(a*b+1)));
+  const n=3;
+  const Kc=K.map((r,i)=>r.map((v,j)=>{
+    const ra=r.reduce((s,x)=>s+x,0)/n, ca=K.reduce((s,row)=>s+row[j],0)/n;
+    const tot=K.reduce((s,row)=>s+row.reduce((a,b)=>a+b,0),0)/(n*n);
+    return v-ra-ca+tot;
+  }));
+  const {vals,vecs}=jacobiEig(Kc);
+  const lam=vals[0];
+  let v1=vecs[0].slice(); if(v1[0]<0)v1=v1.map(x=>-x);
+  const al=v1.map(x=>x/Math.sqrt(lam));
+  const rowAvg=K.map(r=>r.reduce((s,x)=>s+x,0)/n);
+  const tot=K.reduce((s,r)=>s+r.reduce((a,b)=>a+b,0),0)/(n*n);
+  const trainZ=xs.map((_,i)=>Math.sqrt(lam)*v1[i]);
+  function kc(x){
+    const kX=xs.map(a=>(a*x+1)*(a*x+1));
+    const nk=kX.reduce((s,v)=>s+v,0)/n;
+    return kX.map((v,i)=>v-rowAvg[i]-nk+tot);
+  }
+  const z1=x=>{const c=kc(x);return al[0]*c[0]+al[1]*c[1]+al[2]*c[2];};
+  function draw(){
+    const xq=+$('#ooX').value;
+    svg.innerHTML='';
+    // top: axis
+    const yA=60;
+    const xMin=-2,xMax=3;
+    const px=v=>70+(v-xMin)/(xMax-xMin)*740;
+    svgAdd(svg,'line',{x1:70,y1:yA,x2:810,y2:yA,stroke:'var(--line)',strokeWidth:1.5});
+    [-1,0,1].forEach((v,i)=>{
+      svgAdd(svg,'circle',{cx:px(v),cy:yA-10,r:6,fill:'var(--accent)'});
+      svgHalo(svg,px(v),yA+18,'x'+(i+1)+'='+v,{font:10,fill:'var(--muted)'});
+      svgHalo(svg,px(v),yA-26,'z₁='+fmt(trainZ[i],3),{font:10,fill:'var(--accent)'});
+    });
+    svgAdd(svg,'rect',{x:px(xq)-6,y:yA-16,width:12,height:12,transform:`rotate(45 ${px(xq)} ${yA-10})`,fill:'var(--blue)'});
+    svgAdd(svg,'line',{x1:px(xq),y1:yA-34,x2:px(xq),y2:yA+6,stroke:'var(--blue)',strokeWidth:1.4,strokeDasharray:'4 3'});
+    svgHalo(svg,px(xq),yA+40,'x⋆='+fmt(xq,2),{font:10.5,fill:'var(--blue)'});
+    // mid: computation panel
+    const kX=xs.map(a=>(a*xq+1)*(a*xq+1));
+    const nk=kX.reduce((s,v)=>s+v,0)/n;
+    const c=kc(xq);
+    const z=z1(xq);
+    const p0={x0:60,y0:150};
+    const rows=[
+      ['k_X(x⋆) = (k(xᵢ,x⋆))','('+kX.map(v=>fmt(v,2)).join(', ')+')'],
+      ['m_row（训练行均值）','('+rowAvg.map(v=>fmt(v,2)).join(', ')+')'],
+      ['(1/n)·1ᵀk_X(x⋆)',fmt(nk,3)],
+      ['k̄（训练总体均值）',fmt(tot,3)],
+      ['k_c(x⋆) = k_X − m_row − nk·1 + k̄·1','('+c.map(v=>fmt(v,2)).join(', ')+')'],
+      ['z₁(x⋆) = α₁ᵀ k_c(x⋆)',fmt(z,3)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=p0.y0+i*24;
+      svgAdd(svg,'text',{x:p0.x0,y,'font-size':10.5,fill:i===5?'var(--blue)':'var(--ink)'},r[0]);
+      svgAdd(svg,'text',{x:p0.x0+290,y,'font-size':10.5,'font-weight':700,fill:i===5?'var(--blue)':'var(--accent)'},r[1]);
+    });
+    // bottom: z1(x) curve
+    const yB=320,H=80;
+    let lo=1e9,hi=-1e9;
+    for(let k=0;k<=120;k++){const v=z1(xMin+(xMax-xMin)*k/120);lo=Math.min(lo,v);hi=Math.max(hi,v);}
+    const pad=(hi-lo)*0.15+0.1;lo-=pad;hi+=pad;
+    const py=v=>yB+H-(v-lo)/(hi-lo)*H;
+    svgAdd(svg,'rect',{x:70,y:yB-H,width:740,height:H+6,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:70,y1:py(0),x2:810,y2:py(0),stroke:'var(--muted)',strokeWidth:1});
+    let d='M';
+    for(let k=0;k<=120;k++){const x=xMin+(xMax-xMin)*k/120;d+=(k===0?'':' L')+px(x)+','+py(z1(x));}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.4});
+    xs.forEach((x,i)=>svgAdd(svg,'circle',{cx:px(x),cy:py(trainZ[i]),r:5,fill:'var(--accent)'}));
+    svgAdd(svg,'circle',{cx:px(xq),cy:py(clamp(z,lo,hi)),r:6,fill:'var(--blue)'});
+    svgHalo(svg,px(xq)+(xq>1.6?-10:10),py(clamp(z,lo,hi))-10,'z₁(x⋆)='+fmt(z,3),{font:10.5,fill:'var(--blue)',anchor:xq>1.6?'end':'start'});
+    svgHalo(svg,440,yB+H+14,'z₁(x) 曲线（120 个采样点现算）；绿点 = 训练坐标 √λ₁v₁ᵢ',{font:10,fill:'var(--muted)'});
+    $('#ooCap').innerHTML=`当前 x⋆=${fmt(xq,2)}：k_X=(${kX.map(v=>fmt(v,2)).join(', ')})，(1/n)1ᵀk_X=${fmt(nk,3)}，四项中心化后 k_c=(${c.map(v=>fmt(v,2)).join(', ')})，<b>z₁(x⋆)=${fmt(z,3)}</b>。讲义对账：x⋆=2 时 k_c=(−2.89,−2.22,5.11)=(−26/9,−20/9,46/9)，z₁=−2√2≈−2.828。若省略中心化或把 α₁ 写成 v₁/λ₁，这个坐标的数值和尺度都会变。`;
+  }
+  function sync(){$('#ooXval').textContent=fmt(+$('#ooX').value,2);draw();}
+  $('#ooX').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §7 RBF spectrum ---------- */
+(()=>{
+  const svg=$('#rbfViz');
+  let pts=[0,0.9,2.1,3.2,4.3,5.1];
+  function regen(){pts=Array.from({length:6},()=>Math.random()*5);}
+  function draw(){
+    const s=+$('#rbSig').value;
+    svg.innerHTML='';
+    const K=pts.map(a=>pts.map(b=>rbf(a,b,s)));
+    const {vals}=jacobiEig(K);
+    const x0=90,y0=64,w=520;
+    const mx=Math.max(...vals.map(Math.abs),1e-9);
+    svgAdd(svg,'line',{x1:x0,y1:y0+120,x2:x0+w,y2:y0+120,stroke:'var(--muted)',strokeWidth:1.2});
+    vals.forEach((v,i)=>{
+      const bx=x0+i*(w/6)+8, bwid=w/6-16;
+      const h=v/mx*100;
+      svgAdd(svg,'rect',{x:bx,y:y0+120-h,width:bwid,height:Math.max(h,1),rx:3,fill:'var(--accent)',opacity:.9});
+      svgAdd(svg,'text',{x:bx+bwid/2,y:y0+158,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'λ'+(i+1));
+      if(v/mx>=0)svgHalo(svg,bx+bwid/2,y0+120-h-6,fmt(v,2),{font:9.5,fill:'var(--ink)'});
+    });
+    svgHalo(svg,x0+w/2,y0-16,`K（RBF，σ=${fmt(s,2)}）的特征值（Jacobi 现算）`,{font:11,fill:'var(--muted)'});
+    const k01=rbf(0,1,s);
+    const q0={x0:690,y0:70};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11,'font-weight':700,fill:'var(--muted)'},'相距 1 的相似度');
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0+30,'font-size':14,'font-weight':800,fill:'var(--accent)'},'k(0,1)='+fmt(k01,3));
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0+64,'font-size':10.5,fill:'var(--ink)'},k01<0.15?'σ 过小：K≈I，谱≈全 1':(k01>0.85?'σ 过大：K≈11ᵀ，一个主导':'过渡区：谱有层次'));
+    const spread=vals[0]-vals[5];
+    $('#rbCap').innerHTML=`当前 σ=${fmt(s,2)}：6 个点 (${pts.map(p=>fmt(p,1)).join(', ')}) 的 K 特征值为 (${vals.map(v=>fmt(v,2)).join(', ')})，谱极差 ${fmt(spread,2)}；k(0,1)=${fmt(k01,3)}。σ→小：非对角趋 0（K≈I）、谱趋近 (1,1,1,1,1,1)——每个点只像自己，任何方向都没有可提取的方差结构；σ→大：非对角趋 1（K≈11ᵀ）、谱趋近 (6,0,0,0,0,0)——所有点几乎相同，只剩“常数方向”。两种极端都让 kernel PCA 失去分辨力。`;
+  }
+  function sync(){$('#rbSigval').textContent=fmt(+$('#rbSig').value,2);draw();}
+  $('#rbSig').addEventListener('input',sync);
+  $('#rbRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽 6 个输入点');});
+  sync();
+})();
+
+/* ---------- §8 autoencoder bottleneck ---------- */
+(()=>{
+  const svg=$('#aeViz');
+  let data=null;
+  function regen(){
+    // anisotropic 2D cloud along a random direction
+    const th=Math.random()*Math.PI;
+    const dir=[Math.cos(th),Math.sin(th)];
+    const ort=[-dir[1],dir[0]];
+    data=Array.from({length:40},()=>{
+      const u=(Math.random()+Math.random()+Math.random()-1.5)*1.6; // ~gaussian along main axis
+      const v=(Math.random()+Math.random()-1)*0.35;
+      return [dir[0]*u+ort[0]*v, dir[1]*u+ort[1]*v];
+    });
+  }
+  regen();
+  function stats(){
+    const n=data.length;
+    const mx=data.reduce((s,p)=>s+p[0],0)/n, my=data.reduce((s,p)=>s+p[1],0)/n;
+    const cov=[[0,0],[0,0]];
+    data.forEach(p=>{cov[0][0]+=(p[0]-mx)**2;cov[0][1]+=(p[0]-mx)*(p[1]-my);cov[1][1]+=(p[1]-my)**2;});
+    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;
+    const {vals}=jacobiEig(cov);
+    return {mx,my,lams:vals}; // sigma_j^2 = n * lambda_j
+  }
+  function draw(){
+    const k=+$('#aeK').value;
+    svg.innerHTML='';
+    const mk1=svgMarker(svg,'aeA','#176653');
+    // left: bottleneck diagram
+    const bx=60,by=60;
+    const inB={x:bx,y:by,w:56,h:150},midB={x:bx+170,y:by+45,w:44,h:60},outB={x:bx+340,y:by,w:56,h:150};
+    [[inB,'x∈ℝ²'],[midB,'z∈ℝᵏ'],[outB,'x̂∈ℝ²']].forEach(([b,lab])=>{
+      svgAdd(svg,'rect',{x:b.x,y:b.y,width:b.w,height:b.h,rx:10,fill:'var(--surface)',stroke:'var(--accent)',strokeWidth:1.8});
+      svgAdd(svg,'text',{x:b.x+b.w/2,y:b.y+b.h/2,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--ink)'},lab);
+    });
+    svgAdd(svg,'line',{x1:inB.x+inB.w,y1:by+75,x2:midB.x,y2:by+75,stroke:'#176653',strokeWidth:2.2,markerEnd:mk1});
+    svgAdd(svg,'line',{x1:midB.x+midB.w,y1:by+75,x2:outB.x,y2:by+75,stroke:'#176653',strokeWidth:2.2,markerEnd:mk1});
+    svgHalo(svg,bx+113,by+58,'encoder',{font:10.5,fill:'#176653'});
+    svgHalo(svg,bx+283,by+58,'decoder',{font:10.5,fill:'#176653'});
+    svgHalo(svg,bx+192,by+140,'瓶颈 k='+k,{font:10.5,fill:'var(--warm)'});
+    svgHalo(svg,bx+225,by+205,'重构损失 ‖x−x̂‖²（平方误差）',{font:10.5,fill:'var(--muted)'});
+    // right: error staircase
+    const st=stats();
+    const sig2=st.lams.map(l=>l*data.length); // sigma_j^2
+    const tot2=sig2[0]+sig2[1];
+    const R={x0:520,y0:50,w:320,h:210};
+    const pxv=k2=>R.x0+30+k2/2*(R.w-70);
+    const pyv=e=>R.y0+R.h-20-(e/Math.max(tot2,1e-9))*(R.h-60);
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:R.x0+20,y1:pyv(0),x2:R.x0+R.w-10,y2:pyv(0),stroke:'var(--muted)',strokeWidth:1});
+    [[0,tot2],[1,sig2[1]],[2,0]].forEach(([kk,err])=>{
+      svgAdd(svg,'rect',{x:pxv(kk)-16,y:pyv(err),width:32,height:Math.max(pyv(0)-pyv(err),1.5),rx:3,fill:kk===k?'var(--warm)':'var(--accent)',opacity:kk===k?1:.55});
+      svgHalo(svg,pxv(kk),pyv(err)-8,'k='+kk+'：'+fmt(err,1),{font:10,fill:kk===k?'var(--warm)':'var(--ink)'});
+    });
+    svgAdd(svg,'text',{x:R.x0+R.w/2,y:R.y0+R.h+2,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'瓶颈维度 k');
+    svgHalo(svg,R.x0+R.w/2,R.y0-8,'线性 AE 重构误差 = Σ_{j>k} σⱼ²（现算）',{font:10.5,fill:'var(--muted)'});
+    $('#aeCap').innerHTML=`当前 k=${k}：数据前两个特征值（方差×n = σⱼ²）为 ${fmt(sig2[0],1)} 与 ${fmt(sig2[1],1)}；k=0 误差 ${fmt(tot2,1)}、k=1 误差 ${fmt(sig2[1],1)}（占比 ${fmt(sig2[1]/tot2*100,1)}%）、k=2 误差 0。这一阶梯正是“线性瓶颈 = 只保留前 k 个正交变化方向”的直接后果（§9 给出证明）；随机按钮真用 Math.random 重抽各向异性方向。`;
+  }
+  function sync(){$('#aeKval').textContent=$('#aeK').value;draw();}
+  $('#aeK').addEventListener('input',sync);
+  $('#aeRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽数据方向');});
+  sync();
+})();
+
+/* ---------- §9 linear AE = PCA ---------- */
+(()=>{
+  const svg=$('#laeViz');
+  let data=null;
+  function regen(){
+    const th=Math.random()*Math.PI;
+    const dir=[Math.cos(th),Math.sin(th)],ort=[-dir[1],dir[0]];
+    data=Array.from({length:36},()=>{
+      const u=(Math.random()+Math.random()+Math.random()-1.5)*1.5;
+      const v=(Math.random()+Math.random()-1)*0.4;
+      return [dir[0]*u+ort[0]*v,dir[1]*u+ort[1]*v];
+    });
+  }
+  regen();
+  function pca(){
+    const n=data.length;
+    const mx=data.reduce((s,p)=>s+p[0],0)/n, my=data.reduce((s,p)=>s+p[1],0)/n;
+    const cov=[[0,0],[0,0]];
+    data.forEach(p=>{cov[0][0]+=(p[0]-mx)**2;cov[0][1]+=(p[0]-mx)*(p[1]-my);cov[1][1]+=(p[1]-my)**2;});
+    cov[0][0]/=n;cov[0][1]/=n;cov[1][1]/=n;
+    const {vals,vecs}=jacobiEig(cov);
+    return {mx,my,lams:vals,U:vecs,sig2:vals.map(l=>l*n)};
+  }
+  function draw(){
+    const k=+$('#laK').value;
+    svg.innerHTML='';
+    const {mx,my,lams,U,sig2}=pca();
+    const L={x0:60,y0:36,w:400,h:280};
+    const S=62;
+    const cx=L.x0+L.w/2,cy=L.y0+L.h/2;
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    // principal direction line
+    const u1=U[0];
+    svgAdd(svg,'line',{x1:cx-u1[0]*3.4*S,y1:cy-u1[1]*3.4*S,x2:cx+u1[0]*3.4*S,y2:cy+u1[1]*3.4*S,stroke:'var(--accent)',strokeWidth:1.2,strokeDasharray:'6 4',opacity:.7});
+    svgHalo(svg,cx+u1[0]*2.9*S,cy+u1[1]*2.9*S-10,'PC1',{font:10,fill:'var(--accent)'});
+    let errF=0;
+    data.forEach(p=>{
+      const dx=p[0]-mx,dy=p[1]-my;
+      let rx=0,ry=0;
+      if(k>=1){const c1=u1[0]*dx+u1[1]*dy;rx+=c1*u1[0];ry+=c1*u1[1];}
+      if(k>=2){rx=dx;ry=dy;}
+      const X=cx+dx*S,Y=cy-dy*S,Xr=cx+rx*S,Yr=cy-ry*S;
+      errF+=(dx-rx)**2+(dy-ry)**2;
+      svgAdd(svg,'line',{x1:X,y1:Y,x2:Xr,y2:Yr,stroke:'var(--warm)',strokeWidth:1,opacity:.5});
+      svgAdd(svg,'circle',{cx:Xr,cy:Yr,r:4.5,fill:'var(--surface)',stroke:'var(--accent)',strokeWidth:1.6});
+      svgAdd(svg,'circle',{cx:X,cy:Y,r:3.2,fill:'var(--ink)'});
+    });
+    svgHalo(svg,cx,L.y0+16,'实心=中心化数据 · 空心=U_kU_kᵀ 重建 · 线=被丢掉的分量',{font:10,fill:'var(--muted)'});
+    // panel
+    const P={x0:530,y0:56};
+    const tail=sig2.slice(k).reduce((s,v)=>s+v,0);
+    const rows=[
+      ['保留方向数 k',String(k)],
+      ['σ₁², σ₂²（现算）',fmt(sig2[0],1)+' , '+fmt(sig2[1],1)],
+      ['‖X_c−U_kU_kᵀX_c‖²_F',fmt(errF,2)],
+      ['Σ_{j>k} σⱼ²',fmt(tail,2)],
+      ['两数之差',fmt(Math.abs(errF-tail),6)]
+    ];
+    rows.forEach((r,i)=>{
+      const y=P.y0+i*30;
+      svgAdd(svg,'text',{x:P.x0,y,'font-size':11,fill:i>=2&&i<=3?'var(--ink)':'var(--muted)'},r[0]);
+      svgAdd(svg,'text',{x:P.x0+225,y,'font-size':11,'font-weight':700,fill:i===4?'var(--accent)':'var(--accent)'},r[1]);
+    });
+    svgHalo(svg,P.x0+80,P.y0+5*30+6,k===2?'k=2：无损（全部保留）':(k===0?'k=0：全部塌到均值':'k=1：只剩第二方差作为误差'),{font:11,fill:'var(--muted)'});
+    $('#laCap').innerHTML=`当前 k=${k}：Frobenius 误差 ${fmt(errF,2)}，与 Σ_{{j>k}}σⱼ²=${fmt(tail,2)} <b>逐位一致</b>——线性瓶颈的最优重建就是 PCA 前 k 维投影。手算例（§9 卡片）：数据在 w=(1,1)/√2 直线上时 k=1 即零误差，z=wᵀx 对 x=(2,2) 给 2√2。注意等价的三前提：中心化（或 bias）、线性、平方损失；A、B 分解本身不唯一。`;
+  }
+  function sync(){$('#laKval').textContent=$('#laK').value;draw();}
+  $('#laK').addEventListener('input',sync);
+  $('#laRand').addEventListener('click',()=>{regen();draw();toast('已随机重抽数据');});
+  sync();
+})();
+
+/* ---------- §14 chain ---------- */
+(()=>{
+  const svg=$('#chainViz');
+  const mk=svgMarker(svg,'chA','#176653');
+  const mkG=svgMarker(svg,'chG','#8a938b');
+  const row1=[
+    {t:'特征空间 PCA',s:'同一目标'},
+    {t:'双中心化 K_c',s:'=HKH'},
+    {t:'特征分解',s:'λ_r, v_r'},
+    {t:'√λ 归一化',s:'α_r=v_r/√λ_r'},
+    {t:'样本外投影',s:'四项中心化'}
+  ];
+  const row2=[
+    {t:'瓶颈 k',s:'k≪d'},
+    {t:'重构损失 ‖x−x̂‖²',s:''},
+    {t:'线性=PCA 子空间',s:'非线性=弯曲展开'}
+  ];
+  const w1=112,h=58,g1=10,x1=140,y1=36,y2=140;
+  row1.forEach((n,i)=>{
+    const x=x1+i*(w1+g1);
+    svgAdd(svg,'rect',{x,y:y1,width:w1,height:h,rx:10,fill:'color-mix(in srgb,#176653 7%, var(--surface))',stroke:'#176653',strokeWidth:1.8});
+    svgAdd(svg,'text',{x:x+w1/2,y:y1+25,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(svg,'text',{x:x+w1/2,y:y1+43,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},n.s);
+    if(i<row1.length-1)svgAdd(svg,'line',{x1:x+w1,y1:y1+h/2,x2:x+w1+g1,y2:y1+h/2,stroke:'#176653',strokeWidth:2,markerEnd:mk});
+  });
+  const w2=186,g2=14;
+  row2.forEach((n,i)=>{
+    const x=x1+i*(w2+g2);
+    svgAdd(svg,'rect',{x,y:y2,width:w2,height:h,rx:10,fill:'color-mix(in srgb,#176653 7%, var(--surface))',stroke:'#176653',strokeWidth:1.8});
+    svgAdd(svg,'text',{x:x+w2/2,y:y2+25,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(svg,'text',{x:x+w2/2,y:y2+43,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},n.s);
+    if(i<row2.length-1)svgAdd(svg,'line',{x1:x+w2,y1:y2+h/2,x2:x+w2+g2,y2:y2+h/2,stroke:'#176653',strokeWidth:2,markerEnd:mk});
+  });
+  // bookends
+  svgAdd(svg,'rect',{x:12,y:y1+8,width:112,height:42,rx:10,fill:'color-mix(in srgb,#8a938b 10%, var(--surface))',stroke:'#8a938b',strokeWidth:1.6});
+  svgAdd(svg,'text',{x:68,y:y1+34,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},'第 16 讲 PCA');
+  svgAdd(svg,'line',{x1:124,y1:y1+29,x2:140,y2:y1+29,stroke:'#8a938b',strokeWidth:2,markerEnd:mkG});
+  svgAdd(svg,'line',{x1:68,y1:y1+50,x2:68,y2:y2+29,stroke:'#8a938b',strokeWidth:2,markerEnd:mkG});
+  svgAdd(svg,'rect',{x:12,y:y2+8,width:112,height:42,rx:10,fill:'color-mix(in srgb,#8a938b 10%, var(--surface))',stroke:'#8a938b',strokeWidth:1.6});
+  svgAdd(svg,'text',{x:68,y:y2+34,'text-anchor':'middle','font-size':10.5,'font-weight':700,fill:'var(--ink)'},'同一起点');
+  const lastX=x1+5*w1+4*g1;
+  svgAdd(svg,'rect',{x:lastX+16,y:y1+8,width:112,height:42,rx:10,fill:'color-mix(in srgb,#8a938b 10%, var(--surface))',stroke:'#8a938b',strokeWidth:1.6});
+  svgAdd(svg,'text',{x:lastX+72,y:y1+27,'text-anchor':'middle','font-size':10,'font-weight':700,fill:'var(--ink)'},'第 19 讲');
+  svgAdd(svg,'text',{x:lastX+72,y:y1+42,'text-anchor':'middle','font-size':9,fill:'var(--muted)'},'概率建模');
+  svgAdd(svg,'line',{x1:lastX,y1:y1+29,x2:lastX+16,y2:y1+29,stroke:'#8a938b',strokeWidth:2,markerEnd:mkG});
+})();
+
+/* ---------- checklist ---------- */
+(()=>{
+  const items=[
+    '我能解释为什么 Swiss roll 让线性 PCA 失败（函数类太简单，不是数值错误）。',
+    '我能写出特征空间版 PCA 目标 max ⟨u,φ̃ᵢ⟩² 并说明 C_φ 与 K_c 特征值差一个 n。',
+    '我能复述 representer 论证：u⊥ 不改变训练投影、只占范数预算。',
+    '我能手算三点例的 K=[[4,1,0],[1,1,1],[0,1,4]] 与 K_c=[[19,−2,−17],[−2,4,−2],[−17,−2,19]]/9。',
+    '我知道特征值是 4 与 2/3，且 v₁=(1,0,−1)/√2、α₁=(1,0,−1)/(2√2)、α₁ᵀK_cα₁=1。',
+    '我能解释为什么系数除以 √λ_r 而不是 λ_r，以及坐标 z_r(xᵢ)=√λ_r·v_ir。',
+    '我能写出 K_c=HKH 的元素级四项公式，并解释为什么不能只减一个常数。',
+    '我能写出新点的四项中心化 k_c(x) 与 z_r(x)=v_rᵀk_c(x)/√λ_r，并说明为何必须用训练均值。',
+    '我能手算 x⋆=2 时 z₁=−2√2≈−2.828（含 k_c=(−26/9,−20/9,46/9)）。',
+    '我知道 RBF 带宽两个极端的谱形态（≈I 与 ≈11ᵀ）及其后果。',
+    '我能复述线性 autoencoder=PCA 的三前提与准确结论（最优重建子空间相同、坐标不唯一）。',
+    '我能说出非线性 autoencoder 的能力、代价与至少两类评估陷阱。'
+  ];
+  const box=$('#checkList');
+  box.innerHTML=items.map((t,i)=>`<label><input type="checkbox" data-ck="${i}"><span>${t}</span></label>`).join('');
+  const score=$('#checkScore');
+  function upd(){
+    const done=$$('#checkList input').filter(c=>c.checked).length;
+    score.textContent=`已确认 ${done}/${items.length} 项${done===items.length?'——第 18 讲可以收官，向第 19 讲出发。':'。全部勾掉再进入下一讲。'}`;
+    $$('#checkList label').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  }
+  box.addEventListener('change',upd);
+  upd();
+})();
+
+/* ---------- mode system ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    swiss:{mode:'core',tag:'诊断'},fspace:{mode:'core',tag:'目标'},
+    reparam:{mode:'core',tag:'系数'},centering:{mode:'core',tag:'中心化'},
+    worked:{mode:'core',tag:'手算'},oos:{mode:'core',tag:'新点'},
+    capacity:{mode:'core',tag:'带宽'},
+    ae:{mode:'core',tag:'自编码'},lae:{mode:'core',tag:'线性等价'},nlae:{mode:'core',tag:'非线性'},
+    clus:{mode:'extra',tag:'拓展'},workflow:{mode:'extra',tag:'拓展'},
+    confuse:{mode:'core',tag:'误区'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：两条非线性路线各自的位置与连接。',
+    swiss:'一切从“卷层被压扁重叠”的诊断出发——先看清病灶。',
+    fspace:'同一个 PCA 目标搬进特征空间；同心环是最小的反例。',
+    reparam:'无限维方向换成 n 个系数；√λ 归一化是最容易踩的刻度坑。',
+    centering:'看不到 φ 也要减均值：双中心化把四项写成矩阵乘法。',
+    worked:'三点例把 K、K_c、特征对、α₁ 一步步落到具体数字。',
+    oos:'新点没参与分解——必须沿用训练均值做四项中心化。',
+    capacity:'算法能跑了，先摸清 σ 的两个极端与谱形态。',
+    ae:'换第二条路线：用瓶颈和重构损失学编码解码。',
+    lae:'“线性 AE 学到 PCA”的精确版本：相同的是最优重建子空间。',
+    nlae:'非线性激活换来弯曲流形能力，也带来一整套代价与评估陷阱。',
+    clus:'kernel PCA 的账本与邻居：pre-image、O(n²)、以及三种“听起来一样”的聚类。',
+    workflow:'一张 4096 维图像表从预处理到解释的完整可审计流程。',
+    confuse:'收束前先扫掉八句“听起来对”的话。',
+    takeaway:'最后把两条链、五个公式、自查清单和下一讲串起来。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    setTimeout(rebuildBridges,0);
+    if(mode==='full'){
+      $$('.control input[type=range]').forEach(r=>r.dispatchEvent(new Event('input',{bubbles:true})));
+    }
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'Swiss roll',en:'Swiss roll',f:'(t\\cos t,\\ h,\\ t\\sin t)',d:'卷成三维螺旋的二维纸面；检验降维能否展开弯曲结构。',r:'位置：§1。用处：线性 PCA 的标准困难例子。重要：失败源于函数类太简单，不是数值错误。'},
+    {t:'流形',en:'manifold',f:'\\dim_{\\text{local}}=2\\subset\\mathbb R^3',d:'局部低维、整体可能弯曲的结构。',r:'位置：§1。用处：给“高维数据的低维自由度”几何语言。重要：非线性降维的目标就是恢复流形坐标。'},
+    {t:'非线性降维',en:'nonlinear dimensionality reduction',f:'z=g(x),\\ g\\ \\text{非线性}',d:'用非线性映射获得低维表示；两条路线：kernel PCA 与 autoencoder。',r:'位置：§1。用处：可视化、去冗余、下游特征。重要：PCA 是它的线性特例；选路线要看样本量与先验。'},
+    {t:'中心化 Gram 矩阵',en:'centered Gram matrix',f:'(K_c)_{ij}=\\langle\\tilde\\phi_i,\\tilde\\phi_j\\rangle,\\ K_cv_r=\\lambda_rv_r',d:'中心化训练特征的两两内积；kernel PCA 唯一要分解的对象。',r:'位置：§3。用处：把无限维 PCA 变成 n×n 特征值问题。重要：v_r 在样本空间、u_r 在特征空间；K_c 特征值与协方差差一个 n。'},
+    {t:'归一化系数',en:'normalization coefficient',f:'\\alpha_r=\\frac{v_r}{\\sqrt{\\lambda_r}}',d:'让特征空间方向 u_r=Σαᵢᵣφ̃ᵢ 有单位范数的缩放。',r:'位置：§3。用处：保证坐标尺度正确。重要：分母是 √λ 不是 λ；坐标 z_r(xᵢ)=√λ_r·vᵢᵣ。'},
+    {t:'中心矩阵',en:'centering matrix',f:'H=I_n-\\tfrac1n\\mathbf 1\\mathbf 1^\\top,\\ K_c=HKH',d:'左乘减行均值、右乘减列均值的双中心化机器。',r:'位置：§4。用处：不接触 φ 实现特征空间中心化。重要：元素级是四项（原值/行/列/总体）；不能只减一个常数。'},
+    {t:'样本外投影',en:'out-of-sample projection',f:'z_r(x)=\\frac{v_r^\\top k_c(x)}{\\sqrt{\\lambda_r}}',d:'把未参与分解的新点投进已学 kernel 主方向。',r:'位置：§6。用处：kernel PCA 部署后对新数据可用。重要：必须沿用训练均值；存储与计算依赖全部训练点。'},
+    {t:'中心化 kernel 向量',en:'centered kernel vector',f:'k_c(x)=k_X(x)-m_{\\mathrm{row}}-(\\tfrac1n\\mathbf 1^\\top k_X)\\mathbf 1+\\bar k\\mathbf 1',d:'新点版的“减均值”：原始相似度、训练行均值、新点均值、总体均值四项。',r:'位置：§6。用处：与新点的投影口径一致。重要：与 K_c=HKH 的四项完全平行。'},
+    {t:'自编码器',en:'autoencoder',f:'z=f_{\\mathrm{enc}}(x),\\ \\hat x=f_{\\mathrm{dec}}(z),\\ \\min\\tfrac1n\\sum\\lVert x_i-\\hat x_i\\rVert^2',d:'带瓶颈、以重建输入为目标的网络。',r:'位置：§8。用处：无标签学表示。重要：平方误差与 BCE 是不同目标，不能混用结论。'},
+    {t:'编码器',en:'encoder / decoder',f:'f_{\\mathrm{enc}}:\\mathbb R^d\\to\\mathbb R^k,\\ f_{\\mathrm{dec}}:\\mathbb R^k\\to\\mathbb R^d',d:'打包与拆包的一对映射；串联构成自编码器。',r:'位置：§8。用处：z 即学到的低维表示。重要：分解不唯一——(BR⁻¹)(RA) 给出同一重建映射。'},
+    {t:'瓶颈',en:'bottleneck',f:'k\\ll d',d:'维度远低于输入的中间层，对可传递信息施加硬约束。',r:'位置：§8。用处：制造压缩压力。重要：k 过小丢信息、过大失去压力甚至记忆训练集。'},
+    {t:'低秩重建',en:'rank-k reconstruction',f:'\\min_{\\operatorname{rank}M\\le k}\\lVert X_c-MX_c\\rVert_F^2=\\sum_{j>k}\\sigma_j^2',d:'线性自编码器的整体映射 M=BA 秩至多 k；最优解是 PCA 前 k 维投影。',r:'位置：§9。用处：把“线性 AE=PCA”变成可检验命题。重要：三前提（中心化/线性/平方损失）；等价对象是子空间而非坐标。'},
+    {t:'去噪自编码器',en:'denoising autoencoder',f:'\\min\\sum\\lVert x_i-f_{\\mathrm{dec}}(f_{\\mathrm{enc}}(\\tilde x_i))\\rVert^2',d:'从加噪输入重建干净目标；规定“什么表示才算好”的训练变体。',r:'位置：§10。用处：防记忆、学稳健特征。重要：latent 坐标不是自动的流形真值，需额外约束。'},
+    {t:'pre-image 问题',en:'pre-image problem',f:'z\\in\\mathcal H\\ \\to\\ \\text{找 } x',d:'特征空间结果没有简单的原空间逆映射。',r:'位置：§11。用处：去噪/生成需回到输入空间。重要：与 O(n²) 存储、逐点 kernel 并列的实用限制。'},
+    {t:'谱聚类',en:'spectral clustering',f:'L=\\text{图 Laplacian}\\ \\to\\ \\text{特征向量}\\ \\to\\ k\\text{-means}',d:'相似度图 + Laplacian 谱嵌入 + 分组；与 kernel PCA+k-means、kernel k-means 同直觉不同算法。',r:'位置：§11。用处：非凸形状簇。重要：报告要写清矩阵、维数与分组步骤。'}
+  ];
+  const KEYS={};
+  G.forEach(c=>KEYS[c.t]=c.t);
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg,.term-ref';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&(p.matches(GLOSS_SKIP)||p.id==='hero'||p.id==='map'))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'为什么 Swiss roll 是普通 PCA 的困难例子？',a:'它的真实低维结构是弯曲的二维流形；普通 PCA 只能投影到一个线性二维平面，卷曲的不同层会重叠，不能把纸面坐标展开——这是函数类（线性映射）太简单，不是数值错误。'},
+    {q:'若 $K_{ij}=k(x_i,x_j)$，它表示什么？形状是什么？',a:'它是两个样本在隐式特征空间的内积 $K_{ij}=\\langle\\phi(x_i),\\phi(x_j)\\rangle_{\\mathcal H}$；$K\\in\\mathbb R^{n\\times n}$，对称，kernel 正定时半正定。'},
+    {q:'写出 $H$、$K_c$，并说明为什么 $K_c\\mathbf 1=0$。',a:'$H=I_n-\\frac1n\\mathbf 1\\mathbf 1^\\top$，$K_c=HKH$。由于 $H\\mathbf 1=0$，有 $K_c\\mathbf 1=HKH\\mathbf 1=0$——中心化后每行每列均值都为零。'},
+    {q:'若 $K_cv_r=\\lambda_rv_r$ 且 $\\lVert v_r\\rVert_2=1$，为什么 $\\alpha_r=v_r/\\sqrt{\\lambda_r}$ 能令特征空间方向单位化？',a:'$\\lVert u_r\\rVert_{\\mathcal H}^2=\\alpha_r^\\top K_c\\alpha_r=\\frac1{\\lambda_r}v_r^\\top(\\lambda_rv_r)=v_r^\\top v_r=1$。左边正是 $u_r=\\sum_i\\alpha_{ir}\\tilde\\phi_i$ 的范数平方。'},
+    {q:'写出中心化新点 kernel 向量和 $z_r(x)$ 的公式。为什么不能直接用未中心化 kernel 向量？',a:'$k_c(x)=k_X(x)-m_{\\mathrm{row}}-(\\frac1n\\mathbf 1^\\top k_X(x))\\mathbf 1+\\bar k\\mathbf 1$，$z_r(x)=\\alpha_r^\\top k_c(x)=\\frac{v_r^\\top k_c(x)}{\\sqrt{\\lambda_r}}$。PCA 方向是在相对于训练特征均值的坐标中学到的，新点也必须用同一个训练均值，否则每来一个新样本坐标系都会变。'},
+    {q:'手算：三点例（$x=-1,0,1$，$k=(xx\\prime+1)^2$）中取新点 $x_\\star=2$，求 $k_c(x_\\star)$ 与 $z_1(x_\\star)$。',a:'$k_X=(1,1,9)^\\top$，$m_{\\mathrm{row}}=(5/3,1,5/3)^\\top$，$\\bar k=13/9$，$\\frac13\\mathbf 1^\\top k_X=11/3$；$k_c=(-26/9,-20/9,46/9)^\\top$；$z_1=\\frac1{2\\sqrt2}(-\\frac{26}9-\\frac{46}9)=-2\\sqrt2\\approx-2.828$（§6 互动可逐步复算）。'},
+    {q:'在线性激活、平方重构损失和瓶颈维度 $k$ 下，线性 autoencoder 与 PCA 的关系是什么？',a:'整体映射 $\\hat x=BAx$ 秩至多 $k$，等价于找最佳秩 $\\le k$ 线性重建：$\\min_{\\operatorname{rank}M\\le k}\\lVert X_c-MX_c\\rVert_F^2=\\sum_{j>k}\\sigma_j^2$。最优重建子空间与 PCA 前 $k$ 维相同（前提：中心化/合适 bias、线性、平方损失）；但 $A,B$ 分解不唯一，$\\lambda_k=\\lambda_{k+1}$ 时最优子空间本身也不唯一。'},
+    {q:'一个非线性 autoencoder 训练误差很低、验证误差很高。给出至少两个可能原因和两个改进方向。',a:'原因：网络过大记忆训练集、瓶颈/正则化不足、训练验证分布不同、噪声或批次效应。改进：减小网络或瓶颈、加 weight decay/dropout/denoising、验证集早停、检查预处理一致性、多随机种子稳定性分析。'},
+    {q:'为什么瓶颈层可以作为降维表示？平方重构损失怎么写？',a:'瓶颈 $k\\ll d$ 限制可传递信息，$z\\in\\mathbb R^k$ 即低维表示；目标 $\\min_\\theta\\frac1n\\sum_i\\lVert x_i-f_{\\mathrm{dec}}(f_{\\mathrm{enc}}(x_i;\\theta_{\\mathrm{enc}});\\theta_{\\mathrm{dec}})\\rVert_2^2$。重建成功说明 $z$ 保留了对该损失重要的信息，但不自动保证语义。'},
+    {q:'RBF kernel PCA 的带宽 $\\sigma$ 过小或过大分别会发生什么？',a:'过小：$K\\approx I$、谱几乎全 1——每个点只像自己，没有可提取的方差结构；过大：$K\\approx\\mathbf 1\\mathbf 1^\\top$、只剩一个主导特征值——所有点几乎相同。两种极端都失去分辨力（§7 谱互动）。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  if(window.renderMathInElement)renderMathInElement(list,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
