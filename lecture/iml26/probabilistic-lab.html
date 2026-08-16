@@ -1,0 +1,1416 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 19 讲 · 概率建模（Probabilistic Modeling）互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 19 讲 Probabilistic Modeling 的深度互动讲义：从学函数到学分布、分布能做的四件事、直方图密度估计、KDE 与 bandwidth、维度灾难、参数分布族、MLE、高斯均值/方差 MLE、条件分布、MLE=最小二乘、一维回归手算、常见误区与下一讲连接。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+.gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:.92rem}
+.checklist label:hover{border-color:var(--accent)}
+.checklist input{margin-top:5px;accent-color:var(--accent)}
+.checklist label.done{opacity:.62;text-decoration:line-through}
+.check-score{margin-top:10px;font-weight:700;color:var(--accent)}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-19" title="返回第 19 讲原文">← 返回第 19 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 19 · INTERACTIVE LAB</div>
+      <div class="title">概率建模 — 从学函数到学分布</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+<div class="path-bar">
+      <span class="path-title">阅读模式</span>
+      <div class="seg" id="pathBar">
+        <button class="active" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+        <button type="button" data-mode="full" aria-pressed="false">完整课程</button>
+      </div>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 19 讲 / 25 讲</div>
+      <h1>函数给你一个答案，<br>分布给你一张地图</h1>
+      <p class="subtitle">第 16、18 讲的降维教我们从数据里找低维结构；这一讲换一个目标：<b>直接从数据里估计一个概率分布 $P$</b>。我们从直方图和 KDE 两种非参数密度估计出发，再进入参数化分布族与最大似然估计（MLE），最后得到本讲最重要的连接：<b>高斯噪声下的回归 MLE = 最小二乘</b>。</p>
+      <div class="question">💬 <b>本讲核心问题：</b>以前我们学的是“从数据里学一个函数”，现在为什么要改成“从数据里学一个概率分布”？</div>
+      <div class="answer">一句话答案：函数只告诉你一个答案；分布告诉你答案、可能性、置信程度、异常程度，以及如何生成新样本。本讲先学两种非参数密度估计（直方图 / KDE），再学参数化分布族 + MLE，最后把平方损失回归重新解释为高斯噪声下的 MLE。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">函数视角 → 分布视角 → 分布能做的四件事 → 直方图密度估计 → KDE 与 bandwidth → 参数分布族 → MLE 与 log-likelihood → 高斯均值/方差 MLE → 条件分布 → MLE = 最小二乘 → 一个一维回归手算 → 常见误区与下一讲连接。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">概率模型不是“多背几个分布”，而是把预测、不确定性、异常检测、采样生成和决策统一在同一套语言里。MLE 是本讲的第一种推断工具，也是后续 logistic 回归、贝叶斯推断、GMM 与 EM 的地基。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 换问</b>：从学函数 $f$ 换成学分布 $P$（§1–§2）。</span>
+            <span class="step"><b>② 非参数</b>：直方图与 KDE 直接描述 $p(x)$，但平滑参数难选（§3–§4）。</span>
+            <span class="step"><b>③ 参数化</b>：选分布族 $P_\theta$，把“学分布”变成“学有限维 $\theta$”（§5–§6）。</span>
+            <span class="step"><b>④ MLE</b>：取 log、求导，解出高斯均值/方差（§7–§8）。</span>
+            <span class="step"><b>⑤ 回归连接</b>：高斯噪声下的 MLE 等于最小二乘，一维手算 $23/14$（§9–§10）。</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">0</span> 概念地图：这一讲怎么走</h2>
+      <p class="sec-lead">先在脑中钉住六站：旧视角 → 新视角 → 非参数密度 → 参数化 + MLE → 高斯推导 → 回归连接。箭头方向就是数据流/推断流。</p>
+      <div class="viz">
+        <svg id="conceptMap" viewBox="0 0 1280 230" role="img" aria-label="本讲概念地图"></svg>
+        <p class="caption" id="conceptMapCap">节点可点击。灰节点连接前后讲；绿色为本讲核心站点；紫色为拓展站点。</p>
+      </div>
+    </section>
+
+    <!-- ============ §1 SHIFT ============ -->
+    <section id="shift">
+      <h2 class="sec-title"><span class="num">1</span> 从学函数到学分布</h2>
+      <p class="sec-lead">先看旧图景，再把它替换掉。不是“函数不好”，而是“函数回答的问题不够多”。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>传统视角：学一个函数 <span class="en">learn a function</span></h3>
+          <p>监督学习里，训练数据 $(x_i,y_i)$ 经过学习算法，输出 $\hat f(x)$。我们关心泛化误差：</p>
+          <p>$$L(f;P)=\mathbb{E}_{X,Y\sim P}[\ell(f(X),Y)],\qquad L(f;\mathcal D)=\frac1n\sum_i\ell(f(x_i),y_i).$$</p>
+          <p class="small">真实分布 $P$ 只用来解释 train/test 为什么有关：它们都是从一个 $P$ 里 i.i.d. 抽出来的。但算法最后主要输出一个函数。</p>
+        </div>
+        <div class="card why">
+          <h3>概率视角：直接学分布 <span class="en">learn a distribution</span></h3>
+          <p>模型不是 $\hat f$，而是分布：</p>
+          <p>$$\hat P_X,\qquad \hat P_{Y\mid X},\qquad \hat P_{X,Y}.$$</p>
+          <p class="small">无监督估计 $\hat P_X$；监督可以估计条件分布 $\hat P_{Y\mid X}$ 或联合分布 $\hat P_{X,Y}$。一句话区别：传统视角找能做任务的 $f$，概率视角找能解释数据来源的 $P$。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <svg id="shiftViz" viewBox="0 0 900 150" role="img" aria-label="函数视角与分布视角对比"></svg>
+        <p class="caption" id="shiftCap">同一个输入 $x=120$：函数只吐一个点预测 $\hat y$；分布给整条条件分布曲线，均值、方差、分位数、尾部都能读。</p>
+      </div>
+      <div class="def">
+        <div class="term">概率建模</div>
+        <div class="en">probabilistic modeling</div>
+        <div class="plain"><b>是什么：</b>用训练数据估计一个概率分布，使它能解释观测数据的生成机制；而不是只学习一个输入到输出的函数。</div>
+        <div class="plain"><b>白话：</b>从“背答案”变成“学规则”——学到的规则不仅能给一个预测，还能告诉你每种答案有多可能。</div>
+        <div class="plain"><b>怎么用：</b>选定目标分布（$P_X$、$P_{Y\mid X}$ 或 $P_{X,Y}$），用直方图/KDE 或参数族 + MLE 去拟合，再把分布用于预测、不确定性、异常检测或采样。</div>
+        <div class="plain"><b>为什么重要：</b>它把所有下游任务统一成“读出分布上的某个量”；这也是第 20 讲 generative/discriminative、贝叶斯推断和生成模型的共同起点。</div>
+      </div>
+      <div class="def">
+        <div class="term">联合分布</div>
+        <div class="en">joint distribution</div>
+        <div class="plain"><b>是什么：</b>多个随机变量一起的分布 $P_{X,Y}$；连续情形写作联合密度 $p(x,y)$。</div>
+        <div class="plain"><b>白话：</b>“面积和价格同时出现”的完整规律。</div>
+        <div class="plain"><b>怎么用：</b>对它求和/积分得到边缘分布 $P_X$ 或 $P_Y$；对它做除法得到条件分布 $P_{Y\mid X}$。</div>
+        <div class="plain"><b>为什么重要：</b>联合分布是概率建模的目标之一，也是第 20 讲 generative/discriminative 两种分解的出发点。</div>
+      </div>
+    </section>
+
+    <!-- ============ §2 USES ============ -->
+    <section id="uses">
+      <h2 class="sec-title"><span class="num">2</span> 分布能做什么：四件事</h2>
+      <p class="sec-lead">分布不是预测的替代品，而是预测的上游。学到一个条件分布后，选择哪个动作由损失函数决定。</p>
+      <div class="grid3">
+        <div class="card">
+          <h3>① 预测</h3>
+          <p>平方损失 $\ell(a,y)=(a-y)^2$ 下最优预测是<b>条件均值</b> $\hat f(x)=\hat{\mathbb E}[Y\mid X=x]$；绝对损失下是条件中位数；0-1 损失下是最大概率类别 $\arg\max_y \hat P(Y=y\mid X=x)$。</p>
+        </div>
+        <div class="card why">
+          <h3>② 不确定性</h3>
+          <p>同样预测 1.2M，$Y\mid X=120\sim\mathcal N(1.2,0.05^2)$ 与 $\mathcal N(1.2,0.5^2)$ 含义完全不同：均值相同、点预测相同，但后者不确定得多。</p>
+          <div class="viz compact">
+            <svg id="uncertViz" viewBox="0 0 520 180" role="img" aria-label="相同均值不同方差的两条高斯条件分布"></svg>
+            <p class="caption" id="uncertCap">两条曲线由同一公式现算：均值同为 $1.2$，$\sigma$ 不同。点预测无法区分它们，分布可以。</p>
+          </div>
+        </div>
+        <div class="card toolnote">
+          <h3>③ 异常检测</h3>
+          <p>估计输入密度 $\hat p(x)$ 后，新点密度很低可标记为异常：$$\mathrm{flag}(x)=\mathbf 1\{\hat p(x)<\tau\}.$$ 阈值 $\tau$ 应由验证集分位数/误报代价决定，不能由“很低”自动产生。</p>
+        </div>
+        <div class="card toolnote">
+          <h3>④ 采样与生成</h3>
+          <p>从 $\hat P_X$ 抽面积、从 $\hat P(Y\mid X)$ 抽价格，就能模拟一个合成市场。语言模型估计 $P(\text{text})$，扩散模型估计 $P(\text{image})$——生成模型都在做这件事。</p>
+        </div>
+        <div class="card conn">
+          <h3>评分 ≠ 概率</h3>
+          <p>连续变量的 $\hat p(x)$ 是密度评分，不是单点概率；单点概率为 $0$。密度要乘区间长度才是概率。若分类模型输出 $0.8$，只有在相似人群长期约 $80\%$ 为正类时，才叫概率校准。</p>
+        </div>
+      </div>
+      <div class="def">
+        <div class="term">异常检测</div>
+        <div class="en">anomaly detection</div>
+        <div class="plain"><b>是什么：</b>根据“在学到的分布下有多不可能”来识别异常点：$\mathrm{flag}(x)=\mathbf 1\{\hat p(x)<\tau\}$。</div>
+        <div class="plain"><b>白话：</b>先给正常数据建一张密度地图，地图上很荒凉的地方就标可疑。</div>
+        <div class="plain"><b>怎么用：</b>估计 $\hat p(x)$ → 在验证集上选阈值 $\tau$ → 低于阈值标记异常。</div>
+        <div class="plain"><b>为什么重要：</b>这是分布特有的决策能力；函数预测无法直接给出“这个输入本身是否奇怪”。阈值要显式定义，不能靠“很低”自动产生。</div>
+      </div>
+      <div class="def">
+        <div class="term">条件分布</div>
+        <div class="en">conditional distribution</div>
+        <div class="plain"><b>是什么：</b>给定 $X=x$ 后 $Y$ 的分布 $P(Y\mid X=x)$，写成密度就是 $p(y\mid x)$。</div>
+        <div class="plain"><b>白话：</b>“知道面积是 120 之后，价格会怎么分布”。</div>
+        <div class="plain"><b>怎么用：</b>在不同损失下从它读出均值/中位数/最可能类别/区间；也用于生成条件样本。</div>
+        <div class="plain"><b>为什么重要：</b>它比点函数 $f(x)$ 多保留了不确定性，且是监督概率模型与生成/判别模型分野的记号基础。</div>
+      </div>
+    </section>
+
+    <!-- ============ §3 HISTOGRAM ============ -->
+    <section id="hist">
+      <h2 class="sec-title"><span class="num">3</span> 直方图：先数数</h2>
+      <p class="sec-lead">最简单的一维密度估计：把数轴切成 bin，数每个 bin 里有多少个点。注意：先得到概率质量，再除以 bin 宽度才是密度。直方图是一种<b>非参数方法</b>：模型复杂度随划分方式增长，而不是固定为有限维参数向量。</p>
+      <div class="viz">
+        <div class="label-row">
+          <div class="control">
+            <label for="histWidth">bin 宽度 <span class="val" id="histWidthVal"></span></label>
+            <input id="histWidth" type="range" min="10" max="100" step="5" value="50">
+          </div>
+        </div>
+        <svg id="histViz" viewBox="0 0 720 320" role="img" aria-label="直方图密度估计"></svg>
+        <p class="caption" id="histCap"></p>
+      </div>
+      <div class="def">
+        <div class="term">密度</div>
+        <div class="en">density</div>
+        <div class="plain"><b>是什么：</b>连续随机变量的概率强度。对第 $j$ 个 bin $B_j$，若其中有 $N_j$ 个点，bin 宽度 $h_j$，则概率质量 $\hat P(X\in B_j)=N_j/n$，密度为 $\hat p(x)=N_j/(n h_j)$。</div>
+        <div class="plain"><b>公式：</b>$$\hat P(X\in B_j)=\frac{N_j}{n},\qquad \hat p(x)=\frac{N_j}{n h_j}\ (x\in B_j).$$</div>
+        <div class="plain"><b>白话：</b>“每单位 $x$ 有多少概率强度”；要得到概率必须“密度 × 区间长度”。</div>
+        <div class="plain"><b>怎么用：</b>直方图数数后除以 $n$ 再除以宽度；等宽 bin 时 $\sum_j h_j\hat p_j=\sum_j N_j/n=1$。</div>
+        <div class="plain"><b>为什么重要：</b>密度是连续概率建模的基本单位，后续 KDE、MLE 中的 $p(x)$ 都是密度；把密度和概率混淆会直接导致异常阈值、likelihood 比较的错误。</div>
+      </div>
+      <div class="def">
+        <div class="term">非参数方法</div>
+        <div class="en">non-parametric method</div>
+        <div class="plain"><b>是什么：</b>模型复杂度随数据量或划分方式增长，不固定在一个有限维参数向量里的统计方法。</div>
+        <div class="plain"><b>白话：</b>“没有固定模板，数据长什么样我就长什么样”——但仍有平滑参数。</div>
+        <div class="plain"><b>怎么用：</b>直方图选 bin 宽度，KDE 选带宽；复杂度来自数据本身/网格。</div>
+        <div class="plain"><b>为什么重要：</b>它先给了很强的表达能力；高维下表达力变成稀疏问题，于是转向参数化。</div>
+      </div>
+      <div class="def">
+        <div class="term">直方图</div>
+        <div class="en">histogram</div>
+        <div class="plain"><b>是什么：</b>把输入空间切成若干 bin，统计每个 bin 的样本数，再按 $N_j/(n h_j)$ 画出阶梯状密度估计。</div>
+        <div class="plain"><b>白话：</b>把数轴按刻度分格，往格子里丢点，再把每格“点数量 ÷ 总点数 ÷ 格宽”变成高度。</div>
+        <div class="plain"><b>怎么用：</b>选定 bin 宽度（或边界）→ 数点 → 归一化并除以宽度。</div>
+        <div class="plain"><b>为什么重要：</b>它是最直观的非参数估计，但 bin 宽度这个“人为平滑参数”会强烈改变视觉形状，引出平滑方法 KDE。</div>
+      </div>
+    </section>
+
+    <!-- ============ §4 KDE ============ -->
+    <section id="kde">
+      <h2 class="sec-title"><span class="num">4</span> KDE：在每个样本上放山包</h2>
+      <p class="sec-lead">直方图的硬边界造成锯齿；KDE 把每个样本周围放一个平滑核，再求平均。带宽 $\sigma$ 控制小山包宽度。</p>
+      <div class="viz">
+        <div class="label-row">
+          <div class="control">
+            <label for="kdeSigma">带宽 σ <span class="val" id="kdeSigmaVal"></span></label>
+            <input id="kdeSigma" type="range" min="2" max="60" step="1" value="18">
+          </div>
+          <button class="btn" id="kdeRandom" type="button">🎲 随机换一批样本</button>
+        </div>
+        <svg id="kdeViz" viewBox="0 0 760 340" role="img" aria-label="核密度估计"></svg>
+        <p class="caption" id="kdeCap"></p>
+      </div>
+      <div class="def">
+        <div class="term">核密度估计</div>
+        <div class="en">kernel density estimation, KDE</div>
+        <div class="plain"><b>是什么：</b>取积分为 $1$ 的核 $K$，在带宽 $h>0$ 下定义 $K_h(t)=\frac1h K(t/h)$；估计为 $$\hat p_{\mathrm{KDE}}(x)=\frac1n\sum_{i=1}^n K_\sigma(x-x_i).$$</div>
+        <div class="plain"><b>白话：</b>每个样本贡献一个小山包，山包越高代表“附近更可能”；所有山包取平均就是密度估计。</div>
+        <div class="plain"><b>怎么用：</b>选核（常用高斯核）→ 选带宽 → 在网格上把每个样本的核值相加并除以 $n$。</div>
+        <div class="plain"><b>为什么重要：</b>带宽 $h$ 是平滑度开关：太小每个点成峰（过拟合），太大抹平结构（欠拟合）。它是直方图 bin 宽度的连续版，也是高维稀疏困难的最小例子。</div>
+      </div>
+      <div class="def">
+        <div class="term">带宽</div>
+        <div class="en">bandwidth</div>
+        <div class="plain"><b>是什么：</b>核函数的宽度参数 $h$ 或 $\sigma$；$h$ 越大，每个核越宽越矮（$1/h$ 保证总积分仍为 $1$）。</div>
+        <div class="plain"><b>白话：</b>每个样本影响的“势力范围”有多大。</div>
+        <div class="plain"><b>怎么用：</b>调节 KDE 的平滑程度，类似直方图的 bin 宽度；可通过交叉验证选择。</div>
+        <div class="plain"><b>为什么重要：</b>它不是可有可无的细节，$1/h$ 不能省；否则 $K_h$ 积分不为 $1$，就不再是合法密度。</div>
+      </div>
+    </section>
+
+    <!-- ============ §5 CURSE (extra) ============ -->
+    <section id="curse" class="extra">
+      <h2 class="sec-title"><span class="num">5</span> 高维困难：为什么需要参数假设</h2>
+      <p class="sec-lead">一维直方图很自然；维度一高，“局部”变成很大很空的球。</p>
+      <div class="viz">
+        <div class="label-row">
+          <div class="control">
+            <label for="cdDim">维度 d <span class="val" id="cdDimVal"></span></label>
+            <input id="cdDim" type="range" min="1" max="12" step="1" value="6">
+          </div>
+        </div>
+        <svg id="curseViz" viewBox="0 0 720 300" role="img" aria-label="维度灾难"></svg>
+        <p class="caption" id="curseCap"></p>
+      </div>
+      <div class="card conn">
+        <p>若每个坐标切成 10 个 bin，$d$ 维网格数是 $10^d$；若希望半径 $r$ 的邻域含固定比例 $k/n$ 的样本，均匀近似下 $r\approx (k/n)^{1/d}$。$d$ 增大时 $r$ 很难变小，“附近”变得不近。高维建模因此需要低维结构、稀疏性或参数共享等额外假设。</p>
+      </div>
+    </section>
+
+    <!-- ============ §6 PARAM ============ -->
+    <section id="param">
+      <h2 class="sec-title"><span class="num">6</span> 参数化分布族</h2>
+      <p class="sec-lead">用有限维参数 $\theta$ 概括一个分布族，把“学 $P$”变成“学 $\theta$”。</p>
+      <div class="card">
+        <p><b>是什么：</b>先选定一个分布族 $P_\theta$，再由数据估计 $\theta$。例如 Gaussian 的 $\theta=(\mu,\sigma)$，Beta 的 $\theta=(\alpha,\beta)$，Uniform 的 $\theta=(a,b)$。</p>
+        <p><b>白话：</b>与其自由地画任意形状，不如说“我猜数据来自钟形曲线，只差中心和宽度没定”。</p>
+        <p><b>为什么用：</b>非参数估计在高维稀疏；参数族用共享参数把多个坐标的规律绑在一起，样本效率更高，但假设错误时会产生自信的错误。</p>
+      </div>
+      <div class="def">
+        <div class="term">参数分布族</div>
+        <div class="en">parametric family</div>
+        <div class="plain"><b>是什么：</b>由有限维参数 $\theta$ 索引的一组分布 $\{P_\theta:\theta\in\Theta\}$，例如 $\mathcal N(\mu,\sigma^2)$。</div>
+        <div class="plain"><b>白话：</b>一个“带旋钮的分布模板”，旋钮就是 $\theta$。</div>
+        <div class="plain"><b>怎么用：</b>选择分布族 → 用 MLE（或后续 Bayesian 推断）估计 $\theta$ → 得到 $\hat P_\theta$。</div>
+        <div class="plain"><b>为什么重要：</b>它把无限维密度估计压成有限维优化问题；代价是模型错设风险。</div>
+      </div>
+    </section>
+
+    <!-- ============ §7 MLE ============ -->
+    <section id="mle">
+      <h2 class="sec-title"><span class="num">7</span> 最大似然估计：核心问题</h2>
+      <p class="sec-lead">MLE 的原则：在候选参数里，选那个让“已观测数据最像是会发生”的参数。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>关键记号</h3>
+          <p>数据 $x_1,\ldots,x_n$ 是观测、优化时不动；$\theta$ 是候选参数、主动改变。写 $p(x_i;\theta)$：固定数据看 $\theta$ 的函数时，它叫<b>似然</b>。</p>
+          <p>若 i.i.d. 假设成立：</p>
+          <p>$$p(\mathcal D;\theta)=\prod_{i=1}^n p(x_i;\theta),\qquad \hat\theta_{\mathrm{MLE}}=\arg\max_\theta\sum_{i=1}^n\log p(x_i;\theta).$$</p>
+        </div>
+        <div class="card why">
+          <h3>为什么取 log</h3>
+          <p>连乘的 likelihood 随 $n$ 急剧变小，数值不稳定；log 把 $\prod\to\sum$，且 log 严格单调，不改变 $\arg\max$。实际也常写成最小化平均负 log-likelihood：</p>
+          <p>$$\hat\theta_{\mathrm{MLE}}=\arg\min_\theta\left[-\frac1n\sum_{i=1}^n\log p(x_i;\theta)\right].$$</p>
+        </div>
+      </div>
+      <div class="viz">
+        <div class="label-row">
+          <div class="control">
+            <label for="mleMu">候选 μ（两观测 120, 200） <span class="val" id="mleMuVal"></span></label>
+            <input id="mleMu" type="range" min="100" max="220" step="2" value="160">
+          </div>
+        </div>
+        <svg id="mleViz" viewBox="0 0 760 320" role="img" aria-label="MLE 均值滑动"></svg>
+        <p class="caption" id="mleCap"></p>
+      </div>
+      <div class="def">
+        <div class="term">似然</div>
+        <div class="en">likelihood</div>
+        <div class="plain"><b>是什么：</b>固定参数 $\theta$ 时，观测数据在模型下的密度/概率：$L(\theta)=p(\mathcal D;\theta)$。</div>
+        <div class="plain"><b>白话：</b>“用这套参数，眼前这批数据有多像会发生”。</div>
+        <div class="plain"><b>怎么用：</b>把每个观测的密度相乘（i.i.d.），常取 log 成求和再优化。</div>
+        <div class="plain"><b>为什么重要：</b>它是区分“数据作为 $x$ 的函数”和“作为 $\theta$ 的评分”的关键视角；MLE 就是最大化这个评分。</div>
+      </div>
+      <div class="def">
+        <div class="term">最大似然估计</div>
+        <div class="en">maximum likelihood estimation, MLE</div>
+        <div class="plain"><b>是什么：</b>选择让观测数据 likelihood 最大的参数：$\hat\theta_{\mathrm{MLE}}=\arg\max_\theta p(\mathcal D;\theta)$。</div>
+        <div class="plain"><b>白话：</b>在所有“旋钮位置”里，挑一个让已发生数据最不意外的。</div>
+        <div class="plain"><b>怎么用：</b>写联合密度 → 取 log → 对 $\theta$ 求导/用优化器 → 解 $\hat\theta$。</div>
+        <div class="plain"><b>为什么重要：</b>它是本讲第一种推断工具；在 frequentist 视角下它让“数据在该参数下最可能”，不是“参数最可能”。后者要等 Bayesian 视角。</div>
+      </div>
+    </section>
+
+    <!-- ============ §8 GAUSS ============ -->
+    <section id="gauss">
+      <h2 class="sec-title"><span class="num">8</span> 高斯均值 MLE 与方差陷阱</h2>
+      <p class="sec-lead">把 MLE 模板落到具体分布：先固定方差求均值，再同时求方差。重点区分 MLE 方差的分母 $n$ 与无偏方差的分母 $n-1$。</p>
+      <div class="def">
+        <div class="term">高斯均值 MLE <span class="en">Gaussian mean MLE</span></div>
+        <div class="plain">模型 $X_i\overset{\mathrm{i.i.d.}}{\sim}\mathcal N(\mu,1)$，则</div>
+        <div class="formula">$$\ell(\mu)=-\frac n2\log(2\pi)-\frac12\sum_i(x_i-\mu)^2,\qquad \hat\mu_{\mathrm{MLE}}=\frac1n\sum_i x_i=\bar x.$$</div>
+        <div class="plain"><b>白话：</b>固定方差的高斯 MLE = 最小化所有点到候选中心的平方距离 → 最优中心是样本均值。</div>
+      </div>
+      <div class="def">
+        <div class="term">高斯方差 MLE <span class="en">Gaussian variance MLE</span></div>
+        <div class="plain">模型 $X_i\overset{\mathrm{i.i.d.}}{\sim}\mathcal N(\mu,\sigma^2)$，联合求导后：</div>
+        <div class="formula">$$\hat\mu_{\mathrm{MLE}}=\bar x,\qquad \widehat{\sigma^2}_{\mathrm{MLE}}=\frac1n\sum_{i=1}^n(x_i-\bar x)^2.$$</div>
+        <div class="plain"><b>白话：</b>MLE 问“哪个高斯密度最像”；所以分母是 $n$。无偏估计问“反复抽样平均是否等于真值”，分母才用 $n-1$。两个问题不同。</div>
+      </div>
+      <div class="card">
+        <h3>手算 $x=(1,2,3)$</h3>
+        <p>$$\bar x=\frac{1+2+3}{3}=2,\qquad \widehat{\sigma^2}_{\mathrm{MLE}}=\frac{(1-2)^2+(2-2)^2+(3-2)^2}{3}=\frac23.$$</p>
+        <p class="small">若题目问无偏样本方差，才会得到 $1$。注意这里 $\hat\mu=2$ 和 $\hat\sigma^2=2/3$ 都是 MLE 答案，不要混用无偏方差。</p>
+      </div>
+      <div class="viz">
+        <svg id="gaussViz" viewBox="0 0 760 300" role="img" aria-label="MLE 方差与无偏方差对比"></svg>
+        <p class="caption" id="gaussCap">横轴为候选 $\sigma^2$；曲线由 log-likelihood 公式现算。MLE 峰值在 $2/3\approx0.667$，无偏估计 $1$ 是另一个统计目标。</p>
+      </div>
+    </section>
+
+    <!-- ============ §9 REGRESS ============ -->
+    <section id="regress">
+      <h2 class="sec-title"><span class="num">9</span> 条件分布：从面积预测价格</h2>
+      <p class="sec-lead">监督问题在概率语言里就是条件分布：$Y\mid X=x$。一个简单的参数模型是 $Y=wx+\varepsilon$，$\varepsilon\sim\mathcal N(0,\sigma^2)$。</p>
+      <div class="card">
+        <p><b>是什么：</b>$Y\mid X=x\sim\mathcal N(wx,\sigma^2)$。所有 $x$ 共享同一个斜率 $w$，这就是模型能从多个样本泛化的原因。</p>
+        <p><b>白话：</b>“面积每增加一单位，价格中心按 $w$ 移动，但围绕中心还有不可消除的噪声 $\sigma^2$。”</p>
+        <p><b>为什么重要：</b>它为回归提供了概率解释：点预测是条件均值，剩下的 $\sigma^2$ 是条件方差，是“这个预测有多不确定”的量化。</p>
+      </div>
+      <div class="viz">
+        <svg id="regressViz" viewBox="0 0 760 310" role="img" aria-label="条件高斯回归"></svg>
+        <p class="caption" id="regressCap">给定 $X=x$，条件分布中心沿直线移动；每个 $x$ 处的竖向切片画出一条高斯条件密度。</p>
+      </div>
+    </section>
+
+    <!-- ============ §10 LS ============ -->
+    <section id="ls">
+      <h2 class="sec-title"><span class="num">10</span> 高斯噪声下 MLE = 最小二乘</h2>
+      <p class="sec-lead">这不是新回归算法，而是平方损失的概率来源：高斯 log-likelihood 里的二次项就是平方误差。</p>
+      <div class="def">
+        <div class="term">最小二乘 <span class="en">least squares</span></div>
+        <div class="plain"><b>是什么：</b>最小化残差平方和 $\sum_i (y_i-wx_i)^2$ 的线性拟合。</div>
+        <div class="plain"><b>公式：</b>固定 $\sigma^2$ 时，$$\arg\max_w\ell(w)=\arg\min_w\sum_{i=1}^n(y_i-wx_i)^2.$$</div>
+        <div class="plain"><b>白话：</b>把“高斯噪声下最可能的直线”和“残差平方和最小的直线”看成同一件事。</div>
+        <div class="plain"><b>怎么用：</b>对 $w$ 求导令零，得到 $\hat w=\frac{\sum x_i y_i}{\sum x_i^2}$（无截距一维情形）。</div>
+        <div class="plain"><b>为什么重要：</b>它说明平方损失不是凭空来的；若噪声重尾、异方差或相关，高斯同方差假设不成立，损失函数也应改变。</div>
+      </div>
+      <div class="viz">
+        <div class="label-row">
+          <div class="control">
+            <label for="lsW">候选斜率 w <span class="val" id="lsWVal"></span></label>
+            <input id="lsW" type="range" min="-0.5" max="4" step="0.05" value="1.6">
+          </div>
+          <button class="btn" id="lsRandom" type="button">🎲 随机换一批点</button>
+        </div>
+        <svg id="lsViz" viewBox="0 0 760 340" role="img" aria-label="高斯回归与最小二乘"></svg>
+        <p class="caption" id="lsCap"></p>
+      </div>
+      <div class="card">
+        <h3>一维手算 $x=(1,2,3), y=(2,3,5)$</h3>
+        <p>无截距模型 $y=wx+\varepsilon$ 的目标：</p>
+        <p>$$L(w)=(2-w)^2+(3-2w)^2+(5-3w)^2.$$</p>
+        <p>令导数 $L'(w)=-2[(2-w)+2(3-2w)+3(5-3w)]=0$，得到</p>
+        <p>$$23-14w=0 \quad\Longrightarrow\quad \hat w=\frac{23}{14}\approx1.64.$$</p>
+        <p class="small">一般无截距解 $\hat w=\sum x_i y_i/\sum x_i^2$；分子 $2+6+15=23$，分母 $1+4+9=14$。若有截距，模型应写 $Y_i\mid X_i=x_i\sim\mathcal N(w_0+w_1x_i,\sigma^2)$，设计矩阵包含一列 1。</p>
+      </div>
+    </section>
+
+    <!-- ============ §11 CONFUSE ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">11</span> 容易误解的地方</h2>
+      <div class="misconception"><div><div class="truth">误区一：概率模型一定比普通模型好。</div><p>不一定。分布族假设错得离谱时，概率模型会给出很自信但错误的概率。</p></div></div>
+      <div class="misconception"><div><div class="truth">误区二：非参数方法不需要调参。</div><p>不对。直方图要选 bin，KDE 要选 bandwidth。</p></div></div>
+      <div class="misconception"><div><div class="truth">误区三：密度值就是概率。</div><p>连续变量单点概率为 0；密度要在区间上积分才是概率。</p></div></div>
+      <div class="misconception"><div><div class="truth">误区四：MLE 是让参数最可能。</div><p>frequentist 视角里参数不是随机变量；MLE 是让数据在该参数下最可能。“参数最可能”要等 Bayesian 视角。</p></div></div>
+    </section>
+
+    <!-- ============ §12 CONNECT ============ -->
+    <section id="connect">
+      <h2 class="sec-title"><span class="num">12</span> 关键连接：旧概念的新解释</h2>
+      <table class="data">
+        <thead><tr><th>旧概念</th><th>概率解释</th></tr></thead>
+        <tbody>
+          <tr><td>平方损失回归</td><td>高斯噪声下的 MLE</td></tr>
+          <tr><td>分类概率</td><td>条件分布 $P(Y\mid X)$</td></tr>
+          <tr><td>异常检测</td><td>输入密度 $p(X)$ 很低</td></tr>
+          <tr><td>模型选择</td><td>分布族和推断方法的选择</td></tr>
+          <tr><td>生成模型</td><td>学 $P(X)$ 或 $P(X,Y)$ 后采样</td></tr>
+        </tbody>
+      </table>
+      <p class="plain">这不是新旧对立，而是从“任务函数”换到“数据生成机制”。下一讲会继续：分类的条件分布、联合分布的两种分解（generative vs discriminative）、Bayes optimal prediction；再后面进入 Bayesian inference、GMM 与 EM。</p>
+    </section>
+
+    <!-- ============ §13 TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">13</span> 收束总结</h2>
+      <div class="card">
+        <h3>核心问题 → 答案回顾</h3>
+        <p><b>问题：</b>为什么从学函数换成学分布？<br><b>答案：</b>函数只给一个答案；分布给答案、可能性、置信、异常程度和采样能力。直方图/KDE 是两条非参数路线，参数族 + MLE 是更结构化的路线，高斯噪声回归则把平方损失重新解释为 MLE。</p>
+      </div>
+      <div class="card">
+        <h3>最重要的公式 / 结论</h3>
+        <ul>
+          <li>密度 vs 概率：$\hat p(x)=N_j/(n h_j)$，概率 = 密度 × 区间长度。</li>
+          <li>KDE：$\hat p_{\mathrm{KDE}}(x)=\frac1n\sum_i K_\sigma(x-x_i)$。</li>
+          <li>MLE：$\hat\theta=\arg\max_\theta\prod_i p(x_i;\theta)=\arg\max_\theta\sum_i\log p(x_i;\theta)$。</li>
+          <li>高斯 MLE：$\hat\mu=\bar x$，$\widehat{\sigma^2}_{\mathrm{MLE}}=\frac1n\sum_i(x_i-\bar x)^2$。</li>
+          <li>回归连接：$\arg\max_w\ell(w)=\arg\min_w\sum_i(y_i-wx_i)^2$；例 $\hat w=23/14$。</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>可勾选的自查清单</h3>
+        <div class="checklist" id="checkList"></div>
+        <div class="check-score" id="checkScore"></div>
+      </div>
+      <div class="card">
+        <h3>自测题</h3>
+        <div id="quizList"></div>
+        <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="card conn">
+        <h3>与下一讲的连接</h3>
+        <p class="plain">第 19 讲建立了“学分布 + MLE”的模板。第 20 讲把它推到<b>分类</b>：条件分布 $P(Y\mid X)$、两种联合分解（generative / discriminative）、Bayes optimal prediction。MLE 的 log-likelihood 记号会原样复用，只是把高斯密度换成 logistic/类别分布。</p>
+        <p class="plain" style="margin-bottom:0"><a href="index.html#lecture-20"><b>→ 回到课程目录，进入第 20 讲：Probabilistic Modeling II</b></a></p>
+      </div>
+    </section>
+</main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+
+<script>
+"use strict";
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function spreadLabels(items,minGap){
+  const arr=items.slice().sort((a,b)=>a.y-b.y);
+  for(let i=1;i<arr.length;i++){ if(arr[i].y-arr[i-1].y<minGap) arr[i].y=arr[i-1].y+minGap; }
+  return arr;
+}
+function gauss(x,mu,sig){return Math.exp(-((x-mu)*(x-mu))/(2*sig*sig))/(sig*Math.sqrt(2*Math.PI));}
+function normalCDF(x,mu,sig){return 0.5*(1+erf((x-mu)/(sig*Math.SQRT2)));}
+function erf(x){const s=Math.sign(x),a=Math.abs(x);const t=1/(1+0.3275911*a);const y=1-((((1.061405429*t-1.453152027)*t+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-a*a);return s*y;}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n18',x:18,y:85,w:170,h:64,t:'第 16/18 讲',s:'函数 / 降维',target:'index.html#lecture-18',col:'#8a938b'},
+    {id:'shift',x:238,y:30,w:160,h:64,t:'学分布 P',s:'P_X / P_{Y|X}',target:'#shift',col:'#176653'},
+    {id:'hist',x:448,y:30,w:170,h:64,t:'直方图 / KDE',s:'非参数密度',target:'#hist',col:'#176653'},
+    {id:'curse',x:668,y:30,w:160,h:64,t:'高维困难',s:'10^d 个格子',target:'#curse',col:'#6c4fa1'},
+    {id:'param',x:878,y:30,w:160,h:64,t:'参数分布族',s:'P_θ → 学 θ',target:'#param',col:'#176653'},
+    {id:'mle',x:1088,y:30,w:150,h:64,t:'MLE',s:'argmax likelihood',target:'#mle',col:'#176653'},
+    {id:'gauss',x:238,y:148,w:170,h:64,t:'高斯均值 / 方差',s:'μ̂=x̄, σ̂²=RSS/n',target:'#gauss',col:'#176653'},
+    {id:'regress',x:458,y:148,w:170,h:64,t:'条件分布',s:'Y|X ~ N(wx,σ²)',target:'#regress',col:'#176653'},
+    {id:'ls',x:678,y:148,w:190,h:64,t:'MLE = 最小二乘',s:'ŵ=23/14',target:'#ls',col:'#176653'},
+    {id:'n20',x:918,y:148,w:160,h:64,t:'第 20 讲',s:'概率建模 II',target:'index.html#lecture-20',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  // main horizontal: n18 -> shift -> hist -> curse -> param -> mle
+  route([[188,117],[208,117],[208,62],[238,62]],'#8a938b',mkG,'',0,0);
+  route([[398,62],[448,62]],'#176653',mk,'',0,0);
+  route([[618,62],[668,62]],'#176653',mk,'',0,0);
+  route([[828,62],[878,62]],'#6c4fa1',mkV,'',0,0);
+  route([[1038,62],[1088,62]],'#176653',mk,'',0,0);
+  // mle down-left to gauss top
+  route([[1163,94],[1163,124],[373,124],[373,148]],'#176653',mk,'推断落到高斯',765,110,'middle');
+  // gauss -> regress -> ls -> next
+  route([[408,180],[458,180]],'#176653',mk,'',0,0);
+  route([[628,180],[678,180]],'#176653',mk,'',0,0);
+  route([[868,180],[918,180]],'#176653',mk,'',0,0);
+  // extra branch from hist to curse already used; add curse down to param? not needed
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- §1 shift viz ---------- */
+(()=>{
+  const svg=$('#shiftViz');
+  function draw(){
+    svg.innerHTML='';
+    // function view
+    const fx=40,fy=25,fw=190,fh=100;
+    svgAdd(svg,'rect',{x:fx,y:fy,width:fw,height:fh,rx:12,fill:'color-mix(in srgb,#176653 8%,var(--surface))',stroke:'#176653',strokeWidth:1.8});
+    svgHalo(svg,fx+fw/2,fy+45,'函数 f',{fill:'#176653',font:13,anchor:'middle'});
+    svgHalo(svg,fx+fw/2,fy+73,'x = 120',{font:10,anchor:'middle',fill:'var(--muted)'});
+    // input arrow to function left edge
+    svgAdd(svg,'line',{x1:15,y1:fy+50,x2:fx,y2:fy+50,stroke:'#176653',strokeWidth:2,markerEnd:svgMarker(svg,'sfA','#176653')});
+    svgHalo(svg,28,fy+32,'数据 x',{font:10,fill:'#176653',anchor:'middle'});
+    // output arrow from function right edge to point circle
+    const px=330,py=fy+50;
+    svgAdd(svg,'line',{x1:fx+fw,y1:fy+50,x2:px-12,y2:py,stroke:'#176653',strokeWidth:2,markerEnd:svgMarker(svg,'sfB','#176653')});
+    svgAdd(svg,'circle',{cx:px,cy:py,r:12,fill:'var(--surface)',stroke:'#176653',strokeWidth:2});
+    svgHalo(svg,px,py+32,'ŷ = 1.2M',{font:10,fill:'#176653',anchor:'middle'});
+    svgHalo(svg,px,py,'点',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,395,45,'只给一个数字',{font:11,fill:'var(--muted)',anchor:'start'});
+    // distribution view
+    const dx=430,dy=25,dw=190,dh=100;
+    svgAdd(svg,'rect',{x:dx,y:dy,width:dw,height:dh,rx:12,fill:'color-mix(in srgb,#b45a2b 8%,var(--surface))',stroke:'#b45a2b',strokeWidth:1.8});
+    svgHalo(svg,dx+dw/2,dy+45,'条件分布',{fill:'#b45a2b',font:13,anchor:'middle'});
+    svgHalo(svg,dx+dw/2,dy+73,'P(Y | X=120)',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgAdd(svg,'line',{x1:px+12+30,y1:fy+50,x2:dx,y2:dy+50,stroke:'#b45a2b',strokeWidth:2,markerEnd:svgMarker(svg,'sfC','#b45a2b')});
+    // curve area
+    const cx=700,cy=115,scaleX=26,scaleY=150;
+    const mu=1.2,sig=0.22;
+    let d='';
+    for(let i=0;i<=80;i++){
+      const t=i/80;
+      const v=0.5+t*1.6;
+      const p=v===mu?gauss(mu,mu,sig):gauss(v,mu,sig);
+      const x=cx-90+(v-0.5)*scaleX;
+      const y=cy-p*scaleY;
+      d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+    }
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#b45a2b',strokeWidth:2.5});
+    svgHalo(svg,cx,cy-105,'密度曲线',{font:10,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,cx,cy-88,'均值 = 1.2',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,cx,cy-71,'方差 = σ²',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,852,45,'一张地图',{font:11,fill:'var(--muted)',anchor:'start'});
+    svgAdd(svg,'line',{x1:700,y1:115,x2:700,y2:52,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
+  }
+  draw();
+})();
+
+/* ---------- §2 uncertainty viz ---------- */
+(()=>{
+  const svg=$('#uncertViz');
+  const mu=1.2, sigs=[{s:0.05,c:'#176653',label:'模型 A σ=0.05'},{s:0.5,c:'#b45a2b',label:'模型 B σ=0.5'}];
+  function draw(){
+    svg.innerHTML='';
+    const x0=40,x1=480,y0=150,scaleX=170,scaleY=100;
+    // axes
+    svgAdd(svg,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'var(--line)',strokeWidth:1});
+    for(const item of sigs){
+      let d='';
+      const max=gauss(mu,mu,item.s);
+      for(let i=0;i<=100;i++){
+        const t=i/100;
+        const v=mu-0.6+t*1.2;
+        const p=gauss(v,mu,item.s)/max;
+        const x=x0+(v-(mu-0.6))*scaleX;
+        const y=y0-p*scaleY;
+        d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+      }
+      svgAdd(svg,'path',{d,fill:'none',stroke:item.c,strokeWidth:2.5});
+    }
+    svgHalo(svg,x0+(mu-(mu-0.6))*scaleX,30,'均值相同：1.2',{font:11,anchor:'middle',fill:'var(--ink)'});
+    svgHalo(svg,120,90,'模型 A：窄',{font:10,fill:'#176653',anchor:'middle'});
+    svgHalo(svg,330,60,'模型 B：宽',{font:10,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,x0,168,'价格 →',{font:10,anchor:'start',fill:'var(--muted)'});
+    svgHalo(svg,x0+(mu-(mu-0.6))*scaleX,y0-8,'μ',{font:10,anchor:'middle',fill:'var(--muted)'});
+  }
+  draw();
+})();
+
+/* ---------- §3 histogram ---------- */
+(()=>{
+  const svg=$('#histViz');
+  const data=[80,120,130,135,200];
+  function draw(){
+    svg.innerHTML='';
+    const w=+$('#histWidth').value;
+    $('#histWidthVal').textContent=fmt(w,0);
+    const lo=40,hi=260,base=270,x0=55,y0=250,H=200;
+    const n=data.length;
+    const start=lo;
+    const bins=[];
+    let cur=start;
+    while(cur<hi){const end=Math.min(cur+w,hi);bins.push({a:cur,b:end,n:0});cur=end;}
+    data.forEach(v=>{const b=bins.find(b=>v>=b.a&&v<b.b)||bins[bins.length-1];if(b)b.n++;});
+    const scaleX=560/(hi-lo);
+    const maxCount=Math.max(...bins.map(b=>b.n),1);
+    bins.forEach(b=>{
+      const h=(b.n/maxCount)*H;
+      const x=x0+(b.a-lo)*scaleX+2;
+      const bw=Math.max(2,(b.b-b.a)*scaleX-4);
+      svgAdd(svg,'rect',{x,y:base-h,width:bw,height:h,fill:'color-mix(in srgb,#176653 55%,transparent)',stroke:'#176653','stroke-width':1});
+      if(b.n>0){
+        svgAdd(svg,'circle',{cx:x0+(b.a-lo)*scaleX+((b.b-b.a)*scaleX/2),cy:base-h-8,r:3,fill:'var(--ink)'});
+      }
+    });
+    data.forEach(v=>{svgAdd(svg,'circle',{cx:x0+(v-lo)*scaleX,cy:y0+22,r:5,fill:'#b45a2b',stroke:'var(--surface)','stroke-width':1.5});});
+    svgHalo(svg,x0+280,y0+22,'样本点',{font:10,fill:'#b45a2b',anchor:'middle'});
+    // x ticks at selected bin edges (avoid overcrowding)
+    const edges=[...new Set(bins.map(b=>b.a).concat(hi))].filter(v=>v%20===0||v===lo||v===hi||w<=20);
+    edges.forEach(v=>{
+      svgAdd(svg,'line',{x1:x0+(v-lo)*scaleX,y1:base,x2:x0+(v-lo)*scaleX,y2:base+5,stroke:'var(--line)'});
+      svgHalo(svg,x0+(v-lo)*scaleX,base+19,String(v),{font:9,anchor:'middle',fill:'var(--muted)'});
+    });
+    // left y label
+    svgHalo(svg,28,base-H/2,'密度',{font:10,anchor:'middle',fill:'var(--muted)'});
+    // non-empty bin count labels only when width enough
+    if(w>=25){
+      bins.forEach(b=>{
+        if(b.n>0){
+          const cx=x0+(b.a-lo)*scaleX+(b.b-b.a)*scaleX/2;
+          const h=(b.n/maxCount)*H;
+          svgHalo(svg,cx,base-h-12,`${b.n} 点`,{font:9,anchor:'middle',fill:'var(--ink)'});
+        }
+      });
+    }
+    const detail=bins.map(b=>`[${fmt(b.a,0)},${fmt(b.b,0)}): ${b.n}/${n}, p̂=${fmt(b.n/(n*w),4)}`).join('；');
+    $('#histCap').innerHTML=`当前 bin 宽 ${fmt(w,0)}。概率质量 = 点数/n；密度 = 点数/(n·width)。现算：${detail}。归一化检查 $\sum_j h_j\hat p_j=${fmt(bins.reduce((s,b)=>s+(b.n/(n*w))*w,0),6)}$。`;
+  }
+  $('#histWidth').addEventListener('input',draw);
+  draw();
+})();
+
+/* ---------- §4 KDE ---------- */
+(()=>{
+  const svg=$('#kdeViz');
+  let data=[80,120,130,135,200];
+  function gen(){
+    const arr=[];
+    for(let i=0;i<28;i++){
+      const mode=i%3;
+      let v;
+      if(mode===0)v=88+Math.random()*50;
+      else if(mode===1)v=158+Math.random()*40;
+      else v=205+Math.random()*45;
+      arr.push(clamp(v,40,265));
+    }
+    return arr;
+  }
+  function draw(){
+    svg.innerHTML='';
+    const sig=+$('#kdeSigma').value;
+    $('#kdeSigmaVal').textContent=fmt(sig,1);
+    const lo=40,hi=265,base=270,x0=55,H=205,scaleX=640/(hi-lo),n=data.length;
+    data.forEach(v=>{
+      let d='';
+      const max=gauss(v,v,sig);
+      for(let i=0;i<=50;i++){
+        const t=i/50;
+        const x=lo+t*(hi-lo);
+        const p=gauss(x,v,sig)/max;
+        const sx=x0+(x-lo)*scaleX;
+        const sy=base-p*40;
+        d+=(i?'L':'M')+sx.toFixed(1)+','+sy.toFixed(1);
+      }
+      svgAdd(svg,'path',{d,fill:'none',stroke:'color-mix(in srgb,#176653 35%,transparent)',strokeWidth:1.2});
+    });
+    // average KDE
+    let d='';
+    let maxP=0,peakX=0;
+    const grid=[];
+    for(let i=0;i<=160;i++){
+      const x=lo+i*(hi-lo)/160;
+      let p=0;
+      data.forEach(v=>p+=gauss(x,v,sig)/n);
+      grid.push({x,p});
+      if(p>maxP){maxP=p;peakX=x;}
+    }
+    grid.forEach((pt,i)=>{
+      const sx=x0+(pt.x-lo)*scaleX;
+      const sy=base-pt.p*H/maxP;
+      d+=(i?'L':'M')+sx.toFixed(1)+','+sy.toFixed(1);
+    });
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#b45a2b',strokeWidth:3});
+    svgAdd(svg,'line',{x1:x0+(peakX-lo)*scaleX,y1:base-20,x2:x0+(peakX-lo)*scaleX,y2:base,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
+    data.forEach(v=>{svgAdd(svg,'circle',{cx:x0+(v-lo)*scaleX,cy:base,r:4,fill:'#176653',stroke:'var(--surface)','stroke-width':1.5});});
+    // legend
+    svgHalo(svg,120,30,'每个样本的小山包（高斯核）',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,320,30,'平均密度 p̂_KDE(x)',{font:10,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,540,30,'σ = '+fmt(sig,1),{font:10,fill:'var(--ink)',anchor:'middle'});
+    svgHalo(svg,86,288,'40',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,700,288,'265',{font:9,anchor:'middle',fill:'var(--muted)'});
+    $('#kdeCap').innerHTML=`n=${n} 个样本，带宽 σ=${fmt(sig,1)}。橙色曲线是 $\\hat p_{\\mathrm{KDE}}(x)=\\frac1n\\sum_i K_\\sigma(x-x_i)$ 在 ${grid.length} 个网格点上的现算值；峰值位置 x=${fmt(peakX,1)}、峰值密度约 ${fmt(maxP,3)}。σ 太小时每个样本各自成峰，太大时结构被抹平。`;
+  }
+  $('#kdeSigma').addEventListener('input',draw);
+  $('#kdeRandom').addEventListener('click',()=>{data=gen();toast(`已用 Math.random() 生成 ${data.length} 个样本`);draw();});
+  draw();
+})();
+
+/* ---------- §5 curse ---------- */
+(()=>{
+  const svg=$('#curseViz');
+  function draw(){
+    svg.innerHTML='';
+    const d=+$('#cdDim').value;
+    $('#cdDimVal').textContent=String(d);
+    const x0=70,y0=230,plotW=560,plotH=170;
+    const ds=[];
+    for(let i=1;i<=12;i++)ds.push(i);
+    const maxR=Math.pow(0.1,1);
+    const gridCells=Math.pow(10,d);
+    const r=Math.pow(0.1,1/d);
+    svgAdd(svg,'rect',{x:x0,y:y0-plotH,width:plotW,height:plotH,fill:'var(--surface2)',opacity:.25,stroke:'var(--line)'});
+    // curve r
+    let dpath='';
+    ds.forEach(i=>{
+      const rr=Math.pow(0.1,1/i);
+      const x=x0+(i-1)/(ds.length-1)*plotW;
+      const y=y0-rr/maxR*plotH;
+      dpath+=(i===1?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+    });
+    svgAdd(svg,'path',{d:dpath,fill:'none',stroke:'#b45a2b',strokeWidth:2.5});
+    // current marker
+    const cx=x0+(d-1)/(ds.length-1)*plotW;
+    const cy=y0-r/maxR*plotH;
+    svgAdd(svg,'line',{x1:cx,y1:y0,x2:cx,y2:y0-plotH,stroke:'#176653',strokeWidth:1.4,strokeDasharray:'4 3'});
+    svgAdd(svg,'circle',{cx,cy,r:5,fill:'#176653',stroke:'var(--surface)','stroke-width':2});
+    svgHalo(svg,x0+plotW/2,y0-plotH-10,'半径 r = (k/n)^(1/d)，k/n=0.1',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x0+plotW/2,30,'要覆盖固定比例，高维需要更大半径',{font:11,anchor:'middle',fill:'var(--ink)'});
+    svgHalo(svg,cx,cy-18,`d=${d}`,{font:11,fill:'#176653',anchor:'middle'});
+    svgHalo(svg,cx,cy+18,`r=${fmt(r,2)}`,{font:10,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,x0,y0+20,'1',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x0+plotW,y0+20,'12',{font:9,anchor:'middle',fill:'var(--muted)'});
+    $('#curseCap').innerHTML=`维度 d=${d}：若每个坐标切 10 个 bin，总格子数 = 10^d = ${fmt(gridCells,0)}。若希望半径 r 的邻域含约 10% 的样本，近似均匀分布下 r≈${fmt(r,3)}。格子数指数增长、邻域半径变大，就是局部数据稀疏的根源。`;
+  }
+  $('#cdDim').addEventListener('input',draw);
+  draw();
+})();
+
+/* ---------- §7 MLE two-point ---------- */
+(()=>{
+  const svg=$('#mleViz');
+  const xs=[120,200], n=xs.length;
+  function draw(){
+    svg.innerHTML='';
+    const mu=+$('#mleMu').value;
+    $('#mleMuVal').textContent=fmt(mu,0);
+    // objective curve panel
+    const x0=340,x1=740,base=270,H=220,scaleX=(x1-x0)/(220-100);
+    const range=[100,220];
+    let d='';
+    const vals=[];
+    for(let i=0;i<=240;i++){
+      const m=range[0]+i/240*(range[1]-range[0]);
+      const ss=xs.reduce((s,v)=>s+(v-m)*(v-m),0);
+      const loglik=-0.5*ss;
+      const y=base-(loglik+8000)/8000*H; // scale to fit
+      vals.push({m,ss,loglik,y});
+      const x=x0+(m-range[0])*scaleX;
+      d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+    }
+    // axis
+    svgAdd(svg,'line',{x1:x0,y1:base,x2:x1,y2:base,stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#176653',strokeWidth:2.5});
+    const cur=vals.find(v=>Math.abs(v.m-mu)<0.5);
+    const cx=x0+(mu-range[0])*scaleX;
+    svgAdd(svg,'line',{x1:cx,y1:base,x2:cx,y2:base-H,stroke:'#b45a2b',strokeWidth:1.4,strokeDasharray:'4 3'});
+    svgHalo(svg,cx,20,`候选 μ=${fmt(mu,0)}`,{font:11,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,cx,base-40,`SS=${fmt(cur?cur.ss:0,0)}`,{font:10,fill:'var(--ink)',anchor:'middle'});
+    svgHalo(svg,x0+30,base-160,'ℓ(μ) ∝ -½·SS',{font:10,fill:'#176653',anchor:'start'});
+    svgHalo(svg,x0+30,base+20,'100',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x1-25,base+20,'220',{font:9,anchor:'middle',fill:'var(--muted)'});
+    // left data panel
+    const xL=60,xR=290,baseL=base,scaleX2=(xR-xL)/(240-100);
+    xs.forEach(v=>{
+      const x=xL+(v-100)*scaleX2;
+      svgAdd(svg,'line',{x1:x,y1:baseL,x2:x,y2:baseL-14,stroke:'var(--line)'});
+      svgAdd(svg,'circle',{cx:x,cy:baseL-18,r:6,fill:'#176653',stroke:'var(--surface)','stroke-width':1.5});
+    });
+    const mx=xL+(mu-100)*scaleX2;
+    svgAdd(svg,'line',{x1:mx,y1:baseL,x2:mx,y2:baseL-70,stroke:'#b45a2b',strokeWidth:2});
+    svgHalo(svg,175,50,'候选中心',{font:11,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,175,105,'120 与 200',{font:10,fill:'#176653',anchor:'middle'});
+    svgHalo(svg,60,baseL+20,'距离平方和最小 → 样本均值 160',{font:10,anchor:'start',fill:'var(--muted)'});
+    const ss=xs.reduce((s,v)=>s+(v-mu)*(v-mu),0);
+    $('#mleCap').innerHTML=`两个观测 $x_1=120,x_2=200$，候选 $\\mu=${fmt(mu,0)}$。现算平方距离和 $\\sum_i(x_i-\\mu)^2=${fmt(ss,0)}$；$\\mu=160$ 时 $40^2+40^2=3200$，而两端都是 $6400$。右曲线由 $\\ell(\\mu)=-\\frac12\\sum_i(x_i-\\mu)^2$ 现算，峰值在 $\\bar x=160$。`;
+  }
+  $('#mleMu').addEventListener('input',draw);
+  draw();
+})();
+
+/* ---------- §8 gauss variance ---------- */
+(()=>{
+  const svg=$('#gaussViz');
+  const data=[1,2,3], n=data.length, mu=data.reduce((s,v)=>s+v,0)/n;
+  const rss=data.reduce((s,v)=>s+(v-mu)*(v-mu),0);
+  function draw(){
+    svg.innerHTML='';
+    const x0=70,x1=720,base=260,H=210;
+    let d='';
+    for(let i=0;i<=200;i++){
+      const sig2=0.1+i/200*1.9;
+      const ll=-n/2*Math.log(2*Math.PI*sig2)-rss/(2*sig2);
+      const x=x0+(sig2-0.1)/1.9*(x1-x0);
+      const y=base-(ll+2.8)/3.3*H;
+      d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+    }
+    svgAdd(svg,'line',{x1:x0,y1:base,x2:x1,y2:base,stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#176653',strokeWidth:2.5});
+    const mle=2/3,unb=1;
+    function vline(v,color){
+      const x=x0+(v-0.1)/1.9*(x1-x0);
+      svgAdd(svg,'line',{x1:x,y1:base,x2:x,y2:base-40,stroke:color,strokeWidth:1.5,strokeDasharray:'4 3'});
+      return x;
+    }
+    const xm=vline(mle,'#176653'), xu=vline(unb,'#b45a2b');
+    svgHalo(svg,xm,100,`MLE σ̂²=${fmt(mle,3)}`,{font:10,fill:'#176653',anchor:'middle'});
+    svgHalo(svg,xu,140,`无偏 σ²=${fmt(unb,1)}`,{font:10,fill:'#b45a2b',anchor:'middle'});
+    svgHalo(svg,x0+100,30,'ℓ(σ²) 对 x=(1,2,3)',{font:11,fill:'var(--ink)',anchor:'start'});
+    svgHalo(svg,x0+100,52,'峰值 = 分母 n 的 MLE',{font:10,fill:'var(--muted)',anchor:'start'});
+    svgHalo(svg,x0,base+20,'0.1',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x1,base+20,'2.0',{font:9,anchor:'middle',fill:'var(--muted)'});
+    $('#gaussCap').innerHTML=`对 $x=(1,2,3)$：$\\bar x=${fmt(mu,1)}$，$\\mathrm{RSS}=2$。曲线是 $\ell(\\sigma^2)=-\\frac n2\\log(2\\pi\\sigma^2)-\\frac{\\mathrm{RSS}}{2\\sigma^2}$ 的现算值。峰值在 $2/3\\approx${fmt(2/3,3)}$；无偏估计 $1$ 是另一个目标。`;
+  }
+  draw();
+})();
+
+/* ---------- §9 regression conditional ---------- */
+(()=>{
+  const svg=$('#regressViz');
+  function draw(){
+    svg.innerHTML='';
+    const pts=[{x:1,y:2},{x:2,y:3},{x:3,y:5}];
+    const w=23/14,b=0;
+    const x0=55,y0=230,scaleX=170,scaleY=38;
+    // axis
+    svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0+scaleX*3.6,y2:y0,stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0,y2:y0-scaleY*5.6,stroke:'var(--line)',strokeWidth:1});
+    // line
+    const lx0=x0,ly0=y0-(w*0.5)*scaleY;
+    const lx1=x0+3.6*scaleX,ly1=y0-(w*3.5)*scaleY;
+    svgAdd(svg,'line',{x1:lx0,y1:ly0,x2:lx1,y2:ly1,stroke:'#176653',strokeWidth:2.5});
+    svgHalo(svg,x0+2.3*scaleX,ly1-18,`y = (23/14)x`,{font:11,fill:'#176653',anchor:'middle'});
+    // conditional densities at each x
+    pts.forEach((p,i)=>{
+      const cx=x0+p.x*scaleX, cy=y0-p.y*scaleY;
+      const mix=p.y-0.25,sig=0.38,maxH=0.9;
+      let d='';
+      for(let j=0;j<=40;j++){
+        const t=j/40;
+        const v=p.y-0.6+t*0.8;
+        const dens=gauss(v,p.y,sig)/maxH;
+        const x=cx+(v-p.y)*55;
+        const y=cy-dens*70;
+        d+=(j?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+      }
+      svgAdd(svg,'path',{d,fill:'none',stroke:'#b45a2b',strokeWidth:2});
+      svgAdd(svg,'circle',{cx,cy,r:5,fill:'#b45a2b'});
+      svgHalo(svg,cx,cy-105,`Y|X=${p.x}`,{font:9,fill:'#b45a2b',anchor:'middle'});
+    });
+    svgHalo(svg,x0+2.0*scaleX,y0+22,'面积 x →',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x0-18,y0-2.6*scaleY,'价格 y',{font:10,anchor:'start',fill:'var(--muted)'});
+    $('#regressCap').innerHTML=`三个点由 $x=(1,2,3), y=(2,3,5)$ 画成。橙色轮廓是每个 $X=x$ 处 $Y\\mid X=x\\sim\\mathcal N(\\frac{23}{14}x,\\sigma^2)$ 的条件密度切片（$\sigma$ 取示意值 0.38）；点预测是中心，条件方差描述每一个竖切片的宽度。`;
+  }
+  draw();
+})();
+
+/* ---------- §10 LS interactive ---------- */
+(()=>{
+  const svg=$('#lsViz');
+  let data=[{x:1,y:2},{x:2,y:3},{x:3,y:5}];
+  function gen(){
+    const arr=[];
+    const trueW=1+Math.random()*1.5;
+    for(let i=0;i<9;i++){
+      const x=0.6+Math.random()*2.8;
+      const y=trueW*x+(Math.random()*2-1)*0.9;
+      arr.push({x,y});
+    }
+    return arr;
+  }
+  function stats(){
+    const sx=data.reduce((s,p)=>s+p.x,0), sy=data.reduce((s,p)=>s+p.y,0), sxx=data.reduce((s,p)=>s+p.x*p.x,0), sxy=data.reduce((s,p)=>s+p.x*p.y,0);
+    return {opt:sxy/sxx, sxy, sxx};
+  }
+  function draw(){
+    svg.innerHTML='';
+    const w=+$('#lsW').value;
+    $('#lsWVal').textContent=fmt(w,2);
+    const st=stats();
+    const x0=60,y0=220,scaleX=58,scaleY=34,plotW=430,plotH=170;
+    const xMin=0,xMax=4,yMin=-1,yMax=6;
+    const px=x=>x0+(x-xMin)/(xMax-xMin)*plotW;
+    const py=y=>y0-(y-yMin)/(yMax-yMin)*plotH;
+    // axis
+    svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0+plotW,y2:y0,stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'line',{x1:x0,y1:y0,x2:x0,y2:y0-plotH,stroke:'var(--line)',strokeWidth:1});
+    // line
+    const lx0=px(0),ly0=py(0);
+    const lx1=px(4),ly1=py(w*4);
+    svgAdd(svg,'line',{x1:lx0,y1:ly0,x2:lx1,y2:ly1,stroke:'#176653',strokeWidth:2.5});
+    svgHalo(svg,px(3.2),py(w*3.4),`y=${fmt(w,2)}x`,{font:10,fill:'#176653',anchor:'middle'});
+    // residual lines + points
+    data.forEach(p=>{
+      const fit=w*p.x;
+      const x=px(p.x);
+      svgAdd(svg,'line',{x1:x,y1:py(p.y),x2:x,y2:py(fit),stroke:'color-mix(in srgb,#b23a48 70%,transparent)',strokeWidth:1.2});
+    });
+    data.forEach(p=>{svgAdd(svg,'circle',{cx:px(p.x),cy:py(p.y),r:4.5,fill:'#b45a2b',stroke:'var(--surface)','stroke-width':1.2});});
+    svgHalo(svg,x0+plotW/2,y0-plotH-12,'数据与候选直线（强制过原点）',{font:11,fill:'var(--ink)',anchor:'middle'});
+    svgHalo(svg,x0+plotW-8,y0+20,'x',{font:10,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,x0-12,y0-plotH+8,'y',{font:10,anchor:'start',fill:'var(--muted)'});
+    // objective curve lower panel
+    const ox0=60,ox1=730,obase=290,oH=80,orange=[-0.5,4];
+    let d='';
+    const ssCur=data.reduce((s,p)=>s+(p.y-w*p.x)*(p.y-w*p.x),0);
+    const maxSS=data.reduce((s,p)=>s+Math.max(p.y*p.y,(p.y-4*p.x)*(p.y-4*p.x)),0);
+    for(let i=0;i<=120;i++){
+      const ww=orange[0]+i/120*(orange[1]-orange[0]);
+      const ss=data.reduce((s,p)=>s+(p.y-ww*p.x)*(p.y-ww*p.x),0);
+      const x=ox0+(ww-orange[0])/(orange[1]-orange[0])*(ox1-ox0);
+      const y=obase-ss/maxSS*oH;
+      d+=(i?'L':'M')+x.toFixed(1)+','+y.toFixed(1);
+    }
+    svgAdd(svg,'line',{x1:ox0,y1:obase,x2:ox1,y2:obase,stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'path',{d,fill:'none',stroke:'#6c4fa1',strokeWidth:2.5});
+    const ocx=ox0+(clamp(st.opt,orange[0],orange[1])-orange[0])/(orange[1]-orange[0])*(ox1-ox0);
+    svgAdd(svg,'line',{x1:ocx,y1:obase,x2:ocx,y2:obase-oH,stroke:'#6c4fa1',strokeWidth:1.4,strokeDasharray:'4 3'});
+    svgHalo(svg,ocx,obase-oH-8,`ŵ=${fmt(st.opt,2)}`,{font:10,fill:'#6c4fa1',anchor:'middle'});
+    svgHalo(svg,ox0+20,obase-oH+12,'损失曲线 L(w)=Σ(y_i-wx_i)²',{font:10,fill:'var(--muted)',anchor:'start'});
+    svgHalo(svg,ox0,obase+15,'-0.5',{font:9,anchor:'middle',fill:'var(--muted)'});
+    svgHalo(svg,ox1,obase+15,'4',{font:9,anchor:'middle',fill:'var(--muted)'});
+    $('#lsCap').innerHTML=`n=${data.length} 个点，候选 $w=${fmt(w,2)}$，现算 $\sum_i(y_i-wx_i)^2=${fmt(ssCur,3)}$。闭式解 $\hat w=\\sum x_i y_i/\\sum x_i^2=${fmt(st.sxy,3)}/${fmt(st.sxx,3)}=${fmt(st.opt,3)}$；橙色竖线在损失曲线最低点。`;
+  }
+  $('#lsW').addEventListener('input',draw);
+  $('#lsRandom').addEventListener('click',()=>{data=gen();const st=stats();toast(`已用 Math.random() 生成数据；最优 w≈${fmt(st.opt,2)}`);draw();});
+  draw();
+})();
+
+/* ---------- checklist ---------- */
+(()=>{
+  const items=[
+    '我能解释为什么函数给“一个答案”，分布给“一张地图”。',
+    '我能写出直方图密度公式 $\hat p(x)=N_j/(n h_j)$，并说出密度与概率的区别。',
+    '我能写出 KDE 的 $\hat p_{\mathrm{KDE}}(x)=\frac1n\sum_i K_\sigma(x-x_i)$，并解释 $1/h$ 为什么不能省。',
+    '我能说明高维为什么让非参数密度估计变难（$10^d$ 与 $r\approx(k/n)^{1/d}$）。',
+    '我能写出 MLE：$\hat\theta=\arg\max_\theta\prod_i p(x_i;\theta)=\arg\max_\theta\sum_i\log p(x_i;\theta)$。',
+    '我能手算 $x=(1,2,3)$ 的高斯 MLE：$\hat\mu=2,\ \widehat{\sigma^2}_{\mathrm{MLE}}=2/3$，并区分无偏方差 $1$。',
+    '我能写出高斯回归模型 $Y\mid X=x\sim\mathcal N(wx,\sigma^2)$ 并说明 MLE=最小二乘。',
+    '我能手算无截距回归 $\hat w=23/14$（分子 23、分母 14），并知道有截距时设计矩阵要加一列 1。'
+  ];
+  const box=$('#checkList');
+  box.innerHTML=items.map((t,i)=>`<label><input type="checkbox" data-ck="${i}"><span>${t}</span></label>`).join('');
+  const score=$('#checkScore');
+  function upd(){
+    const done=$$('#checkList input').filter(c=>c.checked).length;
+    score.textContent=`已确认 ${done}/${items.length} 项${done===items.length?'——第 19 讲可以收官，向第 20 讲出发。':'。全部勾掉再进入下一讲。'}`;
+    $$('#checkList label').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  }
+  box.addEventListener('change',upd);
+  upd();
+})();
+
+/* ---------- mode system ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    shift:{mode:'core',tag:'换问'},uses:{mode:'core',tag:'四件事'},
+    hist:{mode:'core',tag:'直方图'},kde:{mode:'core',tag:'KDE'},
+    curse:{mode:'extra',tag:'拓展'},
+    param:{mode:'core',tag:'参数族'},mle:{mode:'core',tag:'MLE'},
+    gauss:{mode:'core',tag:'高斯'},regress:{mode:'core',tag:'条件分布'},
+    ls:{mode:'core',tag:'最小二乘'},confuse:{mode:'core',tag:'误区'},
+    connect:{mode:'core',tag:'连接'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先看六站图：从函数到分布、再到 MLE 与回归连接。',
+    shift:'旧图景与新图景并排：学函数 vs 学分布。',
+    uses:'分布不是预测的替代品，而是预测/不确定/异常/采样的上游。',
+    hist:'第一种非参数密度估计：数点再除以宽度。',
+    kde:'把硬 bin 换成软山包；带宽是核心旋钮。',
+    curse:'一维方法在高维会稀疏；这解释了为什么要参数化。',
+    param:'先选分布族，把“学 P”变成“学 θ”。',
+    mle:'MLE 是第一个推断工具：参数让观测最像会发生。',
+    gauss:'把 MLE 模板解出高斯均值与方差，注意 n 与 n−1 的分工。',
+    regress:'把监督回归翻译成条件分布。',
+    ls:'高斯噪声下 MLE 与最小二乘是同一个优化。',
+    confuse:'收束前扫一遍四个常见误解。',
+    connect:'旧概念全部换成概率语言，下一讲进入分类。',
+    takeaway:'最后用公式、自查清单和下一讲连接收束。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    setTimeout(rebuildBridges,0);
+    if(mode==='full'){
+      $$('.control input[type=range]').forEach(r=>r.dispatchEvent(new Event('input',{bubbles:true})));
+    }
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'概率建模',en:'probabilistic modeling',f:'p(x),\\ P_{Y\\mid X}',d:'从数据估计生成数据的概率分布，而不是只学一个输入输出函数。',r:'位置：§1。用处：统一预测、不确定性、异常与生成。重要：所有下游任务变成“读出分布上的量”。'},
+    {t:'联合分布',en:'joint distribution',f:'P_{X,Y}',d:'多个变量一起的分布。',r:'位置：§1。用处：连接输入和输出的完整统计描述。重要：可边缘化或取条件得到其他分布。'},
+    {t:'条件分布',en:'conditional distribution',f:'P(Y\\mid X=x)',d:'给定 $X=x$ 后 $Y$ 的分布。',r:'位置：§2。用处：监督概率模型的输出。重要：不同损失下从中读出均值/中位数/最大概率类别。'},
+    {t:'异常检测',en:'anomaly detection',f:'\\mathrm{flag}(x)=\\mathbf 1\\{\\hat p(x)<\\tau\\}',d:'用低密度评分判断新点是否可疑。',r:'位置：§2。用处：拒绝预测、人工审查、风险控制。重要：阈值必须由验证集/代价确定。'},
+    {t:'密度',en:'density',f:'\\hat p(x)=N_j/(n h_j)',d:'连续变量的概率强度；积分后才是概率。',r:'位置：§3。用处：直方图、KDE、似然都建立在密度上。重要：密度不是单点概率。'},
+    {t:'直方图',en:'histogram',f:'\\hat P(B_j)=N_j/n,\\ \\hat p=N_j/(n h_j)',d:'把空间切成 bin，用计数估计密度。',r:'位置：§3。用处：一维密度估计的直观基线。重要：bin 宽度是人为平滑选择。'},
+    {t:'非参数方法',en:'non-parametric method',f:'N_j,\\ h_j,\\ \\hat p=N_j/(n h_j)',d:'模型复杂度随数据量或划分方式增长，不固定为有限维参数向量。',r:'位置：§3。用处：直方图、KDE 属于此类。重要：“非参数”不等于没有参数，仍要选平滑参数。'},
+    {t:'核密度估计',en:'kernel density estimation, KDE',f:'\\hat p_{\\mathrm{KDE}}(x)=\\frac1n\\sum_i K_\\sigma(x-x_i)',d:'在每个样本周围放平滑核再求平均的非参数密度估计。',r:'位置：§4。用处：平滑但保留结构的一维密度估计。重要：带宽需要选择；$1/h$ 保证归一化。'},
+    {t:'带宽',en:'bandwidth',f:'K_h(t)=\\frac1h K(t/h)',d:'核的宽度参数，控制每个样本影响邻域的大小。',r:'位置：§4。用处：KDE 的平滑度开关。重要：太小过拟合，太大欠拟合。'},
+    {t:'参数分布族',en:'parametric family',f:'P_\\theta,\\ \\theta\\in\\Theta',d:'由有限维参数索引的一组分布。',r:'位置：§6。用处：把密度估计压成有限维优化。重要：样本效率高但有模型错设风险。'},
+    {t:'似然',en:'likelihood',f:'L(\\theta)=p(\\mathcal D;\\theta)',d:'固定参数时观察到这批数据的密度/概率。',r:'位置：§7。用处：比较候选参数对数据的解释力。重要：它是 θ 的函数，不是 x 的概率。'},
+    {t:'最大似然估计',en:'maximum likelihood estimation, MLE',f:'\\hat\\theta=\\arg\\max_\\theta\\prod_i p(x_i;\\theta)',d:'选择让观测数据 likelihood 最大的参数。',r:'位置：§7。用处：本讲第一种推断工具。重要：frequentist 下让数据最可能，不是参数最可能。'},
+    {t:'最小二乘',en:'least squares',f:'\\arg\\min_w\\sum_i(y_i-wx_i)^2',d:'最小化残差平方和的拟合准则。',r:'位置：§10。用处：线性回归的基础损失。重要：可解释为高斯噪声下的 MLE。'}
+  ];
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg,.term-ref';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&(p.matches(GLOSS_SKIP)||p.id==='hero'||p.id==='map'))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${esc(c.t)}</span><span class="ge">${esc(c.en)}</span><span class="gd">${esc(c.d)}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${esc(c.t)}</div><div class="tp-en">${esc(c.en)}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'为什么学到 $P(Y\\mid X)$ 后仍然可以做普通预测？',a:'因为可以针对给定损失取条件风险最小的动作：平方损失取条件均值，绝对损失取条件中位数，0-1 损失取最大概率类别。分布是预测的上游。'},
+    {q:'对连续变量，为什么 $p(x)=0.01$ 不是“概率为 0.01”？',a:'连续变量单点概率为 0；$p(x)$ 是密度，要对区间积分才得到概率。'},
+    {q:'直方图 bin 太细会发生什么？',a:'每个样本附近变成尖峰，很多区域密度为 0；这类似过拟合。'},
+    {q:'KDE 的 bandwidth 太大会发生什么？',a:'每个核被过度抹平，真实多峰结构被隐藏；类似欠拟合。'},
+    {q:'为什么 $X\\sim\\mathcal N(\\mu,1)$ 时 $\\mu$ 的 MLE 是样本均值？',a:'log-likelihood 等价于 $-\\frac12\\sum(x_i-\\mu)^2$，最大化它等价于最小化平方距离和，其最小值在 $\\bar x$。'},
+    {q:'为什么高斯噪声假设会导出平方损失？',a:'高斯 log-density 中含有 $-(y-f(x))^2/2$；最大化 log-likelihood 等价于最小化残差平方和。'},
+    {q:'MLE 中 i.i.d. 假设用在了哪一步？',a:'用在把联合密度分解为 $\\prod_i p(x_i;\\theta)$；同分布保证每一项是同一个 $p(\\cdot;\\theta)$。'},
+    {q:'对 $x=(1,2,3)$，高斯 MLE 的 $\\hat\\mu$ 和 $\\widehat{\\sigma^2}$ 分别是多少？为什么不是 $2$ 和 $1$？',a:'$\\hat\\mu=2$，$\\widehat{\\sigma^2}_{\\mathrm{MLE}}=2/3$。$\\sigma^2=1$ 是无偏样本方差（分母 $n-1=2$）；MLE 分母是 $n=3$，回答的是不同问题。'},
+    {q:'若每个坐标切 10 个 bin，$d=6$ 时总格子数是多少？说明了什么？',a:'$10^6=1{,}000{,}000$。即使每格只要一个样本也需要百万样本，这正是维数灾难的离散版本。'},
+    {q:'如果某个点的 $\\hat p(x)$ 很低，模型能支持什么决策？',a:'可以做异常检测、拒绝预测、触发人工检查或风险控制；但需要一个显式的阈值/决策规则。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  if(window.renderMathInElement)renderMathInElement(list,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
