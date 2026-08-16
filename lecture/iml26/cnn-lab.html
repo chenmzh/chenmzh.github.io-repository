@@ -188,7 +188,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
       <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 14 讲 / 25 讲</div>
       <h1>如果输入是一张图，<br>能不能把<br><span style="color:var(--warm)">图像的结构</span>直接写进网络？</h1>
       <p class="subtitle">第 11–13 讲给了我们<b>模型、梯度、以及训练稳定性</b>，但默认输入都被拍平成一长条向量。第 14 讲补上两件新事：先<u>补齐两个训练技巧</u>（dropout 的完整约定、batch normalization），再问一个结构性问题——<b>输入是图像时，全连接层参数爆炸、还无视“附近像素相关”与“同一模式可出现在任意位置”</b>。这一页是原讲义的<b>附属互动版</b>：每个概念都有定义-白话-用途-计算-连接的完整链条，所有实验都靠拖动滑杆或点击。</p>
-      <div class="question">💬 本讲核心问题：全连接层在图像上参数爆炸、又不利用图像结构；怎么用</b>局部连接 + 参数共享 + 层级堆叠</b>把图像先验写进模型，并让深层网络可训练？</div>
+      <div class="question">💬 本讲核心问题：全连接层在图像上参数爆炸、又不利用图像结构；怎么用<b>局部连接 + 参数共享 + 层级堆叠</b>把图像先验写进模型，并让深层网络可训练？</div>
       <div class="answer">一句话答案：CNN 用<b>两个先验</b>降参数、增强泛化——<b>① 局部连接</b>（一个单元只看一小块邻域），<b>② 参数共享</b>（同一个滤波器滑过全图，同一种模式到处能认）。再配<b>padding / stride / pooling 控制特征图尺寸</b>、<b>感受野逐层扩大</b>让高层看到整片上下文、<b>残差连接与 batch norm 让“很深”也成为可能</b>。而 dropout 与 batch norm，则是让这套更深的模型训练得动、不过拟合的旋钮。</div>
       <div class="overview-grid">
         <div class="overview-card">
@@ -270,7 +270,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
             <select id="fcmS"><option value="224">224×224（猫图）</option><option value="32">32×32（小图）</option><option value="7">7×7（深层特征）</option></select>
           </div>
         </div>
-        <div class="caption" id="fcmCap">柱高对数刻度，数值是<b>真实可学习参数个数</b>（含 bias）。全连接 = $N\cdot m + m$（$N$ 为输入像素数）；卷积（$f\times f\times C_{in}$ 核、$C_{in}$ 通道输入、$m$ 个滤波器）= $(f^2 C_{in}+1)\cdot m$。注意：全连接会随 $N$（图像尺寸）爆炸；卷积只随核大小与通道数增长，<b>与图像大小无关</b>。</div>
+        <div class="caption" id="fcmCap">柱高对数刻度，数值是<b>真实可学习参数个数</b>（含 bias）。全连接 = $N\cdot C_{\mathrm{in}}\cdot m + m$（$N$ 为输入像素数，$C_{\mathrm{in}}$ 为输入通道数）；卷积（$f\times f\times C_{in}$ 核、$C_{in}$ 通道输入、$m$ 个滤波器）= $(f^2 C_{in}+1)\cdot m$。注意：全连接会随 $N$（图像尺寸）爆炸；卷积只随核大小与通道数增长，<b>与图像大小无关</b>。</div>
       </div>
       <div class="def">
         <div class="term">全连接层 <span class="en">fully-connected layer · first mentioned: §1</span></div>
@@ -661,7 +661,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;co
         <div class="svg-wrap"><svg id="paramViz" viewBox="0 0 960 420" role="img" aria-label="参数与计算量对比"></svg></div>
         <div class="label-row">
           <div class="control"><label>输入空间 $H=W$</label><select id="pmH"><option value="7">7×7（深层特征）</option><option value="32" selected>32×32（小图）</option><option value="224">224×224（ImageNet）</option></select></div>
-          <div class="control"><label>核大小 $f$</label><input type="range" id="pmF" min="2" max="7" step="1" value="3"><div class="val" id="pmFval">3</div></div>
+          <div class="control"><label>核大小 $f$</label><input type="range" id="pmF" min="3" max="7" step="2" value="3"><div class="val" id="pmFval">3</div></div>
           <div class="control"><label>输入通道 $C_{in}$</label><input type="range" id="pmCin" min="1" max="32" step="1" value="3"><div class="val" id="pmCinval">3</div></div>
           <div class="control"><label>输出通道 $C_{out}$</label><input type="range" id="pmCout" min="1" max="128" step="1" value="32"><div class="val" id="pmCoutval">32</div></div>
         </div>
@@ -1375,7 +1375,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
     // make output cells clickable
     z.forEach((row,r)=>row.forEach((_,c)=>{
       const rect=svg.querySelector(`rect[x="${ox+c*oc}"][y="${oy+r*oc}"]`);
-      if(rect)rect.addEventListener('click',()=>{state.sel={r,c};draw();});
+      if(rect)rect.addEventListener('click',()=>{state.sel={r,q:c};draw();});
     }));
   }
   function sync(){
@@ -1639,7 +1639,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show'
       {x:40,w:180,t:'大数据预训练',s:'ImageNet 等',color:'var(--accent)'},
       {x:280,w:180,t:'通用特征',s:'边缘/纹理/部件',color:'var(--opt)'},
       {x:520,w:180,t:'小数据新任务',s:'医学图等',color:'var(--warm)'},
-      {x:700?510?700:0:0,w:130,t:'微调/分类头',s:'少量适配',color:'var(--violet)'}
+      {x:700,w:130,t:'微调/分类头',s:'少量适配',color:'var(--violet)'}
     ];
     // actually adjust x last
     boxes[3].x=700;boxes[3].w=130;
