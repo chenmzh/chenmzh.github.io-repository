@@ -1,0 +1,1892 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 14 讲 · 卷积神经网络（CNN）互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 14 讲 Convolutional Neural Networks 的深度互动讲义：dropout 与测试时缩放、batch normalization、不变性与等变性、局部连接与参数共享、一维/二维卷积手算、输出尺寸与参数量、感受野、pooling、卷积反向传播、残差连接与迁移学习。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+ .gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px} .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+.control input[type=number],.control select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+pre.codeblock{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;font-size:.82em;line-height:1.65}
+pre.codeblock code{color:inherit;background:none}
+figure{margin:16px 0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure figcaption{margin-top:6px;color:var(--muted);font-size:.84rem;line-height:1.5}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px}
+.gloss{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+.gloss h4{margin:0 0 4px;font-size:1rem}
+.gloss .en{display:block;font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--accent);margin-bottom:7px}
+.gloss p{margin:.35em 0;font-size:.88rem}
+.gloss .role{color:var(--warm)}
+.gloss .formula{font-size:.92em;overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.legend span::before{content:"●";margin-right:5px;font-size:.9em}
+.legend .l-fwd::before{color:var(--fwd)} .legend .l-bwd::before{color:var(--bwd)} .legend .l-opt::before{color:var(--opt)} .legend .l-tool::before{color:var(--tool)}
+.step-bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-14" title="返回第 14 讲原文">← 返回第 14 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 14 · INTERACTIVE LAB</div>
+      <div class="title">Convolutional Neural Networks — 把图像结构写进网络</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 14 讲 / 25 讲</div>
+      <h1>如果输入是一张图，<br>能不能把<br><span style="color:var(--warm)">图像的结构</span>直接写进网络？</h1>
+      <p class="subtitle">第 11–13 讲给了我们<b>模型、梯度、以及训练稳定性</b>，但默认输入都被拍平成一长条向量。第 14 讲补上两件新事：先<u>补齐两个训练技巧</u>（dropout 的完整约定、batch normalization），再问一个结构性问题——<b>输入是图像时，全连接层参数爆炸、还无视“附近像素相关”与“同一模式可出现在任意位置”</b>。这一页是原讲义的<b>附属互动版</b>：每个概念都有定义-白话-用途-计算-连接的完整链条，所有实验都靠拖动滑杆或点击。</p>
+      <div class="question">💬 本讲核心问题：全连接层在图像上参数爆炸、又不利用图像结构；怎么用</b>局部连接 + 参数共享 + 层级堆叠</b>把图像先验写进模型，并让深层网络可训练？</div>
+      <div class="answer">一句话答案：CNN 用<b>两个先验</b>降参数、增强泛化——<b>① 局部连接</b>（一个单元只看一小块邻域），<b>② 参数共享</b>（同一个滤波器滑过全图，同一种模式到处能认）。再配<b>padding / stride / pooling 控制特征图尺寸</b>、<b>感受野逐层扩大</b>让高层看到整片上下文、<b>残差连接与 batch norm 让“很深”也成为可能</b>。而 dropout 与 batch norm，则是让这套更深的模型训练得动、不过拟合的旋钮。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">分成两段：第一段补完<b>训练技巧</b>（dropout 的两种等价约定、batch normalization 的四步公式）；第二段进入<b>CNN</b>——动机 → 两个先验 → 卷积手算 → 尺寸与参数量 → 感受野与 pooling → 残差与迁移学习。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">神经网络参数多、容易过拟合，而<b>图像自带强结构</b>（局部相关、平移不变/等变）。CNN 用结构先验把这些写进网络，让：参数从 1.5 亿级掉到几千级、同一检测器全图复用、深层网络能被训练。它是现代视觉模型的基石，也是“把知识写进归纳偏置”的最好范例。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲六步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 动机</b>：全连接在图像上参数爆炸、不利用结构（§1）。</span>
+            <span class="step"><b>② 训练技巧</b>：dropout 随机屏蔽 + 尺度补偿，batch norm 标准化隐藏层（§2–§5）。</span>
+            <span class="step"><b>③ 两个先验</b>：局部连接 + 参数共享 → 卷积层（§6–§7）。</span>
+            <span class="step"><b>④ 手算与公式</b>：滑窗算式、输出尺寸、参数量（§8–§11）。</span>
+            <span class="step"><b>⑤ 层级设计</b>：感受野逐层扩大、池化下采样、残差连接与迁移（§12–§17）。</span>
+            <span class="step"><b>⑥ 收束</b>：统一视角 + 自查（§18–§20）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：模型（L11）→ 梯度（L12）→ 训练稳定性（L13）→ CNN（L14）→ 聚类（L15）</span>
+        <span class="pill">🧩 前置：前向/反向传播（L12）、训练技巧（L13 的 dropout 先引了个头）</span>
+        <span class="pill">🎯 产出：一套<b>能动手算卷积尺寸/参数、看懂特征图与感受野</b>的 CNN 语言</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：这一讲在哪里，概念如何互相咬合</h2>
+      <p class="sec-lead">先把“位置”看清楚。第 13 讲补了训练稳定性；<b>第 14 讲</b>先补完两个训练技巧（dropout 的完整约定、batch norm），再回答“如何把图像结构写进网络”——于是有了<b>局部连接 + 参数共享</b>这两个先验，随后自然长出：尺寸公式、感受野、pooling、残差、迁移学习。下图所有节点都可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 660" role="img" aria-label="第 14 讲概念地图"></svg></div>
+        <div class="caption">概念地图（可点击）：<span class="tag opt">结构先验</span>（局部连接/参数共享）是 CNN 的“引擎”；<span class="tag bwd">尺寸调度</span>（padding/stride/pooling）决定特征图长什么样；<span class="tag tool">可训练性</span>（batch norm/残差）让深度成为可能；<span class="tag fwd">复用</span>（迁移学习）把学到的表示变成新任务的特征。灰色节点是本讲前后课程。</div>
+      </div>
+    </section>
+
+    <!-- ============ MOTIVATION ============ -->
+    <section id="motiv">
+      <h2 class="sec-title"><span class="num">§1</span>动机：全连接层在图像上参数爆炸，也不利用结构 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">假设要判断一张图片里有没有猫，图片是 $224\times224\times3$（高 × 宽 × 通道）。把 RGB 三通道展开，输入向量长
+        $$224\cdot224\cdot3=150528.$$
+        如果第一层全连接到 $1000$ 个隐藏单元，这一层光权重就有
+        $$150528\cdot1000=150{,}528{,}000 \approx 1.5\times10^8,$$
+        <b>还没算偏置</b>——而且这只是第一层。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>问题不只是参数多</h3>
+          <p class="plain">更大的问题是：<b>全连接层没有利用图像结构</b>。它把每个像素当成长向量里的独立坐标，等价地“忘记了”像素之间的空间关系。</p>
+          <p class="plain small">如果我们的目标就是让模型自己发现这些关系，也可以，但那是把难学的东西交给优化器；CNN 的做法是<b>直接用网络结构把已知的图像结构写进去</b>。</p>
+        </div>
+        <div class="card">
+          <h3>图像的特点（CNN 就是为它设计的）</h3>
+          <ul class="plain" style="line-height:1.9;padding-left:18px">
+            <li><b>相邻像素关系强</b>：一个像素的取值多半由周围像素决定；</li>
+            <li><b>边缘、角点、纹理是局部模式</b>：只用看一小块邻域就能判断；</li>
+            <li><b>同一个边缘检测器可以在左上角用，也可以用在右下角</b>：模式可复用；</li>
+            <li><b>物体稍微平移，标签通常不变</b>：样本对应大致不变的输出。</li>
+          </ul>
+          <p class="plain small">“附近更相关”→“局部连接”，“模式可复用”→“参数共享”，“平移大致不变”→“层级聚合”。这三条就是后面所有设计的来源。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：同一种输入，全连接 vs 卷积的参数规模差多少</h4>
+        <div class="svg-wrap"><svg id="fcMotivation" viewBox="0 0 780 340" role="img" aria-label="全连接与卷积参数数量对比"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>该层输出单元/滤波器数 $m$</label><input type="range" id="fcmM" min="50" max="1000" step="10" value="1000"><div class="val" id="fcmMval">1000</div></div>
+          <div class="control"><label>卷积核大小 $f\times f$</label><input type="range" id="fcmF" min="1" max="7" step="1" value="3"><div class="val" id="fcmFval">3</div></div>
+          <div class="control"><label>输入通道 $C_{in}$（RGB=3）</label><input type="range" id="fcmC" min="1" max="64" step="1" value="3"><div class="val" id="fcmCval">3</div></div>
+          <div class="control"><label>空间尺寸（$224\times224$）</label>
+            <select id="fcmS"><option value="224">224×224（猫图）</option><option value="32">32×32（小图）</option><option value="7">7×7（深层特征）</option></select>
+          </div>
+        </div>
+        <div class="caption" id="fcmCap">柱高对数刻度，数值是<b>真实可学习参数个数</b>（含 bias）。全连接 = $N\cdot m + m$（$N$ 为输入像素数）；卷积（$f\times f\times C_{in}$ 核、$C_{in}$ 通道输入、$m$ 个滤波器）= $(f^2 C_{in}+1)\cdot m$。注意：全连接会随 $N$（图像尺寸）爆炸；卷积只随核大小与通道数增长，<b>与图像大小无关</b>。</div>
+      </div>
+      <div class="def">
+        <div class="term">全连接层 <span class="en">fully-connected layer · first mentioned: §1</span></div>
+        <p class="plain"><b>是什么</b>：每个输出单元都连接到上一层<b>所有</b>输入的网络层，权重是稠密矩阵 $W\in\mathbb{R}^{d_{out}\times d_{in}}$，加偏置 $b$。</p>
+        <p class="plain"><b>白话</b>：把每个输入都“介绍”给每个输出，谁跟谁都连上。</p>
+        <p class="plain"><b>干嘛用</b>：通用、表达能力强；但对图像来说太浪费——它不利用局部性与平移结构。</p>
+        <p class="plain"><b>怎么算</b>：$v^{(l+1)}=\varphi(Wv^{(l)})$，参数个数 $=d_{in}d_{out}$，随输入像素数线性爆炸。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是第 11–13 讲的主角；本讲用它当“反面教材”，引出卷积层（§7）如何用局部连接 + 参数共享把 $N\cdot m$ 缩成 $(f^2C_{in}+1)m$。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>既然全连接在图像上又贵又不学结构，那我们先把第 13 讲只“开个头”的两个训练技巧讲完整——<b>dropout 到底怎么在训练/测试之间对齐尺度</b>，再看 batch norm。它们不解决“结构”，但解决“训练得动”，是进入深层 CNN 的前提。</div>
+    </section>
+
+    <!-- ============ DROPOUT ============ -->
+    <section id="drop">
+      <h2 class="sec-title"><span class="num">§2</span>Dropout：训练时随机屏蔽，测试时用全部单元 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">第 13 讲已经引过头。这里把约定讲精确。神经网络<b>参数多、容易过拟合</b>，dropout 的关键想法是：
+        <b>训练时随机忽略一部分隐藏单元，测试时使用全部单元</b>。
+        设某个隐藏单元的值是 $v$，本文统一用 $p\in(0,1]$ 表示<b>保留概率</b>，丢弃概率是 $1-p$。训练时引入随机 mask $m\sim\operatorname{Bernoulli}(p)$，即 $m=1$ 以概率 $p$ 保留、$m=0$ 以概率 $1-p$ 丢弃，于是训练时该单元实际输出
+        $$v_{\mathrm{train}}=m\cdot v.$$</p>
+      <div class="card compact">
+        <p class="plain small"><b>这意味着什么</b>：每个 mini-batch 看到的都是一个<b>不同的子网络</b>——随机去掉了一些单元。模型不能依赖某一个固定隐藏单元永远存在，被迫学习更<b>分散、稳健</b>的表示。这降低了单元之间的复杂“共适应”，从而减少过拟合。</p>
+        <p class="plain small"><b>先记住三条“不是”</b>（详见 §18 误解梳理）：dropout 不是删除神经元（只是临时屏蔽）；不是让模型变小（测试时仍用完整模型）；也不一定总有帮助（数据很多、或 batch norm 很强时收益可能变小）。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">手算小实验（完整例 1）：三层隐藏单元 + 随机 mask</h4>
+        <p class="plain small">设一层有三个隐藏单元 $v=[2,4,6]$，输出层权重 $w=[1,1,1]$。没有 dropout 时 $f=2+4+6=12$。现在训练时保留概率 $p$，每次点“随机 mask”都独立生成一个 mask，看看这次只能用哪些单元、$f_{\mathrm{train}}$ 是多少。</p>
+        <div class="svg-wrap"><svg id="dropoutViz" viewBox="0 0 760 340" role="img" aria-label="dropout 随机屏蔽演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>保留概率 $p$</label><input type="range" id="dropP" min="0.3" max="0.9" step="0.05" value="0.5"><div class="val" id="dropPval">0.50</div></div>
+          <div class="control"><button class="btn warm" id="dropRun" type="button">🎲 随机 mask</button></div>
+        </div>
+        <div class="caption" id="dropCap">每个单元这次被保留（实心）或被丢弃（空心）。$f_{\mathrm{train}}$ 是<b>这一次</b>留下来的单元对输出的贡献，$f_{\mathrm{no}}=12$ 是完整模型的值；$p\cdot f_{\mathrm{no}}$ 是“平均会传出多少信号”的期望。多按几次“随机 mask”，注意结果每次都不同，但围绕期望 $\mathbb{E}[mv]=pv$ 波动。</div>
+      </div>
+      <div class="def">
+        <div class="term">Dropout <span class="en">dropout · first mentioned: §2</span></div>
+        <p class="plain"><b>是什么</b>：正则化技术——训练时以概率 $1-p$ 把隐藏单元临时置零（乘 mask $m\sim\operatorname{Bernoulli}(p)$），测试时用全部单元并匹配尺度。</p>
+        <p class="plain"><b>白话</b>：训练时“故意请病假几个人”，让大家不依赖谁；考试时全部到场。</p>
+        <p class="plain"><b>干嘛用</b>：降低单元间复杂共适应、减少过拟合。</p>
+        <p class="plain"><b>怎么算 / 怎么用</b>：训练时 $v_{\mathrm{train}}=mv$；测试时要么输出 $pv$（约定 1），要么训练时用 $mv/p$（inverted、约定 2），让训练与测试的<b>激活尺度</b>一致。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是“泛化控制”的一把旋钮（第 13 讲）；本讲把它讲完整，紧接着 §3 的尺度对齐是它最容易记错的地方，也是工程实现（如 PyTorch 的 <code>F.dropout</code>/inverted 语义）的默认约定。</p>
+      </div>
+      <div class="def">
+        <div class="term">保留概率 $p$ 与随机屏蔽 <span class="en">keep probability · random mask · first mentioned: §2</span></div>
+        <p class="plain"><b>是什么</b>：$p$ 是每个单元保留下来的概率；mask $m$ 是取 $0/1$ 的伯努利随机变量，$m=1$ 表示保留、$m=0$ 表示丢弃。</p>
+        <p class="plain"><b>白话</b>：$p$ 是“出勤率”，$m$ 是“今天谁来上班”的抽签结果。</p>
+        <p class="plain"><b>干嘛用</b>：mask 实现“临时屏蔽”；$p$ 是超参数（常见 0.5），控制屏蔽强度。</p>
+        <p class="plain"><b>怎么算</b>：$\mathbb{E}[m]=p$；训练输出 $mv$ 的期望是 $pv$（下一步就用它）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：屏蔽是手段，$p$ 决定期望尺度——这正是 §3 为什么要做“测试时缩放”。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>你可能会问：训练时把单元“随便掐掉”，测试时又全用——<b>两边的信号尺度对不上怎么办？</b>这正是下一节“测试时缩放 / inverted dropout”要回答的。</div>
+    </section>
+
+
+    <!-- ============ DROPOUT TEST-TIME SCALING ============ -->
+    <section id="dropscale">
+      <h2 class="sec-title"><span class="num">§3</span>Dropout 的测试时缩放：让训练与测试的激活尺度一致 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">要“对齐”的量是同一个：<b>这个隐藏单元传给下一层的平均激活</b>。原激活是常数 $v$，mask $m\sim\operatorname{Bernoulli}(p)$。训练时输出 $mv$，由期望的线性性
+        $$\mathbb{E}[mv]=v\,\mathbb{E}[m]=pv.$$
+        这里算的不是预测值，而是训练时随机屏蔽后、这条通路<b>平均</b>还传出多少信号。如果测试时所有单元直接输出 $v$，平均尺度就从 $pv$ 跳到 $v$——前后不一致。两种等价约定：</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>约定 1：测试时缩放 <span class="en">test-time scaling</span></h3>
+          <p class="plain">训练时用 $mv$；测试时把每个单元的激活乘 $p$：
+            $$v_{\mathrm{test,effective}}=p\cdot v.$$
+            训练期望 $pv$，测试输出 $pv$——一致。</p>
+        </div>
+        <div class="card">
+          <h3>约定 2：inverted dropout</h3>
+          <p class="plain">训练时把保留单元“放大”到 $mv/p$；测试时直接用 $v$：
+            $$\mathbb{E}\!\left[\frac{m}{p}v\right]=\frac{\mathbb{E}[m]}{p}v=v.$$
+            因为 $\mathbb{E}[m]=p$，期望仍然是 $v$——测试端不再需要任何缩放。现代框架（PyTorch、TF）默认走这条。</p>
+        </div>
+      </div>
+      <div class="confirm" style="border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface));border-radius:10px;padding:12px 16px;margin:14px 0">
+        <p class="plain" style="margin:0"><b>两条路殊途同归</b>：都是让“训练时期的平均信号尺度”与“测试时期的实际信号尺度”匹配。区别只是——<b>把缩放放在测试端，还是放在训练端（inverted）</b>。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：两种约定为什么“等效”——试试不同 $p$</h4>
+        <div class="svg-wrap"><svg id="dropoutScale" viewBox="0 0 820 320" role="img" aria-label="dropout 两种约定尺度对齐"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>保留概率 $p$</label><input type="range" id="dropScaleP" min="0.3" max="0.9" step="0.05" value="0.5"><div class="val" id="dropScalePval">0.50</div></div>
+          <div class="control"><label>原激活值 $v$</label><input type="range" id="dropScaleV" min="1" max="10" step="1" value="8"><div class="val" id="dropScaleVval">8</div></div>
+        </div>
+        <div class="caption" id="dropScaleCap">绿条=训练时期望传出 $\mathbb{E}[mv]=pv$；蓝条=约定 1 的测试输出 $pv$（与期望一致）；橙条=约定 2 的测试输出 $v$、训练期望也是 $v$。两种约定都让“训练期望 = 测试输出”。</div>
+      </div>
+      <div class="def">
+        <div class="term">测试时缩放 / inverted dropout <span class="en">test-time scaling · inverted dropout · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：为使训练（有随机屏蔽）与测试（无屏蔽）的激活尺度一致而引入的两种等价补偿约定。</p>
+        <p class="plain"><b>白话</b>：训练时平均只有 $p$ 的人到场，考试要么按 $p$ 打折，要么平时按 $1/p$ 找齐。</p>
+        <p class="plain"><b>干嘛用</b>：防止同一个量在训练/测试之间“突变”，保证推理阶段直接可用。</p>
+        <p class="plain"><b>怎么算</b>：约定 1：测试输出 $pv$；约定 2：训练输出 $mv/p$（期望 $=v$），测试输出 $v$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：这是 dropout 最容易记错的细节（§18 误解）；理解“两种约定都是让期望对齐”，就能在任何框架里看懂源码里的 <code>1/(1-drop)</code> 是什么。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>dropout 管的是“训练时随机性 + 尺度对齐”。<b>还剩一个让深层网络稳定训练的大杀器</b>：不只标准化输入，还要标准化<b>每一层隐藏激活</b>——batch normalization。</div>
+    </section>
+
+    <!-- ============ BATCH NORMALIZATION ============ -->
+    <section id="bn">
+      <h2 class="sec-title"><span class="num">§4</span>Batch Normalization：让隐藏层也保持标准化 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">前面课程讲过<b>输入标准化</b>（均值 $0$、方差 $1$）有助于优化。但深度网络里，第一层之后的数据分布会不断变化——因为<b>每一层的权重都在训练</b>。batch normalization 的想法是：
+        <b>不只标准化输入，也标准化隐藏层激活。</b>它通常作为一层插入网络。</p>
+      <div class="card compact">
+        <p class="plain small"><b>先明确在标准化谁</b>：以全连接层一个固定的特征（维度）为例，mini-batch 有 $m$ 个样本，该特征的激活是 $v_1,\ldots,v_m$。我们<b>只在这 $m$ 个值之间</b>算统计量，不把不同特征混在一起。四步：</p>
+        <ol class="plain" style="line-height:1.9;padding-left:18px">
+          <li><b>Batch 均值</b>：$\mu_B=\tfrac{1}{m}\sum_{i=1}^m v_i$</li>
+          <li><b>Batch 方差</b>：$\sigma_B^2=\tfrac{1}{m}\sum_{i=1}^m (v_i-\mu_B)^2$</li>
+          <li><b>标准化</b>：$\hat v_i=\dfrac{v_i-\mu_B}{\sqrt{\sigma_B^2+\varepsilon}}$，$\varepsilon>0$ 防止方差很小时除零</li>
+          <li><b>缩放平移（可学习）</b>：$\bar v_i=\gamma\,\hat v_i+\beta$</li>
+        </ol>
+        <p class="plain small"><b>分工</b>：$\mu_B,\sigma_B^2$ 是<b>当前数据给出的统计量</b>；$\gamma,\beta$ 是<b>反向传播学习的参数</b>。记不住谁是谁，就看索引：$\mu,\sigma$ 下标有 $B$（batch），$\gamma,\beta$ 没有。</p>
+      </div>
+      <div class="card compact">
+        <h3 style="margin-top:0">卷积激活时的统计轴</h3>
+        <p class="plain small">对卷积激活张量 $V\in\mathbb{R}^{B\times C\times H\times W}$，通常按<b>通道</b>统计：同一输出通道 $c$ 用 $BHW$ 个数估计 $\mu_{B,c}$、$\sigma_{B,c}^2$；而 $\gamma_c,\beta_c$ 每个通道各一对。<b>训练</b>时用当前 batch 统计并累计运行统计；<b>测试</b>时用运行统计——不能把待预测样本临时凑成一个 batch 再重新定义均值和方差。（后面“同通道”的 BatchNorm 都采用这种统计轴约定。）</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：一个 mini-batch 走完四步</h4>
+        <p class="plain small">下面 6 个数是一个 mini-batch 里某固定特征（维度）的激活：$v=[1.5,0.5,2.0,1.0,3.0,1.0]$。拖动 $\gamma$ 与 $\beta$，看第 4 步如何把标准化后的值缩放平移（前面三步只由数据决定）。</p>
+        <div class="svg-wrap"><svg id="bnSteps" viewBox="0 0 860 380" role="img" aria-label="batch normalization 四步演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>可学习缩放 $\gamma$（0.5–2）</label><input type="range" id="bnG" min="0.5" max="2" step="0.05" value="1.0"><div class="val" id="bnGval">1.00</div></div>
+          <div class="control"><label>可学习平移 $\beta$（−1–1）</label><input type="range" id="bnB" min="-1" max="1" step="0.05" value="0"><div class="val" id="bnBval">0.00</div></div>
+        </div>
+        <div class="caption" id="bnCap">每行一个样本：$v_i$（原值）→ $\hat v_i=(v_i-\mu_B)/\sqrt{\sigma_B^2+\varepsilon}$（纯由数据定的标准化）→ $\bar v_i=\gamma\hat v_i+\beta$（可学习恢复尺度）。顶部是 $\mu_B,\sigma_B^2$，它们只随数据变；$\gamma,\beta$ 由你拖。</div>
+      </div>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">Batch Normalization <span class="en">batch normalization · first mentioned: §4</span></div>
+          <p class="plain"><b>是什么</b>：一个网络层，用当前 mini-batch 的统计量（均值、方差）把激活标准化，再用可学习参数 $\gamma,\beta$ 缩放平移。</p>
+          <p class="plain"><b>白话</b>：把每个隐藏特征的“中心”和“胖瘦”先归一到标准形状，再让网络自己决定要多大、偏哪儿。</p>
+          <p class="plain"><b>干嘛用</b>：让每一层的激活尺度稳定，训练更稳、允许更大学习率、常常提升泛化。</p>
+          <p class="plain"><b>怎么算</b>：$\hat v_i=\frac{v_i-\mu_B}{\sqrt{\sigma_B^2+\varepsilon}}$，再 $\bar v_i=\gamma\hat v_i+\beta$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：它回应了 §1 的“参数多 + 深层训练难”：前面层的尺度变化不再向后传染；同时也常使 dropout 的收益变小（互相补充的两种正则手段）。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">Batch 统计量 <span class="en">batch statistics · first mentioned: §4</span></div>
+          <p class="plain"><b>是什么</b>：$\mu_B=\frac1m\sum_i v_i$、$\sigma_B^2=\frac1m\sum_i(v_i-\mu_B)^2$，由当前 mini-batch 的 $m$ 个样本算出。</p>
+          <p class="plain"><b>白话</b>：这批货的平均和离散程度。</p>
+          <p class="plain"><b>干嘛用</b>：第三步标准化要用；它们是“当前数据”的统计，而不是参数。</p>
+          <p class="plain"><b>怎么算</b>：公式如上；测试时改用训练期累计的<b>运行统计</b>（拓展 §4.1）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：分清“数据统计量（带下标 $B$）”与“学习参数（$\gamma,\beta$）”是最容易搞混的地方；否则测试时为什么不能重新算 batch 均值就说不清。</p>
+        </div>
+      </div>
+      <details>
+        <summary>拓展 4.1：运行统计（running statistics）与 BN 的测试语义</summary>
+        <div class="inner">
+          <p class="plain">训练时除了用当前 batch 归一化，还会用“指数移动平均”累计全训练过程的 $\mu_B,\sigma_B^2$（如每个 batch 更新 $\mu_{\mathrm{run}}\leftarrow(1-\alpha)\mu_{\mathrm{run}}+\alpha\mu_B$）。<b>测试/推理时</b>用这份运行统计代替当前 batch 统计——这样预测不依赖样本被塞进哪个 batch，结果确定且可复现。</p>
+          <p class="plain small">这是 BN 最容易踩的坑之一：训练好以后，<b>不要</b>为单个测试样本临时“凑”一个 batch 重新算均值方差；要用模型保存的运行统计。</p>
+        </div>
+      </details>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>“标准化后为什么还要 $\gamma,\beta$？”这不是加戏，而是防 BN 把模型能力锁死。下一节就回答这个“为什么不强制均值 0 方差 1”的问题。</div>
+    </section>
+
+
+    <!-- ============ WHY GAMMA BETA ============ -->
+    <section id="gamma">
+      <h2 class="sec-title"><span class="num">§5</span>为什么还要 γ 和 β：既稳定，又不锁死表达 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">如果 batch norm 永远强制均值 0、方差 1，可能<u>限制模型的表达能力</u>。例如某层真的需要非零均值、或不同的尺度。于是第三步标准化之后，再用<b>可学习参数</b>来回答两个问题：</p>
+      <pre class="codeblock"><code>标准化后要不要放大？（γ，缩放）
+要不要平移？      （β，平移）</code></pre>
+      <p class="plain">极端情况下，模型甚至可以<b>部分“撤销”标准化</b>（学出 $\gamma\approx\sqrt{\sigma_B^2+\varepsilon}$、$\beta\approx\mu_B$），这不算 bug——它说明 BN“既能稳定训练，又不太限制表达能力”。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">$\gamma,\beta$（可学习缩放/平移） <span class="en">learnable scale &amp; shift · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：BN 第四步里的两个参数：$\bar v_i=\gamma\hat v_i+\beta$。$\gamma$ 管放大概率、$\beta$ 管平移位置。</p>
+          <p class="plain"><b>白话</b>：先把数据“校准”到标准形状，再让网络自己决定要不要放大、往哪儿挪。</p>
+          <p class="plain"><b>干嘛用</b>：恢复模型真正需要的尺度和位置，避免标准化把表达锁死。</p>
+          <p class="plain"><b>怎么算</b>：它们随网络一起梯度下降；$\gamma=1,\beta=0$ 是常见初始化（先保持“纯标准化”）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：没有它们，BN 就退化成“有损预处理”；有它们，BN 才能“产业级”被反复堆叠。这也回应 §1 的警示——结构先验给能力，可学习参数给弹性。</p>
+        </div>
+        <div class="card">
+          <h3>BN 的实践作用（课程层面记住这些）</h3>
+          <ul class="plain" style="line-height:1.9;padding-left:18px">
+            <li><b>训练更稳定</b>：每层输入尺度被控，不必不断适应剧烈变化的分布；</li>
+            <li><b>学习率可更大胆</b>：梯度尺度受控，允许更大的 $\eta$；</li>
+            <li><b>常常提升泛化</b>：还带一点正则化味道（mini-batch 统计带来的噪声）。</li>
+          </ul>
+          <p class="plain small">课件常提“减少 internal covariate shift”。现代研究对 BN 为何有效有更复杂的解释；在本课程层面，记预防法即可。</p>
+        </div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>训练技巧补齐了（dropout、batch norm）。现在正式进入 CNN：<b>先问“一整张图到底想要哪种对称性”——不变，还是等变？</b>这是理解卷积为什么这么设计的第一块拼图。</div>
+    </section>
+
+    <!-- ============ INVARIANCE vs EQUIVARIANCE ============ -->
+    <section id="equiv">
+      <h2 class="sec-title"><span class="num">§6</span>不变性与等变性：卷积鼓励的是哪一种？ <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">课件明确区分两个词，它们答案不同、容易混。用平移举例（移动 $a$ 个位置，平移算子记作 $T_a$）：</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>不变性 <span class="en">invariance</span></h3>
+          <p class="plain"><b>输入稍微平移，预测标签不变</b>。例：猫在左边 → cat；猫在右边 → cat。输出类别相同。</p>
+        </div>
+        <div class="card">
+          <h3>等变性 <span class="en">equivariance</span></h3>
+          <p class="plain"><b>输入平移，输出也相应平移</b>。例：图像分割中猫向右移动 10 像素，输出的猫区域也向右移动 10 像素。输出不是不变，而是“跟着变”。</p>
+        </div>
+      </div>
+      <p class="plain">对局部共享核（stride 1、暂时忽略边界）有
+        $$\operatorname{Conv}(T_a x)=T_a\operatorname{Conv}(x).$$
+        左式在位置 $t$ 取到的窗口，正是原图在位置 $t-a$ 的同一个窗口；<b>同一组权重没有因位置改变而变</b>。这说明卷积是<b>平移等变</b>，不是不变：输出特征图会跟随平移。想得到<b>近似不变</b>的分类输出，靠的是后面的 pooling / 全局聚合（位置被汇总掉），或数据增强。</p>
+      <div class="card compact">
+        <p class="plain small"><b>边界与 stride 的承认</b>：stride $>1$ 与 padding 会让“严格的一像素平移”不再精确满足上式；下图忽略了这些边界效应，专注看“等变”这个主现象。回顾 §1 的图像特点：平移后标签不变 → 不变性；但<b>特征图自己必须跟着走</b>（等变），高层再汇总出不变。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：输入平移 → 卷积响应也跟着平移（等变）；全局汇总 → 近似不变</h4>
+        <div class="svg-wrap"><svg id="equivDemo" viewBox="0 0 900 400" role="img" aria-label="卷积等变性与全局汇总不变性"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>右移量 $a$（像素）</label><input type="range" id="eqA" min="0" max="8" step="1" value="3"><div class="val" id="eqAval">3</div></div>
+          <div class="control"><label>核</label>
+            <select id="eqK"><option value="edge">边缘 [1,0,−1]</option><option value="smooth">平滑 [⅓,⅓,⅓]</option></select>
+          </div>
+        </div>
+        <div class="caption" id="eqCap">上排：原信号 $x$ 与右移后的 $T_a x$；下排：各自卷积响应 $z=\operatorname{Conv}(x)$ 与 $z'=\operatorname{Conv}(T_ax)$。按键核看 $z'=T_a z$（等变）；两路的<b>全局平均</b>几乎相等（近似不变，数值文本框里实时给出）。</div>
+      </div>
+      <div class="def">
+        <div class="term">不变性 / 等变性 <span class="en">invariance / equivariance · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：不变性——输入做某种变换后输出<b>保持不变</b>；等变性——输出<b>按同样方式变换</b>（平移则平移、旋转则旋转）。</p>
+        <p class="plain"><b>白话</b>：不变=“猫在哪都叫 cat”；等变=“轮廓图跟着猫一起动”。</p>
+        <p class="plain"><b>干嘛用</b>：用来精确描述“卷积给了网络什么结构先验”——它给的是等变，不是不变。</p>
+        <p class="plain"><b>怎么算</b>：$\operatorname{Conv}(T_ax)=T_a\operatorname{Conv}(x)$（等变）；不变通常由后的聚合/增强近似达到。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：这是 §18 误解“卷积天然完全平移不变”的源头；理解了等变，才能看懂为什么分类 CNN 要配 pooling（§13）——一个管“特征跟着走”，一个管“把位置汇总掉”。</p>
+      </div>
+      <div class="card compact">
+        <h3 style="margin-top:0">如何鼓励模型学到不变性？</h3>
+        <p class="plain small">课件列了几条路：<b>数据增强</b>（随机平移/裁剪/翻转，让模型见多识广）、<b>特殊正则化</b>、<b>预处理</b>、以及<b>把不变性写进网络结构</b>（卷积共享参数 + 池化聚合局部响应）。CNN 的优势在于：它不是只靠数据“凑”出平移结构，而是<b>在结构上先假设局部模式可以复用</b>——这就是“归纳偏置”的正面作用。</p>
+      </div>
+      <div class="def">
+        <div class="term">数据增强 <span class="en">data augmentation · first mentioned: §6</span></div>
+        <p class="plain"><b>是什么</b>：训练时对输入做受控变换生成更多样本：随机平移、随机裁剪、随机翻转等。</p>
+        <p class="plain"><b>白话</b>：同一张图，把它上下左右搬一搬再给模型看，等于教会它“换个位置还是同一个东西”。</p>
+        <p class="plain"><b>干嘛用</b>：引入平移（及更多）近似不变、抑制过拟合。</p>
+        <p class="plain"><b>怎么算</b>：每个 epoch 对每个样本随机采样一个变换应用到批次上。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是“让模型学到不变性”的<b>数据侧</b>手段，与卷积（结构侧）互补；后续迁移学习（§17）也常配合它。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>“局部共享核”这个词已经说了两次。<b>它到底是怎么搭起来的？</b>下一节把卷积层的两个核心先验讲透——局部连接 + 参数共享。</div>
+    </section>
+
+
+    <!-- ============ TWO PRIORS ============ -->
+    <section id="local">
+      <h2 class="sec-title"><span class="num">§7</span>卷积层的两个核心先验：局部连接 + 参数共享 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">CNN 靠两个设计同时降参数、增泛化，这就是“把图像结构写进网络”的具体含义：</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>局部连接 <span class="en">local connectivity</span></h3>
+          <p class="plain">一个隐藏单元<b>只看附近一小块输入</b>。例如 $3\times3$ 的滤波器只看 $9$ 个像素位置，不看全图。</p>
+          <p class="plain small">符合图像直觉：<b>边缘和纹理由局部像素决定</b>（§1）。</p>
+        </div>
+        <div class="card">
+          <h3>参数共享 <span class="en">parameter sharing</span></h3>
+          <p class="plain"><b>同一个滤波器在整张图上滑动</b>。左上角检测边缘的那组权重，也用于右下角。</p>
+          <p class="plain small">符合图像直觉：<b>同一种局部模式可能出现在任意位置</b>（§1）。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：一个 $3\times3$ 核，被哪些位置共享</h4>
+        <div class="svg-wrap"><svg id="localShare" viewBox="0 0 880 400" role="img" aria-label="局部连接与参数共享"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>观察滑窗左上角横坐标</label><input type="range" id="lsX" min="0" max="2" step="1" value="0"><div class="val" id="lsXval">0</div></div>
+          <div class="control"><label>观察滑窗左上角纵坐标</label><input type="range" id="lsY" min="0" max="2" step="1" value="0"><div class="val" id="lsYval">0</div></div>
+          <div class="control"><button class="btn warm" id="lsRun" type="button">🎲 随机给核赋一组权重 a–i</button></div>
+        </div>
+        <div class="caption" id="lsCap">左侧：$5\times5$ 输入上，黄色窗口 = 当前观察的输出单元对应的 $3\times3$ 局部邻域；右侧：同一个核 $K=[a,b,c;d,e,f;g,h,i]$ 在 9 个位置复用（灰框），当前观察位置高亮。参数总量恒为 $3\times3=9$ 个权重 + 1 个 bias，<b>与位置无关</b>——这就是§1 里“同一种模式到处能认”的来源。</div>
+      </div>
+      <div class="def">
+        <div class="term">局部连接 <span class="en">local connectivity · first mentioned: §7</span></div>
+        <p class="plain"><b>是什么</b>：一个输出单元只连接到输入的一小块邻域（如 $f\times f$ 个位置），而不是全部输入。它对应“附近像素更相关”这一先验。</p>
+        <p class="plain"><b>白话</b>：你判断“是不是边缘”，不用看整张图，看窗口里的几个像素就够了。</p>
+        <p class="plain"><b>干嘛用</b>：省参数（只连 $f^2C_{in}$ 个输入）且天然把局部模式优先编码。</p>
+        <p class="plain"><b>怎么算</b>：输出只看窗口 $\tilde x_{ts+r}$；参数量与邻域大小相关。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它和参数共享是两个先验之一；配合 §8–§9 的滑窗算式就得到卷积层。</p>
+      </div>
+      <div class="def">
+        <div class="term">参数共享 <span class="en">parameter sharing · first mentioned: §7</span></div>
+        <p class="plain"><b>是什么</b>：同一组滤波器权重在输入的所有位置上重复使用（整图滑窗），而不是每位置一套独立参数。</p>
+        <p class="plain"><b>白话</b>：一个“边缘检测器”的墨迹到处盖，盖出来的特征图每个位置都是它的响应。</p>
+        <p class="plain"><b>干嘛用</b>：把参数量从“随位置增长”压成“固定大小”；并实现平移等变（§6）。</p>
+        <p class="plain"><b>怎么算</b>：参数量 $(f^2C_{in}+1)C_{out}$，与输出宽度/高度无关（§10）；反向传播时同一参数梯度对所有使用位置求和（§15）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是“同一种模式出现在任意位置都认”的结构化写法；也是卷积和全连接最本质的分水岭。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>空泛地说“滑窗”不够。<b>先看一维卷积手算</b>，把“乘-加、stride、padding、输出长度”这几个动作一个数一个数算出来——这是后面所有二维公式的地基。</div>
+    </section>
+
+    <!-- ============ 1D CONVOLUTION ============ -->
+    <section id="conv1d">
+      <h2 class="sec-title"><span class="num">§8</span>一维卷积手算：滑窗、stride、padding 一个数一个数来 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">先看一维。课堂例：输入 $x=[1,2,0,3,1]$，滤波器 $w=[1,0,-1]$，stride 1、无 padding。输出长度 $5-3+1=3$，逐位置
+        $$z_1=1\cdot1+0\cdot2+(-1)\cdot0=1,\quad z_2=1\cdot2+0\cdot0+(-1)\cdot3=-1,\quad z_3=1\cdot0+0\cdot3+(-1)\cdot1=-1.$$
+        所以 $z=[1,-1,-1]$。这个滤波器大致在检测<b>“左边值 − 右边值”</b>，一种局部变化。</p>
+      <p class="plain small">推广成公式前先定符号：输入长度 $n$，核长度 $k$，两端各补 $p$ 个位置，核每次移动 $s$ 格；补完的 $\tilde x$ 长 $n+2p$，第 $t$ 个输出（从 0 起）读窗口 $\tilde x_{ts},\ldots,\tilde x_{ts+k-1}$。于是
+        $$z_t=\sum_{r=0}^{k-1}w_r\,\tilde x_{ts+r},\qquad t=0,\ldots,\mathrm{out}-1,\qquad \mathrm{out}=\left\lfloor\frac{n+2p-k}{s}\right\rfloor+1.$$
+        最后的窗口起点必须满足 $ts+k-1\le n+2p-1$；不够一个完整核的尾部<b>不再产生输出</b>，这就是取 floor 的原因。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：自己动手滑窗——换输入、换核、换 stride/padding、点输出位置看算账</h4>
+        <div class="svg-wrap"><svg id="conv1dViz" viewBox="0 0 940 400" role="img" aria-label="一维卷积滑窗互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入预设</label>
+            <select id="c1In"><option value="lecture" selected>课堂例 [1,2,0,3,1]</option><option value="step">阶跃 [0,0,0,1,1,1]</option><option value="impulse">脉冲 [0,0,2,0,0,0]</option></select>
+          </div>
+          <div class="control"><label>滤波器 $w$</label>
+            <select id="c1W"><option value="edge" selected>边缘 [1,0,−1]</option><option value="smooth">平滑 [0.5,0.5,0.5]</option><option value="diff">差分 [1,−1]</option></select>
+          </div>
+          <div class="control"><label>stride $s$</label><input type="range" id="c1S" min="1" max="2" step="1" value="1"><div class="val" id="c1Sval">1</div></div>
+          <div class="control"><label>padding $p$</label><input type="range" id="c1P" min="0" max="1" step="1" value="0"><div class="val" id="c1Pval">0</div></div>
+          <div class="control"><label>查看输出位置 $t$</label><input type="range" id="c1T" min="0" max="2" step="1" value="1"><div class="val" id="c1Tval">1</div></div>
+          <div class="control"><button class="btn warm" id="c1Rand" type="button">🎲 随机输入</button></div>
+        </div>
+        <div class="caption" id="c1Out">—</div>
+        <div class="caption" id="c1Step" style="font-family:Menlo,Monaco,monospace;color:var(--accent)">—</div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>一个重要提醒（记号）</b>：这里窗口用「滑窗乘加」书写，与深度学习框架一致（cross-correlation）。严格数学卷积还要把核翻转；本课程反复申明：<b>翻转与否不改变参数共享、尺寸与反向传播的结论</b>。你只需要记住：课件和各大库都按“滑窗加权重和”来算。</p>
+        <p class="plain small"><b>层号记号提示</b>：本章“层”用下标 $l$（如感受野的 $r_l$），损失仍用第 12 讲的 $J$（与下标 $l$ 长得很像的 $\ell$ 损失符号我们<b>统一不引入</b>），避免把层号 $l$ 和损失号 $\ell$ 看混。</p>
+      </div>
+      <div class="def">
+        <div class="term">卷积（滑窗形式） <span class="en">convolution (cross-correlation flavor) · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：把滤波器 $w$ 从左到右滑过输入 $\tilde x$，在每个位置对窗口内逐元素相乘再求和，得到输出 $z_t=\sum_{r=0}^{k-1}w_r\tilde x_{ts+r}$。</p>
+        <p class="plain"><b>白话</b>：拿一把“尺子”扫过一条数轴，每段都量一次“尺子与这段的贴合度”。</p>
+        <p class="plain"><b>干嘛用</b>：提取局部模式（边缘 = 局部变化），并因参数共享而数量可控、位置无关。</p>
+        <p class="plain"><b>怎么算</b>：确定 $n,k,p,s$ → 算 $\mathrm{out}$ → 对每个 $t$ 做窗口乘加；$z_t$ 就是这个位置的特征。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是 §7 两个先验的具体算式；下一节把它推广到二维 + 多通道 → 真正的卷积层。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>一维能做，二维也只是“同样的事在行和列上都做”。<b>但有一件事必须说清：核要不要覆盖通道？</b>下一节用一张真实特征图把二维卷积算完整。</div>
+    </section>
+
+    <!-- ============ 2D CONVOLUTION ============ -->
+    <section id="conv2d">
+      <h2 class="sec-title"><span class="num">§9</span>二维卷积与多通道：核到底覆盖几个通道 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">二维卷积最容易混淆的是“核只有宽和高，还是还要覆盖通道”。先写全形状：输入
+        $$X\in\mathbb{R}^{H\times W\times C_{\mathrm{in}}},$$
+        $H,W$ 是空间尺寸，$C_{\mathrm{in}}$ 是输入通道数。<b>一个输出滤波器必须同时查看所有输入通道</b>，所以它的形状是
+        $$K^{(q)}\in\mathbb{R}^{k_h\times k_w\times C_{\mathrm{in}}},$$
+        $q$ 是输出通道编号。看一张把“局部连接具体化”的课堂例：$4\times4$ 输入、$2\times2$ 核、stride 1、无 padding，输出 $3\times3$：
+        $$X=\begin{bmatrix}1&2&0&1\\0&1&3&2\\2&0&1&1\\1&2&2&0\end{bmatrix},\quad K=\begin{bmatrix}1&0\\-1&1\end{bmatrix}\ \Rightarrow\ Z=\begin{bmatrix}2&4&-1\\-2&2&3\\3&0&-1\end{bmatrix}.$$
+        左上角 $Z_{1,1}=1\cdot1+2\cdot0+0\cdot(-1)+1\cdot1=2$。每个输出只看输入的四个数（局部连接）；同一个 $K$ 滑到 9 个位置，9 个输出共享同一组 4 个参数。</p>
+      <div class="card compact">
+        <p class="plain small"><b>一个滤波器 = 一张特征图</b>。若有 $C_{\mathrm{out}}=m$ 个滤波器，就产生 $m$ 张输出特征图（每通道一张），而不是“每个输入通道各自一张”。多通道时，同一位置还要对通道求和，完整算式：
+          $$Z_{r,t,q}=b_q+\sum_{u=0}^{k_h-1}\sum_{v=0}^{k_w-1}\sum_{c=1}^{C_{\mathrm{in}}}K^{(q)}_{u,v,c}\,\tilde X_{rs_h+u,\,ts_w+v,\,c}.$$
+          三层求和只留下 $(r,t,q)$ 三个索引 → 输出形状“新高 × 新宽 × 滤波器个数”。例如 RGB（$C_{in}=3$）一个 $3\times3$ 滤波器实际有 $3\times3\times3=27$ 个权重 + 1 个 bias。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：点任意输出单元，看它“吃”的是输入里哪一块窗口</h4>
+        <div class="svg-wrap"><svg id="conv2dViz" viewBox="0 0 960 460" role="img" aria-label="二维卷积点击看窗口"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入</label>
+            <select id="c2Grid"><option value="4" selected>4×4（课堂例）</option><option value="5">5×5（图案）</option></select>
+          </div>
+          <div class="control"><label>核</label>
+            <select id="c2K"><option value="edge2" selected>2×2 边缘 [1,0;−1,1]</option><option value="blur2">2×2 平滑 [0.25×4]</option><option value="edge3">3×3 垂直边缘</option></select>
+          </div>
+          <div class="control"><label>padding $p$</label><input type="range" id="c2P" min="0" max="1" step="1" value="0"><div class="val" id="c2Pval">0</div></div>
+          <div class="control"><button class="btn warm" id="c2Rand" type="button">🎲 随机输入</button></div>
+        </div>
+        <div class="caption" id="c2Cap">stride 固定 1。点右侧输出特征图里的任意格子：左侧输入里对应的窗口会被高亮，下方的算式把<b>这个格子</b>的每一项乘加列出来（含 bias $b_q$，这里取 0）。核是共享的——同一组权重在所有窗口上复用。</div>
+        <div class="caption" id="c2Step" style="font-family:Menlo,Monaco,monospace;color:var(--accent)">—</div>
+      </div>
+      <div class="def">
+        <div class="term">滤波器 / 特征图 <span class="en">filter / kernel · feature map · first mentioned: §9</span></div>
+        <p class="plain"><b>是什么</b>：滤波器（kernel/filter）$K^{(q)}$ 是卷积层中可学习的局部权重块，形状 $k_h\times k_w\times C_{\mathrm{in}}$；它在所有位置滑动产生的响应图就是<b>特征图</b>（feature map），形状 $H_{\mathrm{out}}\times W_{\mathrm{out}}$。</p>
+        <p class="plain"><b>白话</b>：滤波器是“检测器”，特征图是“检测器在全图上打了多少分”的地图。</p>
+        <p class="plain"><b>干嘛用</b>：不同的滤波器学不同的模式（水平边、垂直边、颜色变化…）；特征图把“哪里有这种模式”编码下来。</p>
+        <p class="plain"><b>怎么算</b>：滑窗乘加（含对通道求和 + bias）→ 一张特征图。CNN 里的滤波器不是人手写的，是<b>反向传播学出来</b>的。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：滤波器=共享参数（§7），特征图=等变输出（§6）；高层特征图堆叠再多通道就能表达更抽象的模式（§12 感受野、§14 可视化）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>算式有了，那<b>“到底省了多少参数、又费多少计算”</b>？下一节把全连接 vs 卷积的参数与乘法次数一次算清，并引出“归纳偏置”这个词。</div>
+    </section>
+
+    <!-- ============ PARAMETERS / COMPUTE ============ -->
+    <section id="params">
+      <h2 class="sec-title"><span class="num">§10</span>参数与计算量：卷积省了什么，又花了什么 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">一维例子最直观：输入长度 100，输出也约 100。全连接层需要 $100\times100=10000$ 个权重；一个长度 3 的卷积核只有 3 个权重，20 个滤波器也只有 $3\times20=60$ 个权重。二维公式把“省参数”和“花计算”分开算：</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>参数量（可学习的权重 + bias）</h3>
+          <p class="plain">一个滤波器同时覆盖所有输入通道，形状 $k_h\times k_w\times C_{\mathrm{in}}$，再配 1 个 bias；共有 $C_{\mathrm{out}}$ 个滤波器：
+            $$(k_h\,k_w\,C_{\mathrm{in}}+1)\,C_{\mathrm{out}}.$$
+            参数量<b>不乘</b> $H_{\mathrm{out}}W_{\mathrm{out}}$——因为空间位置共享同一组权重。</p>
+        </div>
+        <div class="card">
+          <h3>计算量（乘法次数）</h3>
+          <p class="plain">每个输出位置都要做 $k_h k_w C_{\mathrm{in}}$ 次乘法，位置数是 $H_{\mathrm{out}}W_{\mathrm{out}}$：
+            $$C_{\mathrm{out}}\cdot H_{\mathrm{out}}W_{\mathrm{out}}\cdot k_h k_w C_{\mathrm{in}}.$$
+            计算量<b>要乘</b>输出位置数——同一个核确实在每个位置都执行了一遍。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：改变图像尺寸、核大小与通道数，看“参数”和“计算”分别怎么变</h4>
+        <div class="svg-wrap"><svg id="paramViz" viewBox="0 0 960 420" role="img" aria-label="参数与计算量对比"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入空间 $H=W$</label><select id="pmH"><option value="7">7×7（深层特征）</option><option value="32" selected>32×32（小图）</option><option value="224">224×224（ImageNet）</option></select></div>
+          <div class="control"><label>核大小 $f$</label><input type="range" id="pmF" min="2" max="7" step="1" value="3"><div class="val" id="pmFval">3</div></div>
+          <div class="control"><label>输入通道 $C_{in}$</label><input type="range" id="pmCin" min="1" max="32" step="1" value="3"><div class="val" id="pmCinval">3</div></div>
+          <div class="control"><label>输出通道 $C_{out}$</label><input type="range" id="pmCout" min="1" max="128" step="1" value="32"><div class="val" id="pmCoutval">32</div></div>
+        </div>
+        <div class="caption" id="pmCap">柱高用对数刻度。全连接参数 = $HWC_{in}\cdot C_{out}+C_{out}$；卷积参数 = $(f^2C_{in}+1)C_{out}$；卷积计算量 = $C_{out}\cdot H_{out}W_{out}\cdot f^2C_{in}$（这里用 $H_{out}=W_{out}=\lfloor(H+2p-f)/1\rfloor+1$，$p=\lfloor f/2\rfloor$）。关键观察：<b>卷积参数几乎不随图像边长增长，计算量却会随分辨率增长</b>。</div>
+      </div>
+      <div class="def">
+        <div class="term">归纳偏置 <span class="en">inductive bias · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：模型结构自带的、训练前就有的偏好——这里指“局部性”和“位置共享”这两个对解的约束。</p>
+        <p class="plain"><b>白话</b>：模型天生就觉得“局部模式可以到处复用”，不用等数据告诉它。</p>
+        <p class="plain"><b>干嘛用</b>：在合适的问题上大幅减少所需参数和数据；在不合适时也会限制模型。</p>
+        <p class="plain"><b>怎么算</b>：通过局部连接（只看窗口）和参数共享（同一核处处用）来实例化。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：卷积的“强”不是来自更复杂的数学，而是来自把图像结构写进函数类（§7）；这也是下一节输出尺寸公式的动机。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>参数公式里出现了 $H_{\mathrm{out}},W_{\mathrm{out}}$。<b>它们由什么决定？</b>下一节把 padding、stride、核大小代入输出尺寸公式，并用手算例子验证。</div>
+    </section>
+
+    <!-- ============ OUTPUT SIZE ============ -->
+    <section id="output">
+      <h2 class="sec-title"><span class="num">§11</span>输出尺寸：padding、stride、核大小如何决定空间大小 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">单个空间维度的完整公式（正方形简写 $n\times n$、核 $f\times f$、padding $p$、stride $s$）：
+        $$\mathrm{out}=\left\lfloor\frac{n+2p-f}{s}\right\rfloor+1.$$
+        输出通道数就是滤波器个数 $m$，所以输出形状是 $\mathrm{out}\times\mathrm{out}\times m$。手算例子：$n=32,f=5,p=2,s=1$ 时
+        $$\left\lfloor\frac{32+4-5}{1}\right\rfloor+1=32,$$
+        空间尺寸不变；$s=2$ 时
+        $$\left\lfloor\frac{32+4-5}{2}\right\rfloor+1=\left\lfloor\frac{31}{2}\right\rfloor+1=16,$$
+        空间减半。取 floor 不是代数习惯，而是<b>最后不足一个完整核的尾部不再产生输出</b>。</p>
+      <div class="grid2">
+        <div class="card">
+          <h3>Padding</h3>
+          <p class="plain small">在边界补值（常补 0）。作用：<b>控制输出尺寸</b>；让<b>边缘像素也有机会被多次使用</b>。不 padding 时边缘像素参与的卷积次数少，输出也变小。</p>
+        </div>
+        <div class="card">
+          <h3>Stride</h3>
+          <p class="plain small">滤波器每次移动的步长。$s=1$：逐像素滑，输出更密；$s=2$：隔一个位置滑，输出更小。stride 可降低计算量和空间尺寸，但也可能丢细节。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动参数，看一维窗口位置与输出长度</h4>
+        <div class="svg-wrap"><svg id="outSize" viewBox="0 0 940 320" role="img" aria-label="输出尺寸公式可视化"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入长度 $n$</label><input type="range" id="osN" min="8" max="20" step="1" value="12"><div class="val" id="osNval">12</div></div>
+          <div class="control"><label>核长度 $k$</label><input type="range" id="osK" min="2" max="5" step="1" value="3"><div class="val" id="osKval">3</div></div>
+          <div class="control"><label>padding $p$</label><input type="range" id="osP" min="0" max="3" step="1" value="1"><div class="val" id="osPval">1</div></div>
+          <div class="control"><label>stride $s$</label><input type="range" id="osS" min="1" max="3" step="1" value="1"><div class="val" id="osSval">1</div></div>
+          <div class="control"><label>查看起点 $t$</label><input type="range" id="osT" min="0" max="0" step="1" value="0"><div class="val" id="osTval">0</div></div>
+        </div>
+        <div class="caption" id="osOut">—</div>
+        <div class="caption" id="osStep" style="font-family:Menlo,Monaco,monospace;color:var(--accent)">—</div>
+      </div>
+      <div class="def">
+        <div class="term">padding / stride <span class="en">padding · stride · first mentioned: §11</span></div>
+        <p class="plain"><b>是什么</b>：padding 是在输入边界补一圈值（通常补 0）；stride 是核每次滑动的步长。</p>
+        <p class="plain"><b>白话</b>：padding 是给图片“加个边”；stride 是“隔几个位置踩一脚”。</p>
+        <p class="plain"><b>干嘛用</b>：padding 控制输出尺寸并让边缘参与更多；stride 降采样、降计算。</p>
+        <p class="plain"><b>怎么算</b>：$\mathrm{out}=\lfloor(n+2p-k)/s\rfloor+1$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它们直接决定特征图大小，是架构设计（§12）和感受野（§12）里“隔多远”的源头。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>有了尺寸工具，就能看“典型的 CNN 到底怎么搭”。<b>但真正决定网络能“看见多大范围”的量不是单层尺寸，而是感受野</b>——下一节把两者一起讲。</div>
+    </section>
+
+    <!-- ============ TYPICAL CNN / RECEPTIVE FIELD ============ -->
+    <section id="rf">
+      <h2 class="sec-title"><span class="num">§12</span>典型 CNN 结构与感受野：一层看一块，层层看全局 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">经典图像分类 CNN 常是：<b>输入图像 → 卷积+ReLU → 卷积+ReLU → 池化 → 卷积+ReLU → 卷积+ReLU → 池化 → 全连接/全局池化 → 输出分类</b>。前面卷积层学局部特征，中间层组合成更大结构，最后全连接或全局池化用于分类。</p>
+      <p class="plain">感受野 <span class="en">receptive field</span> 问的是：<b>某一层的一个输出值，最多依赖原图中的多大区域？</b>深层单元虽然每层只看局部，但它看到的上一层单元本身已汇总过更早的局部区域，所以感受野逐层扩大。用 $r_l$ 表示第 $l$ 层单元在原图上的感受野边长，$j_l$ 表示第 $l$ 层相邻两个输出中心在原图上相隔多少像素；初始 $r_0=j_0=1$。经过核大小 $k_l$、stride $s_l$ 的第 $l$ 层：
+        $$j_l=j_{l-1}s_l,\qquad r_l=r_{l-1}+(k_l-1)j_{l-1}.$$
+        例如两层 $3\times3$、stride 1 的卷积再接 $2\times2$、stride 2 的 pooling：$r$ 从 $1\to3\to5\to6$，$j$ 从 $1\to1\to1\to2$。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：选一种堆叠，看感受野边长与中心间隔如何递推</h4>
+        <div class="svg-wrap"><svg id="rfViz" viewBox="0 0 1000 420" role="img" aria-label="感受野递推"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>堆叠方式</label>
+            <select id="rfStack">
+              <option value="basic" selected>两层 3×3 Conv + 2×2 Pool</option>
+              <option value="vggish">三层 3×3 Conv (stride 1)</option>
+              <option value="strided">Conv 3×3 s=2 + Conv 3×3</option>
+            </select>
+          </div>
+        </div>
+        <div class="caption" id="rfCap">左侧：原图上的感受野逐层变大（示意方块边长按 $r_l$ 比例缩放）；右侧：每一层的 $k_l,s_l,j_l,r_l$ 表格。$r_l$ 回答“看多大”，$j_l$ 回答“隔多远”。</div>
+      </div>
+      <div class="def">
+        <div class="term">感受野 <span class="en">receptive field · first mentioned: §12</span></div>
+        <p class="plain"><b>是什么</b>：某层一个输出单元在原始输入上能够影响的区域大小（边长 $r_l$）。</p>
+        <p class="plain"><b>白话</b>：这个输出“眼睛”能覆盖原图多大一块。</p>
+        <p class="plain"><b>干嘛用</b>：解释为什么 CNN 底层看边缘、高层看物体结构。</p>
+        <p class="plain"><b>怎么算</b>：$j_l=j_{l-1}s_l$，$r_l=r_{l-1}+(k_l-1)j_{l-1}$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：堆叠卷积/池化/stride 是在有意识地设计“上下文范围”；下一节 pooling 就是缩小尺寸、同时扩大感受野的一个重要手段。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>典型结构里的“池化”到底是干什么的？<b>它下采样、降计算，还带来一点平移鲁棒性——但也丢空间信息</b>。下一节用 $2\times2$ 手算看代价与收益。</div>
+    </section>
+
+    <!-- ============ POOLING ============ -->
+    <section id="pooling">
+      <h2 class="sec-title"><span class="num">§13</span>Pooling：局部汇总，降尺寸也丢信息 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">Pooling 层用于下采样。常见两种：max pooling 和 average pooling。例如 $2\times2$ 的窗口
+        $$\begin{bmatrix}1&3\\2&0\end{bmatrix}\xrightarrow{\max}3,\qquad \xrightarrow{\mathrm{avg}}1.5.$$
+        Pooling 的作用：<b>降低空间尺寸、减少计算和参数、增加一定局部平移鲁棒性</b>；但也会丢失精确位置信息。分类任务常能接受；像素级分割任务要更谨慎。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：切换 max / average pooling，看 4×4 怎么变成 2×2</h4>
+        <div class="svg-wrap"><svg id="poolViz" viewBox="0 0 860 380" role="img" aria-label="pooling 演示"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>池化方式</label><select id="poolType"><option value="max" selected>max pooling</option><option value="avg">average pooling</option></select></div>
+        </div>
+        <div class="caption" id="poolCap">每个 $2\times2$ 窗口都用一个颜色标记。max 取窗口最大值，avg 取窗口平均值。注意池化没有可学习参数，位置信息被“汇总”掉了。</div>
+      </div>
+      <div class="def">
+        <div class="term">池化 <span class="en">pooling · first mentioned: §13</span></div>
+        <p class="plain"><b>是什么</b>：在局部窗口内做聚合（max/avg）的下采样层。</p>
+        <p class="plain"><b>白话</b>：把 2×2 块“浓缩”成一个数，地图变小但关键响应还在。</p>
+        <p class="plain"><b>干嘛用</b>：降分辨率、降计算、增加局部平移鲁棒性。</p>
+        <p class="plain"><b>怎么算</b>：$2\times2$、stride 2 时，每个不重叠窗口取最大值或平均值。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它是“从等变走向近似不变”的重要一环（§6），也是 CNN 典型的尺寸调度器（§11）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>看到这里，你可能会想：<b>卷积层共享参数，还能不能反向传播？</b>可以，而且梯度恰恰来自“所有用到同一参数的位置”。下一节把这条求和写清楚。</div>
+    </section>
+
+    <!-- ============ CONV BACKPROP ============ -->
+    <section id="convbp">
+      <h2 class="sec-title"><span class="num">§14</span>卷积反向传播：共享参数的梯度要“全位置求和” <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">卷积层仍由可微运算组成（乘法、加法、激活函数），所以可以反向传播。<b>区别是权重共享</b>：同一个滤波器权重出现在多个位置，因此它的梯度要把所有使用位置的贡献相加。简化情形（stride 1、无 padding），设输出通道 $o$ 的核参数 $K_{o,c,u,v}$，输入 $X_{r+u,q+v,c}$，上游梯度 $\delta_{r,q,o}=\partial J/\partial Z_{r,q,o}$，则
+        $$\frac{\partial J}{\partial K_{o,c,u,v}}=\sum_{r,q}\delta_{r,q,o}\,X_{r+u,q+v,c}.$$
+        这条求和正是“参数共享”的数学后果；偏置梯度则对所有空间位置的 $\delta_{r,q,o}$ 求和。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：选核里的一个参数，看它从哪些窗口收到梯度贡献</h4>
+        <div class="svg-wrap"><svg id="convBp" viewBox="0 0 900 420" role="img" aria-label="卷积反向传播梯度求和"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>核参数位置 $(u,v)$</label><select id="bpK">
+            <option value="0,0">K[0,0]</option><option value="0,1">K[0,1]</option>
+            <option value="1,0">K[1,0]</option><option value="1,1" selected>K[1,1]</option>
+          </select></div>
+        </div>
+        <div class="caption" id="bpCap">左侧：$3\times3$ 输入 $X$；中间：$2\times2$ 输出梯度 $\delta$；右侧：当前核参数的梯度 = 所有“用了它的窗口”中 $\delta\times X$ 的和。高亮的输入格子就是那些窗口里对应的元素。</div>
+        <div class="caption" id="bpStep" style="font-family:Menlo,Monaco,monospace;color:var(--accent)">—</div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>梯度能算，但“很深”还是会难训练。<b>如果新增的若干层暂时学不到有用变换，能不能让它们不阻断原有表示和梯度？</b>下一节的残差连接就是答案。</div>
+    </section>
+
+    <!-- ============ RESIDUAL ============ -->
+    <section id="residual">
+      <h2 class="sec-title"><span class="num">§15</span>残差连接：给梯度一条直通路径 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">很深的网络会遇到梯度传播困难。Residual connection 把一个块写成
+        $$y=x+F(x),$$
+        而不是只学 $y=F(x)$。如果某些层暂时没必要改变表示，只需让 $F(x)\approx0$，则 $y\approx x$。反向传播也有“直通”：设 $J_F(x)=\partial F(x)/\partial x$ 是 $F$ 的 Jacobian，则
+        $$\nabla_xJ=\left(I+J_F(x)\right)^{\top}\nabla_yJ.$$
+        括号里的 $I$ 来自 $y$ 中的恒等项 $x$；即使 $J_F$ 很小，梯度仍有一条乘以 $I$ 的路径可以返回。普通堆叠层没有这条显式捷径。</p>
+      <div class="card compact">
+        <p class="plain small"><b>形状匹配是前提</b>：加法要求 $x$ 与 $F(x)$ 形状一致。如果通道数或空间尺寸改变，常用 $1\times1$ 卷积或带 stride 的投影 $P(x)$，把公式改为 $y=P(x)+F(x)$。因此 residual connection 不是任意把两层相加，而是在形状匹配的表示之间建立恒等或投影捷径。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">图示：普通块 vs 残差块</h4>
+        <div class="svg-wrap"><svg id="residualViz" viewBox="0 0 860 360" role="img" aria-label="残差连接对比"></svg></div>
+        <div class="caption">左：普通块 $y=F(x)$，梯度必须穿过 $F$；右：残差块 $y=x+F(x)$，梯度多一条恒等路径。</div>
+      </div>
+      <div class="def">
+        <div class="term">残差连接 <span class="en">residual connection · first mentioned: §15</span></div>
+        <p class="plain"><b>是什么</b>：把块的输入 $x$ 直接加到输出上：$y=x+F(x)$。</p>
+        <p class="plain"><b>白话</b>：给信息流开一条“快速通道”，即使深层暂时没学到新东西，原来的信息还能过去。</p>
+        <p class="plain"><b>干嘛用</b>：缓解深层网络梯度传播困难，让 ResNet 等能训练非常深。</p>
+        <p class="plain"><b>怎么算</b>：形状匹配时直接相加；形状不匹配用投影 $P(x)$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它和第 13 讲的初始化、第 14 讲的 batch norm 一起，都是在解决“深度可训练性”。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>网络很深、表示很好，但换个任务要重新训练吗？<b>不需要——学到的通用特征可以迁移</b>。下一节讲 transfer learning 和 fine-tuning。</div>
+    </section>
+
+    <!-- ============ TRANSFER LEARNING ============ -->
+    <section id="transfer">
+      <h2 class="sec-title"><span class="num">§16</span>迁移学习：把学到的表示变成新任务的特征 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">神经网络的目标之一是学习好表示。如果一个 CNN 在 ImageNet 上学到了通用图像特征（边缘、纹理、形状、物体部件），这些特征可能对新任务也有用。例如医学图像数据很少，可以：</p>
+      <div class="grid3">
+        <div class="card"><h3>1. 预训练</h3><p class="plain small">先用大数据训练网络（如 ImageNet 分类）。</p></div>
+        <div class="card"><h3>2. 提取特征</h3><p class="plain small">把新图片送入网络，取中间层输出作为特征，再训练一个小分类器。</p></div>
+        <div class="card"><h3>3. 微调</h3><p class="plain small">进一步在新数据上继续更新部分或全部权重，即 <b>fine-tuning</b>。</p></div>
+      </div>
+      <p class="plain">直觉：<b>不要从零学视觉常识；从已有表示开始，再适配新任务。</b>这特别适合小数据任务。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">图示：预训练 → 通用特征 → 小数据适配</h4>
+        <div class="svg-wrap"><svg id="transferViz" viewBox="0 0 860 300" role="img" aria-label="迁移学习流程"></svg></div>
+        <div class="caption">迁移学习把“大数据阶段”和“小数据阶段”分开：前者学通用表示，后者只学少量适配参数或对新任务微调。</div>
+      </div>
+      <div class="def">
+        <div class="term">迁移学习 / 微调 <span class="en">transfer learning · fine-tuning · first mentioned: §16</span></div>
+        <p class="plain"><b>是什么</b>：迁移学习是复用某个任务学到的表示；微调是在新数据上继续更新已有模型（部分或全部参数）。</p>
+        <p class="plain"><b>白话</b>：先在大图上“开眼界”，再到小图上“补课”。</p>
+        <p class="plain"><b>干嘛用</b>：小数据任务也能用上大规模预训练的表征，降低数据需求、加快训练。</p>
+        <p class="plain"><b>怎么算</b>：加载预训练权重 → 替换/新建分类头 → 在新数据上选择只训头部或整体微调。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：它把“表示学习”变成可迁移的资产，也呼应整门课的“表示、目标、优化、评估”主线（§19 收束）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>主线走完。最后用一小节把最容易误解的 5 件事挑明（拓展），再进入自测与收束。</div>
+    </section>
+
+    <!-- ============ EXTRA MISCONCEPTIONS ============ -->
+    <section id="extra">
+      <h2 class="sec-title"><span class="num">§17</span>拓展：计算效率、架构选择与 5 个容易误解的地方 <span class="sec-tag extra">拓展</span></h2>
+      <div class="card compact">
+        <h3 style="margin-top:0">为什么 GPU 重要？</h3>
+        <p class="plain small">神经网络训练中大量操作是矩阵乘法、卷积、张量运算；这些操作高度并行，GPU 适合并行数值计算。深度学习的发展不仅来自算法，也来自硬件与软件栈：GPU/TPU、高效卷积实现、自动微分框架。</p>
+      </div>
+      <div class="card compact">
+        <h3 style="margin-top:0">架构选择与模型选择</h3>
+        <p class="plain small">CNN 里要选：卷积层数、每层通道数、滤波器大小、stride/padding、pooling 方式、是否用 batch norm/residual、激活函数、学习率 schedule、正则化方式。深度网络训练很贵，所以实践中用训练集调参，验证集/开发集做模型选择，测试集只在最后报告一次。</p>
+      </div>
+      <div class="misconception"><div class="truth">误解 1：CNN 只是在图像上更大的 MLP</div><p class="plain small">不是。CNN 通过局部连接和参数共享改变了模型结构；参数数量、泛化方式和表示学习都不同。</p></div>
+      <div class="misconception"><div class="truth">误解 2：卷积天然提供完全平移不变</div><p class="plain small">卷积更接近平移等变；分类中的不变性通常还需要 pooling、全局聚合、数据增强等共同作用。</p></div>
+      <div class="misconception"><div class="truth">误解 3：padding 只是为了尺寸好看</div><p class="plain small">padding 也影响边界信息使用方式；它让边缘像素有更多机会参与卷积。</p></div>
+      <div class="misconception"><div class="truth">误解 4：pooling 总是越多越好</div><p class="plain small">pooling 会丢空间信息；分类中常有用，定位、分割任务中要谨慎。</p></div>
+      <div class="misconception"><div class="truth">误解 5：batch norm 只是预处理</div><p class="plain small">它是网络内部的一层，训练时用 mini-batch 统计，并有可训练参数 $\gamma,\beta$。</p></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>把容易混的点都拆掉后，用一组小自测确认你真正带走了什么。</div>
+    </section>
+
+    <!-- ============ QUIZ ============ -->
+    <section id="quiz">
+      <h2 class="sec-title"><span class="num">§18</span>自测：确认你真的带走了 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">先自己写一句话答案，再点击显示参考答案。</p>
+      <div id="quizList"></div>
+      <p class="small" id="quizScore" style="display:none"></p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>最后把整讲重新串成一条线，并接上第 15 讲。</div>
+    </section>
+
+    <!-- ============ TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§19</span>收束：把第 14 讲重新串成一条线 <span class="sec-tag core">核心</span></h2>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>核心问题 → 答案回顾</h3>
+          <p class="plain small">问题：神经网络参数多、容易过拟合；图像输入时，能不能把图像的结构直接写进网络？<br>
+          答案：能。用局部连接（附近像素相关）、参数共享（同模式可复用）、池化与层级聚合（位置可略）、batch norm/残差（深而稳），再把学到的表示迁移到新任务。</p>
+        </div>
+        <div class="overview-card">
+          <h3>最重要的公式/结论</h3>
+          <ul class="plain small" style="padding-left:16px">
+            <li>Dropout 期望：$\mathbb{E}[mv]=pv$；测试时缩放或 inverted dropout 二选一</li>
+            <li>BN：$\hat v=(v-\mu_B)/\sqrt{\sigma_B^2+\epsilon}$，$\bar v=\gamma\hat v+\beta$</li>
+            <li>输出尺寸：$\mathrm{out}=\lfloor(n+2p-k)/s\rfloor+1$</li>
+            <li>参数量：$(k_hk_wC_{\mathrm{in}}+1)C_{\mathrm{out}}$</li>
+            <li>感受野：$j_l=j_{l-1}s_l,\ r_l=r_{l-1}+(k_l-1)j_{l-1}$</li>
+            <li>残差：$y=x+F(x)$，梯度有恒等路径 $I$</li>
+          </ul>
+        </div>
+        <div class="overview-card">
+          <h3>可勾选自查清单</h3>
+          <label style="display:block"><input type="checkbox" id="ck1"> 我能说出 dropout 训练与测试的尺度如何对齐</label>
+          <label style="display:block"><input type="checkbox" id="ck2"> 我能手写 BN 四步并区分 $\mu_B,\sigma_B^2$ 与 $\gamma,\beta$</label>
+          <label style="display:block"><input type="checkbox" id="ck3"> 我能说明卷积是平移等变，不是天然完全不变</label>
+          <label style="display:block"><input type="checkbox" id="ck4"> 我能用输出尺寸公式手算 $n,f,p,s$ 的 $\mathrm{out}$</label>
+          <label style="display:block"><input type="checkbox" id="ck5"> 我能解释感受野递推与 pooling 的取舍</label>
+          <label style="display:block"><input type="checkbox" id="ck6"> 我能说明残差连接为什么给梯度直通路径</label>
+        </div>
+      </div>
+      <div class="confirm" style="border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface));border-radius:10px;padding:14px 18px;margin:16px 0">
+        <p class="plain" style="margin:0"><b>与下一讲的连接</b>：第 15 讲进入 <b>Clustering（聚类）</b>——没有标签时如何组织数据。CNN 的“表示学习”在第 14 讲已经起步；聚类会换一个视角：不靠标签，靠数据自身结构找组。你带着“结构先验”和“表示”这两个词去听，会发现它们仍在同一条课程主线上。</p>
+      </div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<footer>IML 2026 · 第 14 讲 Convolutional Neural Networks · 互动附属页 · 返回 <a href="index.html#lecture-14">原讲义</a></footer>
+<div class="toast" id="toast"></div>
+
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const heatColor=v=>{const a=clamp(Math.abs(v)/3,0,1);const r=v>=0?[23,102,83]:[178,58,72];return `color-mix(in srgb, rgb(${r[0]},${r[1]},${r[2]}) ${Math.round(a*100)}%, var(--surface))`;};
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function svgLine(parent,x1,y1,x2,y2,opts={}){
+  const o=Object.assign({color:'var(--line)',width:1.5,dash:false,marker:null},opts);
+  return svgAdd(parent,'line',{x1,y1,x2,y2,stroke:o.color,strokeWidth:o.width,strokeDasharray:o.dash?'6 4':'none',markerEnd:o.marker||''});
+}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L14) ---------- */
+(()=>{
+  const svg=$('#conceptMap');svg.setAttribute('viewBox','0 0 1460 660');
+  const defs=svgAdd(svg,'defs');
+  const mkFwd=svgMarker(defs,'cmFwd','#176653'),mkBwd=svgMarker(defs,'cmBwd','#b45a2b'),mkOpt=svgMarker(defs,'cmOpt','#285a9e'),mkTool=svgMarker(defs,'cmTool','#6c4fa1'),mkGray=svgMarker(defs,'cmGray','#8a938b');
+  const N=[
+    {id:'n12',x:18,y:180,w:150,h:86,t:'第 12 讲',s1:'反向传播',s2:'算梯度',target:'index.html#lecture-12',col:'#8a938b'},
+    {id:'n13',x:18,y:390,w:150,h:86,t:'第 13 讲',s1:'训练稳定性',s2:'优化 / 正则',target:'index.html#lecture-13',col:'#8a938b'},
+    {id:'dropbn',x:240,y:70,w:190,h:80,t:'Dropout / BN',s:'训练更深、更稳',target:'#drop',col:'#176653'},
+    {id:'prior',x:500,y:70,w:190,h:80,t:'局部连接 + 参数共享',s:'两个结构先验',target:'#local',col:'#176653'},
+    {id:'conv',x:760,y:70,w:180,h:80,t:'卷积层',s:'1D → 2D → 多通道',target:'#conv1d',col:'#176653'},
+    {id:'size',x:1020,y:70,w:190,h:80,t:'尺寸 / 参数 / 计算',s:'out 公式与参数量',target:'#output',col:'#176653'},
+    {id:'rf',x:240,y:250,w:190,h:80,t:'感受野 / Pooling',s:'看多大、汇总位置',target:'#rf',col:'#285a9e'},
+    {id:'res',x:500,y:250,w:190,h:80,t:'残差连接',s:'梯度直通路径',target:'#residual',col:'#285a9e'},
+    {id:'trans',x:760,y:250,w:180,h:80,t:'迁移学习',s:'表示可复用',target:'#transfer',col:'#285a9e'},
+    {id:'take',x:1020,y:250,w:190,h:80,t:'自测 / 收束',s:'串回课程主线',target:'#takeaway',col:'#285a9e'},
+    {id:'n15',x:1280,y:520,w:140,h:86,t:'第 15 讲',s1:'聚类',s2:'无标签分组',target:'index.html#lecture-15',col:'#8a938b'}
+  ];
+  const P=Object.fromEntries(N.map(n=>[n.id,n]));
+  function route(pts,color,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    const marker=color==='#176653'?mkFwd:color==='#285a9e'?mkOpt:color==='#b45a2b'?mkBwd:color==='#6c4fa1'?mkTool:mkGray;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  // arrows (start/end on boundaries)
+  route([[168,205],[235,205],[235,115]],'#8a938b','反向传播',200,158,'start');
+  route([[168,440],[210,440],[210,170],[240,170]],'#8a938b','稳定训练',205,322,'start');
+  route([[430,110],[500,110]],'#176653','先验',464,94);
+  route([[690,110],[760,110]],'#176653','滑窗',724,94);
+  route([[940,110],[1020,110]],'#176653','公式',979,94);
+  route([[1115,150],[1115,225],[1070,240],[1070,250]],'#285a9e','',1090,225);
+  route([[430,290],[500,290]],'#285a9e','结构',464,274);
+  route([[690,290],[760,290]],'#285a9e','复用',724,274);
+  route([[940,290],[1000,290],[1000,510],[1150,510],[1150,520]],'#285a9e','下一讲',1170,360,'start');
+  route([[60,270],[60,500],[1280,500],[1280,520]],'#8a938b','下一讲',660,512,'start');
+  route([[1180,390],[1270,390],[1270,520]],'#8a938b','',1228,474,'start');
+  // nodes
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    else if(n.s1){svgAdd(g,'text',{x:n.w/2,y:n.h/2+13,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s1);svgAdd(g,'text',{x:n.w/2,y:n.h/2+28,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s2);}
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- fc motivation ---------- */
+(()=>{
+  const svg=$('#fcMotivation'), M={l:64,r:24,t:20,b:62}, W=780,H=340;
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  const yOf=v=>M.t+plotH*(1-Math.log10(Math.max(1,v))/Math.log10(1e9));
+  function draw(){
+    const m=+$('#fcmM').value, f=+$('#fcmF').value, cin=+$('#fcmC').value, hs=+$('#fcmS').value;
+    const N=hs*hs;
+    const fc=(N*cin)*m+m, cv=(f*f*cin+1)*m;
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs'); const mk=svgMarker(defs,'fmY','#176653');
+    svgAdd(svg,'line',{x1:M.l,y1:yOf(1),x2:W-M.r,y2:yOf(1),stroke:'var(--line)'});
+    [1,1e2,1e4,1e6,1e8].forEach(v=>{svgAdd(svg,'line',{x1:M.l,y1:yOf(v),x2:M.l+5,y2:yOf(v),stroke:'var(--line)'});svgHalo(svg,M.l-8,yOf(v)+4,fmt(v),{anchor:'end',font:9.5,bg:'transparent'});});
+    const bw=90;
+    const bars=[
+      {x:150,label:'全连接参数',val:fc,color:'var(--warm)'},
+      {x:340,label:'卷积参数',val:cv,color:'var(--accent)'}
+    ];
+    bars.forEach((b,i)=>{
+      const x=b.x-bw/2, yy=yOf(b.val), h=M.t+plotH-yy;
+      svgAdd(svg,'rect',{x,y:yy,width:bw,height:Math.max(h,2),rx:6,fill:b.color,opacity:.85});
+      svgHalo(svg,b.x,Math.max(yy-10,M.t+18),fmt(b.val),{fill:b.color,font:12});
+      svgAdd(svg,'text',{x:b.x,y:H-M.b+18,'text-anchor':'middle','font-size':12,fill:'var(--ink)'},b.label);
+    });
+    svgAdd(svg,'text',{x:W-M.r,y:H-8,'text-anchor':'end','font-size':10.5,fill:'var(--muted)'},'对数刻度 · 含 bias · 输出单元/滤波器数 m='+fmt(m));
+  }
+  function sync(){
+    $('#fcmMval').textContent=fmt(+$('#fcmM').value,0);
+    $('#fcmFval').textContent=fmt(+$('#fcmF').value,0);
+    $('#fcmCval').textContent=fmt(+$('#fcmC').value,0);
+    draw();
+  }
+  ['fcmM','fcmF','fcmC','fcmS'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- dropout random mask ---------- */
+(()=>{
+  const svg=$('#dropoutViz'), W=760,H=340;
+  const state={mask:[1,0,1]};
+  function generate(p){state.mask=[0,1,2].map(()=>Math.random()<p?1:0);}
+  function draw(){
+    const p=+$('#dropP').value, v=[2,4,6], w=[1,1,1];
+    const f=v.reduce((a,b)=>a+b,0), ft=v.reduce((a,b,i)=>a+w[i]*b*state.mask[i],0);
+    svg.innerHTML='';
+    svgAdd(svg,'text',{x:30,y:30,'font-size':12,fill:'var(--muted)'},'p='+fmt(p,2)+' · 这次 mask = ['+state.mask.join(', ')+']');
+    const xs=[150,320,490], yH=150, yO=270;
+    xs.forEach((x,i)=>{
+      const kept=state.mask[i]===1;
+      svgLine(svg,x,yH+24,x,yO-30,{color:kept?'var(--accent)':'var(--line)',width:kept?2:1.3,dash:kept?false:'6 4'});
+      svgAdd(svg,'circle',{cx:x,cy:yH,r:28,fill:kept?'color-mix(in srgb,var(--accent) 18%, var(--surface))':'transparent',stroke:kept?'var(--accent)':'var(--muted)',strokeWidth:kept?3:1.6});
+      svgAdd(svg,'text',{x,y:yH,'text-anchor':'middle','font-size':11,fill:kept?'var(--ink)':'var(--muted)'},'v='+fmt(v[i],0));
+      svgAdd(svg,'text',{x,y:yH+50,'text-anchor':'middle','font-size':11,fill:kept?'var(--accent)':'var(--muted)'},kept?'保留':'丢弃');
+      svgHalo(svg,x+44,yH-16,'w='+fmt(w[i],0),{font:9.5,anchor:'start'});
+    });
+    svgAdd(svg,'circle',{cx:(xs[0]+xs[2])/2,cy:yO,r:36,fill:'color-mix(in srgb,var(--warm) 12%, var(--surface))',stroke:'var(--warm)',strokeWidth:2});
+    svgAdd(svg,'text',{x:(xs[0]+xs[2])/2,y:yO-4,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},'Σ');
+    svgAdd(svg,'text',{x:(xs[0]+xs[2])/2,y:yO+19,'text-anchor':'middle','font-size':11,fill:'var(--warm)'},'f_train='+fmt(ft,1));
+    svgHalo(svg,(xs[0]+xs[2])/2,yO-24,'无 dropout f='+fmt(f,0),{font:10.5});
+    svgHalo(svg,(xs[0]+xs[2])/2,yO+54,'p·f='+fmt(p*f,2),{font:10.5});
+  }
+  function sync(){const p=+$('#dropP').value;$('#dropPval').textContent=fmt(p,2);draw();}
+  $('#dropP').addEventListener('input',sync);
+  $('#dropRun').addEventListener('click',()=>{generate(+$('#dropP').value);draw();toast('已生成新的随机 mask');});
+  generate(0.5);sync();
+})();
+
+/* ---------- dropout test-time scaling ---------- */
+(()=>{
+  const svg=$('#dropoutScale'), M={l:60,r:30,t:24,b:74}, W=820,H=320;
+  const plotH=H-M.t-M.b;
+  function y(v,maxv){return M.t+plotH*(1-v/maxv);}
+  function draw(){
+    const p=+$('#dropScaleP').value, v=+$('#dropScaleV').value;
+    const a=p*v; // train expected and convention1 test
+    const b=v;   // convention2 test
+    const maxv=Math.max(a,b,1)*1.15;
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:M.l,y1:y(0,maxv),x2:W-M.r,y2:y(0,maxv),stroke:'var(--line)'});
+    svgAdd(svg,'text',{x:M.l+6,y:M.t-6,'font-size':11,fill:'var(--muted)'},'p='+fmt(p,2)+' · v='+fmt(v,0));
+    const bars=[
+      {x:180,label:'训练期望 E[mv]=pv',val:a,color:'var(--accent)'},
+      {x:390,label:'约定 1 测试输出 pv',val:a,color:'var(--opt)'},
+      {x:600,label:'约定 2 测试输出 v',val:b,color:'var(--warm)'}
+    ];
+    bars.forEach(b=>{
+      const bw=94, yy=y(b.val,maxv), h=M.t+plotH-yy;
+      svgAdd(svg,'rect',{x:b.x-bw/2,y:yy,width:bw,height:Math.max(h,2),rx:6,fill:b.color,opacity:.85});
+      svgHalo(svg,b.x,yy-12,fmt(b.val,2),{fill:b.color,font:12});
+      svgAdd(svg,'text',{x:b.x,y:H-M.b+16,'text-anchor':'middle','font-size':11.5,fill:'var(--ink)'},b.label);
+    });
+  }
+  function sync(){['dropScaleP','dropScaleV'].forEach(id=>{const b=$('#'+id);const v=+b.value; $('#'+id+'val').textContent=fmt(v,2);});draw();}
+  $('#dropScaleP').addEventListener('input',sync);
+  $('#dropScaleV').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- batch norm four steps ---------- */
+(()=>{
+  const svg=$('#bnSteps'), W=860,H=380;
+  const vals=[1.5,0.5,2.0,1.0,3.0,1.0], eps=1e-6;
+  function draw(){
+    const g=+$('#bnG').value, beta=+$('#bnB').value;
+    const mu=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const variance=vals.reduce((a,b)=>a+(b-mu)**2,0)/vals.length;
+    const hats=vals.map(v=>(v-mu)/Math.sqrt(variance+eps));
+    const bars=hats.map(h=>g*h+beta);
+    svg.innerHTML='';
+    svgAdd(svg,'text',{x:30,y:28,'font-size':12,fill:'var(--muted)'},'μ_B='+fmt(mu,3)+' · σ²_B='+fmt(variance,3));
+    const cols=[
+      {x:170,label:'原值 v_i'},
+      {x:390,label:'标准化 v̂_i'},
+      {x:640,label:'γ·v̂_i+β'}
+    ];
+    cols.forEach(c=>svgHalo(svg,c.x,54,c.label,{font:11.5,fill:'var(--accent)'}));
+    vals.forEach((v,i)=>{
+      const y=85+i*44;
+      const pts=[v,hats[i],bars[i]];
+      pts.forEach((p,j)=>{
+        const x=cols[j].x;
+        svgAdd(svg,'circle',{cx:x,cy:y,r:15,fill:j===2?'color-mix(in srgb,var(--warm) 18%, var(--surface))':'color-mix(in srgb,var(--accent) 14%, var(--surface))',stroke:j===2?'var(--warm)':'var(--accent)',strokeWidth:2});
+        svgHalo(svg,x+32,y,fmt(p,2),{anchor:'start',font:10});
+      });
+      svgAdd(svg,'text',{x:30,y:y+4,'font-size':10,fill:'var(--muted)'},'样本 '+(i+1));
+    });
+    svgAdd(svg,'text',{x:30,y:H-12,'font-size':11,fill:'var(--muted)'},'γ='+fmt(g,2)+' · β='+fmt(beta,2));
+  }
+  function sync(){const g=+$('#bnG').value,beta=+$('#bnB').value;$('#bnGval').textContent=fmt(g,2);$('#bnBval').textContent=fmt(beta,2);draw();}
+  $('#bnG').addEventListener('input',sync);
+  $('#bnB').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- equivariance demo ---------- */
+(()=>{
+  const svg=$('#equivDemo'), W=900,H=400;
+  const base=[0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+  const n=base.length;
+  function conv(sig,k){
+    const out=[];
+    for(let i=0;i+k.length<=sig.length;i++){
+      let s=0;for(let j=0;j<k.length;j++)s+=k[j]*sig[i+j];out.push(s);
+    }
+    return out;
+  }
+  function shift(sig,a){const r=Array(n).fill(0);for(let i=0;i<n;i++)r[i]=i>=a?sig[i-a]:0;return r;}
+  function draw(){
+    const a=+$('#eqA').value, ktype=$('#eqK').value;
+    const k=ktype==='edge'?[1,0,-1]:[1/3,1/3,1/3];
+    const x=shift(base,a), z=conv(base,k), z2=conv(x,k);
+    svg.innerHTML='';
+    const x0=60, step=30, yBase=110, yConv=300;
+    function plot(sig,y,color,label,useShift,lx){
+      const pts=sig.map((v,i)=>({x:x0+i*step,y:y-v*55}));
+      svgAdd(svg,'line',{x1:x0,y1:y,x2:x0+(sig.length-1)*step,y2:y,stroke:'var(--line)'});
+      pts.forEach(p=>svgAdd(svg,'line',{x1:p.x,y1:y,x2:p.x,y2:y-2,stroke:'var(--line)'}));
+      svgAdd(svg,'path',{d:pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '),fill:'none',stroke:color,strokeWidth:2.4});
+      pts.forEach((p,i)=>svgAdd(svg,'circle',{cx:p.x,cy:p.y,r:4.5,fill:color}));
+      svgHalo(svg,lx||x0-6,y-56,label,{anchor:'start',fill:color,font:11,bg:'transparent'});
+    }
+    plot(base,yBase,'var(--accent)','x',false,x0-6);
+    plot(x,yBase,'var(--warm)','T_a x',true,x0+42);
+    svgHalo(svg,870,yBase,'a='+fmt(a,0),{font:11.5,fill:'var(--warm)'});
+    plot(z,yConv,'var(--accent)','z=Conv(x)',false,x0-6);
+    plot(z2,yConv,'var(--warm)','z′=Conv(T_a x)',true,x0+92);
+    const avg1=base.reduce((s,v)=>s+v,0)/base.length;
+    const avg2=x.reduce((s,v)=>s+v,0)/base.length;
+    svgHalo(svg,870,yConv-56,'全局平均 '+fmt(avg1,3)+' ≈ '+fmt(avg2,3),{anchor:'end',font:10.5});
+  }
+  function sync(){const a=+$('#eqA').value;$('#eqAval').textContent=fmt(a,0);$('#eqCap').textContent='上排：原信号 x（绿）与右移后的 T_a x（橙）；下排：各自卷积响应 z 与 z′。右移 a='+a+' 时 z′=T_a z（等变）；两路全局平均分别为 '+fmt(base.reduce((s,v)=>s+v,0)/base.length,3)+' 与 '+fmt(shift(base,a).reduce((s,v)=>s+v,0)/base.length,3)+'（近似不变）。';draw();}
+  $('#eqA').addEventListener('input',sync);
+  $('#eqK').addEventListener('change',sync);
+  sync();
+})();
+
+/* ---------- local connectivity & parameter sharing ---------- */
+(()=>{
+  const svg=$('#localShare'), W=880,H=400;
+  const letters=['a','b','c','d','e','f','g','h','i'];
+  const state={vals:letters.slice()};
+  function draw(){
+    const x=+$('#lsX').value, y=+$('#lsY').value;
+    svg.innerHTML='';
+    const left=65, top=50, cell=42;
+    svgHalo(svg,left+5*cell/2,top-10,'输入 5×5',{font:12,fill:'var(--accent)'});
+    for(let r=0;r<5;r++)for(let c=0;c<5;c++){
+      const sel=r>=y&&r<y+3&&c>=x&&c<x+3;
+      svgAdd(svg,'rect',{x:left+c*cell,y:top+r*cell,width:cell-2,height:cell-2,rx:5,fill:sel?'color-mix(in srgb,var(--warm) 30%, var(--surface))':'var(--surface2)',stroke:sel?'var(--warm)':'var(--line)',strokeWidth:sel?2.5:1});
+      svgAdd(svg,'text',{x:left+c*cell+cell/2,y:top+r*cell+cell/2+4,'text-anchor':'middle','font-size':11,fill:sel?'var(--warm)':'var(--muted)'},'('+r+','+c+')');
+    }
+    const kx=520, ky=60, kc=70;
+    svgHalo(svg,kx+kc*1.5,ky-10,'同一个 3×3 核 K',{font:12,fill:'var(--accent)'});
+    for(let r=0;r<3;r++)for(let c=0;c<3;c++){
+      svgAdd(svg,'rect',{x:kx+c*kc,y:ky+r*kc,width:kc-4,height:kc-4,rx:6,fill:'color-mix(in srgb,var(--accent) 10%, var(--surface))',stroke:'var(--accent)',strokeWidth:1.6});
+      svgAdd(svg,'text',{x:kx+c*kc+kc/2,y:ky+r*kc+kc/2+5,'text-anchor':'middle','font-size':19,fill:'var(--ink)'},state.vals[r*3+c]);
+    }
+    svgAdd(svg,'text',{x:kx+kc*1.5,y:ky+3*kc+34,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'参数量：9 个权重 + 1 个 bias，与位置无关');
+    svgAdd(svg,'text',{x:left+5*cell/2,y:top+5*cell+34,'text-anchor':'middle','font-size':11.5,fill:'var(--muted)'},'当前观察 (x,y)=('+x+','+y+') 的 3×3 窗口');
+  }
+  function sync(){const x=+$('#lsX').value,y=+$('#lsY').value;$('#lsXval').textContent=fmt(x,0);$('#lsYval').textContent=fmt(y,0);draw();}
+  $('#lsX').addEventListener('input',sync);
+  $('#lsY').addEventListener('input',sync);
+  $('#lsRun').addEventListener('click',()=>{state.vals=letters.map(()=>Math.round((Math.random()*4-1)*10)/10);draw();toast('新核 a–i = '+state.vals.join(', '));});
+  sync();
+})();
+
+/* ---------- 1D convolution interactive ---------- */
+(()=>{
+  const svg=$('#conv1dViz'), W=940,H=400;
+  const INP={lecture:[1,2,0,3,1], step:[0,0,0,1,1,1], impulse:[0,0,2,0,0,0]};
+  const KER={edge:[1,0,-1], smooth:[0.5,0.5,0.5], diff:[1,-1]};
+  function compute(){
+    const selIn=$('#c1In');
+    const raw=selIn.dataset.custom ? JSON.parse(selIn.dataset.custom) : (INP[selIn.value] || Array.from({length:7},()=>Math.floor(Math.random()*7)-2));
+    const k=KER[$('#c1W').value], s=+$('#c1S').value, p=+$('#c1P').value;
+    const x=[...Array(p).fill(0),...raw,...Array(p).fill(0)];
+    const out=Math.floor((x.length-k.length)/s)+1;
+    const z=[];for(let t=0;t<out;t++){let sum=0;for(let r=0;r<k.length;r++)sum+=k[r]*x[t*s+r];z.push(sum);}
+    return {raw,k,px:x,z,out,p,s};
+  }
+  function draw(){
+    const {raw,k,px,z,out,p,s}=compute();
+    const t=clamp(+$('#c1T').value,0,Math.max(0,out-1));
+    svg.innerHTML='';
+    const x0=80, cell=44, yX=150, yK=60, yZ=265;
+    svgHalo(svg,x0-8,yX-14,'输入 x̃',{anchor:'start',font:11.5,fill:'var(--accent)'});
+    px.forEach((v,i)=>{
+      const pad=i<p||i>=px.length-p;
+      svgAdd(svg,'rect',{x:x0+i*cell,y:yX-22,width:cell-4,height:44,rx:5,fill:pad?'color-mix(in srgb,var(--blue) 16%, var(--surface2))':'var(--surface2)',stroke:pad?'var(--blue)':'var(--line)',strokeWidth:1});
+      svgAdd(svg,'text',{x:x0+i*cell+cell/2,y:yX+5,'text-anchor':'middle','font-size':11.5,fill:pad?'var(--blue)':'var(--ink)'},fmt(v,2));
+    });
+    svgHalo(svg,x0-8,yK-14,'核 w',{anchor:'start',font:11.5,fill:'var(--warm)'});
+    k.forEach((v,i)=>{
+      svgAdd(svg,'rect',{x:x0+i*cell,y:yK-16,width:cell-4,height:32,rx:5,fill:'color-mix(in srgb,var(--warm) 14%, var(--surface))',stroke:'var(--warm)',strokeWidth:1.4});
+      svgAdd(svg,'text',{x:x0+i*cell+cell/2,y:yK+5,'text-anchor':'middle','font-size':11.5,fill:'var(--warm)'},fmt(v,2));
+    });
+    svgHalo(svg,x0-8,yZ-14,'输出 z',{anchor:'start',font:11.5,fill:'var(--accent)'});
+    z.forEach((v,i)=>{
+      svgAdd(svg,'rect',{x:x0+i*cell,y:yZ-18,width:cell-4,height:38,rx:5,fill:'color-mix(in srgb,var(--accent) 12%, var(--surface))',stroke:i===t?'var(--warm)':'var(--accent)',strokeWidth:i===t?3:1.4});
+      svgAdd(svg,'text',{x:x0+i*cell+cell/2,y:yZ+7,'text-anchor':'middle','font-size':11.5,fill: i===t?'var(--warm)':'var(--ink)'},fmt(v,2));
+    });
+    // highlight selected window
+    if(z.length){
+      const start=t*s, end=start+k.length-1;
+      for(let i=start;i<=end;i++){
+        svgAdd(svg,'rect',{x:x0+i*cell-2,y:yX-26,width:cell,height:52,fill:'none',stroke:'var(--warm)',strokeWidth:2.4,strokeDasharray:'3 3'});
+      }
+      const terms=[];let sum=0;
+      for(let r=0;r<k.length;r++){const term=k[r]*px[start+r];sum+=term;terms.push(fmt(k[r],2)+'×'+fmt(px[start+r],2)+'='+fmt(term,2));}
+      $('#c1Out').textContent='t='+t+' · 窗口 x̃['+start+'..'+end+'] · z_t='+terms.join(' + ')+' = '+fmt(sum,2);
+      $('#c1Step').textContent='out = floor((n+2p−k)/s)+1 = floor(('+raw.length+'+2×'+p+'−'+k.length+')/'+s+')+1 = '+out;
+    } else {
+      $('#c1Out').textContent='该参数组合没有合法输出（核太大或 stride 太大）。';
+      $('#c1Step').textContent='—';
+    }
+  }
+  function sync(){
+    const c=compute();
+    const maxT=Math.max(0,c.out-1);
+    const tEl=$('#c1T');tEl.max=maxT;if(+tEl.value>maxT)tEl.value=maxT;
+    ['c1S','c1P','c1T'].forEach(id=>{const b=$('#'+id),v=$('#'+id+'val');if(b&&v)v.textContent=fmt(+b.value,0);});
+    $('#c1Sval').textContent=fmt(+$('#c1S').value,0);
+    $('#c1Pval').textContent=fmt(+$('#c1P').value,0);
+    $('#c1Tval').textContent=fmt(+$('#c1T').value,0);
+    draw();
+  }
+  ['c1In','c1W','c1S','c1P','c1T'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#c1Rand').addEventListener('click',()=>{const vals=Array.from({length:7},()=>Math.floor(Math.random()*7)-2);const el=$('#c1In');if(![...el.options].some(o=>o.value==='custom')){const o=document.createElement('option');o.value='custom';o.textContent='随机输入';el.appendChild(o);}el.value='custom';el.dataset.custom=JSON.stringify(vals);sync();toast('已生成随机输入');});
+  $('#c1In').addEventListener('change',()=>{delete $('#c1In').dataset.custom;sync();});
+  sync();
+})();
+
+/* ---------- 2D convolution interactive ---------- */
+(()=>{
+  const svg=$('#conv2dViz'), W=960,H=460;
+  const GRID={
+    4:[[1,2,0,1],[0,1,3,2],[2,0,1,1],[1,2,2,0]],
+    5:[[1,2,0,1,2],[0,1,3,2,0],[2,0,1,1,3],[1,2,2,0,1],[0,1,0,2,2]]
+  };
+  const K={
+    edge2:[[1,0],[-1,1]],
+    blur2:[[.25,.25],[.25,.25]],
+    edge3:[[1,0,-1],[1,0,-1],[1,0,-1]]
+  };
+  const state={sel:{r:1,q:1}};
+  function compute(){
+    const n=+$('#c2Grid').value;
+    const x=GRID[n].map(r=>r.slice());
+    const Kmat=K[$('#c2K').value];
+    const p=+$('#c2P').value, kh=Kmat.length, kw=Kmat[0].length;
+    const H=n+2*p,W=n+2*p;
+    const pad=Array.from({length:H},(_,r)=>Array.from({length:W},(_,c)=>{const ar=r-p,ac=c-p;return ar>=0&&ar<n&&ac>=0&&ac<n?x[ar][ac]:0;}));
+    const oh=H-kh+1, ow=W-kw+1;
+    const z=Array.from({length:oh},()=>Array(ow).fill(0));
+    for(let r=0;r<oh;r++)for(let c=0;c<ow;c++){
+      let s=0;for(let u=0;u<kh;u++)for(let v=0;v<kw;v++)s+=Kmat[u][v]*pad[r+u][c+v];z[r][c]=s;
+    }
+    return {x,pad,Kmat,p,kh,kw,z,oh,ow,n};
+  }
+  function draw(){
+    const {x,pad,Kmat,p,kh,kw,z,oh,ow,n}=compute();
+    const sel=state.sel; const sr=clamp(sel.r,0,oh-1), sc=clamp(sel.q,0,ow-1);
+    svg.innerHTML='';
+    const ix=50, iy=70, ic=44, ox=580, oy=70, oc=64;
+    svgHalo(svg,ix+ic*(n+2*p)/2,iy-14,'输入 X'+(p?'（含 padding）':''),{font:12,fill:'var(--accent)'});
+    pad.forEach((row,r)=>row.forEach((v,c)=>{
+      const isPad=r<p||r>=n+p||c<p||c>=n+p;
+      svgAdd(svg,'rect',{x:ix+c*ic,y:iy+r*ic,width:ic-3,height:ic-3,rx:4,fill:isPad?'color-mix(in srgb,var(--blue) 20%, var(--surface2))':'var(--surface2)',stroke:isPad?'var(--blue)':'var(--line)',strokeWidth:1});
+      svgAdd(svg,'text',{x:ix+c*ic+ic/2,y:iy+r*ic+ic/2+4,'text-anchor':'middle','font-size':10.5,fill:isPad?'var(--blue)':'var(--ink)'},fmt(v,2));
+    }));
+    // highlight selected window
+    for(let u=0;u<kh;u++)for(let v=0;v<kw;v++){
+      svgAdd(svg,'rect',{x:ix+(sc+v)*ic-1.5,y:iy+(sr+u)*ic-1.5,width:ic,height:ic,fill:'none',stroke:'var(--warm)',strokeWidth:2.4,strokeDasharray:'3 3'});
+    }
+    svgHalo(svg,ox+oc*ow/2,oy-14,'输出特征图 Z',{font:12,fill:'var(--warm)'});
+    z.forEach((row,r)=>row.forEach((v,c)=>{
+      const act=r===sr&&c===sc;
+      svgAdd(svg,'rect',{x:ox+c*oc,y:oy+r*oc,width:oc-3,height:oc-3,rx:5,fill:act?'color-mix(in srgb,var(--warm) 30%, var(--surface))':'color-mix(in srgb,'+(v>=0?'var(--accent)':'var(--warm)')+' 12%, var(--surface))',stroke:act?'var(--warm)':'var(--line)',strokeWidth:act?3:1.2,style:'cursor:pointer'});
+      svgAdd(svg,'text',{x:ox+c*oc+oc/2,y:oy+r*oc+oc/2+4,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},fmt(v,2));
+    }));
+    // compute step
+    let terms=[],sum=0;
+    for(let u=0;u<kh;u++)for(let v=0;v<kw;v++){
+      const term=Kmat[u][v]*pad[sr+u][sc+v];sum+=term;terms.push(fmt(Kmat[u][v],2)+'×'+fmt(pad[sr+u][sc+v],2));
+    }
+    $('#c2Step').textContent='Z['+sr+','+sc+'] = '+terms.join(' + ')+' = '+fmt(sum,2)+'（含 bias，这里 b=0）';
+    $('#c2Cap').textContent='stride 固定 1。当前点输出 ('+sr+','+sc+')；输入窗口 '+(sr+','+sc+' 到 '+(sr+kh-1)+','+(sc+kw-1))+'。输出尺寸：'+oh+'×'+ow+'；同一核在所有窗口共享。';
+    // make output cells clickable
+    z.forEach((row,r)=>row.forEach((_,c)=>{
+      const rect=svg.querySelector(`rect[x="${ox+c*oc}"][y="${oy+r*oc}"]`);
+      if(rect)rect.addEventListener('click',()=>{state.sel={r,c};draw();});
+    }));
+  }
+  function sync(){
+    const c=compute();state.sel.r=clamp(state.sel.r,0,c.oh-1);state.sel.q=clamp(state.sel.q,0,c.ow-1);
+    $('#c2Pval').textContent=fmt(+$('#c2P').value,0);draw();
+  }
+  ['c2Grid','c2K','c2P'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  $('#c2Rand').addEventListener('click',()=>{
+    const n=+$('#c2Grid').value;
+    GRID[n]=Array.from({length:n},()=>Array.from({length:n},()=>Math.floor(Math.random()*7)-2));
+    sync();toast('已生成随机输入');
+  });
+  sync();
+})();
+
+/* ---------- parameter / compute comparison ---------- */
+(()=>{
+  const svg=$('#paramViz'), M={l:70,r:30,t:24,b:76}, W=960,H=420;
+  const plotW=W-M.l-M.r, plotH=H-M.t-M.b;
+  const yOf=v=>M.t+plotH*(1-Math.log10(Math.max(1,v))/Math.log10(1e12));
+  function compute(){
+    const H=+$('#pmH').value, f=+$('#pmF').value, cin=+$('#pmCin').value, cout=+$('#pmCout').value;
+    const p=Math.floor(f/2), out=Math.floor((H+2*p-f)/1)+1;
+    const fc=(H*H*cin)*cout+cout;
+    const cv=(f*f*cin+1)*cout;
+    const macs=cout*out*out*f*f*cin;
+    return {fc,cv,macs,out};
+  }
+  function draw(){
+    const {fc,cv,macs,out}=compute();
+    svg.innerHTML='';
+    svgAdd(svg,'line',{x1:M.l,y1:yOf(1),x2:W-M.r,y2:yOf(1),stroke:'var(--line)'});
+    [1,1e2,1e4,1e6,1e8,1e10].forEach(v=>{svgAdd(svg,'line',{x1:M.l,y1:yOf(v),x2:M.l+5,y2:yOf(v),stroke:'var(--line)'});svgHalo(svg,M.l-7,yOf(v)+4,fmt(v,0),{anchor:'end',font:9,bg:'transparent'});});
+    const bars=[
+      {label:'全连接参数',val:fc,color:'var(--warm)'},
+      {label:'卷积参数',val:cv,color:'var(--accent)'},
+      {label:'卷积计算量(MACs)',val:macs,color:'var(--opt)'}
+    ];
+    const bw=140, start=220;
+    bars.forEach((b,i)=>{
+      const x=start+i*230, yy=yOf(b.val), h=M.t+plotH-yy;
+      svgAdd(svg,'rect',{x,y:yy,width:bw,height:Math.max(h,2),rx:8,fill:b.color,opacity:.85});
+      svgHalo(svg,x+bw/2,yy-12,fmt(b.val,0),{fill:b.color,font:12.5});
+      svgAdd(svg,'text',{x:x+bw/2,y:H-M.b+16,'text-anchor':'middle','font-size':12,fill:'var(--ink)'},b.label);
+    });
+    svgAdd(svg,'text',{x:M.l+6,y:M.t-8,'font-size':11,fill:'var(--muted)'},'对数刻度 · H=W='+$('#pmH').value+' · f='+$('#pmF').value+' · C_in='+$('#pmCin').value+' · C_out='+$('#pmCout').value+' · H_out='+out);
+  }
+  function sync(){
+    $('#pmFval').textContent=fmt(+$('#pmF').value,0);
+    $('#pmCinval').textContent=fmt(+$('#pmCin').value,0);
+    $('#pmCoutval').textContent=fmt(+$('#pmCout').value,0);
+    draw();
+  }
+  ['pmH','pmF','pmCin','pmCout'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- output size formula ---------- */
+(()=>{
+  const svg=$('#outSize'), W=940,H=320;
+  function compute(){
+    const n=+$('#osN').value,k=+$('#osK').value,p=+$('#osP').value,s=+$('#osS').value;
+    const out=Math.floor((n+2*p-k)/s)+1;
+    return {n,k,p,s,out};
+  }
+  function draw(){
+    const {n,k,p,s,out}=compute();
+    const t=clamp(+$('#osT').value,0,Math.max(0,out-1));
+    svg.innerHTML='';
+    const total=n+2*p, cell=34, x0=60, yIn=90, yOut=185;
+    svgHalo(svg,x0-8,yIn-14,'n='+n+' (灰=padding)',{anchor:'start',font:11.5,fill:'var(--accent)'});
+    for(let i=0;i<total;i++){
+      const pad=i<p||i>=p+n;
+      svgAdd(svg,'rect',{x:x0+i*cell,y:yIn-18,width:cell-3,height:36,rx:4,fill:pad?'color-mix(in srgb,var(--blue) 22%, var(--surface2))':'var(--surface2)',stroke:pad?'var(--blue)':'var(--line)'});
+      svgAdd(svg,'text',{x:x0+i*cell+cell/2,y:yIn+5,'text-anchor':'middle','font-size':10.5,fill:pad?'var(--blue)':'var(--ink)'},pad?'0':i-p+1);
+    }
+    if(out>0){
+      svgHalo(svg,x0-8,yOut-14,'out='+out,{anchor:'start',font:11.5,fill:'var(--warm)'});
+      for(let i=0;i<out;i++){
+        const act=i===t;
+        svgAdd(svg,'rect',{x:x0+i*s*cell,y:yOut-16,width:cell,height:30,rx:4,fill:act?'color-mix(in srgb,var(--warm) 30%, var(--surface))':'color-mix(in srgb,var(--accent) 12%, var(--surface))',stroke:act?'var(--warm)':'var(--accent)',strokeWidth:act?2.6:1.2});
+        svgAdd(svg,'text',{x:x0+i*s*cell+cell/2,y:yOut+6,'text-anchor':'middle','font-size':10.5,fill:act?'var(--warm)':'var(--ink)'},'t='+i);
+      }
+      // highlight current window in input row
+      const start=t*s,end=start+k-1;
+      for(let i=start;i<=end;i++){
+        svgAdd(svg,'rect',{x:x0+i*cell-1.5,y:yIn-22,width:cell,height:44,fill:'none',stroke:'var(--warm)',strokeWidth:2.4,strokeDasharray:'3 3'});
+      }
+      $('#osOut').textContent='out = floor((n+2p−k)/s)+1 = floor(('+n+'+2×'+p+'−'+k+')/'+s+')+1 = '+out;
+      $('#osStep').textContent='当前输出 t='+t+' 的窗口起点是 x̃['+start+']，覆盖 x̃['+start+'..'+end+']。';
+    } else {
+      $('#osOut').textContent='没有合法输出：核太大或 stride 太大。';
+      $('#osStep').textContent='—';
+    }
+  }
+  function sync(){
+    const c=compute();const maxT=Math.max(0,c.out-1);const tEl=$('#osT');tEl.max=maxT;if(+tEl.value>maxT)tEl.value=maxT;
+    ['osN','osK','osP','osS','osT'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,0));
+    draw();
+  }
+  ['osN','osK','osP','osS','osT'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- receptive field ---------- */
+(()=>{
+  const svg=$('#rfViz'), W=1000,H=420;
+  const STACKS={
+    basic:[{name:'输入',k:null,s:null},{name:'Conv 3×3',k:3,s:1},{name:'Conv 3×3',k:3,s:1},{name:'Pool 2×2',k:2,s:2}],
+    vggish:[{name:'输入',k:null,s:null},{name:'Conv1 3×3',k:3,s:1},{name:'Conv2 3×3',k:3,s:1},{name:'Conv3 3×3',k:3,s:1}],
+    strided:[{name:'输入',k:null,s:null},{name:'Conv 3×3 s=2',k:3,s:2},{name:'Conv 3×3',k:3,s:1}]
+  };
+  function rows(){
+    const layers=STACKS[$('#rfStack').value];
+    let r=1,j=1;
+    const out=[{name:'输入',k:'—',s:'—',j:1,r:1}];
+    for(let l=1;l<layers.length;l++){
+      const lay=layers[l];
+      j=j*lay.s;
+      r=r+(lay.k-1)*(j/lay.s); // use previous j before stride update: jPrev=j/lay.s
+      out.push({name:lay.name,k:lay.k,s:lay.s,j,r});
+      j=lay.s* (j/lay.s); // actually j already updated above
+    }
+    return out;
+  }
+  function draw(){
+    const data=rows();
+    svg.innerHTML='';
+    const cx=210, cy=200, maxScale=26;
+    const maxR=Math.max(...data.map(d=>d.r));
+    data.slice(1).forEach((d,i)=>{
+      const side=d.r*maxScale;
+      const alpha=0.55+0.1*i;
+      svgAdd(svg,'rect',{x:cx-side/2,y:cy-side/2,width:side,height:side,rx:8,fill:'none',stroke:'var(--accent)',strokeWidth:2,strokeDasharray:'3 3',opacity:alpha});
+      svgHalo(svg,cx,cy-side/2-9,'第'+(i+1)+'层 r='+d.r,{font:10.5,fill:'var(--accent)'});
+    });
+    svgAdd(svg,'rect',{x:cx-1,y:cy-1,width:2,height:2,fill:'var(--warm)',stroke:'var(--warm)'});
+    svgHalo(svg,cx,cy,'原图像素',{font:11,fill:'var(--warm)'});
+    const tx=500, ty=50, rh=34, cw=[150,42,42,48,48];
+    svgHalo(svg,tx+145,ty-14,'堆叠与递推表',{font:12.5,fill:'var(--accent)'});
+    const heads=['层','k','s','j','r']; let x=tx;
+    heads.forEach((h,i)=>{svgAdd(svg,'rect',{x,y:ty,width:cw[i],height:rh,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'text',{x:x+cw[i]/2,y:ty+rh/2+4,'text-anchor':'middle','font-size':11.5,fontWeight:700,fill:'var(--ink)'},h);x+=cw[i];});
+    data.forEach((d,i)=>{
+      let xx=tx,y=ty+rh+i*34;
+      const vals=[d.name,String(d.k),String(d.s),String(d.j),String(d.r)];
+      vals.forEach((v,j)=>{svgAdd(svg,'rect',{x:xx,y:y,width:cw[j],height:34,fill:i%2?'color-mix(in srgb,var(--accent) 5%, var(--surface))':'var(--surface)',stroke:'var(--line)'});svgAdd(svg,'text',{x:xx+cw[j]/2,y:y+22,'text-anchor':'middle','font-size':11,fill:'var(--ink)'},v);xx+=cw[j];});
+    });
+    const last=data[data.length-1];
+    svgHalo(svg,tx+145,ty+(data.length+1)*34+14,'最后一个输出：r='+last.r+'，j='+last.j,{font:12,fill:'var(--warm)'});
+  }
+  $('#rfStack').addEventListener('change',draw);
+  draw();
+})();
+
+/* ---------- pooling demo ---------- */
+(()=>{
+  const svg=$('#poolViz'), W=860,H=380;
+  const M=[[1,3,2,4],[2,0,1,3],[0,1,3,2],[4,2,1,0]];
+  const colors=['#176653','#b45a2b','#285a9e','#6c4fa1'];
+  function draw(){
+    const type=$('#poolType').value;
+    const out=[];
+    for(let br=0;br<2;br++)for(let bc=0;bc<2;bc++){
+      const vals=[];
+      for(let r=0;r<2;r++)for(let c=0;c<2;c++)vals.push(M[br*2+r][bc*2+c]);
+      out.push(type==='max'?Math.max(...vals):vals.reduce((a,b)=>a+b,0)/4);
+    }
+    svg.innerHTML='';
+    const ix=60,iy=70,ic=74,ox=520,oy=70,oc=110;
+    svgHalo(svg,ix+2*ic,iy-14,'输入 4×4',{font:12,fill:'var(--accent)'});
+    M.forEach((row,r)=>row.forEach((v,c)=>{
+      const bi=Math.floor(r/2),bj=Math.floor(c/2),idx=bi*2+bj;
+      svgAdd(svg,'rect',{x:ix+c*ic,y:iy+r*ic,width:ic-3,height:ic-3,rx:5,fill:'color-mix(in srgb, '+colors[idx]+' 16%, var(--surface))',stroke:colors[idx],strokeWidth:1.5});
+      svgAdd(svg,'text',{x:ix+c*ic+ic/2,y:iy+r*ic+ic/2+5,'text-anchor':'middle','font-size':13,fill:'var(--ink)'},fmt(v,2));
+    }));
+    svgHalo(svg,ox+oc,oy-14,type==='max'?'max pooling →':'average pooling →',{font:12,fill:'var(--warm)'});
+    for(let i=0;i<4;i++){
+      const r=Math.floor(i/2),c=i%2, xx=ox+c*oc,yy=oy+r*oc;
+      svgAdd(svg,'rect',{x:xx,y:yy,width:oc-4,height:oc-4,rx:8,fill:'color-mix(in srgb, '+colors[i]+' 24%, var(--surface))',stroke:colors[i],strokeWidth:2});
+      svgAdd(svg,'text',{x:xx+oc/2,y:yy+oc/2+5,'text-anchor':'middle','font-size':15,fontWeight:700,fill:'var(--ink)'},fmt(out[i],2));
+    }
+  }
+  $('#poolType').addEventListener('change',draw);
+  draw();
+})();
+
+/* ---------- conv backprop gradient sum ---------- */
+(()=>{
+  const svg=$('#convBp'), W=900,H=420;
+  const X=[[1,0,2],[0,1,1],[2,1,0]];
+  const D=[[1,-2],[3,0.5]];
+  function draw(){
+    const [u,v]=$('#bpK').value.split(',').map(Number);
+    let sum=0;const terms=[];
+    for(let r=0;r<2;r++)for(let c=0;c<2;c++){
+      const x=X[r+u][c+v], d=D[r][c];sum+=d*x;terms.push(fmt(d,2)+'×'+fmt(x,2));
+    }
+    svg.innerHTML='';
+    const ix=70,iy=70,ic=68,dx=360,dy=70,dc=68,rx=650;
+    svgHalo(svg,ix+ic*1.5,iy-14,'输入 X（3×3）',{font:12,fill:'var(--accent)'});
+    X.forEach((row,r)=>row.forEach((val,c)=>{
+      const used=r>=u&&r<u+2&&c>=v&&c<v+2;
+      svgAdd(svg,'rect',{x:ix+c*ic,y:iy+r*ic,width:ic-3,height:ic-3,rx:5,fill:used?'color-mix(in srgb,var(--warm) 28%, var(--surface))':'var(--surface2)',stroke:used?'var(--warm)':'var(--line)',strokeWidth:used?2.4:1});
+      svgAdd(svg,'text',{x:ix+c*ic+ic/2,y:iy+r*ic+ic/2+5,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},fmt(val,2));
+    }));
+    svgHalo(svg,dx+dc,dy-14,'输出梯度 δ（2×2）',{font:12,fill:'var(--warm)'});
+    D.forEach((row,r)=>row.forEach((val,c)=>{
+      svgAdd(svg,'rect',{x:dx+c*dc,y:dy+r*dc,width:dc-3,height:dc-3,rx:5,fill:'color-mix(in srgb,var(--warm) 18%, var(--surface))',stroke:'var(--warm)',strokeWidth:1.4});
+      svgAdd(svg,'text',{x:dx+c*dc+dc/2,y:dy+r*dc+dc/2+5,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},fmt(val,2));
+    }));
+    svgHalo(svg,rx+120,70,'∂J/∂K['+u+','+v+']',{font:13,fill:'var(--accent)'});
+    svgAdd(svg,'text',{x:rx,y:118,'font-size':12.5,fill:'var(--ink)'},'= '+terms.join(' + '));
+    svgAdd(svg,'text',{x:rx,y:148,'font-size':14,fontWeight:700,fill:'var(--accent)'},'= '+fmt(sum,3));
+    svgAdd(svg,'text',{x:rx,y:200,'font-size':11.5,fill:'var(--muted)'},'所有用到 K['+u+','+v+'] 的滑窗位置');
+    svgAdd(svg,'text',{x:rx,y:224,'font-size':11.5,fill:'var(--muted)'},'都把 δ×X 贡献加到这里。');
+    $('#bpStep').textContent='K['+u+','+v+'] 的梯度 = '+terms.join(' + ')+' = '+fmt(sum,3);
+  }
+  $('#bpK').addEventListener('change',draw);
+  draw();
+})();
+
+/* ---------- residual connection diagram ---------- */
+(()=>{
+  const svg=$('#residualViz'), W=860,H=360;
+  function draw(){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');const mk=svgMarker(defs,'rsArr','#176653');
+    svgHalo(svg,180,60,'普通块',{font:13,fill:'var(--accent)'});
+    svgHalo(svg,640,60,'残差块',{font:13,fill:'var(--accent)'});
+    // plain block
+    const p={x0:90,y0:180,x1:210,y1:180,x2:340,y2:180};
+    svgAdd(svg,'rect',{x:p.x0-40,y:p.y0-24,width:80,height:48,rx:10,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'text',{x:p.x0,y:p.y0+5,'text-anchor':'middle','font-size':13,fill:'var(--ink)'},'x');
+    svgAdd(svg,'rect',{x:p.x1-50,y:p.y1-34,width:100,height:68,rx:10,fill:'color-mix(in srgb,var(--accent) 10%, var(--surface))',stroke:'var(--accent)'});svgAdd(svg,'text',{x:p.x1,y:p.y1-4,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},'F(x)');svgAdd(svg,'text',{x:p.x1,y:p.y1+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},'权重层');
+    svgAdd(svg,'rect',{x:p.x2-40,y:p.y2-24,width:80,height:48,rx:10,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'text',{x:p.x2,y:p.y2+5,'text-anchor':'middle','font-size':13,fill:'var(--ink)'},'y=F(x)');
+    svgLine(svg,p.x0+44,p.y0,p.x1-54,p.y1,{color:'var(--accent)',width:2,marker:mk});
+    svgLine(svg,p.x1+54,p.y1,p.x2-44,p.y2,{color:'var(--accent)',width:2,marker:mk});
+    // residual block
+    const q={x0:500,y0:180,x1:620,y1:180,x2:750,y2:180,x3:820,y3:180};
+    svgAdd(svg,'rect',{x:q.x0-40,y:q.y0-24,width:80,height:48,rx:10,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'text',{x:q.x0,y:q.y0+5,'text-anchor':'middle','font-size':13,fill:'var(--ink)'},'x');
+    svgAdd(svg,'rect',{x:q.x1-50,y:q.y1-34,width:100,height:68,rx:10,fill:'color-mix(in srgb,var(--accent) 10%, var(--surface))',stroke:'var(--accent)'});svgAdd(svg,'text',{x:q.x1,y:q.y1-4,'text-anchor':'middle','font-size':12.5,fill:'var(--ink)'},'F(x)');svgAdd(svg,'text',{x:q.x1,y:q.y1+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},'权重层');
+    svgAdd(svg,'circle',{cx:q.x2,cy:q.y2,r:26,fill:'color-mix(in srgb,var(--warm) 12%, var(--surface))',stroke:'var(--warm)',strokeWidth:2});svgAdd(svg,'text',{x:q.x2,y:q.y2+5,'text-anchor':'middle','font-size':15,fill:'var(--warm)'},'+');
+    svgAdd(svg,'rect',{x:q.x3-40,y:q.y3-24,width:80,height:48,rx:10,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'text',{x:q.x3,y:q.y3+5,'text-anchor':'middle','font-size':13,fill:'var(--ink)'},'y');
+    svgLine(svg,q.x0+44,q.y0,q.x1-54,q.y1,{color:'var(--accent)',width:2,marker:mk});
+    svgLine(svg,q.x1+54,q.y1,q.x2-30,q.y2,{color:'var(--accent)',width:2,marker:mk});
+    svgLine(svg,q.x2+30,q.y2,q.x3-44,q.y3,{color:'var(--warm)',width:2,marker:mk});
+    // skip path from x top to plus top
+    svgAdd(svg,'path',{d:`M${q.x0},${q.y0-29} C ${q.x0+20},${q.y0-85} ${q.x2-50},${q.y2-70} ${q.x2},${q.y2-30}`,fill:'none',stroke:'var(--warm)',strokeWidth:2.4,strokeDasharray:'5 3',markerEnd:mk});
+    svgHalo(svg,(q.x0+q.x2)/2-20,q.y0-78,'恒等捷径 x',{font:11.5,fill:'var(--warm)'});
+    svgHalo(svg,(q.x0+q.x2)/2-20,q.y0-98,'梯度路径 I',{font:11.5,fill:'var(--warm)'});
+  }
+  draw();
+})();
+
+/* ---------- transfer learning flow ---------- */
+(()=>{
+  const svg=$('#transferViz'), W=860,H=300;
+  function draw(){
+    svg.innerHTML='';
+    const defs=svgAdd(svg,'defs');const mk=svgMarker(defs,'trArr','#176653');
+    const boxes=[
+      {x:40,w:180,t:'大数据预训练',s:'ImageNet 等',color:'var(--accent)'},
+      {x:280,w:180,t:'通用特征',s:'边缘/纹理/部件',color:'var(--opt)'},
+      {x:520,w:180,t:'小数据新任务',s:'医学图等',color:'var(--warm)'},
+      {x:700?510?700:0:0,w:130,t:'微调/分类头',s:'少量适配',color:'var(--violet)'}
+    ];
+    // actually adjust x last
+    boxes[3].x=700;boxes[3].w=130;
+    boxes.forEach((b,i)=>{
+      svgAdd(svg,'rect',{x:b.x,y:90,width:b.w,height:90,rx:12,fill:'color-mix(in srgb, '+b.color+' 12%, var(--surface))',stroke:b.color,strokeWidth:2});
+      svgAdd(svg,'text',{x:b.x+b.w/2,y:122,'text-anchor':'middle','font-size':13.5,fontWeight:700,fill:'var(--ink)'},b.t);
+      svgAdd(svg,'text',{x:b.x+b.w/2,y:148,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},b.s);
+      if(i<boxes.length-1)svgLine(svg,b.x+b.w+4,135,boxes[i+1].x-4,135,{color:'var(--accent)',width:2.2,marker:mk});
+    });
+    svgHalo(svg,430,250,'迁移学习：先学通用表示，再在新任务上小样本适配',{font:13,fill:'var(--accent)'});
+  }
+  draw();
+})();
+
+/* ---------- core/full mode, bridges, tags ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},motiv:{mode:'core',tag:'动机'},
+    drop:{mode:'core',tag:'Dropout'},dropscale:{mode:'core',tag:'尺度'},bn:{mode:'core',tag:'BN'},
+    gamma:{mode:'core',tag:'γ/β'},equiv:{mode:'core',tag:'对称性'},local:{mode:'core',tag:'两个先验'},
+    conv1d:{mode:'core',tag:'一维'},conv2d:{mode:'core',tag:'二维'},params:{mode:'core',tag:'参数'},
+    output:{mode:'core',tag:'尺寸'},rf:{mode:'core',tag:'感受野'},pooling:{mode:'core',tag:'池化'},
+    convbp:{mode:'core',tag:'反向传播'},residual:{mode:'core',tag:'残差'},transfer:{mode:'core',tag:'迁移'},
+    extra:{mode:'extra',tag:'拓展'},quiz:{mode:'core',tag:'自测'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：第 14 讲在整门课的位置，以及概念如何互相咬合。',
+    motiv:'从“全连接在图像上参数爆炸”的问题出发，才知道 CNN 要解决什么。',
+    drop:'训练技巧先补完：dropout 到底怎么屏蔽、怎么对齐尺度。',
+    dropscale:'dropout 的难点在测试时缩放；讲完它才能安心进 batch norm。',
+    bn:'dropout 管随机性，batch norm 管每层激活尺度。',
+    gamma:'标准化后为什么还要 γ,β——这是 BN 不锁死表达的关键。',
+    equiv:'进入 CNN 前先问“要哪种对称性”：等变，不是天然不变。',
+    local:'等变来自共享核；这一节把局部连接和参数共享两个先验讲透。',
+    conv1d:'先用一维手算把滑窗、stride、padding 的动作算清楚。',
+    conv2d:'一维推广到二维/多通道：核要覆盖所有输入通道。',
+    params:'算式有了，立刻看它省了多少参数、又花了多少计算。',
+    output:'尺寸公式是 CNN 架构设计的基本工具。',
+    rf:'尺寸之外还有“看多大”：感受野逐层扩大。',
+    pooling:'池化是尺寸调度与近似不变性的关键手段。',
+    convbp:'共享参数仍然可反传，梯度是所有使用位置的和。',
+    residual:'深层训练难，残差连接给梯度一条直通路径。',
+    transfer:'深而稳的表示可以迁移，新任务不必从零学。',
+    extra:'把计算效率、架构选择和 5 个常见误解一次性拆掉。',
+    quiz:'用自测确认你真的带走了核心概念。',
+    takeaway:'把整讲串成一条线，并接上第 15 讲聚类。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    rebuildBridges();
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'全连接层',en:'fully-connected layer',f:'v^{(l+1)}=\\varphi(Wv^{(l)})',d:'每个输出单元都连接到上一层所有输入的网络层；权重是稠密矩阵 W，加偏置 b。',r:'位置：§1。用处：通用但参数随输入像素数线性爆炸。重要：第 11–13 讲的主角，本讲用它引出卷积。'},
+    {t:'Dropout',en:'dropout',f:'v_{\\mathrm{train}}=m\\cdot v',d:'训练时以概率 1-p 随机屏蔽隐藏单元（乘 Bernoulli mask），测试时用全部单元并匹配尺度。',r:'位置：§2。用处：减少单元共适应、抑制过拟合。重要：测试时缩放是工程实现的常见坑。'},
+    {t:'保留概率',en:'keep probability',f:'m\\sim\\operatorname{Bernoulli}(p)',d:'p 是每个单元保留下来的概率；mask m 取 0/1，m=1 表示保留、m=0 表示丢弃。',r:'位置：§2。用处：控制 dropout 强度；期望 E[mv]=pv 决定尺度补偿。'},
+    {t:'测试时缩放',en:'test-time scaling / inverted dropout',f:'v_{\\mathrm{test}}=pv,\\quad \\mathbb{E}[mv/p]=v',d:'为让训练（有随机屏蔽）与测试（无屏蔽）的激活尺度一致而采用的两种等价约定。',r:'位置：§3。用处：保证推理阶段尺度不突变。重要：现代框架默认 inverted dropout。'},
+    {t:'Batch Normalization',en:'batch normalization',f:'\\hat v=\\frac{v-\\mu_B}{\\sqrt{\\sigma_B^2+\\epsilon}}',d:'用当前 mini-batch 的统计量把激活标准化，再用可学习 γ,β 缩放平移的层。',r:'位置：§4。用处：稳定训练、允许更大学习率、常提升泛化。重要：测试时用运行统计。'},
+    {t:'Batch 统计量',en:'batch statistics',f:'\\mu_B=\\frac1m\\sum v_i,\\ \\sigma_B^2=\\frac1m\\sum(v_i-\\mu_B)^2',d:'由当前 mini-batch 的 m 个样本算出的均值和方差，是数据统计量而不是模型参数。',r:'位置：§4。用处：BN 的第三步标准化。重要：与 γ,β 的学习参数身份必须分清。'},
+    {t:'可学习缩放/平移',en:'learnable scale & shift',f:'\\bar v=\\gamma\\hat v+\\beta',d:'BN 第四步的两个可学习参数：γ 管放大、β 管平移。',r:'位置：§5。用处：恢复模型需要的尺度和位置。重要：没有它们 BN 会限制表达能力。'},
+    {t:'等变性',en:'equivariance',f:'\\operatorname{Conv}(T_ax)=T_a\\operatorname{Conv}(x)',d:'输入平移时输出也相应平移；卷积给出的是平移等变，而不是不变。',r:'位置：§6。用处：精确描述卷积给网络的结构先验。重要：分类的不变性还需 pooling/聚合。'},
+    {t:'数据增强',en:'data augmentation',d:'训练时对输入做受控变换（平移、裁剪、翻转）生成更多样本。',r:'位置：§6。用处：让模型学到近似不变、抑制过拟合。重要：与卷积的结构先验互补。'},
+    {t:'局部连接',en:'local connectivity',d:'一个输出单元只连接到输入的一小块邻域，而不是全部输入。',r:'位置：§7。用处：利用“附近像素相关”，省参数。重要：卷积层的两个先验之一。'},
+    {t:'参数共享',en:'parameter sharing',d:'同一组滤波器权重在输入的所有位置重复使用。',r:'位置：§7。用处：把参数量从随位置增长压成固定大小，并实现平移等变。重要：卷积与全连接的本质分水岭。'},
+    {t:'卷积',en:'convolution (cross-correlation flavor)',f:'z_t=\\sum_{r=0}^{k-1}w_r\\tilde x_{ts+r}',d:'滤波器在输入上滑动，在每个窗口内逐元素乘加得到输出。',r:'位置：§8。用处：提取局部模式并共享参数。重要：按深度学习库的滑窗约定书写。'},
+    {t:'滤波器',en:'filter / kernel · feature map',f:'K^{(q)}\\in\\mathbb{R}^{k_h\\times k_w\\times C_{\\mathrm{in}}}',d:'卷积层中可学习的局部权重块；它在所有位置滑动产生的响应图是特征图。',r:'位置：§9。用处：不同滤波器学不同模式。重要：特征图堆叠形成层级表示。'},
+    {t:'归纳偏置',en:'inductive bias',d:'模型结构自带的先验偏好；CNN 的偏置是局部性和位置共享。',r:'位置：§10。用处：在合适任务上大幅降参和数据需求。重要：不合适时也会限制模型。'},
+    {t:'padding / stride',en:'padding · stride',f:'\\mathrm{out}=\\lfloor(n+2p-k)/s\\rfloor+1',d:'padding 在输入边界补值；stride 是核每次滑动的步长。',r:'位置：§11。用处：控制输出尺寸、边缘使用频率、计算量。重要：输出尺寸公式的输入变量。'},
+    {t:'感受野',en:'receptive field',f:'j_l=j_{l-1}s_l,\\ r_l=r_{l-1}+(k_l-1)j_{l-1}',d:'某层一个输出单元在原始输入上能影响的区域大小。',r:'位置：§12。用处：解释底层看边缘、高层看结构。重要：堆叠网络就是在设计上下文范围。'},
+    {t:'池化',en:'pooling',d:'在局部窗口内做 max/avg 聚合的下采样层。',r:'位置：§13。用处：降尺寸、降计算、增加局部鲁棒性。重要：会丢空间信息，分割任务要谨慎。'},
+    {t:'残差连接',en:'residual connection',f:'y=x+F(x)',d:'把块的输入直接加到输出上，给梯度一条恒等捷径。',r:'位置：§15。用处：缓解深层网络梯度传播困难。重要：ResNet 能训练非常深的原因。'},
+    {t:'迁移学习',en:'transfer learning / fine-tuning',d:'复用一个任务学到的表示；微调是在新数据上继续更新已有模型。',r:'位置：§16。用处：小数据任务也能用大规模预训练表示。重要：表示学习成为可迁移资产。'}
+  ];
+  const KEYS={'全连接层':'全连接层','Dropout':'Dropout','保留概率':'保留概率','测试时缩放':'测试时缩放','Batch Normalization':'Batch Normalization','Batch 统计量':'Batch 统计量','可学习缩放/平移':'可学习缩放/平移','等变性':'等变性','数据增强':'数据增强','局部连接':'局部连接','参数共享':'参数共享','卷积':'卷积','滤波器':'滤波器','归纳偏置':'归纳偏置','padding / stride':'padding / stride','感受野':'感受野','池化':'池化','残差连接':'残差连接','迁移学习':'迁移学习'};
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&p.matches(GLOSS_SKIP))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:c.k||KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'Dropout 训练时和测试时有什么区别？',a:'训练时随机屏蔽单元（mask m∼Bernoulli(p)），测试时使用全部单元并匹配激活尺度。'},
+    {q:'为什么 dropout 测试时需要缩放，或训练时使用 inverted dropout？',a:'因为训练时单元期望贡献是 pv；不补偿会让测试时激活尺度从 pv 跳到 v，前后不一致。'},
+    {q:'Batch Normalization 的四个计算步骤是什么？',a:'① batch 均值 μ_B；② batch 方差 σ²_B；③ 标准化 v̂=(v−μ_B)/√(σ²_B+ε)；④ 可学习缩放平移 v̄=γv̂+β。'},
+    {q:'gamma 和 beta 为什么是可学习的？',a:'防止标准化把模型表达能力锁死；让网络可以决定要不要放大、往哪儿平移。'},
+    {q:'CNN 的局部连接和参数共享分别解决什么问题？',a:'局部连接利用“附近像素相关”；参数共享利用“同一种模式可出现在不同位置”。'},
+    {q:'一维输入长度 10，滤波器长度 3，padding 0，stride 1，输出长度是多少？',a:'out = floor((10+0−3)/1)+1 = 8。'},
+    {q:'输入 32×32，滤波器 5×5，padding 2，stride 1，输出空间大小是多少？',a:'out = floor((32+4−5)/1)+1 = 32，所以是 32×32。'},
+    {q:'卷积更接近平移不变还是平移等变？',a:'平移等变：Conv(T_ax)=T_aConv(x)。分类中的近似不变还要 pooling/全局聚合/数据增强。'},
+    {q:'pooling 有什么好处和代价？',a:'好处：降尺寸、降计算、增加局部平移鲁棒性；代价：丢空间细节，分割/定位任务要谨慎。'},
+    {q:'residual connection 为什么有助于训练深层网络？',a:'y=x+F(x) 提供恒等捷径；反向传播中梯度多一条乘以 I 的路径，即使 F 的 Jacobian 很小也能返回。'},
+    {q:'transfer learning 为什么适合小数据任务？',a:'大数据上学到的通用特征可复用，新任务不必从零学视觉常识，只需少量适配或微调。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
