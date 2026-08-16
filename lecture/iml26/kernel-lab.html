@@ -1,0 +1,1711 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 9 讲 · The Kernel Trick（核技巧）互动实验室 | IML 2026</title>
+<meta name="description" content="IML 2026 第 9 讲 The Kernel Trick（核技巧）的深度互动讲义：特征映射、特征爆炸、梯度住在样本 span 中、representer theorem、w=Φᵀα 重参数化、核函数、Gram 矩阵、kernelization 三步、多项式核的 √2 缩放、RBF 带宽、PSD 证明、收益与代价。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{
+  --paper:#f4f2ec; --surface:#fffdf8; --surface2:#ece9e0; --ink:#20231f; --muted:#667068;
+  --line:#d6d2c4; --accent:#176653; --accent2:#0b7a6b; --warm:#b45a2b; --danger:#b23a48;
+  --blue:#285a9e; --violet:#6c4fa1; --gold:#8a6a14;
+  --fwd:#176653; --bwd:#b45a2b; --opt:#285a9e; --tool:#6c4fa1;
+  --code-bg:#172622; --code-ink:#e9f0ec; --shadow:0 10px 30px rgba(30,35,30,.10);
+}
+html[data-theme="dark"]{
+  --paper:#151917; --surface:#1d231f; --surface2:#262e29; --ink:#eef1ea; --muted:#a9b4ab;
+  --line:#3a433d; --accent:#7cc4ad; --accent2:#5fb39a; --warm:#e6a071; --danger:#e58390;
+  --blue:#8fb8ec; --violet:#b49ae8; --gold:#d8b96a;
+  --fwd:#7cc4ad; --bwd:#e6a071; --opt:#8fb8ec; --tool:#b49ae8;
+  --code-bg:#0f1613; --code-ink:#dce8e0; --shadow:0 10px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong","Source Han Serif SC",serif;line-height:1.8;font-size:17px}
+a{color:var(--accent)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}
+.topbar{position:sticky;top:0;z-index:50;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:blur(10px)}
+.topbar .brand{display:flex;min-width:0;gap:10px;align-items:center}
+.topbar .kicker{font-family:Menlo,Monaco,monospace;font-size:.7rem;font-weight:700;letter-spacing:.08em;color:var(--accent)}
+.topbar .title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .actions{display:flex;gap:8px;flex:none}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.88rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#f7fffb}
+.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}
+.btn.ghost{background:transparent}
+.icon-btn{display:inline-grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.layout{display:grid;grid-template-columns:252px minmax(0,1fr) 296px;gap:0;max-width:1600px;margin:0 auto;align-items:start}
+.gloss-rail{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow-y:auto;overflow-x:hidden;padding:22px 14px 40px;border-left:1px solid var(--line)}
+.gloss-rail .gloss-sec{margin:14px 0 6px;color:var(--accent);font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.04em}
+.gloss-rail .gloss-term{display:block;width:100%;padding:7px 9px;margin:2px 0;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}
+.gloss-rail .gloss-term:hover{background:var(--surface2);border-color:var(--line)}
+.gloss-rail .gloss-term.active{border-left-color:var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent)}
+.gloss-rail .gloss-term .gt{font-size:.8rem;font-weight:700}
+.gloss-rail .gloss-term .ge{display:block;font-family:Menlo,Monaco,monospace;font-size:.66rem;color:var(--muted)}
+.gloss-rail .gloss-term .gd{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:.72rem;color:var(--muted);line-height:1.4;margin-top:2px}
+.term-ref{position:relative;display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}
+.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+.term-pop{position:fixed;z-index:120;width:min(360px,calc(100vw - 24px));padding:13px 15px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:4px solid var(--accent);border-radius:10px;background:var(--surface);box-shadow:var(--shadow);font-size:.86rem;line-height:1.6}
+.term-pop .tp-head{font-weight:800}
+.term-pop .tp-en{font-family:Menlo,Monaco,monospace;font-size:.72rem;color:var(--muted)}
+.term-pop .tp-f{overflow-x:auto;padding:4px 0;font-size:.9rem}
+.term-pop .tp-role{color:var(--warm)}
+.toc{position:sticky;top:64px;max-height:calc(100vh - 84px);overflow:auto;padding:22px 14px 40px;border-right:1px solid var(--line)}
+.toc .toc-label{font-family:Menlo,Monaco,monospace;font-size:.68rem;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin:0 8px 8px}
+.toc a{display:block;padding:5px 9px;border-left:2px solid transparent;color:var(--muted);text-decoration:none;font-size:.84rem;line-height:1.4;border-radius:0 6px 6px 0}
+.toc a:hover{color:var(--accent)}
+.toc a.active{color:var(--accent);border-left-color:var(--accent);font-weight:700;background:color-mix(in srgb,var(--accent) 8%,transparent)}
+main{min-width:0;padding:34px clamp(16px,4vw,58px) 90px}
+section{margin:0 0 58px;scroll-margin-top:74px}
+.hero{border:1px solid var(--line);border-radius:18px;background:linear-gradient(135deg,var(--surface),var(--surface2));padding:38px clamp(20px,4vw,46px);box-shadow:var(--shadow)}
+.hero .course{font-family:Menlo,Monaco,monospace;font-size:.72rem;letter-spacing:.12em;color:var(--accent);font-weight:700}
+.hero h1{margin:.35em 0 .25em;font-size:clamp(1.8rem,4.5vw,3.2rem);line-height:1.12}
+.hero .subtitle{font-size:1.12rem;color:var(--muted);max-width:52em}
+.hero .question{margin:22px 0 0;padding:16px 20px;border-left:4px solid var(--warm);background:color-mix(in srgb,var(--warm) 8%,transparent);border-radius:0 10px 10px 0;font-size:1.06rem}
+.hero .answer{margin-top:12px;font-weight:700}
+.hero .hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(240px,100%),1fr));gap:14px;margin-top:24px}
+.overview-card{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:14px 16px}
+.overview-card h3{margin:.1em 0 .45em;font-size:1.02rem}
+.overview-card .steps{display:flex;flex-direction:column;gap:5px;font-size:.88rem;line-height:1.55}
+.overview-card .steps .step{display:flex;gap:8px}
+.overview-card .steps .step b{color:var(--warm);flex:none}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:.8rem}
+h2.sec-title{display:flex;align-items:baseline;gap:14px;margin:0 0 8px;font-size:1.62rem;line-height:1.3;scroll-margin-top:80px}
+h2.sec-title .num{font-family:Menlo,Monaco,monospace;font-size:.8rem;font-weight:700;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.sec-lead{max-width:58em;color:var(--muted);margin:.4em 0 1em}
+h3{font-size:1.18rem;margin:1.7em 0 .5em;color:var(--accent)}
+h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin:16px 0;box-shadow:0 2px 10px rgba(30,35,30,.04)}
+.card.compact{padding:14px 16px}
+.viz{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0;overflow:auto}
+.viz h4{margin:0 0 8px;font-size:1rem}
+.viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
+.def .term{font-weight:800;font-size:1.02rem}
+.def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
+.def .plain{color:var(--ink);margin:.4em 0}
+.def .formula{overflow-x:auto;padding:.2em 0;font-size:.98em}
+.why{border-left:5px solid var(--warm);background:color-mix(in srgb,var(--warm) 6%,var(--surface));border-color:color-mix(in srgb,var(--warm) 45%,var(--line))}
+.why .term{color:var(--warm)}
+.conn{border-left:5px solid var(--blue);background:color-mix(in srgb,var(--blue) 6%,var(--surface));border-color:color-mix(in srgb,var(--blue) 45%,var(--line))}
+.conn .term{color:var(--blue)}
+.toolnote{border-left:5px solid var(--violet);background:color-mix(in srgb,var(--violet) 6%,var(--surface));border-color:color-mix(in srgb,var(--violet) 45%,var(--line))}
+.toolnote .term{color:var(--violet)}
+.label-row{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;align-items:flex-end}
+.control{display:flex;flex-direction:column;gap:4px;min-width:170px;flex:1}
+.control label{font-size:.8rem;color:var(--muted);font-weight:700}
+.control .val{font-family:Menlo,Monaco,monospace;font-size:.8rem;color:var(--accent)}
+.control input[type=range]{width:100%;accent-color:var(--accent)}
+.control input[type=number],.control select{width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table.data{border-collapse:collapse;width:100%;margin:10px 0;font-size:.9rem}
+table.data th,table.data td{border:1px solid var(--line);padding:7px 10px;text-align:center}
+table.data th{background:var(--surface2);font-size:.85rem}
+table.data td.num{font-family:Menlo,Monaco,monospace;font-size:.82rem}
+pre.codeblock{background:var(--code-bg);color:var(--code-ink);padding:14px 16px;border-radius:10px;overflow:auto;font-size:.82em;line-height:1.65}
+pre.codeblock code{color:inherit;background:none}
+figure{margin:16px 0}
+figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+figure figcaption{margin-top:6px;color:var(--muted);font-size:.84rem;line-height:1.5}
+details{margin:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--surface);overflow:hidden}
+summary{padding:11px 15px;cursor:pointer;font-weight:700;background:var(--surface2)}
+details[open] summary{border-bottom:1px solid var(--line)}
+details .inner{padding:12px 16px}
+.tag{display:inline-block;padding:2px 8px;margin-left:6px;border-radius:999px;font-size:.7rem;font-family:Menlo,Monaco,monospace;color:#fff}
+.tag.fwd{background:var(--fwd)} .tag.bwd{background:var(--bwd)} .tag.opt{background:var(--opt)} .tag.tool{background:var(--tool)}
+svg text{font-family:Menlo,Monaco,monospace}
+.svg-wrap{width:100%;overflow:auto}
+.small{font-size:.82rem;color:var(--muted)}
+.quiz-item{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin:12px 0}
+.quiz-item .q{font-weight:700}
+.quiz-item .ans{display:none;margin-top:10px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:0 8px 8px 0}
+.quiz-item.open .ans{display:block}
+.misconception{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid var(--line);border-left:5px solid var(--danger);border-radius:10px;background:color-mix(in srgb,var(--danger) 5%,var(--surface));margin:12px 0}
+.misconception .truth{font-weight:800;color:var(--danger)}
+.gloss-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:14px}
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:.8rem;color:var(--muted);margin:6px 0 12px}
+.legend span::before{content:"●";margin-right:5px;font-size:.9em}
+.step-bar{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.kbd{font-family:Menlo,Monaco,monospace;font-size:.78rem;padding:2px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;background:var(--surface2)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;transition:.22s ease;background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:.86rem;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--warm));width:0;z-index:99;transition:width .15s ease}
+footer{border-top:1px solid var(--line);padding:30px 0 10px;text-align:center;color:var(--muted);font-size:.9rem}
+.path-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 26px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.path-bar .path-title{font-weight:800;margin-right:4px}
+.path-bar .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.path-bar .seg button{border:0;background:var(--surface2);color:var(--muted);padding:7px 14px;font-size:.84rem;font-weight:700}
+.path-bar .seg button.active{background:var(--accent);color:#f7fffb}
+.path-hint{color:var(--muted);font-size:.82rem;flex:1;min-width:220px}
+.sec-tag{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.7rem;font-weight:800;vertical-align:middle}
+.sec-tag.core{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent)}
+.sec-tag.extra{background:color-mix(in srgb,var(--violet) 12%,transparent);color:var(--violet);border:1px solid color-mix(in srgb,var(--violet) 40%,transparent)}
+.mode-hidden{display:none!important}
+.next-bridge{display:flex;gap:10px;align-items:flex-start;margin:22px 0 8px;padding:12px 14px;border:1px dashed color-mix(in srgb,var(--warm) 55%,var(--line));border-radius:12px;background:color-mix(in srgb,var(--warm) 6%,var(--surface));font-size:.9rem}
+.next-bridge .nb-label{flex:none;font-weight:800;color:var(--warm);white-space:nowrap}
+.next-bridge a{font-weight:700}
+.checklist{display:flex;flex-direction:column;gap:8px}
+.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;font-size:.92rem}
+.checklist label:hover{border-color:var(--accent)}
+.checklist input{margin-top:5px;accent-color:var(--accent)}
+.checklist label.done{opacity:.62;text-decoration:line-through}
+.check-score{margin-top:10px;font-weight:700;color:var(--accent)}
+@media (max-width:1280px){.gloss-rail{display:none}.layout{grid-template-columns:252px minmax(0,1fr)}}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}.toc{display:none}main{padding-top:22px}}
+@media (max-width:640px){body{font-size:16px}.topbar .title{display:none}.hero{padding:24px 16px}h2.sec-title{font-size:1.35rem;flex-wrap:wrap}.card,.viz{padding:14px}}
+@media print{.topbar,.toc,.gloss-rail,.term-pop,#progress,.toast{display:none!important}body{background:#fff}.layout{display:block}.card,.viz,.hero{border-color:#bbb;box-shadow:none}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand">
+    <a class="btn ghost" href="index.html#lecture-09" title="返回第 9 讲原文">← 返回第 9 讲</a>
+    <div>
+      <div class="kicker">IML 2026 · LECTURE 09 · INTERACTIVE LAB</div>
+      <div class="title">The Kernel Trick — 复杂特征只以内积出现</div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="resetAll" type="button">↺ 重置全部</button>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <nav class="toc" id="toc" aria-label="本页目录"><div class="toc-label">On this page</div></nav>
+  <main id="main">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="hero">
+      <div class="course">INTRODUCTION TO MACHINE LEARNING · SPRING 2026 · 第 9 讲 / 25 讲</div>
+      <h1>用无限复杂的特征，<br>却从不真正<br><span style="color:var(--warm)">构造它们</span>？</h1>
+      <p class="subtitle">第 8 讲的 soft-margin SVM 已经给出线性分类器的全部零件；非线性仍然缺一块拼图。这一讲回答一个问题：<b>能不能使用非常复杂、甚至无限维的非线性特征，同时避免显式构造这些特征？</b>答案是可以——前提是训练和预测只通过特征向量之间的<b>内积</b>使用这些特征。本讲把 feature map、样本张成空间、Gram matrix 与 kernel trick 连成一条可以手算、可以推导的主线。</p>
+      <div class="question">💬 本讲核心问题：高维（甚至无限维）特征能给模型带来非线性表达力，但显式构造它们在计算上不可行。有没有办法<b>只享受内积、不支付构造代价</b>？</div>
+      <div class="answer">一句话答案：可以。两条观察保证解向量 $w$ 只住在 $n$ 个训练特征张成的子空间里（梯度走不出去 + 正则化最优解主动留在里面），于是 $w=\Phi^\top\alpha$ 把未知量换成 $n$ 个系数；代入预测后公式里<b>只剩特征内积</b>，把每个内积换成一个核函数 $k(x,z)=\phi(x)^\top\phi(z)$，就得到 kernel trick：用 $n\times n$ 的 Gram matrix 换掉 $n\times p$ 的显式特征矩阵。</div>
+      <div class="overview-grid">
+        <div class="overview-card">
+          <h3>📌 今天讲什么</h3>
+          <p class="small">从“圆形边界怎么变直”出发：特征映射 → 特征数量爆炸 → 梯度住在样本 span 中 → 正则化最优解也住在 span 中（representer theorem）→ 重参数化 $w=\Phi^\top\alpha$ → 核函数与核化模型 → Gram matrix 与 $\widehat y=K\alpha$ → kernelization 三步 → 多项式核 / RBF 核 → PSD → 收益与代价。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🔥 为什么重要</h3>
+          <p class="small">线性模型 + 特征映射是“受控的非线性”：表达力来自 $\phi$，理论（凸性、几何）来自线性。kernel trick 让你可以把 $\phi$ 推到无限维而计算量只依赖样本数 $n$。它是第 10 讲 kernel ridge / valid kernel 判据、以及此后一切“按样本相似度工作”的方法的地基。</p>
+        </div>
+        <div class="overview-card">
+          <h3>🧭 主线逻辑（整讲五步）</h3>
+          <div class="steps">
+            <span class="step"><b>① 变直</b>：加非线性特征，弯的边界在特征空间里是直的（§1）。</span>
+            <span class="step"><b>② 爆炸</b>：显式构造特征的数量与内存不可行（§2）。</span>
+            <span class="step"><b>③ 两条观察</b>：梯度与正则化最优解都住在训练特征的 span 中（§3–§4）。</span>
+            <span class="step"><b>④ 换变量</b>：$w=\Phi^\top\alpha$，预测只剩内积（§5）。</span>
+            <span class="step"><b>⑤ 收进矩阵</b>：$K=\Phi\Phi^\top$，$\widehat y=K\alpha$，用 $k$ 替换一切内积（§6–§7）。</span>
+          </div>
+        </div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill">📍 位置：分类 II / soft-margin（L8）→ <b>kernel trick（L9）</b> → kernel ridge 与 valid kernel（L10）</span>
+        <span class="pill">🧩 前置：向量内积、矩阵乘法维度、正交分解、链式法则求梯度</span>
+        <span class="pill">🎯 产出：一套<b>能手算 $K$、能推导 $w=\Phi^\top\alpha$、能解释 bandwidth 与 PSD</b>的核方法语言</span>
+      </div>
+    </section>
+
+    <div class="path-bar" id="pathBar">
+      <span class="path-title">🎓 学习路径</span>
+      <span class="seg"><button type="button" data-mode="core" aria-pressed="true">核心主线</button><button type="button" data-mode="full" aria-pressed="false">完整课程</button></span>
+      <span class="path-hint" id="pathHint"></span>
+    </div>
+
+    <!-- ============ CONCEPT MAP ============ -->
+    <section id="map">
+      <h2 class="sec-title"><span class="num">§0</span>课程地图：kernel trick 在这门课里的位置</h2>
+      <p class="sec-lead">第 8 讲止步于线性边界（soft-margin SVM 的 $\phi(x)=x$ 情形）。第 9 讲把“非线性”装进特征映射里，再想办法不付构造代价；第 10 讲接着处理正则化与“什么函数才是合法 kernel”。下面的地图是本讲内部主线，节点可点击。</p>
+      <div class="viz">
+        <div class="svg-wrap"><svg id="conceptMap" viewBox="0 0 1460 350" role="img" aria-label="第 9 讲概念地图"></svg></div>
+        <div class="caption">概念地图：<span class="tag tool">核心</span>环节（特征映射 → 特征爆炸 → 两条 span 观察 → 重参数化 → Gram → 三步核化）构成完整主线；<span style="color:var(--violet);font-weight:700">拓展</span>环节回答“具体用什么核、合法性怎么判、代价是什么”。灰色节点是前后讲次。</div>
+      </div>
+    </section>
+
+    <!-- ============ §1 FEATURE MAP ============ -->
+    <section id="feature">
+      <h2 class="sec-title"><span class="num">§1</span>非线性边界可以来自线性模型 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">考虑二维分类：圆内为正类，圆外为负类。原始输入上的线性模型 $f(x)=w_1x_1+w_2x_2+b$ 只能产生直线边界，画不出圆。但只要把“到原点的距离信息”加进特征，同一个线性机器立刻会画圆——这一节先把“弯的变直”这件事亲手算一遍。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">特征映射 <span class="en">feature map · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：把原始输入 $x\in\mathcal X$ 变换成特征向量的函数 $\phi:\mathcal X\to\mathbb R^p$（更一般地映射到某个内积空间 $\mathcal H$）。本讲的圆例子取
+            $$\phi(x)=\begin{bmatrix}1&x_1&x_2&x_1^2&x_1x_2&x_2^2\end{bmatrix}^\top\in\mathbb R^6,$$
+            即所有次数 $\le 2$ 的单项式（带常数坐标 $1$）。</p>
+          <p class="plain"><b>白话</b>：给每个点重新“报户口”——不光报坐标，还报坐标的平方、乘积这些衍生信息。</p>
+          <p class="plain"><b>干嘛用</b>：让线性模型产生非线性决策边界；表达力全部来自 $\phi$ 的选择。</p>
+          <p class="plain"><b>怎么算</b>：代入坐标即可。例如 $x=(2,3)^\top$ 时 $\phi(x)=(1,2,3,4,6,9)^\top$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：模型在 $\phi(x)$ 上线性、在 $x$ 上非线性——这是“受控非线性”的统一姿势。$\phi$ 的维数 $p$ 可以远大于输入维数 $d$，这正是 §2 要付出的代价、也是 §5 kernel trick 要绕开的对象。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">特征矩阵 <span class="en">feature matrix · first mentioned: §1</span></div>
+          <p class="plain"><b>是什么</b>：把 $n$ 个样本的特征向量逐行堆叠：
+            $$\Phi=\begin{bmatrix}\phi(x_1)^\top\\ \vdots\\ \phi(x_n)^\top\end{bmatrix}\in\mathbb R^{n\times p},\qquad w\in\mathbb R^p,\qquad \alpha\in\mathbb R^n.$$
+            $\Phi$ 的第 $i$ 行是 $\phi(x_i)^\top$。</p>
+          <p class="plain"><b>白话</b>：一张“每行一个样本、每列一个特征”的大表。</p>
+          <p class="plain"><b>干嘛用</b>：把逐样本公式压缩成一次矩阵乘法，方便检查维度。</p>
+          <p class="plain"><b>怎么算</b>：本讲始终用两条恒等式 $w=\Phi^\top\alpha$ 与 $K=\Phi\Phi^\top$；维度检查 $\underbrace{\Phi^\top}_{p\times n}\underbrace{\alpha}_{n\times1}=\underbrace{w}_{p\times1}$，$\underbrace{\Phi}_{n\times p}\underbrace{\Phi^\top}_{p\times n}=\underbrace{K}_{n\times n}$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：注意两个“维度”的区别——原始输入 $x$ 有 $d$ 个坐标，特征向量 $\phi(x)$ 有 $p$ 个坐标。$\Phi$ 是有限维记号；若特征空间无限维，就把 $\Phi\Phi^\top$ 理解为“逐对计算内积”得到的 $n\times n$ Gram matrix（§6），而不是真的创建无限宽矩阵。</p>
+        </div>
+      </div>
+      <div class="card compact">
+        <h3 style="margin-top:0">圆的例子：一行就画出来</h3>
+        <p class="plain">取 $w=(4,0,0,-1,0,-1)^\top$，则
+          $$f(x)=w^\top\phi(x)=4-x_1^2-x_2^2.$$
+          决策边界 $f(x)=0$ 等价于 $x_1^2+x_2^2=4$，即半径为 $2$ 的圆。分类时真正要做的只是比较 $f(x)$ 的符号：$f(x)>0$ 判为圆内（正类），$f(x)<0$ 判为圆外（负类）。</p>
+        <p class="plain small"><b>记号提醒（先声明，避免混淆）</b>：本讲用 <b>$\ell(y,s)$（小写 ell）表示逐样本损失函数</b>，与数字 $1$、字母 $l$ 无关；<b>样本下标 $i$ 与输入维数 $d$、特征维数 $p$ 各司其职</b>。另外本讲 <b>$k(x,z)$ 是标量的 kernel、$K$ 是 $n\times n$ 矩阵、$k_x$ 是 $n\times 1$ 列向量（§6 定义的“相似度清单”）</b>——三个“k”会在 §5–§6 先后登场，到时再逐一区分。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动测试点，看“圆外弯、特征空间直”与符号判断</h4>
+        <div class="svg-wrap"><svg id="circleViz" viewBox="0 0 920 400" role="img" aria-label="特征映射把圆形边界变直"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>测试点 $x_1$</label><input type="range" id="cvX" min="-3.5" max="3.5" step="0.1" value="2"><div class="val" id="cvXval">2.0</div></div>
+          <div class="control"><label>测试点 $x_2$</label><input type="range" id="cvY" min="-3.5" max="3.5" step="0.1" value="3"><div class="val" id="cvYval">3.0</div></div>
+        </div>
+        <div class="caption" id="cvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>一个一分钟手算</b>：取 $x=(2,3)^\top$，则 $\phi(x)=(1,2,3,4,6,9)^\top$，所以 $f(x)=w^\top\phi(x)=4-4-9=-9$。负号说明这个点位于圆外——上图把 $x_1=2$、$x_2=3$ 设为默认值，右侧直线上的投影就是这个手算。</p>
+        <p class="plain small"><b>右图为什么是直线</b>：$f(x)=4-x_1^2-x_2^2=4-r^2$，其中 $r^2=x_1^2+x_2^2$。把横轴取成特征坐标 $r^2$，$f$ 就是一条斜率为 $-1$ 的直线——这正是“模型对特征线性”的含义；左图里的圆边界，在特征空间里只是一个阈值比较。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>既然“加特征就能变弯”，那把所有多项式特征都加上不就完了？下一节算一笔账，看这个念头在哪里撞墙。</div>
+    </section>
+
+    <!-- ============ §2 EXPLOSION ============ -->
+    <section id="explosion">
+      <h2 class="sec-title"><span class="num">§2</span>为什么不直接把所有特征都算出来 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">问题在于特征数量会迅速膨胀。对 $d$ 维输入，所有总次数不超过 $m$ 的单项式数量为
+        $$p=\binom{d+m}{m}.$$
+        也就是说“加特征”的代价随 $m$ 呈组合式增长，而不是线性增长。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：特征数量与显式特征矩阵的内存账单（全部现算）</h4>
+        <div class="svg-wrap"><svg id="comboViz" viewBox="0 0 860 250" role="img" aria-label="组合数爆炸对比条形图"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>输入维数 $d$</label><input type="range" id="cbD" min="2" max="1000" step="1" value="1000"><div class="val" id="cbDval">1000</div></div>
+          <div class="control"><label>多项式总次数 $m$</label><input type="range" id="cbM" min="1" max="8" step="1" value="3"><div class="val" id="cbMval">3</div></div>
+          <div class="control"><label>样本数 $n$</label><input type="range" id="cbN" min="100" max="20000" step="100" value="1000"><div class="val" id="cbNval">1000</div></div>
+        </div>
+        <div class="caption" id="cbCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>对账（讲义数值）</b>：$d=1000$、$m=3$ 时 $p=\binom{1003}{3}=167{,}668{,}501$；$n=1000$ 个样本的显式 $\Phi$ 约含 $1.68\times10^{11}$ 个数，按每个 $8$ 字节算约 $1.34$ TB 内存。把上表滑到 $(d{=}1000,\,m{=}3,\,n{=}1000)$，账单应逐项吻合（这些数字由上面的滑杆现算，不是写死的文案）。</p>
+        <p class="plain small"><b>三个愿望</b>：课件由此提出三点要求——函数类足够有表达力；不显式构造巨大的 $\Phi$；若损失是凸的，训练问题仍保留凸性。kernel trick 是同时满足三点的办法。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>愿望很美好，凭什么是可能的？先看第一条线索：梯度下降根本走不出训练特征张成的小空间。</div>
+    </section>
+
+    <!-- ============ §3 GRADIENT IN SPAN ============ -->
+    <section id="gradspan">
+      <h2 class="sec-title"><span class="num">§3</span>第一条观察：梯度始终在样本特征的 span 中 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">这一节回答一个很实际的问题：特征空间可能有 $p$ 个坐标、甚至无限维，但训练集只有 $n$ 个样本——优化时真的需要在整个特征空间里到处寻找吗？答案是：从 $w_0=0$ 出发，经验损失的梯度每一步都只由这 $n$ 个训练样本的特征向量拼出来。</p>
+      <div class="def">
+        <div class="term">张成子空间 <span class="en">span · first mentioned: §3</span></div>
+        <p class="plain"><b>是什么</b>：训练特征向量所有线性组合构成的集合
+          $$S=\operatorname{span}\{\phi(x_1),\ldots,\phi(x_n)\}=\Big\{\textstyle\sum_{i=1}^n a_i\phi(x_i)\ :\ a\in\mathbb R^n\Big\}\subseteq\mathbb R^p.$$</p>
+        <p class="plain"><b>白话</b>：只允许用训练样本的特征方向“搭积木”，能搭出来的整个平面/超平面。</p>
+        <p class="plain"><b>干嘛用</b>：把“整个 $p$ 维空间”的搜索缩小到“至多 $n$ 个生成方向”的子空间。</p>
+        <p class="plain"><b>怎么算</b>：判断 $v\in S$ 只需看能否写出 $v=\sum_i a_i\phi(x_i)$；本讲更实用的判据是梯度公式本身（下方推导）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：当 $p\gg n$ 时 $S$ 只是特征空间里极薄的一片；§4 将证明正则化最优解也住在这里，于是 $w$ 只需 $n$ 个系数（§5）。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">推导：链式法则给出 $\nabla_wL(w)\in S$</h3>
+        <p class="plain">考虑逐样本损失
+          $$L(w)=\frac1n\sum_{i=1}^n \ell\!\left(y_i,\,w^\top\phi(x_i)\right),\qquad s_i(w)=w^\top\phi(x_i).$$
+          这里 $w,\phi(x_i)\in\mathbb R^p$，所以 $s_i(w)$ 是标量。损失对 $w$ 的依赖只有一条路径 $w\to s_i\to\ell$，逐段使用链式法则：
+          $$\nabla_w\ell(y_i,s_i(w))=\frac{\partial \ell(y_i,s)}{\partial s}\bigg|_{s=s_i(w)}\ \nabla_ws_i(w),\qquad \nabla_ws_i(w)=\phi(x_i),$$
+          所以
+          $$\nabla_wL(w)=\frac1n\sum_{i=1}^n c_i(w)\,\phi(x_i),\qquad c_i(w)=\frac{\partial \ell(y_i,s)}{\partial s}\bigg|_{s=w^\top\phi(x_i)}.$$</p>
+        <p class="plain small"><b>人话</b>：$c_i(w)$ 只是“预测稍微改变时，单样本损失变化多快”的<b>标量</b>；关键不是它的具体形式，而是它是标量——所以每一项 $c_i(w)\phi(x_i)$ 都是训练特征的数乘，梯度只能沿训练特征的方向叠加。</p>
+        <p class="plain small"><b>再往前一步（归纳）</b>：从 $w_0=0\in S$ 开始做梯度下降 $w_{t+1}=w_t-\eta_t\nabla_wL(w_t)$。若 $w_t\in S$，则减号右边两项都在 $S$ 中，因此 $w_{t+1}\in S$；由归纳法 $w_t\in S$ 对所有 $t\ge0$ 成立。训练轨迹从不离开 $S$。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：调整各样本的损失导数 $c_i$，看梯度怎么被“拼”出来</h4>
+        <div class="svg-wrap"><svg id="gradSpanViz" viewBox="0 0 860 430" role="img" aria-label="梯度由训练特征叠加"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$c_1$（样本 1 的损失导数）</label><input type="range" id="gsC1" min="-1.5" max="1.5" step="0.1" value="0.8"><div class="val" id="gsC1val">0.8</div></div>
+          <div class="control"><label>$c_2$</label><input type="range" id="gsC2" min="-1.5" max="1.5" step="0.1" value="-0.6"><div class="val" id="gsC2val">-0.6</div></div>
+          <div class="control"><label>$c_3$</label><input type="range" id="gsC3" min="-1.5" max="1.5" step="0.1" value="1.2"><div class="val" id="gsC3val">1.2</div></div>
+        </div>
+        <div class="caption" id="gsCap"></div>
+      </div>
+      <div class="card compact why">
+        <div class="term">一个容易漏掉的细节</div>
+        <p class="plain small">若初始化不是零，而是 $w_0=w_{0,\parallel}+w_{0,\perp}$、其中 $w_{0,\perp}\perp S$，那么每次梯度更新只改变平行分量，$w_{0,\perp}$ 会一直保留。<b>上面的结论依赖 $w_0=0$（至少 $w_0\in S$）</b>。图里三条链式箭头无论怎么调，合成向量都出不了这张纸——因为这里 $p=2$、三个方向恰好张成全平面；一般 $p\gg n$ 时它们张成的 $S$ 只是薄薄一片。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>“梯度下降走不出 $S$”只是某种算法的路线。下一节换成更强的命题：带正则化时，<b>最优解本身</b>也住在这个 span 中——与用什么算法无关。</div>
+    </section>
+
+    <!-- ============ §4 REPRESENTER ============ -->
+    <section id="representer">
+      <h2 class="sec-title"><span class="num">§4</span>第二条观察：最优解可以选在这个 span 中 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">证明思路是把任意 $w$ 拆成“训练数据看得见”和“训练数据完全看不见”两部分，再看正则项如何惩罚后者。</p>
+      <div class="def">
+        <div class="term">正交分解 <span class="en">orthogonal decomposition · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：任取 $w\in\mathbb R^p$，唯一地写成
+          $$w=w_\parallel+w_\perp,\qquad w_\parallel\in S,\quad w_\perp\in S^\perp,$$
+          其中 $S^\perp$ 是与 $S$ 中所有向量正交的方向集合。</p>
+        <p class="plain"><b>白话</b>：把 $w$ 拆成“训练数据看得见的平行部分”和“完全看不见的垂直部分”。</p>
+        <p class="plain"><b>干嘛用</b>：证明垂直部分对训练预测毫无贡献，只会增加范数。</p>
+        <p class="plain"><b>怎么算</b>：$w_\parallel$ 是 $w$ 在 $S$ 上的投影（一维 span 时 $w_\parallel=(w^\top u)u$，$u$ 为单位方向），$w_\perp=w-w_\parallel$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：因为每个 $\phi(x_i)\in S$，所以 $w_\perp^\top\phi(x_i)=0$，于是所有训练预测满足 $w^\top\phi(x_i)=w_\parallel^\top\phi(x_i)$。$w_\perp$ 不改变任何一个训练点的预测——下面的正则项正是要在这些“数据看不见”的方向上额外收费。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">加正则化后，结论更强（representer theorem 的核心）</h3>
+        <p class="plain">只依赖训练预测的经验损失满足 $L(w)=L(w_\parallel)$。考虑
+          $$J(w)=L(w)+\lambda\lVert w\rVert_2^2,\qquad \lambda>0.$$
+          由勾股定理 $\lVert w\rVert_2^2=\lVert w_\parallel\rVert_2^2+\lVert w_\perp\rVert_2^2$，所以
+          $$J(w)-J(w_\parallel)=\lambda\lVert w_\perp\rVert_2^2\ \ge\ 0,$$
+          且只要 $w_\perp\ne0$ 就严格大于零。因此带平方范数正则化的最优解必须满足 $w_\perp=0$，即 $w\in S$。</p>
+      </div>
+      <div class="def why">
+        <div class="term">Representer 定理 <span class="en">representer theorem · first mentioned: §4</span></div>
+        <p class="plain"><b>是什么</b>：当经验损失只通过训练点上的预测值进入目标、复杂度项是特征空间（或 RKHS）范数的平方且 $\lambda>0$ 时，最优解可以写成 $w=\sum_i\alpha_i\phi(x_i)$。</p>
+        <p class="plain"><b>白话</b>：与其在 $p$ 个特征坐标里大海捞针，不如直接找 $n$ 个“每个训练样本贡献多少”的系数。</p>
+        <p class="plain"><b>干嘛用</b>：把未知量从 $w\in\mathbb R^p$ 换成 $\alpha\in\mathbb R^n$，这是 kernel 方法的理论通行证。</p>
+        <p class="plain"><b>怎么算 / 怎么用</b>：先正交分解、再比较 $J(w)$ 与 $J(w_\parallel)$（上面的两行证明）；$\alpha$ 的具体数值由训练问题决定（第 10 讲会解 kernel ridge）。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：注意边界条件——对任意目标函数或任意正则项不能直接套用；没有正则项时最小值未必唯一（“数据看不见”的方向不受惩罚）。它只保证 $w$ 可由训练特征组合，还没省掉 $\phi(x)$——那是 §5 的事。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：拖动 $w$，验证“垂直部分不改变任何训练预测，却增加范数”</h4>
+        <div class="svg-wrap"><svg id="orthViz" viewBox="0 0 860 430" role="img" aria-label="正交分解几何"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$w$ 的第一坐标</label><input type="range" id="ovWx" min="-4" max="4" step="0.1" value="2.6"><div class="val" id="ovWxval">2.6</div></div>
+          <div class="control"><label>$w$ 的第二坐标</label><input type="range" id="ovWy" min="-3" max="3" step="0.1" value="2.2"><div class="val" id="ovWyval">2.2</div></div>
+          <div class="control"><label>正则系数 $\lambda$</label><input type="range" id="ovLam" min="0.1" max="2" step="0.1" value="0.8"><div class="val" id="ovLamval">0.8</div></div>
+        </div>
+        <div class="caption" id="ovCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>图里发生了什么</b>：两个训练特征 $\phi(x_1)=(4,1)$、$\phi(x_2)=(2,0.5)$ 共线，张成的 $S$ 是一条过原点的直线。无论怎么拖 $w$：三组训练预测始终成对相等（$w^\top\phi(x_i)=w_\parallel^\top\phi(x_i)$），垂直内积 $w_\perp^\top\phi(x_i)=0$；而勾股账 $\lVert w\rVert^2=\lVert w_\parallel\rVert^2+\lVert w_\perp\rVert^2$ 逐项闭合，正则化差价恰为 $\lambda\lVert w_\perp\rVert^2$——面板里所有数字由滑杆现算。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>现在 $w$ 有了 $n$ 个系数的表示。下一节把它写成矩阵形式 $w=\Phi^\top\alpha$ 并代入预测——高维特征将第一次<b>成对地消失在内积里</b>。</div>
+    </section>
+
+    <!-- ============ §5 REPARAM ============ -->
+    <section id="reparam">
+      <h2 class="sec-title"><span class="num">§5</span>从 $w$ 到 $\alpha$：$w=\Phi^\top\alpha$ 与核函数 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">这一节把未知量从特征坐标中的 $w\in\mathbb R^p$，换成“每个训练样本贡献多少”的 $\alpha\in\mathbb R^n$。这常被称为从 primal（原始）表示转到 kernel / 样本表示；这里只是用 representer 结论<b>重参数化</b>，并不是又解了一个新的优化问题。</p>
+      <div class="card">
+        <h3 style="margin-top:0">一条等号链，四个等号各有任务</h3>
+        <p class="plain">因为 $w\in S$，按 span 的定义存在系数 $\alpha_1,\ldots,\alpha_n$ 使 $w=\sum_{i=1}^n\alpha_i\phi(x_i)$，按 $\Phi$ 的定义这正是 $w=\Phi^\top\alpha$。对新输入 $x$，预测为
+          $$\begin{aligned}
+          f_\alpha(x)&=w^\top\phi(x) &&\text{（原来的线性预测）}\\
+          &=(\Phi^\top\alpha)^\top\phi(x) &&\text{（代入 } w=\Phi^\top\alpha\text{）}\\
+          &=\alpha^\top\Phi\phi(x) &&\text{（}(AB)^\top=B^\top A^\top\text{）}\\
+          &=\sum_{i=1}^n\alpha_i\,\phi(x_i)^\top\phi(x) &&\text{（逐分量展开）}
+          \end{aligned}$$</p>
+        <p class="plain small"><b>维度闭合</b>：$\alpha^\top$ 是 $1\times n$，$\Phi$ 是 $n\times p$，$\phi(x)$ 是 $p\times1$，最终得到一个标量预测。最后一行只包含<b>特征向量的内积</b>。</p>
+      </div>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">核函数 <span class="en">kernel function · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：$$k(x,z)=\phi(x)^\top\phi(z),$$ 即两个点特征内积的直接记号——不一定知道或写出 $\phi$ 本身。</p>
+          <p class="plain"><b>白话</b>：一个“相似度打分器”：先各自升维再点积的结果，一步算出。</p>
+          <p class="plain"><b>干嘛用</b>：把“高维空间的几何”压缩成一次标量函数计算。</p>
+          <p class="plain"><b>怎么算</b>：例如 $k(x,z)=(1+x^\top z)^2$、$k_\sigma(x,z)=\exp(-\lVert x-z\rVert^2/2\sigma^2)$（§8–§9）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：kernel 的本质正是隐式特征内积——我们不一定知道 $\phi$，但几何解释仍来自特征空间；合法性判据（PSD）在 §10。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">核化模型 <span class="en">kernelized model · first mentioned: §5</span></div>
+          <p class="plain"><b>是什么</b>：$$f_\alpha(x)=\sum_{i=1}^n\alpha_i\,k(x_i,x).$$ 把核函数代入重参数化预测后的模型。</p>
+          <p class="plain"><b>白话</b>：新点的预测 = 各训练点按“像不像”加权投票，票重是 $\alpha_i$。</p>
+          <p class="plain"><b>干嘛用</b>：$p\gg n$ 时这不是记号游戏：预测只需 $n$ 个 kernel 值，不必写出 $\phi(x)$ 的每个坐标。</p>
+          <p class="plain"><b>怎么算</b>：对每个训练点算 $k(x_i,x)$，乘 $\alpha_i$，求和（下面的互动逐步演示）。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：$\alpha_i$ 是训练点 $x_i$ 对预测的贡献权重；§6 把训练点之间的内积收进 Gram matrix，§7 给出完整的替换操作规程。</p>
+        </div>
+      </div>
+      <div class="card compact toolnote">
+        <div class="term">两个约定，先说清楚</div>
+        <p class="plain small"><b>① 截距 $b=0$</b>：本讲的 $f_\alpha$ 没有单独截距项。若 $\phi(x)$ 含常数坐标 $1$（如 §1 的圆特征），截距已含在 $w^\top\phi(x)$ 中；若不含而需要显式截距，应写 $f_{\alpha,b}(x)=b+\sum_i\alpha_ik(x_i,x)$，且通常不对 $b$ 施加平方范数正则化。<b>② 三个“k”</b>：$k(x,z)$ 标量函数、$K\in\mathbb R^{n\times n}$ 矩阵、$k_x\in\mathbb R^n$ 列向量（§6 定义的“相似度清单”）——大小写与下标各表身份，不要混写。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：滑动查询点，逐步看 kernel 路线的预测（并与显式特征对账）</h4>
+        <div class="svg-wrap"><svg id="reparamViz" viewBox="0 0 880 430" role="img" aria-label="核化预测逐步计算"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>查询点 $x$</label><input type="range" id="rpX" min="-0.5" max="4" step="0.05" value="1"><div class="val" id="rpXval">1.00</div></div>
+        </div>
+        <div class="caption" id="rpCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>对账逻辑</b>：训练点 $x_i\in\{0,\,0.9,\,2.1,\,3.2\}$、$k(x,z)=(1+xz)^2$。图下方两行给出同一条预测的两种算法——左走“核路线”$\sum_i\alpha_ik(x_i,x_q)$，右走“显式特征路线”$w^\top\phi(x_q)$，其中 $w=\Phi^\top\alpha$、$\phi(x)=(1,x)$ 由 $\alpha$ 现算。两条路线的数值逐位一致，就是 kernel trick 与显式构造<b>数学等价、只有成本不同</b>的直接证据。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>预测只需要“查询点与每个训练点的内积”。训练呢？下一节把训练点<b>两两之间</b>的内积一次性收进 Gram matrix。</div>
+    </section>
+
+    <!-- ============ §6 GRAM ============ -->
+    <section id="gram">
+      <h2 class="sec-title"><span class="num">§6</span>Gram matrix 与训练预测 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">目标：把 $n$ 个训练点的预测同时写成一次矩阵乘法。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">Gram 矩阵 <span class="en">Gram matrix · first mentioned: §6</span></div>
+          <p class="plain"><b>是什么</b>：训练样本两两之间的特征内积组成的矩阵
+            $$K=\Phi\Phi^\top\in\mathbb R^{n\times n},\qquad K_{ij}=\phi(x_i)^\top\phi(x_j)=k(x_i,x_j).$$</p>
+          <p class="plain"><b>白话</b>：一张“相似度地图”——第 $(i,j)$ 格是样本 $i$ 与样本 $j$ 的特征内积。</p>
+          <p class="plain"><b>干嘛用</b>：训练阶段所有“训练点之间”的核值一次收齐，$\widehat y=K\alpha$。</p>
+          <p class="plain"><b>怎么算</b>：手算时先算原始内积 $x_i^\top x_j$ 再代入 kernel（§7 互动逐步演示）。对称性 $K_{ij}=K_{ji}$ 让行列两种读法数值相同。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：RBF 时对角线 $K_{ii}=1$、样本成块时出现深色块；但它必须 PSD 才是合法 Gram matrix（§10）。</p>
+        </div>
+        <div class="def conn">
+          <div class="term">核向量 <span class="en">kernel vector · first mentioned: §6</span></div>
+          <p class="plain"><b>是什么</b>：对新输入 $x$，收集它与所有训练点的核值：
+            $$k_x=\begin{bmatrix}k(x_1,x)\\ \vdots\\ k(x_n,x)\end{bmatrix}\in\mathbb R^n,\qquad f_\alpha(x)=k_x^\top\alpha.$$</p>
+          <p class="plain"><b>白话</b>：新点的“相似度清单”：跟每个训练点各像几分。</p>
+          <p class="plain"><b>干嘛用</b>：预测阶段的全部工作量——算 $n$ 个数再加权求和。</p>
+          <p class="plain"><b>怎么算</b>：逐点代入 kernel；注意 $k_x$ 与 $K$ 的第 $j$ 行（写成列向量时 $K_{j,:}^\top$）在 $x=x_j$ 时重合。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：训练/预测两条公式 $$\widehat y_{\mathrm{train}}=K\alpha,\qquad f_\alpha(x)=k_x^\top\alpha$$ 分别用 $K$ 与 $k_x$，正好对应“训练阶段 / 预测阶段”两件事。</p>
+        </div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>下标方向别凭感觉</b>：第 $j$ 个训练点的 kernel vector 是 $K$ 的第 $j$ <b>行</b>；预测
+          $$f_\alpha(x_j)=\sum_{i=1}^n\alpha_ik(x_i,x_j)=\sum_{i=1}^nK_{ji}\alpha_i,$$
+          第二个等号用 $K_{ji}=k(x_j,x_i)=k(x_i,x_j)$ 的对称性。右侧正是 $K\alpha$ 的第 $j$ 个分量，所以 $\widehat y=K\alpha$。<b>对称性只是让两种写法数值相同，行/列的语义来自定义</b>。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：调整 $\sigma$、随机换样本，读相似度地图（RBF Gram 热图）</h4>
+        <div class="svg-wrap"><svg id="gramViz" viewBox="0 0 880 470" role="img" aria-label="Gram 矩阵热图"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>RBF 尺度 $\sigma$</label><input type="range" id="gvSig" min="0.3" max="2.5" step="0.05" value="0.9"><div class="val" id="gvSigval">0.90</div></div>
+          <div class="control" style="justify-content:flex-end"><button class="btn warm" id="gvRand" type="button">🎲 随机换一批样本</button></div>
+        </div>
+        <div class="caption" id="gvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>怎么读图</b>：颜色由当前 $\sigma$ 与样本坐标现算，深蓝=接近 $1$ 的高相似度、浅黄=接近 $0$。主对角线最深（$K_{ii}=1$）；样本按簇聚集时出现深色块；热图关于主对角线对称（$K_{ij}=K_{ji}$）。但“看起来对称且颜色非负”<b>不足以</b>证明它是合法 Gram matrix——真正的代数条件是任意 $a$ 都有 $a^\top Ka\ge0$（§10）。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>零件齐了：span 观察、重参数化、$K$ 与 $k_x$。下一节把 kernel trick 压缩成三步操作规程，并检查凸性有没有丢。</div>
+    </section>
+
+    <!-- ============ §7 THREE STEPS ============ -->
+    <section id="threesteps">
+      <h2 class="sec-title"><span class="num">§7</span>Kernelization 的三步与凸性 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">三步的目标不是“把公式里的 $\phi$ 字样换掉”，而是<b>确保训练目标和预测公式中只剩内积</b>——只有这样，才能用 $k$ 代替高维特征计算。</p>
+      <div class="grid3">
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">Step Ⅰ 限制并重参数化</h3><p class="plain small">把 $w$ 限制在样本 span 中并改写为 $$w=\Phi^\top\alpha.$$ 依据是 §3–§4 的两条观察。</p></div>
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">Step Ⅱ 识别所有内积</h3><p class="plain small">代入后清点：公式里出现的高维对象只剩成对内积 $$\phi(x_i)^\top\phi(x_j).$$ 预测、训练目标都在此列。</p></div>
+        <div class="card compact"><h3 style="margin:.2em 0 .4em">Step Ⅲ 用核函数替换</h3><p class="plain small">$$\phi(x_i)^\top\phi(x_j)\ \longrightarrow\ k(x_i,x_j).$$ 从此 $\phi$ 不再出现，计算只经过 $k$。</p></div>
+      </div>
+      <div class="def">
+        <div class="term">核化 <span class="en">kernelization · first mentioned: §7</span></div>
+        <p class="plain"><b>是什么</b>：把一个“只通过内积使用特征”的算法/目标改写成只含 kernel 值的形式的整套流程（上面三步）。</p>
+        <p class="plain"><b>白话</b>：给算法做一次“内积替换手术”，手术后再也看不见高维向量。</p>
+        <p class="plain"><b>干嘛用</b>：让 §2 的三个愿望同时兑现：表达力来自 $\phi$（隐式）、不构造 $\Phi$、凸性保留。</p>
+        <p class="plain"><b>怎么算</b>：例如平方损失变为
+          $$L(\alpha)=\frac1n\lVert y-K\alpha\rVert_2^2,\qquad \Phi w=\Phi(\Phi^\top\alpha)=(\Phi\Phi^\top)\alpha=K\alpha.$$</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：前提“只通过内积使用特征”不可破坏——若算法需要 $\phi(x)$ 的单个坐标（如 $L_1$ 正则 $\lVert w\rVert_1$），就无法核化。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">凸性没有丢</h3>
+        <p class="plain">若 $K$ 对称，平方损失的梯度与 Hessian 为
+          $$\nabla_\alpha L(\alpha)=\frac2nK(K\alpha-y),\qquad \nabla_\alpha^2L(\alpha)=\frac2nK^2,$$
+          且对任意 $v\in\mathbb R^n$，
+          $$v^\top K^2v=(Kv)^\top(Kv)=\lVert Kv\rVert_2^2\ \ge\ 0,$$
+          所以平方损失关于 $\alpha$ 仍是凸函数。更一般地：只要每个 $\ell(y_i,\cdot)$ 凸、预测 $K_{i,:}\alpha$ 对 $\alpha$ 仿射，kernelized 经验损失就仍凸。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：手算题 1 的逐步演示——$\Phi w$ 与 $K\alpha$ 必须给出同一答案</h4>
+        <div class="svg-wrap"><svg id="stepsViz" viewBox="0 0 880 300" role="img" aria-label="核化等价性逐步验证"></svg></div>
+        <div class="step-bar">
+          <button class="btn primary" id="stNext" type="button">下一步 ▸</button>
+          <button class="btn ghost" id="stReset" type="button">↺ 重新演示</button>
+        </div>
+        <div class="caption" id="stCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>题目</b>：$\Phi=\begin{bmatrix}1&0\\1&1\\1&2\end{bmatrix}$，$\alpha=(1,-1,2)^\top$。要求分别用 $\Phi w$ 和 $K\alpha$ 计算训练预测并验证相同（数据取自讲义第 12 节手算题 1，面板数值全部现算）。点击“下一步”逐格点亮：$w=\Phi^\top\alpha\to\Phi w\to K=\Phi\Phi^\top\to K\alpha\to$ 损失对照。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>主线的推导到此闭合。接下来是工具箱：两个最常用的核——多项式族与高斯 RBF——各自怎么算、怎么读参数。</div>
+    </section>
+
+    <!-- ============ §8 POLY KERNEL ============ -->
+    <section id="poly">
+      <h2 class="sec-title"><span class="num">§8</span>Polynomial kernel：系数缩放不能漏 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">常用的 $m$ 次非齐次多项式 kernel 是
+        $$k(x,z)=(c+x^\top z)^m,\qquad c\ge0.$$
+        它看起来朴素，但对应的特征映射里藏着 $\sqrt2$ 因子——漏掉它们是最常见的手算错误。</p>
+      <div class="def">
+        <div class="term">多项式核 <span class="en">polynomial kernel · first mentioned: §8</span></div>
+        <p class="plain"><b>是什么</b>：$k(x,z)=(c+x^\top z)^m$；以 $d=2$、$c=1$、$m=2$ 为例
+          $$k(x,z)=(1+x_1z_1+x_2z_2)^2=1+2x_1z_1+2x_2z_2+x_1^2z_1^2+2x_1x_2z_1z_2+x_2^2z_2^2.$$</p>
+        <p class="plain"><b>白话</b>：先把内积加一，再取 $m$ 次幂——一次幂运算同时算出所有交叉项的总内积。</p>
+        <p class="plain"><b>干嘛用</b>：隐式使用全部次数 $\le m$ 的单项式特征（共 $\binom{d+m}{m}$ 个，见 §2）。</p>
+        <p class="plain"><b>怎么算</b>：精确匹配该 kernel 的特征映射是
+          $$\phi(x)=\begin{bmatrix}1&\sqrt2x_1&\sqrt2x_2&x_1^2&\sqrt2x_1x_2&x_2^2\end{bmatrix}^\top,$$
+          直接验证 $\phi(x)^\top\phi(z)=(1+x^\top z)^2$。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：常见错误是把特征写成 $(1,x_1,x_2,x_1^2,x_1x_2,x_2^2)^\top$ 就声称内积等于 $(1+x^\top z)^2$——这组特征能表达同一类二次多项式，但缺 $\sqrt2$ 缩放时内积并不等于这个特定 kernel（下面的互动专门对这笔账）。计算上：显式构造需 $p=\binom{d+m}{m}$ 维，而 $x^\top z$ 只要 $O(d)$，再取 $m$ 次幂即可。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：展开 $(1+x^\top z)^2$，对照两套特征映射的内积</h4>
+        <div class="svg-wrap"><svg id="polyViz" viewBox="0 0 880 330" role="img" aria-label="多项式核系数缩放对照"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>$x_1$</label><input type="range" id="pvX1" min="-2" max="2" step="0.1" value="1"><div class="val" id="pvX1val">1.0</div></div>
+          <div class="control"><label>$x_2$</label><input type="range" id="pvX2" min="-2" max="2" step="0.1" value="0.5"><div class="val" id="pvX2val">0.5</div></div>
+          <div class="control"><label>$z_1$</label><input type="range" id="pvZ1" min="-2" max="2" step="0.1" value="0.5"><div class="val" id="pvZ1val">0.5</div></div>
+          <div class="control"><label>$z_2$</label><input type="range" id="pvZ2" min="-2" max="2" step="0.1" value="1.5"><div class="val" id="pvZ2val">1.5</div></div>
+        </div>
+        <div class="caption" id="pvCap"></div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>多项式核的世界仍是有限维。下一节的高斯 RBF 对应<b>无限维</b>特征空间，却只用一次指数计算——参数 $\sigma$ 就是它的“视野旋钮”。</div>
+    </section>
+
+    <!-- ============ §9 RBF ============ -->
+    <section id="rbf">
+      <h2 class="sec-title"><span class="num">§9</span>RBF kernel：把“近”变成相似度 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">Gaussian RBF kernel 写作
+        $$k_\sigma(x,z)=\exp\!\left(-\frac{\lVert x-z\rVert_2^2}{2\sigma^2}\right),\qquad \sigma>0,$$
+        它满足 $k_\sigma(x,x)=1$；当 $\lVert x-z\rVert_2$ 很大时，$k_\sigma(x,z)$ 接近 $0$。</p>
+      <div class="grid2">
+        <div class="def">
+          <div class="term">RBF 核 / 高斯核 <span class="en">radial basis function kernel · first mentioned: §9</span></div>
+          <p class="plain"><b>是什么</b>：$k_\sigma(x,z)=\exp(-\lVert x-z\rVert_2^2/2\sigma^2)$，以距离为自变量的径向基函数。</p>
+          <p class="plain"><b>白话</b>：“离得近就像（接近 1），离得远就不像（接近 0）”的打分器。</p>
+          <p class="plain"><b>干嘛用</b>：在核化模型里，每个训练点都变成一个以 $x_i$ 为中心的局部基函数：$\alpha_i>0$ 时在附近向上推，$\alpha_i<0$ 时向下压。</p>
+          <p class="plain"><b>怎么算</b>：代入距离与 $\sigma$ 一步算出；很多库写 $k(x,z)=\exp(-\gamma\lVert x-z\rVert^2)$，关系是 $\gamma=1/(2\sigma^2)$。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：RBF 对应<b>无限维</b>特征空间——kernel trick 的意义不是列出无限多个特征，而是用一次有限的函数计算得到它们的总内积。</p>
+        </div>
+        <div class="def why">
+          <div class="term">带宽 <span class="en">bandwidth · first mentioned: §9</span></div>
+          <p class="plain"><b>是什么</b>：RBF 中的尺度参数 $\sigma$（等价参数 $\gamma=1/2\sigma^2$）。</p>
+          <p class="plain"><b>白话</b>：每个训练点的“影响半径”：$\sigma$ 小→只管脚下一亩地；$\sigma$ 大→隔着老远也发声。</p>
+          <p class="plain"><b>干嘛用</b>：控制模型的局部 / 全局程度，是最重要的单个超参数。</p>
+          <p class="plain"><b>怎么算</b>：读图标尺：取 $r=\sigma$，则无论 $\sigma$ 多大都有 $k_\sigma=e^{-1/2}\approx0.607$——改变 $\sigma$ 本质上是水平拉伸 / 压缩同一条钟形曲线。</p>
+          <p class="plain"><b>为什么重要 + 连接</b>：$\sigma$ 小→基函数局部、函数灵活、方差与过拟合风险高；$\sigma$ 大→影响范围广、函数平滑全局。不能只凭训练拟合程度判断好坏，必须用 validation / cross-validation 选。</p>
+        </div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动（上）：RBF 相似度剖面——参考曲线 + 你的 $\sigma$</h4>
+        <div class="svg-wrap"><svg id="rbfProfile" viewBox="0 0 880 300" role="img" aria-label="RBF 剖面曲线"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>你的带宽 $\sigma$</label><input type="range" id="rbSig" min="0.2" max="2.5" step="0.05" value="0.8"><div class="val" id="rbSigval">0.80</div></div>
+        </div>
+        <div class="caption" id="rbCap1"></div>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动（下）：$\sigma$ 如何改写整条预测函数 $f_\alpha(x)$</h4>
+        <div class="svg-wrap"><svg id="rbfSum" viewBox="0 0 880 320" role="img" aria-label="RBF 核化模型曲线"></svg></div>
+        <div class="caption" id="rbCap2"></div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>任何 kernel 都必须回答一个合法性问题：它算出来的 $K$ 凭什么总能当“内积表”用？下一节证明 Gram matrix 一定是 PSD。</div>
+    </section>
+
+    <!-- ============ §10 PSD ============ -->
+    <section id="psd">
+      <h2 class="sec-title"><span class="num">§10</span>为什么 Gram matrix 一定是 PSD <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">要证明的不是“矩阵元素都非负”。PSD 的定义是：任取系数 $a$，二次型 $a^\top Ka$ 都不能为负。把 $K=\Phi\Phi^\top$ 代进去，这个二次型会变成一个向量长度的平方。</p>
+      <div class="def">
+        <div class="term">半正定 <span class="en">positive semidefinite (PSD) · first mentioned: §10</span></div>
+        <p class="plain"><b>是什么</b>：对任意 $a\in\mathbb R^n$ 都有 $a^\top Ka\ge0$，记作 $K\succeq0$。</p>
+        <p class="plain"><b>白话</b>：随便怎么给样本加权组合，组合特征的“长度平方”都不可能是负数。</p>
+        <p class="plain"><b>干嘛用</b>：合法 Gram matrix 的判定标准；也是凸性的来源。</p>
+        <p class="plain"><b>怎么算 / 怎么证</b>：由 $K=\Phi\Phi^\top$，
+          $$a^\top Ka=a^\top\Phi\Phi^\top a=(\Phi^\top a)^\top(\Phi^\top a)=\lVert\Phi^\top a\rVert_2^2\ \ge\ 0.$$
+          第二个等号只是重新加括号并使用 $a^\top\Phi=(\Phi^\top a)^\top$；最后一项是欧氏范数平方，不可能为负。</p>
+        <p class="plain"><b>为什么重要 + 连接</b>：三层意义——几何上 $K$ 真是某组向量的两两内积；谱上所有特征值非负；优化上 $\alpha^\top K\alpha$ 是凸二次型。若 $K$ 奇异不表示 kernel 非法，只说明 $\phi(x_i)$ 线性相关或 $\alpha$ 表示不唯一（§12 误区 2）。第 10 讲把它提升为 valid kernel 的判据：一个函数要对<b>任意有限输入集合</b>产生 PSD Gram matrix。</p>
+      </div>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：$2\times2$ 对称矩阵 $\begin{bmatrix}1&\rho\\ \rho&1\end{bmatrix}$——$\rho$ 出界会发生什么</h4>
+        <div class="svg-wrap"><svg id="psdViz" viewBox="0 0 880 330" role="img" aria-label="PSD 判定互动"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>相关系数 $\rho$</label><input type="range" id="pvRho" min="-2.5" max="2.5" step="0.05" value="0.6"><div class="val" id="pvRhoval">0.60</div></div>
+          <div class="control" style="min-width:280px"><label>测试向量 $a$</label>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn ghost" id="pvA11" type="button">a=(1,1)</button>
+              <button class="btn ghost" id="pvA1m" type="button">a=(1,−1)</button>
+              <button class="btn warm" id="pvARand" type="button">🎲 随机 a</button>
+            </div>
+          </div>
+        </div>
+        <div class="caption" id="pvCap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>和讲义题 4 对账</b>：把 $\rho$ 滑到 $2$ 得到 $K=\begin{bmatrix}1&2\\2&1\end{bmatrix}$——特征值 $3$ 和 $-1$，取 $a=(1,-1)$ 时 $a^\top Ka=-2<0$，所以它不可能等于某个实矩阵的 $\Phi\Phi^\top$。而 $|\rho|\le1$ 时不但 PSD，右侧还会现算出一组真实特征向量 $\phi(x_1),\phi(x_2)$，让你看到 $a^\top Ka=\lVert a_1\phi(x_1)+a_2\phi(x_2)\rVert^2$ 逐位成立。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>合法性解决了，还有一笔经济账：kernel trick 用 $n\times n$ 的 $K$ 换掉 $n\times p$ 的 $\Phi$——什么时候赚、什么时候亏？</div>
+    </section>
+
+    <!-- ============ §11 COST ============ -->
+    <section id="cost">
+      <h2 class="sec-title"><span class="num">§11</span>Kernel trick 的收益与代价 <span class="sec-tag extra">拓展</span></h2>
+      <p class="sec-lead">kernel 方法避免显式存储 $\Phi\in\mathbb R^{n\times p}$，但必须处理 $K\in\mathbb R^{n\times n}$：朴素构造并存储 $K$ 需要 $n^2$ 个 kernel 值和 $O(n^2)$ 内存；直接求解稠密线性系统通常需要 $O(n^3)$ 时间。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">互动：内存天平——$\Phi$ 的 $n\times p$ 对 $K$ 的 $n\times n$</h4>
+        <div class="svg-wrap"><svg id="costViz" viewBox="0 0 880 300" role="img" aria-label="内存与时间对比"></svg></div>
+        <div class="label-row">
+          <div class="control"><label>样本数 $\log_{10} n$</label><input type="range" id="cv2N" min="1.5" max="6.5" step="0.05" value="4"><div class="val" id="cv2Nval">10^4.00</div></div>
+          <div class="control"><label>特征维数 $\log_{10} p$</label><input type="range" id="cv2P" min="1" max="9" step="0.05" value="7"><div class="val" id="cv2Pval">10^7.00</div></div>
+        </div>
+        <div class="caption" id="cv2Cap"></div>
+      </div>
+      <div class="card compact">
+        <p class="plain small"><b>什么时候划算</b>：$n$ 中等、显式特征维度 $p$ 极大；需要非线性模型；希望保留凸优化问题；可以承受样本数上的二次存储。当 $n$ 达到百万量级（把 $\log_{10}n$ 滑到 6）时，朴素 kernel matrix 通常不可行——需要近似 kernel、Nyström 方法、随机 Fourier 特征或其他模型。条形长度按对数刻度现画，文案数字随滑杆现算。</p>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>收束之前，把五句“听起来对”的话过一遍筛子——它们都是本讲最容易踩的坑。</div>
+    </section>
+
+    <!-- ============ §12 MISCONCEPTIONS ============ -->
+    <section id="confuse">
+      <h2 class="sec-title"><span class="num">§12</span>常见误区 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">每一条都先给出“听起来对”的说法，再给真相。建议先自己想一遍再看下去。</p>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 1</b>：kernel 与 feature map 无关，选 kernel 就是选一个相似度函数。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：kernel 的本质正是隐式特征内积 $k(x,z)=\phi(x)^\top\phi(z)$。我们不一定知道或写出 $\phi$，但几何解释仍来自特征空间——PSD、凸性、带宽的直觉全部建立在这上面。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 2</b>：$w=\Phi^\top\alpha$ 的表示一定唯一，所以 $\alpha$ 就是“真正的参数”。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：若训练特征线性相关，$\Phi^\top$ 有非平凡零空间，不同的 $\alpha$ 可能给出同一个 $w$。唯一性不是 kernel trick 成立的必要条件。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 3</b>：kernel trick 总会减少计算。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：它减少的是对巨大特征维度 $p$ 的显式计算，代价是 $n\times n$ 的 $K$。当 $n$ 很大时这个代价可能更严重（§11 的天平亲测）。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 4</b>：RBF bandwidth 越小越精确，所以越小越好。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：小 $\sigma$ 让模型更局部，通常降低训练误差，但也提高方差和过拟合风险。带宽必须通过 validation 或 cross-validation 选择。</p></div></div>
+      <div class="misconception"><div>❌</div><div><p style="margin:0"><b>误区 5</b>：对称矩阵就是 Gram matrix。</p><p class="truth" style="margin:.4em 0 0">✓ 真相：还不够。Gram matrix 必须 PSD——§10 的互动里 $\rho=2$ 的矩阵对称、元素非负，却有负特征值。第 10 讲会系统学习 valid kernel 的对称性与 PSD 条件。</p></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span>坑扫完了。最后把整讲收进一条链、五个公式和一张自查清单。</div>
+    </section>
+
+    <!-- ============ §13 TAKEAWAY ============ -->
+    <section id="takeaway">
+      <h2 class="sec-title"><span class="num">§13</span>收束：第 9 讲真正要带走的东西 <span class="sec-tag core">核心</span></h2>
+      <p class="sec-lead">kernel trick 没有消灭复杂特征，而是把它们隐藏在内积计算中：用样本维度 $n$ 上的 Gram matrix 换掉了特征维度 $p$ 上的显式表示。</p>
+      <div class="viz">
+        <h4 style="margin-top:0">六步逻辑链（回顾）</h4>
+        <div class="svg-wrap"><svg id="chainViz" viewBox="0 0 880 180" role="img" aria-label="六步逻辑链"></svg></div>
+        <div class="caption">六个环节首尾相接：前两步给出动机（§1–§2），中间两步是理论保证（§3–§4），最后两步是操作流程（§5–§7）。</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">核心问题 → 答案回顾</h3>
+        <p class="plain"><b>能不能使用非常复杂、甚至无限维的非线性特征，同时避免显式构造它们？</b>能——只要训练和预测只通过特征向量之间的内积使用这些特征：梯度与正则化最优解都住在训练特征的 span 中（$w=\Phi^\top\alpha$），预测与训练预测分别化为 $f_\alpha(x)=k_x^\top\alpha$ 与 $\widehat y=K\alpha$，于是每个内积都可以换成一次核函数计算。</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">最重要的五个公式</h3>
+        <p class="plain">$$w=\Phi^\top\alpha \quad\text{（representer：解向量住在样本 span 中，}\alpha\in\mathbb R^n\text{）}$$
+          $$f_\alpha(x)=\sum_{i=1}^n\alpha_i\,k(x_i,x)=k_x^\top\alpha \quad\text{（核化模型：预测只剩内积）}$$
+          $$K=\Phi\Phi^\top,\quad K_{ij}=k(x_i,x_j),\quad \widehat y=K\alpha \quad\text{（Gram matrix：训练一次收齐）}$$
+          $$a^\top Ka=\lVert\Phi^\top a\rVert_2^2\ge0 \quad\text{（PSD：内积表的合法性）}$$
+          $$k_\sigma(x,z)=\exp\!\Big(-\tfrac{\lVert x-z\rVert_2^2}{2\sigma^2}\Big),\quad \gamma=\tfrac1{2\sigma^2} \quad\text{（RBF：无限维特征的一次式计算）}$$</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自查清单（勾掉才算带走）</h3>
+        <div class="checklist" id="checkList"></div>
+        <div class="check-score" id="checkScore"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">自测题（先自己算，再看答案）</h3>
+        <div id="quizList"></div>
+        <div class="small" id="quizScore" style="display:none;margin-top:8px"></div>
+      </div>
+      <div class="card conn">
+        <h3 style="margin-top:0">与下一讲的连接</h3>
+        <p class="plain">第 9 讲得到了 $f_\alpha(x)=\sum_i\alpha_ik(x_i,x)$ 与 $\widehat y_{\mathrm{train}}=K\alpha$，但也留下两个紧接的问题：<b>① kernel 模型太容易插值时，如何用 $\lambda$ 正则化</b>（kernel ridge：$\alpha=(K+\lambda I)^{-1}y$ 一族闭式解，还要处理 $K$ 奇异）；<b>② 什么样的相似度函数才是 valid kernel</b>（对任意有限输入集合产生 PSD Gram matrix）。第 10 讲还会把 kNN、decision tree、random forest 组装成另一套非线性工具箱。</p>
+        <p class="plain" style="margin-bottom:0"><a href="index.html#lecture-10"><b>→ 回到课程目录，进入第 10 讲：Kernel and Other Methods</b></a></p>
+      </div>
+    </section>
+
+  </main>
+  <aside class="gloss-rail" id="glossRailBody" aria-label="术语速查"></aside>
+</div>
+<div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script>
+<script src="katex/auto-render.min.js"></script>
+<script>
+renderMathInElement(document.body,{
+  delimiters:[
+    {left:'$$',right:'$$',display:true},
+    {left:'$',right:'$',display:false}
+  ],
+  ignoredTags:['script','noscript','style','textarea','pre','code','option','select','input'],
+  throwOnError:false
+});
+</script>
+<script>
+"use strict";
+
+/* ---------- utilities ---------- */
+const $=(s,r=document)=>s.includes(',')?Array.from(r.querySelectorAll(s)):r.querySelector(s);
+const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=2)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(1);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function svgAdd(parent,tag,attrs,text){
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs){el.setAttribute(k,attrs[k]);}
+  if(text!==undefined)el.textContent=text;
+  parent.appendChild(el);return el;
+}
+function svgMarker(parent,id,color){const m=svgAdd(parent,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto-start-reverse'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')';}
+function svgHalo(parent,x,y,text,opts={}){
+  const o=Object.assign({fill:'var(--ink)',anchor:'middle',font:11,weight:600,bg:'var(--surface)',stroke:'var(--line)'},opts);
+  const t=svgAdd(parent,'text',{x,y,'text-anchor':o.anchor,'font-size':o.font,'font-weight':o.weight,fill:o.fill},text);
+  try{const b=t.getBBox();const r=svgAdd(parent,'rect',{x:b.x-5,y:b.y-3,width:b.width+10,height:b.height+7,rx:6,fill:o.bg,stroke:o.stroke,'stroke-width':0.7,opacity:0.96});parent.insertBefore(r,t);}catch(e){}
+  return t;
+}
+function toast(msg){const t=$('#toast');if(!t)return;t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1900);}
+function humanSize(b){
+  if(!Number.isFinite(b))return '—';
+  const units=['B','KB','MB','GB','TB','PB','EB'];let i=0,v=b;
+  while(v>=1000&&i<units.length-1){v/=1000;i++;}
+  return fmt(v,i>=2?2:1)+' '+units[i];
+}
+function spreadLabels(items,minGap){
+  // items: [{x,y}] sorted ascending by y are enforced apart; keeps x.
+  const arr=items.slice().sort((a,b)=>a.y-b.y);
+  for(let i=1;i<arr.length;i++){ if(arr[i].y-arr[i-1].y<minGap) arr[i].y=arr[i-1].y+minGap; }
+  return arr;
+}
+
+/* ---------- theme / toc / progress / reset ---------- */
+(()=>{
+  const root=document.documentElement;
+  const saved=localStorage.getItem('iml-lab-theme');
+  if(saved)root.dataset.theme=saved;
+  $('#themeToggle').addEventListener('click',()=>{
+    root.dataset.theme=root.dataset.theme==='dark'?'light':'dark';
+    localStorage.setItem('iml-lab-theme',root.dataset.theme);
+  });
+  $('#resetAll').addEventListener('click',()=>{localStorage.removeItem('iml-lab-theme');localStorage.removeItem('iml-mode');location.reload();});
+  const toc=$('#toc');
+  $$('main section').forEach(sec=>{
+    const h=sec.querySelector('h2.sec-title');if(!h||!sec.id)return;
+    const a=document.createElement('a');a.href='#'+sec.id;
+    const n=h.querySelector('.num');a.textContent=(n?n.textContent+' ':'')+h.childNodes[h.childNodes.length-1].textContent.trim();
+    toc.appendChild(a);
+  });
+  const links=$$('#toc a');
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));}});
+  },{rootMargin:'-15% 0px -70% 0px'});
+  $$('main section').forEach(s=>spy.observe(s));
+  const progress=$('#progress');
+  addEventListener('scroll',()=>{
+    const h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    progress.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+  },{passive:true});
+})();
+
+/* ---------- concept map (L9) ---------- */
+(()=>{
+  const svg=$('#conceptMap');
+  const N=[
+    {id:'n8',x:20,y:120,w:150,h:66,t:'第 8 讲',s:'soft-margin 线性',target:'index.html#lecture-08',col:'#8a938b'},
+    {id:'feature',x:220,y:20,w:150,h:62,t:'特征映射',s:'弯边界变直',target:'#feature',col:'#176653'},
+    {id:'explosion',x:410,y:20,w:150,h:62,t:'特征爆炸',s:'p=C(d+m,m)',target:'#explosion',col:'#176653'},
+    {id:'gradspan',x:600,y:20,w:150,h:62,t:'梯度在 span 中',s:'∇L=Σcᵢφ(xᵢ)',target:'#gradspan',col:'#176653'},
+    {id:'repr',x:790,y:20,w:150,h:62,t:'Representer',s:'最优解也在 S',target:'#representer',col:'#176653'},
+    {id:'reparam',x:220,y:120,w:160,h:62,t:'重参数化 + 核函数',s:'w=Φᵀα, k=φᵀφ',target:'#reparam',col:'#176653'},
+    {id:'gram',x:420,y:120,w:160,h:62,t:'Gram 矩阵',s:'ŷ=Kα, kₓᵀα',target:'#gram',col:'#176653'},
+    {id:'threesteps',x:620,y:120,w:180,h:62,t:'kernelization 三步',s:'凸性保留',target:'#threesteps',col:'#176653'},
+    {id:'takeaway',x:840,y:120,w:160,h:62,t:'收束 / 自测',s:'带回五个公式',target:'#takeaway',col:'#176653'},
+    {id:'poly',x:240,y:250,w:170,h:62,t:'多项式核',s:'√2 缩放',target:'#poly',col:'#6c4fa1'},
+    {id:'rbf',x:450,y:250,w:150,h:62,t:'RBF 核',s:'带宽 σ',target:'#rbf',col:'#6c4fa1'},
+    {id:'psd',x:640,y:250,w:150,h:62,t:'PSD',s:'合法性判据',target:'#psd',col:'#6c4fa1'},
+    {id:'cost',x:840,y:250,w:150,h:62,t:'收益与代价',s:'n² 对 n·p',target:'#cost',col:'#6c4fa1'},
+    {id:'confuse',x:1030,y:250,w:190,h:62,t:'常见误区',s:'五句话过筛',target:'#confuse',col:'#6c4fa1'},
+    {id:'n10',x:1230,y:120,w:170,h:66,t:'第 10 讲',s:'kernel ridge · valid kernel',target:'index.html#lecture-10',col:'#8a938b'}
+  ];
+  const mk=svgMarker(svg,'cmA','#176653'),mkV=svgMarker(svg,'cmV','#6c4fa1'),mkG=svgMarker(svg,'cmG','#8a938b');
+  function route(pts,color,marker,label,lx,ly,anchor='middle'){
+    let d=`M${pts[0][0]},${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++)d+=` L${pts[i][0]},${pts[i][1]}`;
+    svgAdd(svg,'path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinejoin:'round',strokeLinecap:'round',markerEnd:marker});
+    if(label)svgHalo(svg,lx,ly,label,{fill:color,font:11.5,anchor});
+  }
+  route([[170,153],[195,153],[195,51],[220,51]],'#8a938b',mkG,'',0,0);
+  route([[370,51],[410,51]],'#176653',mk,'',0,0);
+  route([[560,51],[600,51]],'#176653',mk,'',0,0);
+  route([[750,51],[790,51]],'#176653',mk,'',0,0);
+  route([[865,82],[865,105],[300,105],[300,120]],'#176653',mk,'',0,0);
+  route([[380,151],[420,151]],'#176653',mk,'',0,0);
+  route([[580,151],[620,151]],'#176653',mk,'',0,0);
+  route([[800,151],[840,151]],'#176653',mk,'',0,0);
+  route([[1000,151],[1230,151]],'#8a938b',mkG,'下一讲',1115,140);
+  route([[280,182],[280,250]],'#6c4fa1',mkV,'',0,0);
+  route([[480,182],[480,250]],'#6c4fa1',mkV,'',0,0);
+  route([[530,182],[530,216],[715,216],[715,250]],'#6c4fa1',mkV,'',0,0);
+  route([[690,182],[690,230],[915,230],[915,250]],'#6c4fa1',mkV,'',0,0);
+  route([[920,182],[920,238],[1125,238],[1125,250]],'#6c4fa1',mkV,'',0,0);
+  for(const n of N){
+    const g=svgAdd(svg,'g',{transform:`translate(${n.x},${n.y})`,class:'cm-node','data-target':n.target||'',style:'cursor:pointer',tabindex:'0'});
+    svgAdd(g,'rect',{width:n.w,height:n.h,rx:12,fill:'color-mix(in srgb,'+n.col+' 7%, var(--surface))',stroke:n.col,strokeWidth:1.8});
+    svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.t);
+    if(n.s)svgAdd(g,'text',{x:n.w/2,y:n.h/2+18,'text-anchor':'middle','font-size':10.5,fill:'var(--muted)'},n.s);
+    if(n.target){
+      const t=String(n.target);
+      g.addEventListener('click',()=>{ if(t.startsWith('index.html')) location.href=t; else location.hash=t; });
+      g.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault(); if(t.startsWith('index.html')) location.href=t; else location.hash=t; }});
+    }
+  }
+})();
+
+/* ---------- §1 circle viz ---------- */
+(()=>{
+  const svg=$('#circleViz');
+  // training points: deterministic rings
+  const pts=[];
+  for(let k=0;k<8;k++){const a=k/8*2*Math.PI;pts.push({x:1.05*Math.cos(a),y:1.05*Math.sin(a),c:1});pts.push({x:2.85*Math.cos(a+0.39),y:2.85*Math.sin(a+0.39),c:-1});}
+  const L={x0:48,y0:34,w:318,h:318}, R={x0:560,y0:34,w:300,h:318};
+  const xmin=-3.6,xmax=3.6;
+  const lx=v=>L.x0+(v-xmin)/(xmax-xmin)*L.w;
+  const ly=v=>L.y0+L.h-(v-xmin)/(xmax-xmin)*L.h;
+  const rmax2=13; // r^2 axis range
+  const rx=v=>R.x0+clamp(v/rmax2,0,1.02)*R.w;
+  const ry=v=>R.y0+(14-clamp(v,-21,14))/36*R.h; // f mapped into the panel, clamped
+  function draw(){
+    const tx=+$('#cvX').value, ty=+$('#cvY').value;
+    svg.innerHTML='';
+    // left frame
+    svgAdd(svg,'rect',{x:L.x0,y:L.y0,width:L.w,height:L.h,fill:'var(--surface2)',opacity:.4,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:L.x0,y1:ly(0),x2:L.x0+L.w,y2:ly(0),stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'line',{x1:lx(0),y1:L.y0,x2:lx(0),y2:L.y0+L.h,stroke:'var(--line)',strokeWidth:1});
+    // contours f=3,0,-5 (r=sqrt(4-f)) drawn from formula
+    [[3,1],[0,2],[-5,3]].forEach(([f,r])=>{
+      svgAdd(svg,'circle',{cx:lx(0),cy:ly(0),r:r/(xmax-xmin)*L.w,fill:'none',stroke:f===0?'var(--accent)':'var(--muted)',strokeWidth:f===0?2.4:1,opacity:f===0?1:.45,'stroke-dasharray':f===0?'none':'4 4'});
+      const la=2.2;
+      svgHalo(svg,lx(r*Math.cos(la)),ly(r*Math.sin(la)),'f='+f,{fill:f===0?'var(--accent)':'var(--muted)',font:10});
+    });
+    // points
+    pts.forEach(p=>svgAdd(svg,'circle',{cx:lx(p.x),cy:ly(p.y),r:5,fill:p.c>0?'var(--accent)':'var(--warm)',opacity:.85}));
+    // test point
+    const f=4-tx*tx-ty*ty, inside=f>0;
+    svgAdd(svg,'line',{x1:lx(tx)-9,y1:ly(ty),x2:lx(tx)+9,y2:ly(ty),stroke:'var(--blue)',strokeWidth:2.4});
+    svgAdd(svg,'line',{x1:lx(tx),y1:ly(ty)-9,x2:lx(tx),y2:ly(ty)+9,stroke:'var(--blue)',strokeWidth:2.4});
+    svgHalo(svg,lx(tx)+2,ly(ty)-14,'x=('+fmt(tx,1)+','+fmt(ty,1)+')',{fill:'var(--blue)',font:10.5,anchor:'start'});
+    // right frame: f = 4 - r^2 line
+    svgAdd(svg,'rect',{x:R.x0,y:R.y0,width:R.w,height:R.h,fill:'var(--surface2)',opacity:.4,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:R.x0,y1:ry(0),x2:R.x0+R.w,y2:ry(0),stroke:'var(--line)',strokeWidth:1});
+    svgAdd(svg,'line',{x1:rx(0),y1:ry(4),x2:rx(13),y2:ry(4-13),stroke:'var(--accent)',strokeWidth:2.4});
+    svgHalo(svg,rx(6.5),ry(4-6.5),'f=4−r²',{fill:'var(--accent)',font:11});
+    svgHalo(svg,rx(4.6),ry(3),'r²=4 → 圆',{fill:'var(--muted)',font:10});
+    // region labels
+    svgHalo(svg,rx(1.4),ry(8),'f>0 圆内',{fill:'var(--accent)',font:10.5});
+    svgHalo(svg,rx(9),ry(-9),'f<0 圆外',{fill:'var(--warm)',font:10.5});
+    // projection of test point
+    const r2=tx*tx+ty*ty;
+    svgAdd(svg,'line',{x1:lx(tx),y1:ly(ty),x2:rx(r2),y2:ry(f),stroke:'var(--blue)',strokeWidth:1.2,strokeDasharray:'5 4',opacity:.7});
+    svgAdd(svg,'circle',{cx:rx(r2),cy:ry(f),r:6,fill:'var(--blue)'});
+    // axis labels
+    svgHalo(svg,L.x0+L.w/2,L.y0+L.h+18,'原始空间 (x₁,x₂)',{font:11,fill:'var(--muted)'});
+    svgHalo(svg,L.x0-30,L.y0+L.h/2,'x₂',{font:10,fill:'var(--muted)'});
+    svgHalo(svg,R.x0+R.w/2,R.y0+R.h+18,'特征坐标 r²=x₁²+x₂²',{font:11,fill:'var(--muted)'});
+    svgHalo(svg,R.x0-24,R.y0+R.h/2,'f(x)',{font:10,fill:'var(--muted)'});
+    // per-coordinate computation panel text (dynamically in caption)
+    const terms=[['1',4],['x₁',tx*0],['x₂',ty*0],['x₁²',tx*tx*(-1)],['x₁x₂',tx*ty*0],['x₂²',ty*ty*(-1)]];
+    const parts=terms.map(([n,v])=>n+'×'+fmt(v,2)).join(' + ');
+    $('#cvCap').innerHTML=`φ(x) = (1, ${fmt(tx,1)}, ${fmt(ty,1)}, ${fmt(tx*tx,2)}, ${fmt(tx*ty,2)}, ${fmt(ty*ty,2)})，w=(4,0,0,−1,0,−1)，逐项展开 f = ${parts} = <b>${fmt(f,2)}</b>。f ${inside?'> 0，判为':'< 0，判为'}<b>${inside?'圆内（正类）':'圆外（负类）'}</b>；该点在右图的投影落在直线上 r²=${fmt(r2,2)} 处。右图直线的纵截距恒为 4（对应 w 的常数特征坐标）。`;
+  }
+  function sync(){$('#cvXval').textContent=fmt(+$('#cvX').value,1);$('#cvYval').textContent=fmt(+$('#cvY').value,1);draw();}
+  ['cvX','cvY'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §2 combo explosion ---------- */
+(()=>{
+  const svg=$('#comboViz');
+  function binom(d,m){let p=1;for(let i=1;i<=m;i++){p=p*(d+i)/i;}return p;}
+  function draw(){
+    const d=+$('#cbD').value,m=+$('#cbM').value,n=+$('#cbN').value;
+    const p=binom(d,m);
+    const memPhi=n*p*8, memK=n*n*8;
+    svg.innerHTML='';
+    const x0=210,y0=40,w=590;
+    // log scale from 1e2 B to 1e16 B
+    const lo=2,hi=16;
+    const bw=v=>clamp((Math.log10(Math.max(v,1))-lo)/(hi-lo),0,1)*w;
+    svgAdd(svg,'line',{x1:x0,y1:y0-6,x2:x0+w,y2:y0-6,stroke:'var(--line)'});
+    for(let e=lo;e<=hi;e+=2){
+      const x=x0+(e-lo)/(hi-lo)*w;
+      svgAdd(svg,'line',{x1:x,y1:y0-6,x2:x,y2:y0+150,stroke:'var(--line)',opacity:.35});
+      svgAdd(svg,'text',{x,y:y0-12,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},(e>=12?'10^'+e+' B':'1e'+e));
+    }
+    const bars=[
+      {label:'显式特征矩阵 Φ (n×p×8B)',v:memPhi,c:'var(--warm)'},
+      {label:'K 矩阵 (n×n×8B)',v:memK,c:'var(--accent)'}
+    ];
+    bars.forEach((b,i)=>{
+      const y=y0+16+i*66;
+      svgAdd(svg,'text',{x:x0-12,y:y+13,'text-anchor':'end','font-size':11,fill:'var(--ink)'},b.label);
+      const wpx=bw(b.v);
+      svgAdd(svg,'rect',{x:x0,y,width:Math.max(wpx,2),height:26,rx:5,fill:b.c,opacity:.88});
+      svgHalo(svg,x0+Math.max(wpx,2)+8,y+17,humanSize(b.v),{fill:b.c,font:11,anchor:'start'});
+    });
+    const ratio=p/n;
+    const verdict=ratio>1?'kernel 路线更省':'显式特征更省（p≤n 时 kernel 路线无内存优势）';
+    svgHalo(svg,x0+8,y0+150,'p/n = '+fmt(ratio,0)+' 倍 → '+verdict,{fill:'var(--muted)',font:11,anchor:'start'});
+    $('#cbCap').innerHTML=`当前组合：p = C(${d}+${m}, ${m}) = C(${d+m}, ${m}) = <b>${Math.round(p).toLocaleString('en-US')}</b> 个特征；n = <b>${fmt(n,0)}</b> 个样本。显式 Φ 需要 n·p = ${Math.round(n*p).toLocaleString('en-US')} 个数（每数 8 字节 ≈ <b>${humanSize(memPhi)}</b>），而 K 这一票只需 n² = ${fmt(n*n,0)} 个 kernel 值（≈ <b>${humanSize(memK)}</b>）。kernel 路线把账单从“样本×特征”换成“样本×样本”。`;
+  }
+  function sync(){$('#cbDval').textContent=$('#cbD').value;$('#cbMval').textContent=$('#cbM').value;$('#cbNval').textContent=fmt(+$('#cbN').value,0);draw();}
+  ['cbD','cbM','cbN'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §3 gradient in span ---------- */
+(()=>{
+  const svg=$('#gradSpanViz');
+  const phis=[{v:[3,1],c:'var(--accent)'},{v:[-1.4,2.1],c:'var(--blue)'},{v:[-1.8,-1.6],c:'var(--gold)'}];
+  const cx=430,cy=225,S=62;
+  const px=v=>cx+v[0]*S, py=v=>cy-v[1]*S;
+  function draw(){
+    const cs=[+$('#gsC1').value,+$('#gsC2').value,+$('#gsC3').value];
+    svg.innerHTML='';
+    const mk=svgMarker(svg,'gsArr','var(--ink)');
+    const n=3;
+    // grid
+    svgAdd(svg,'rect',{x:30,y:20,width:800,height:395,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    for(let g=-6;g<=6;g++){svgAdd(svg,'line',{x1:px([g,0]),y1:py([0,2.95]),x2:px([g,0]),y2:py([0,-2.95]),stroke:'var(--line)',opacity:.3});}
+    for(let g=-2;g<=2;g++){svgAdd(svg,'line',{x1:px([-6.2,0]),y1:py([0,g]),x2:px([6.2,0]),y2:py([0,g]),stroke:'var(--line)',opacity:.3});}
+    svgAdd(svg,'line',{x1:px([-6.2,0]),y1:py([0,0]),x2:px([6.2,0]),y2:py([0,0]),stroke:'var(--muted)',strokeWidth:1.2});
+    svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,3.1]),x2:px([0,0]),y2:py([0,-3.1]),stroke:'var(--muted)',strokeWidth:1.2});
+    // unit vectors phi_i (unscaled) as reference directions
+    phis.forEach((p,i)=>{
+      svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,0]),x2:px(p.v),y2:py(p.v),stroke:p.c,strokeWidth:1.4,strokeDasharray:'3 3',opacity:.65});
+      svgHalo(svg,px(p.v)*1+ (p.v[0]>=0?12:-12),py(p.v)+(p.v[1]>=0?-8:14),'φ(x'+(i+1)+')=('+fmt(p.v[0],1)+','+fmt(p.v[1],1)+')',{fill:p.c,font:10.5,anchor:p.v[0]>=0?'start':'end'});
+    });
+    // chain arrows of (1/n) c_i phi_i
+    let cur=[0,0];
+    const chainLbl=[];
+    phis.forEach((p,i)=>{
+      const step=[cs[i]*p.v[0]/n,cs[i]*p.v[1]/n];
+      const nxt=[cur[0]+step[0],cur[1]+step[1]];
+      svgAdd(svg,'line',{x1:px(cur),y1:py(cur),x2:px(nxt),y2:py(nxt),stroke:p.c,strokeWidth:2.6,opacity:.8});
+      const mid=[(cur[0]+nxt[0])/2,(cur[1]+nxt[1])/2];
+      chainLbl.push({x:px(mid),y:py(mid)-14,c:p.c,txt:'(1/n)·c'+(i+1)+'φ(x'+(i+1)+')'});
+      cur=nxt;
+    });
+    spreadLabels(chainLbl,17).forEach(it=>svgHalo(svg,it.x,it.y,it.txt,{fill:it.c,font:9.5}));
+    // result gradient arrow
+    svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,0]),x2:px(cur),y2:py(cur),stroke:'var(--ink)',strokeWidth:3.2,markerEnd:'url(#gsArr)'});
+    svgHalo(svg,px(cur)+14,py(cur)-4,'∇L(w)=('+fmt(cur[0],2)+', '+fmt(cur[1],2)+')',{fill:'var(--ink)',font:11,anchor:cur[0]>=0?'start':'end'});
+    svgAdd(svg,'circle',{cx:px([0,0]),cy:py([0,0]),r:4,fill:'var(--ink)'});
+    const mag=Math.hypot(cur[0],cur[1]);
+    $('#gsCap').innerHTML=`当前 c = (${fmt(cs[0],1)}, ${fmt(cs[1],1)}, ${fmt(cs[2],1)})，梯度 ∇L(w) = (1/n)Σ cᵢφ(xᵢ) = (1/3)·[(${fmt(cs[0],1)})·(3,1) + (${fmt(cs[1],1)})·(−1.4,2.1) + (${fmt(cs[2],1)})·(−1.8,−1.6)] = <b>(${fmt(cur[0],2)}, ${fmt(cur[1],2)})</b>，长度 ${fmt(mag,2)}。无论损失导数怎么变，结果都是三个训练方向的加权和——本图 p=2、三个方向恰好张满全平面；当 p≫n 时它们只张成一片薄薄的 S，梯度永远出不去。`;
+  }
+  function sync(){['gsC1','gsC2','gsC3'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,1));draw();}
+  ['gsC1','gsC2','gsC3'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §4 orthogonal decomposition ---------- */
+(()=>{
+  const svg=$('#orthViz');
+  const u=[4,1].map(v=>v/Math.hypot(4,1)); // unit direction of S
+  const phi1=[4,1], phi2=[2,0.5];
+  const cx=430,cy=225,S=58;
+  const px=v=>cx+v[0]*S, py=v=>cy-v[1]*S;
+  function draw(){
+    const w=[+$('#ovWx').value,+$('#ovWy').value];
+    const lam=+$('#ovLam').value;
+    const d=w[0]*u[0]+w[1]*u[1];
+    const wp=[d*u[0],d*u[1]];
+    const perp=[w[0]-wp[0],w[1]-wp[1]];
+    svg.innerHTML='';
+    svgMarker(svg,'ovArrA','var(--accent)');svgMarker(svg,'ovArrB','var(--blue)');svgMarker(svg,'ovArrW','var(--warm)');svgMarker(svg,'ovArrI','var(--ink)');
+    svgAdd(svg,'rect',{x:30,y:20,width:800,height:395,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    // span S band
+    const t=6.2;
+    svgAdd(svg,'line',{x1:px([-t*u[0],-t*u[1]]),y1:py([-t*u[0],-t*u[1]]),x2:px([t*u[0],t*u[1]]),y2:py([t*u[0],t*u[1]]),stroke:'var(--accent)',strokeWidth:14,opacity:.12});
+    svgAdd(svg,'line',{x1:px([-t*u[0],-t*u[1]]),y1:py([-t*u[0],-t*u[1]]),x2:px([t*u[0],t*u[1]]),y2:py([t*u[0],t*u[1]]),stroke:'var(--accent)',strokeWidth:1.6,dasharray:'6 5'});
+    svgHalo(svg,px([t*u[0],t*u[1]])+10,py([t*u[0],t*u[1]])+4,'S = span{φ(x₁),φ(x₂)}',{fill:'var(--accent)',font:11,anchor:'start'});
+    // axes
+    svgAdd(svg,'line',{x1:px([-6.8,0]),y1:py([0,0]),x2:px([6.8,0]),y2:py([0,0]),stroke:'var(--line)',opacity:.6});
+    svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,3.2]),x2:px([0,0]),y2:py([0,-3.2]),stroke:'var(--line)',opacity:.6});
+    // training features on S
+    [phi1,phi2].forEach((p,i)=>{
+      svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,0]),x2:px(p),y2:py(p),stroke:'var(--accent)',strokeWidth:2.4,markerEnd:'url(#ovArrA)'});
+      svgHalo(svg,px(p)+10,py(p)+(i===0?-6:16),'φ(x'+(i+1)+')=('+fmt(p[0],1)+','+fmt(p[1],1)+')',{fill:'var(--accent)',font:10.5,anchor:'start'});
+    });
+    // w parallel
+    svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,0]),x2:px(wp),y2:py(wp),stroke:'var(--blue)',strokeWidth:2.8,markerEnd:'url(#ovArrB)'});
+    svgHalo(svg,(cx+px(wp))/2+(d>=0?10:-10),(cy+py(wp))/2-14,'w∥=('+fmt(wp[0],2)+','+fmt(wp[1],2)+')',{fill:'var(--blue)',font:10.5,anchor:d>=0?'start':'end'});
+    // w total (from origin to w)
+    svgAdd(svg,'line',{x1:px([0,0]),y1:py([0,0]),x2:px(w),y2:py(w),stroke:'var(--ink)',strokeWidth:3,markerEnd:'url(#ovArrI)'});
+    // w_perp: from w_parallel tip to w tip
+    svgAdd(svg,'line',{x1:px(wp),y1:py(wp),x2:px(w),y2:py(w),stroke:'var(--warm)',strokeWidth:2.4,markerEnd:'url(#ovArrW)'});
+    svgHalo(svg,px(w)+12,py(w),'w=('+fmt(w[0],1)+','+fmt(w[1],1)+')',{fill:'var(--ink)',font:11,anchor:w[0]>=0?'start':'end'});
+    // right-angle marker at w_parallel tip: between ray (wp→w) and ray (wp→away from origin)
+    const ax=px(wp),ay=py(wp),bx=px(w),by=py(w);
+    const d1x=bx-ax,d1y=by-ay,n1=Math.hypot(d1x,d1y)||1;
+    const d2x=ax-cx,d2y=ay-cy,n2=Math.hypot(d2x,d2y)||1;
+    const q=12;
+    const p1=[ax+d1x/n1*q,ay+d1y/n1*q];
+    const p2=[ax+d2x/n2*q,ay+d2y/n2*q];
+    const p3=[p1[0]+d2x/n2*q,p1[1]+d2y/n2*q];
+    svgAdd(svg,'path',{d:`M${p1[0]},${p1[1]} L${p3[0]},${p3[1]} L${p2[0]},${p2[1]}`,fill:'none',stroke:'var(--muted)',strokeWidth:1.2});
+    svgHalo(svg,(ax+bx)/2,(ay+by)/2+16,'w⊥',{fill:'var(--warm)',font:10.5});
+    // numeric panel (right side textual, in caption)
+    const pred1=w[0]*phi1[0]+w[1]*phi1[1], pred1p=wp[0]*phi1[0]+wp[1]*phi1[1];
+    const pred2=w[0]*phi2[0]+w[1]*phi2[1], pred2p=wp[0]*phi2[0]+wp[1]*phi2[1];
+    const perpDot=perp[0]*phi1[0]+perp[1]*phi1[1];
+    const nw2=w[0]*w[0]+w[1]*w[1], nwp2=wp[0]*wp[0]+wp[1]*wp[1], nperp2=perp[0]*perp[0]+perp[1]*perp[1];
+    $('#ovCap').innerHTML=`训练预测对照（现算）：w·φ(x₁)=<b>${fmt(pred1,2)}</b> vs w∥·φ(x₁)=<b>${fmt(pred1p,2)}</b>；w·φ(x₂)=<b>${fmt(pred2,2)}</b> vs w∥·φ(x₂)=<b>${fmt(pred2p,2)}</b>；垂直内积 w⊥·φ(x₁)=${fmt(perpDot,2)}。勾股账：‖w‖²=${fmt(nw2,3)} = ‖w∥‖²+‖w⊥‖² = ${fmt(nwp2,3)}+${fmt(nperp2,3)}。正则化差价 J(w)−J(w∥)=λ‖w⊥‖² = ${fmt(lam,1)}×${fmt(nperp2,3)} = <b>${fmt(lam*nperp2,3)}</b>——只要 w⊥≠0，带平方范数正则化的最优解就会把这部分扔掉。`;
+  }
+  function sync(){$('#ovWxval').textContent=fmt(+$('#ovWx').value,1);$('#ovWyval').textContent=fmt(+$('#ovWy').value,1);$('#ovLamval').textContent=fmt(+$('#ovLam').value,1);draw();}
+  ['ovWx','ovWy','ovLam'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §5 reparam prediction ---------- */
+(()=>{
+  const svg=$('#reparamViz');
+  const xs=[0,0.9,2.1,3.2], alphas=[1.0,-0.6,0.8,-0.4];
+  const ker=(a,b)=>(1+a*b)*(1+a*b);
+  const xmin=-0.6,xmax=4.1;
+  const px=v=>60+(v-xmin)/(xmax-xmin)*760;
+  function draw(){
+    const xq=+$('#rpX').value;
+    svg.innerHTML='';
+    // top axis
+    const yA=90;
+    const contribs=xs.map((x,i)=>alphas[i]*ker(x,xq));
+    const maxh=Math.max(...contribs.map(Math.abs),1e-9);
+    svgAdd(svg,'line',{x1:60,y1:yA,x2:820,y2:yA,stroke:'var(--line)',strokeWidth:1.5});
+    xs.forEach((x,i)=>{
+      const h=contribs[i];
+      svgAdd(svg,'circle',{cx:px(x),cy:yA,r:6,fill:h>=0?'var(--accent)':'var(--warm)'});
+      svgHalo(svg,px(x),yA+22,'x'+(i+1)+'='+fmt(x,1),{font:10,fill:'var(--muted)'});
+      svgHalo(svg,px(x),yA+42,'α'+(i+1)+'='+fmt(alphas[i],1),{font:9.5,fill:alphas[i]>=0?'var(--accent)':'var(--warm)'});
+      // contribution bar (height normalized to the current max |contribution|)
+      const bh=h/maxh*30;
+      svgAdd(svg,'rect',{x:px(x)-7,y:bh>=0?yA-50-bh:yA-50,width:14,height:Math.abs(bh),fill:h>=0?'var(--accent)':'var(--warm)',opacity:.32,rx:2});
+      svgHalo(svg,px(x),bh>=0?yA-50-bh-8:yA-50+Math.abs(bh)+14,'α'+(i+1)+'k='+fmt(h,2),{font:9,fill:h>=0?'var(--accent)':'var(--warm)'});
+    });
+    // query
+    svgAdd(svg,'line',{x1:px(xq),y1:yA-70,x2:px(xq),y2:322,stroke:'var(--blue)',strokeWidth:1.4,strokeDasharray:'5 4'});
+    svgAdd(svg,'rect',{x:px(xq)-6,y:yA-6,width:12,height:12,transform:`rotate(45 ${px(xq)} ${yA})`,fill:'var(--blue)'});
+    svgHalo(svg,px(xq),yA+64,'x_q='+fmt(xq,2),{font:10,fill:'var(--blue)'});
+    // bottom curve f(x)
+    const yB=250,xminP=60,w=760;
+    const f=x=>alphas.reduce((s,a,i)=>s+a*ker(xs[i],x),0);
+    let lo=-1,hi=1;
+    for(let k=0;k<=140;k++){const v=f(xmin+(xmax-xmin)*k/140);lo=Math.min(lo,v);hi=Math.max(hi,v);}
+    const pad=(hi-lo)*0.18+0.1;lo-=pad;hi+=pad;
+    const py=v=>yB+30-(v-lo)/(hi-lo)*100;
+    svgAdd(svg,'rect',{x:60,y:py(hi)-6,width:760,height:(py(lo)-py(hi))+12,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    svgAdd(svg,'line',{x1:60,y1:py(0),x2:820,y2:py(0),stroke:'var(--line)',strokeWidth:1});
+    let d='M';
+    for(let k=0;k<=140;k++){const x=xmin+(xmax-xmin)*k/140;d+=(k===0?'':' L')+px(x)+','+py(f(x));}
+    svgAdd(svg,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
+    const fq=f(xq);
+    svgAdd(svg,'circle',{cx:px(xq),cy:py(fq),r:6.5,fill:'var(--blue)'});
+    svgHalo(svg,px(xq)+(xq>2.3?10:-10),py(fq)-12,'f(x_q)='+fmt(fq,3),{font:10.5,fill:'var(--blue)',anchor:xq>2.3?'start':'end'});
+    svgHalo(svg,440,py(lo)-6,'f_α(x)=Σ αᵢk(xᵢ,x)，k(x,z)=(1+xz)²（140 个采样点由公式现算）',{font:10,fill:'var(--muted)'});
+    // dual route numbers
+    const w0=alphas.reduce((s,a)=>s+a,0), w1=alphas.reduce((s,a,i)=>s+a*xs[i],0);
+    const explicit=w0*1+w1*xq;
+    const kvals=xs.map((x,i)=>ker(x,xq));
+    const sum=kvals.reduce((s,k,i)=>s+alphas[i]*k,0);
+    $('#rpCap').innerHTML=`核路线：k(xᵢ,x_q) = (${kvals.map(k=>fmt(k,2)).join(', ')})，加权求和 Σαᵢk(xᵢ,x_q) = ${kvals.map((k,i)=>fmt(alphas[i]*k,2)).join(' + ')} = <b>${fmt(sum,3)}</b>。显式路线：w=Φᵀα=(Σαᵢ, Σαᵢxᵢ)=(${fmt(w0,2)}, ${fmt(w1,2)})，φ(x_q)=(1, ${fmt(xq,2)})，w·φ(x_q)=${fmt(w0,1)}×1+(${fmt(w1,2)})×${fmt(xq,2)} = <b>${fmt(explicit,3)}</b>。两条路线逐位一致：kernel trick 与显式构造数学等价，只是前者从未访问 φ 的“高维内容”。`;
+  }
+  function sync(){$('#rpXval').textContent=fmt(+$('#rpX').value,2);draw();}
+  $('#rpX').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §6 gram heatmap ---------- */
+(()=>{
+  const svg=$('#gramViz');
+  let pts=null;
+  function regen(){
+    const mk=(cx,cy)=>[cx+(Math.random()-.5)*1.3, cy+(Math.random()-.5)*1.3];
+    pts=[...[0,0,0].map(()=>mk(1.1,1.0)), ...[0,0,0].map(()=>mk(3.0,2.6))];
+  }
+  regen();
+  const ker=(a,b,s)=>{const d2=(a[0]-b[0])**2+(a[1]-b[1])**2;return Math.exp(-d2/(2*s*s));};
+  function color(v){ // 1 -> deep blue, 0 -> pale yellow
+    const h=215-165*v, sat=70+12*v, lig=88-56*v;
+    return `hsl(${fmt(h,0)},${fmt(sat,0)}%,${fmt(lig,0)}%)`;
+  }
+  function draw(){
+    const s=+$('#gvSig').value;
+    svg.innerHTML='';
+    const scat={x0:60,y0:40,w:300,h:280};
+    const xmin=-0.2,xmax=4.4,ymin=-0.4,ymax=4.0;
+    const px=v=>scat.x0+(v-xmin)/(xmax-xmin)*scat.w;
+    const py=v=>scat.y0+scat.h-(v-ymin)/(ymax-ymin)*scat.h;
+    svgAdd(svg,'rect',{x:scat.x0,y:scat.y0,width:scat.w,height:scat.h,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    pts.forEach((p,i)=>svgAdd(svg,'circle',{cx:px(p[0]),cy:py(p[1]),r:6.5,fill:i<3?'var(--accent)':'var(--warm)',opacity:.9}));
+    svgHalo(svg,scat.x0+scat.w/2,scat.y0+scat.h+20,'输入空间：两簇各 3 个点（随机生成）',{font:10.5,fill:'var(--muted)'});
+    // heatmap
+    const h0={x0:430,y0:40,cell:62,gap:3};
+    let maxOff=0,minOff=1;
+    for(let i=0;i<6;i++)for(let j=0;j<6;j++){if(i!==j){const v=ker(pts[i],pts[j],s);maxOff=Math.max(maxOff,v);minOff=Math.min(minOff,v);}}
+    for(let i=0;i<6;i++){
+      svgAdd(svg,'text',{x:h0.x0-10,y:h0.y0+i*(h0.cell+h0.gap)+h0.cell/2+4,'text-anchor':'end','font-size':11,fill:'var(--muted)'},'x'+(i+1));
+      svgAdd(svg,'text',{x:h0.x0+i*(h0.cell+h0.gap)+h0.cell/2,y:h0.y0-12,'text-anchor':'middle','font-size':11,fill:'var(--muted)'},'x'+(i+1));
+      for(let j=0;j<6;j++){
+        const v=ker(pts[i],pts[j],s);
+        svgAdd(svg,'rect',{x:h0.x0+i*(h0.cell+h0.gap),y:h0.y0+j*(h0.cell+h0.gap),width:h0.cell,height:h0.cell,rx:4,fill:color(v),stroke:'var(--line)',strokeWidth:.7});
+        svgAdd(svg,'text',{x:h0.x0+i*(h0.cell+h0.gap)+h0.cell/2,y:h0.y0+j*(h0.cell+h0.gap)+h0.cell/2+4,'text-anchor':'middle','font-size':11,fill:v>0.72?'#fff':'#333',style:'font-weight:700'},fmt(v,2));
+      }
+    }
+    svgHalo(svg,h0.x0+3*(h0.cell+h0.gap)+h0.cell+20,h0.y0+6*(h0.cell+h0.gap)+26,'K=ΦΦᵀ（现算），行列同序',{font:10.5,fill:'var(--muted)'});
+    $('#gvCap').innerHTML=`当前 σ=${fmt(s,2)}（γ=1/(2σ²)=${fmt(1/(2*s*s),3)}）。对角线 Kᵢᵢ=k(xᵢ,xᵢ)=1 恒成立；非对角最大 ${fmt(maxOff,2)}、最小 ${fmt(minOff,2)}——σ 越大非对角普遍抬升（极端时 K 趋近全 1 矩阵），σ 越小簇间越“互相看不见”。热图关于主对角线对称（Kᵢⱼ=Kⱼᵢ）。点“随机换一批样本”会真用 Math.random 重新生成两簇坐标，深色块的位置随样本移动。`;
+  }
+  function sync(){$('#gvSigval').textContent=fmt(+$('#gvSig').value,2);draw();}
+  $('#gvSig').addEventListener('input',sync);
+  $('#gvRand').addEventListener('click',()=>{regen();draw();toast('已重新随机生成 6 个样本点');});
+  sync();
+})();
+
+/* ---------- §7 steps walkthrough ---------- */
+(()=>{
+  const svg=$('#stepsViz');
+  const Phi=[[1,0],[1,1],[1,2]], alpha=[1,-1,2], y=[2,4,7];
+  const K=Phi.map(a=>Phi.map(b=>a[0]*b[0]+a[1]*b[1]));
+  const w=[0,0].map((_,k)=>Phi.reduce((s,r,i)=>s+alpha[i]*r[k],0));
+  const pw=Phi.map(r=>r[0]*w[0]+r[1]*w[1]);
+  const Ka=K.map(row=>row.reduce((s,v,i)=>s+v*alpha[i],0));
+  const L1=y.reduce((s,v,i)=>s+(v-pw[i])**2,0)/3, L2=y.reduce((s,v,i)=>s+(v-Ka[i])**2,0)/3;
+  const STEPS=[
+    {t:'第 1 步：重参数化 w=Φᵀα',rows:[['w₁ = 1×1 + 1×(−1) + 1×2',fmt(w[0],0)],['w₂ = 0×1 + 1×(−1) + 2×2',fmt(w[1],0)]],note:'Step Ⅰ：把 w 限制在样本 span 中，未知量换成 α∈R³。'},
+    {t:'第 2 步：显式路线 Φw',rows:pw.map((v,i)=>['(Φw)'+(i+1)+' = 1×'+fmt(w[0],0)+' + '+fmt(Phi[i][1],0)+'×'+fmt(w[1],0),fmt(v,0)]),note:'用特征矩阵与 w 逐行相乘——这条路要真正访问每个特征坐标。'},
+    {t:'第 3 步：Gram 矩阵 K=ΦΦᵀ',rows:[[0,1,2].map(i=>[0,1,2].map(j=>fmt(K[i][j],0)).join(' ')).join(' / '),'n×n'],note:'第 (i,j) 格 = 1 + xᵢxⱼ：只用了“内积”这一种信息。'},
+    {t:'第 4 步：核路线 Kα',rows:Ka.map((v,i)=>['(Kα)'+(i+1)+' = '+K[i].map((v2,j)=>fmt(v2,0)+'×'+fmt(alpha[j],0)).join(' + '),fmt(v,0)]),note:'Step Ⅱ+Ⅲ：识别内积、替换成 k，全程没有出现 6 维向量。'},
+    {t:'第 5 步：损失对照（凸性保留）',rows:[['‖y−Φw‖²/3',fmt(L1,3)],['‖y−Kα‖²/3',fmt(L2,3)]],note:'两条损失逐位一致——核化没有改变要最小化的量，只是换了住址。'}
+  ];
+  let idx=-1;
+  function draw(){
+    svg.innerHTML='';
+    const x0=40,y0=26;
+    STEPS.forEach((st,i)=>{
+      const done=i<=idx;
+      const y=y0+i*54;
+      svgAdd(svg,'rect',{x:x0,y,width:800,height:46,rx:8,fill:done?'color-mix(in srgb,var(--accent) 8%, var(--surface))':'var(--surface)',stroke:done?'var(--accent)':'var(--line)',strokeWidth:done?1.8:1});
+      svgAdd(svg,'circle',{cx:x0+22,cy:y+23,r:11,fill:done?'var(--accent)':'var(--surface2)',stroke:'var(--line)'});
+      svgAdd(svg,'text',{x:x0+22,y:y+27,'text-anchor':'middle','font-size':11,fill:done?'#fff':'var(--muted)','font-weight':700},String(i+1));
+      svgAdd(svg,'text',{x:x0+46,y:y+20,'font-size':12,'font-weight':700,fill:done?'var(--ink)':'var(--muted)'},st.t);
+      svgAdd(svg,'text',{x:x0+46,y:y+37,'font-size':10.5,fill:'var(--muted)'},st.rows.map(r=>r[0]+' = '+r[1]).join('   |   '));
+    });
+    const st=idx>=0?STEPS[idx]:null;
+    $('#stCap').innerHTML=st?`<b>${st.t}</b> — ${st.note}<br>当前已完成 ${idx+1}/${STEPS.length} 步。${idx===STEPS.length-1?' 全部对上：Φw 与 Kα 给出同一组训练预测 ('+pw.map(v=>fmt(v,0)).join(', ')+')，损失同为 '+fmt(L1,3)+'。':''}`:`点击“下一步”逐步点亮五步计算。全部数值（w、Φw、K、Kα、损失）由页面内公式现算，可先自己手算再对答案。`;
+  }
+  $('#stNext').addEventListener('click',()=>{idx=Math.min(idx+1,STEPS.length-1);draw();});
+  $('#stReset').addEventListener('click',()=>{idx=-1;draw();});
+  draw();
+})();
+
+/* ---------- §8 polynomial kernel ---------- */
+(()=>{
+  const svg=$('#polyViz');
+  function draw(){
+    const x1=+$('#pvX1').value,x2=+$('#pvX2').value,z1=+$('#pvZ1').value,z2=+$('#pvZ2').value;
+    const terms=[
+      ['1','1×1',1],
+      ['2x₁z₁','2×'+fmt(x1*z1,2)+'×'+fmt(x1*z1,2),2*x1*z1],
+      ['2x₂z₂','2×'+fmt(x2,1)+'×'+fmt(z2,1),2*x2*z2],
+      ['x₁²z₁²',fmt(x1*x1,2)+'×'+fmt(z1*z1,2),x1*x1*z1*z1],
+      ['2x₁x₂z₁z₂','2×'+fmt(x1*x2,2)+'×'+fmt(z1*z2,2),2*x1*x2*z1*z2],
+      ['x₂²z₂²',fmt(x2*x2,2)+'×'+fmt(z2*z2,2),x2*x2*z2*z2]
+    ];
+    const kern=Math.pow(1+x1*z1+x2*z2,2);
+    svg.innerHTML='';
+    const x0=250,y0=30,rh=30;
+    svgAdd(svg,'text',{x:x0,y:y0-8,'font-size':11.5,fill:'var(--muted)','font-weight':700},'(1+xᵀz)² 的六项展开（数值现算）');
+    terms.forEach((t,i)=>{
+      const y=y0+i*rh;
+      svgAdd(svg,'text',{x:x0,y,'text-anchor':'end','font-size':11,fill:'var(--ink)'},t[0]);
+      svgAdd(svg,'rect',{x:x0+10,y:y-13,width:250,height:22,rx:4,fill:'var(--surface2)',opacity:.6});
+      const max=Math.max(...terms.map(tt=>Math.abs(tt[2])),0.01);
+      const wv=Math.abs(t[2])/max*238;
+      svgAdd(svg,'rect',{x:x0+12,y:y-11,width:Math.max(wv,2),height:18,rx:3,fill:t[2]>=0?'var(--accent)':'var(--warm)',opacity:.75});
+      svgAdd(svg,'text',{x:x0+272,y,'font-size':11,fill:'var(--ink)',style:'font-weight:700'},fmt(t[2],2));
+    });
+    const ysum=y0+6*rh+10;
+    svgAdd(svg,'line',{x1:x0-30,y1:ysum-14,x2:x0+320,y2:ysum-14,stroke:'var(--line)'});
+    svgHalo(svg,x0+60,ysum+6,'合计 k(x,z) = '+fmt(kern,3),{fill:'var(--accent)',font:12});
+    // feature-map comparison panel
+    const px0=610,y0b=30;
+    svgAdd(svg,'text',{x:px0,y:y0b-8,'font-size':11.5,fill:'var(--muted)','font-weight':700},'两套特征映射的内积对照');
+    const sqrt2=Math.SQRT2;
+    const phiS=[1,sqrt2*x1,sqrt2*x2,x1*x1,sqrt2*x1*x2,x2*x2];
+    const phiSz=[1,sqrt2*z1,sqrt2*z2,z1*z1,sqrt2*z1*z2,z2*z2];
+    const phiP=[1,x1,x2,x1*x1,x1*x2,x2*x2];
+    const phiPz=[1,z1,z2,z1*z1,z1*z2,z2*z2];
+    const ipS=phiS.reduce((s,v,i)=>s+v*phiSz[i],0);
+    const ipP=phiP.reduce((s,v,i)=>s+v*phiPz[i],0);
+    const rows=[
+      ['φ√=(1,√2x₁,√2x₂,x₁²,√2x₁x₂,x₂²)',ipS,'var(--accent)'],
+      ['φplain=(1,x₁,x₂,x₁²,x₁x₂,x₂²)',ipP,'var(--warm)']
+    ];
+    rows.forEach((r,i)=>{
+      const y=y0b+22+i*54;
+      svgAdd(svg,'rect',{x:px0,y,width:230,height:44,rx:8,fill:'var(--surface2)',opacity:.5,stroke:r[2]});
+      svgAdd(svg,'text',{x:px0+10,y:y+18,'font-size':9.5,fill:'var(--ink)'},r[0].slice(0,42));
+      svgAdd(svg,'text',{x:px0+10,y:y+34,'font-size':11,fill:r[2],'font-weight':700},'内积 = '+fmt(r[1],3));
+    });
+    const diff=kern-ipP;
+    svgHalo(svg,px0+112,y0b+22+2*54+16,'差 k−φplainᵀφplain = '+fmt(diff,3),{fill:'var(--muted)',font:10.5});
+    const crossZero=Math.abs(x1*x2*z1*z2)<1e-9;
+    $('#pvCap').innerHTML=`左：六项展开之和 = 1 + 2·(${fmt(x1*z1,2)}) + 2·(${fmt(x2*z2,2)}) + ${fmt(x1*x1*z1*z1,2)} + 2·(${fmt(x1*x2*z1*z2,2)}) + ${fmt(x2*x2*z2*z2,2)} = <b>${fmt(kern,3)}</b> = (1+xᵀz)²，其中 xᵀz=${fmt(x1*z1+x2*z2,2)}。右：带 √2 的特征映射内积 = <b>${fmt(ipS,3)}</b>（与 kernel 逐位一致）；漏掉 √2 的朴素特征内积 = ${fmt(ipP,3)}${crossZero?'（当前交叉项为 0，恰好相等）':'，差了 '+fmt(diff,3)+'——交叉项与线性项系数 2=(√2)² 被丢掉了'}`;
+  }
+  function sync(){['pvX1','pvX2','pvZ1','pvZ2'].forEach(id=>$('#'+id+'val').textContent=fmt(+$('#'+id).value,1));draw();}
+  ['pvX1','pvX2','pvZ1','pvZ2'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §9 RBF ---------- */
+(()=>{
+  const svg1=$('#rbfProfile'), svg2=$('#rbfSum');
+  const refs=[0.35,0.8,1.5];
+  const rmax=4;
+  const xs=[0.5,1.1,1.9,2.6,3.4], alphas=[0.9,-0.7,1.0,-0.6,0.8];
+  const xMin=-0.2,xMax=4.2;
+  const px1=r=>70+r/rmax*740, py1=v=>38+(1-v)*190;
+  const ker=(r,s)=>Math.exp(-r*r/(2*s*s));
+  function draw(){
+    const sUser=+$('#rbSig').value;
+    // --- profile ---
+    svg1.innerHTML='';
+    svgAdd(svg1,'rect',{x:70,y:38,width:740,height:190,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    [0,0.25,0.5,0.75,1].forEach(v=>{svgAdd(svg1,'line',{x1:70,y1:py1(v),x2:810,y2:py1(v),stroke:'var(--line)',opacity:.4});svgAdd(svg1,'text',{x:62,y:py1(v)+4,'text-anchor':'end','font-size':9.5,fill:'var(--muted)'},fmt(v,2));});
+    for(let k=0;k<=8;k++)svgAdd(svg1,'text',{x:px1(k/2),y:246,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},fmt(k/2,1));
+    const allS=[...refs,sUser];
+    const specs=[...refs.map((s,i)=>({s,user:false,col:['#c96a4a','#3d7ab8','#3aa0a0'][i]})),{s:sUser,user:true,col:'var(--violet)'}];
+    specs.forEach(sp=>{
+      let d='M';
+      for(let k=0;k<=150;k++){const r=rmax*k/150;d+=(k===0?'':' L')+px1(r)+','+py1(ker(r,sp.s));}
+      svgAdd(svg1,'path',{d,fill:'none',stroke:sp.col,strokeWidth:sp.user?3.2:1.8,opacity:sp.user?1:.75});
+    });
+    // marker at r = sigma_user: k = e^{-1/2}
+    const kHalf=Math.exp(-0.5);
+    svgAdd(svg1,'line',{x1:px1(sUser),y1:py1(kHalf),x2:px1(sUser),y2:py1(0),stroke:'var(--violet)',strokeWidth:1.2,strokeDasharray:'4 4'});
+    svgAdd(svg1,'circle',{cx:px1(sUser),cy:py1(kHalf),r:5,fill:'var(--violet)'});
+    svgHalo(svg1,px1(sUser)+8,py1(0)-6,'r=σ 时 k=e^(−1/2)≈'+fmt(kHalf,3),{fill:'var(--violet)',font:10.5,anchor:'start'});
+    // curve labels: place on-curve at height depending on rank of sigma, then anti-collide
+    const labH=[0.86,0.66,0.46,0.26];
+    const sorted=[...specs].sort((a,b)=>a.s-b.s);
+    const items=sorted.map((sp,i)=>{
+      const h=labH[i];
+      const r=Math.sqrt(2*Math.log(1/h))*sp.s;
+      return {sp,x:px1(Math.min(r,rmax)),y:py1(h),text:(sp.user?'σ='+fmt(sp.s,2)+'（你的）':'σ='+fmt(sp.s,2))};
+    });
+    const placed=spreadLabels(items,17);
+    placed.forEach(it=>svgHalo(svg1,it.x,it.y,it.text,{fill:it.sp.col,font:10.5}));
+    svgHalo(svg1,70,py1(1)-8,'kσ(0)=1：三条曲线 + 你的曲线都在此起步',{font:9.5,fill:'var(--muted)',anchor:'start'});
+    svgHalo(svg1,px1(2),262,'带符号位移 |x−x′|（横轴即一维距离）',{font:10,fill:'var(--muted)'});
+    $('#rbCap1').innerHTML=`参考曲线 σ=0.35（窄峰：稍离中心相似度即崩到 0）、σ=0.8、σ=1.5（宽峰：远处仍有影响），紫色加粗为你当前的 σ=${fmt(sUser,2)}（γ=${fmt(1/(2*sUser*sUser),3)}）。所有曲线在 r=0 处取 1（k(x,x)=1）；以 r=σ 为标尺，无论 σ 多少该处恒为 e^(−1/2)≈${fmt(kHalf,3)}——改 σ 本质是水平方向拉伸/压缩同一条曲线。曲线与标注均由公式现算，标签做了防重叠错开。`;
+    // --- sum curve ---
+    svg2.innerHTML='';
+    const f=x=>alphas.reduce((s,a,i)=>s+a*Math.exp(-((x-xs[i])**2)/(2*sUser*sUser)),0);
+    let lo=-1.4,hi=1.4,fmin=Infinity,fmax=-Infinity;
+    for(let k=0;k<=160;k++){const v=f(xMin+(xMax-xMin)*k/160);lo=Math.min(lo,v);hi=Math.max(hi,v);fmin=Math.min(fmin,v);fmax=Math.max(fmax,v);}
+    const pad=(hi-lo)*0.15;lo-=pad;hi+=pad;
+    const y0=40,H=200;
+    const px2=v=>70+(v-xMin)/(xMax-xMin)*740;
+    const py2=v=>y0+H-(v-lo)/(hi-lo)*H;
+    svgAdd(svg2,'rect',{x:70,y:y0,width:740,height:H,fill:'var(--surface2)',opacity:.35,stroke:'var(--line)'});
+    svgAdd(svg2,'line',{x1:70,y1:py2(0),x2:810,y2:py2(0),stroke:'var(--muted)',strokeWidth:1});
+    svgAdd(svg2,'text',{x:62,y:py2(0)+4,'text-anchor':'end','font-size':9.5,fill:'var(--muted)'},'0');
+    xs.forEach((x,i)=>{
+      const v=f(x);
+      svgAdd(svg2,'line',{x1:px2(x),y1:py2(0),x2:px2(x),y2:py2(alphas[i]*Math.exp(0)),stroke:'var(--line)',strokeWidth:1,opacity:.6});
+      svgAdd(svg2,'line',{x1:px2(x),y1:py2(0),x2:px2(x),y2:py2(v),stroke:alphas[i]>=0?'var(--accent)':'var(--warm)',strokeWidth:2.2});
+      svgAdd(svg2,'circle',{cx:px2(x),cy:py2(v),r:5.5,fill:alphas[i]>=0?'var(--accent)':'var(--warm)'});
+      svgHalo(svg2,px2(x),py2(v)+(alphas[i]>=0?-11:19),'α'+(i+1)+'='+fmt(alphas[i],1),{font:9.5,fill:alphas[i]>=0?'var(--accent)':'var(--warm)'});
+    });
+    let d='M';
+    for(let k=0;k<=160;k++){const x=xMin+(xMax-xMin)*k/160;d+=(k===0?'':' L')+px2(x)+','+py2(f(x));}
+    svgAdd(svg2,'path',{d,fill:'none',stroke:'var(--accent)',strokeWidth:2.6});
+    svgHalo(svg2,70,y0-6,'f_α(x)=Σ αᵢ·exp(−(x−xᵢ)²/(2σ²))，σ 联动上图（160 个采样点现算）',{font:10,fill:'var(--muted)',anchor:'start'});
+    const sumA=alphas.reduce((s,a)=>s+a,0);
+    const peaks=alphas.length;
+    $('#rbCap2').innerHTML=`σ=${fmt(sUser,2)} 时的整条预测函数：${peaks} 个训练点各是一个以 xᵢ 为中心的局部基函数，αᵢ>0 向上推、αᵢ<0 向下压。当前曲线最大值 ${fmt(fmax,2)}、最小值 ${fmt(fmin,2)}。σ→大 时各点影响范围互相重叠、曲线趋近平滑（极限趋向常数 Σαᵢ=${fmt(sumA,2)}）；σ→小 时每点只影响脚下、函数在一串尖峰之间自由摆动（训练误差变小、方差与过拟合风险升高）。带宽要靠 validation 选择，不能只看训练拟合。`;
+  }
+  function sync(){$('#rbSigval').textContent=fmt(+$('#rbSig').value,2);draw();}
+  $('#rbSig').addEventListener('input',sync);
+  sync();
+})();
+
+/* ---------- §10 PSD ---------- */
+(()=>{
+  const svg=$('#psdViz');
+  let a=[1,1];
+  function draw(){
+    const rho=+$('#pvRho').value;
+    svg.innerHTML='';
+    const M=[[1,rho],[rho,1]];
+    const eig1=1+rho, eig2=1-rho;
+    const legal=Math.abs(rho)<=1;
+    // matrix heatmap
+    const h0={x0:50,y0:46,cell:64};
+    const cmap=v=>v>=0?`hsl(215,${fmt(clamp(35+45*v,0,80),0)}%,${fmt(92-52*clamp(v,0,1),0)}%)`:`hsl(8,${fmt(clamp(35+45*(-v),0,80),0)}%,${fmt(92-52*clamp(-v,0,1),0)}%)`;
+    for(let i=0;i<2;i++)for(let j=0;j<2;j++){
+      const v=M[i][j];
+      svgAdd(svg,'rect',{x:h0.x0+j*(h0.cell+4),y:h0.y0+i*(h0.cell+4),width:h0.cell,height:h0.cell,rx:6,fill:cmap(v),stroke:'var(--line)'});
+      svgAdd(svg,'text',{x:h0.x0+j*(h0.cell+4)+h0.cell/2,y:h0.y0+i*(h0.cell+4)+h0.cell/2+4,'text-anchor':'middle','font-size':13,'font-weight':700,fill:v>0.55?'#fff':'#333'},fmt(v,2));
+    }
+    svgHalo(svg,h0.x0+h0.cell+2,h0.y0+2*(h0.cell+4)+28,'K（蓝正红负，现算）',{font:10,fill:'var(--muted)'});
+    // eigenvalue bars
+    const e0={x0:290,y0:52,w:200};
+    svgAdd(svg,'line',{x1:e0.x0,y1:e0.y0+72,x2:e0.x0+e0.w,y2:e0.y0+72,stroke:'var(--muted)',strokeWidth:1.2});
+    svgAdd(svg,'text',{x:e0.x0+e0.w/2,y:e0.y0-14,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'var(--muted)'},'特征值（λ=1±ρ）');
+    const bl=v=>e0.x0+e0.w/2+ v/3.6*(e0.w/2-6);
+    [[eig1,'λ₁=1+ρ'],[eig2,'λ₂=1−ρ']].forEach(([v,lab],i)=>{
+      const y=e0.y0+18+i*40;
+      const x0b=Math.min(e0.x0+e0.w/2,bl(v)),wb=Math.abs(bl(v)- (e0.x0+e0.w/2));
+      svgAdd(svg,'rect',{x:x0b,y,width:Math.max(wb,1.5),height:20,rx:3,fill:v>=0?'var(--accent)':'var(--danger)'});
+      svgAdd(svg,'text',{x:e0.x0,y:y+15,'font-size':10.5,fill:'var(--muted)'},lab);
+      svgHalo(svg,e0.x0+e0.w+16,y+15,fmt(v,2),{font:11,fill:v>=0?'var(--accent)':'var(--danger)',anchor:'start'});
+    });
+    // quadratic form panel
+    const q=a[0]*M[0][0]*a[0]+a[0]*M[0][1]*a[1]+a[1]*M[1][0]*a[0]+a[1]*M[1][1]*a[1];
+    const q0={x0:560,y0:30};
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0,'font-size':11,'font-weight':700,fill:'var(--muted)'},'二次型 aᵀKa（测试向量现算）');
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0+24,'font-size':11,fill:'var(--ink)'},`a=(${fmt(a[0],2)}, ${fmt(a[1],2)})`);
+    svgAdd(svg,'text',{x:q0.x0,y:q0.y0+46,'font-size':13,'font-weight':800,fill:q<-1e-12?'var(--danger)':'var(--accent)'},`aᵀKa = ${fmt(q,3)}`);
+    // verdict
+    svgHalo(svg,q0.x0,q0.y0+70,legal?'K ⪰ 0：任意 a 都有 aᵀKa ≥ 0':'K 不是 PSD：存在 a 使 aᵀKa < 0',{font:11,fill:legal?'var(--accent)':'var(--danger)',anchor:'start'});
+    if(legal){
+      // exhibit feature vectors: phi1, phi2 with inner product rho
+      const c1=Math.sqrt((1+rho)/2), s1=Math.sqrt((1-rho)/2);
+      const ph1=[c1,s1], ph2=[c1,-s1];
+      const combo=[a[0]*ph1[0]+a[1]*ph2[0], a[0]*ph1[1]+a[1]*ph2[1]];
+      const n2=combo[0]*combo[0]+combo[1]*combo[1];
+      svgAdd(svg,'text',{x:q0.x0,y:q0.y0+100,'font-size':10.5,fill:'var(--muted)'},`一组真实特征：φ(x₁)=(${fmt(c1,2)}, ${fmt(s1,2)})，φ(x₂)=(${fmt(c1,2)}, ${fmt(-s1,2)})`);
+      svgAdd(svg,'text',{x:q0.x0,y:q0.y0+121,'font-size':10.5,fill:'var(--ink)'},`‖a₁φ(x₁)+a₂φ(x₂)‖² = ${fmt(n2,3)}（与 aᵀKa 逐位一致）`);
+      svgHalo(svg,q0.x0,q0.y0+150,'范数平方不可能是负数 → PSD',{font:10.5,fill:'var(--accent)',anchor:'start'});
+    }else{
+      svgAdd(svg,'text',{x:q0.x0,y:q0.y0+100,'font-size':10.5,fill:'var(--danger)'},'不存在实特征向量组能实现这个内积表：任何 ΦΦᵀ 的二次型都是范数平方。');
+      svgAdd(svg,'text',{x:q0.x0,y:q0.y0+121,'font-size':10.5,fill:'var(--muted)'},`最小特征值 ${fmt(Math.min(eig1,eig2),2)} < 0 → 沿其特征向量取 a 即得 aᵀKa<0。`);
+    }
+    $('#pvCap').innerHTML=`当前 ρ=${fmt(rho,2)}：λ₁=1+ρ=${fmt(eig1,2)}，λ₂=1−ρ=${fmt(eig2,2)}${legal?'，都非负 → PSD ✓。':'，λ₂ 为负 → 不是 PSD ✗。'}取 a=(${fmt(a[0],2)}, ${fmt(a[1],2)}) 时 aᵀKa=${fmt(q,3)}${q<-1e-12?'（负值！这就是“对称且元素非负”仍不够的原因）':'。'}把 ρ 滑到 2 复现讲义题 4 的 [[1,2],[2,1]]：特征值 3 与 −1，a=(1,−1) 给出 −2。`;
+  }
+  function sync(){$('#pvRhoval').textContent=fmt(+$('#pvRho').value,2);draw();}
+  $('#pvRho').addEventListener('input',sync);
+  $('#pvA11').addEventListener('click',()=>{a=[1,1];draw();});
+  $('#pvA1m').addEventListener('click',()=>{a=[1,-1];draw();});
+  $('#pvARand').addEventListener('click',()=>{
+    const th=Math.random()*2*Math.PI;
+    a=[Math.cos(th),Math.sin(th)];
+    draw();toast('随机测试向量 a=('+fmt(a[0],2)+', '+fmt(a[1],2)+')');
+  });
+  sync();
+})();
+
+/* ---------- §11 cost ---------- */
+(()=>{
+    const svg=$('#costViz');
+    function draw(){
+    const n=Math.pow(10,+$('#cv2N').value), p=Math.pow(10,+$('#cv2P').value);
+    const memPhi=n*p*8, memK=n*n*8;
+    const ops=n**3;
+    const sec=ops/1e9;
+    svg.innerHTML='';
+    const x0=210,y0=36,w=560;
+    const lo=-4,hi=18;
+    const bw=v=>clamp((Math.log10(Math.max(v,1e-4))-lo)/(hi-lo),0,1)*w;
+    svgAdd(svg,'line',{x1:x0,y1:y0-6,x2:x0+w,y2:y0-6,stroke:'var(--line)'});
+    for(const e of [-3,0,3,6,9,12,15,18]){
+      const x=x0+(e-lo)/(hi-lo)*w;
+      svgAdd(svg,'line',{x1:x,y1:y0-6,x2:x,y2:y0+180,stroke:'var(--line)',opacity:.3});
+      svgAdd(svg,'text',{x,y:y0-12,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},'1e'+e);
+    }
+    const bars=[
+      {label:'显式 Φ 内存 (n·p·8B)',v:memPhi,c:'var(--warm)'},
+      {label:'K 内存 (n²·8B)',v:memK,c:'var(--accent)'},
+      {label:'稠密求解耗时 O(n³)/10⁹ ops',v:sec,c:'var(--blue)',unit:humanTime(sec)}
+    ];
+    bars.forEach((b,i)=>{
+      const y=y0+14+i*58;
+      svgAdd(svg,'text',{x:x0-12,y:y+13,'text-anchor':'end','font-size':10.5,fill:'var(--ink)'},b.label);
+      const wpx=bw(b.v);
+      svgAdd(svg,'rect',{x:x0,y,width:Math.max(wpx,2),height:24,rx:5,fill:b.c,opacity:.85});
+      svgHalo(svg,x0+Math.max(wpx,2)+8,y+16,b.unit||humanSize(b.v),{fill:b.c,font:10.5,anchor:'start'});
+    });
+    const infeasible=memK>1e12;
+    svgHalo(svg,x0+8,y0+196,infeasible?'n 已达 '+fmt(n,0)+'：K 需要 '+humanSize(memK)+'，朴素 kernel matrix 不可行（需 Nyström / 随机 Fourier 特征 / 其他模型）':'n='+fmt(n,0)+'，p='+fmt(p,0)+'：Φ 要 '+humanSize(memPhi)+'，K 只要 '+humanSize(memK)+'，核化把账单从 n·p 换成 n²。',{fill:'var(--muted)',font:10.5,anchor:'start'});
+    $('#cv2Cap').innerHTML=`当前 n=10^${fmt(+$('#cv2N').value,2)}=${fmt(n,0)}，p=10^${fmt(+$('#cv2P').value,2)}=${fmt(p,0)}。显式路线：内存 ${humanSize(memPhi)}；kernel 路线：内存 ${humanSize(memK)}、构造需 ${fmt(n*n,0)} 个 kernel 值、稠密求解 ${fmt(ops,0)} 次浮点运算（≈${humanTime(sec)}，按 10⁹ ops/s 折算的量级估计）。条形长度按对数刻度现画——同样的 n 下把 p 拉高，Φ 条无限变长而 K 条纹丝不动；反之把 n 拉到 10⁶，K 一条就先爆。`;
+  }
+  function humanTime(sec){
+    if(sec<1e-3)return fmt(sec*1e6,1)+' μs';
+    if(sec<1)return fmt(sec*1e3,1)+' ms';
+    if(sec<60)return fmt(sec,1)+' s';
+    if(sec<3600)return fmt(sec/60,1)+' min';
+    if(sec<86400)return fmt(sec/3600,1)+' h';
+    if(sec<3.15e7)return fmt(sec/86400,1)+' 天';
+    return fmt(sec/3.15e7,1)+' 年';
+  }
+  function sync(){$('#cv2Nval').textContent='10^'+fmt(+$('#cv2N').value,2);$('#cv2Pval').textContent='10^'+fmt(+$('#cv2P').value,2);draw();}
+  ['cv2N','cv2P'].forEach(id=>$('#'+id).addEventListener('input',sync));
+  sync();
+})();
+
+/* ---------- §13 chain ---------- */
+(()=>{
+  const svg=$('#chainViz');
+  const nodes=[
+    {t:'① 加特征',s:'弯边界变直'},
+    {t:'② 特征爆炸',s:'p=C(d+m,m)'},
+    {t:'③ 梯度在 span',s:'∇L=Σcᵢφ'},
+    {t:'④ 最优解在 span',s:'representer'},
+    {t:'⑤ w=Φᵀα',s:'预测只剩内积'},
+    {t:'⑥ K 与 k 替换',s:'ŷ=Kα'}
+  ];
+  const w=118,h=64,gap=18,x0=22,y0=40;
+  const mk=svgMarker(svg,'chA','#176653');
+  nodes.forEach((n,i)=>{
+    const x=x0+i*(w+gap);
+    svgAdd(svg,'rect',{x,y:y0,width:w,height:h,rx:12,fill:'color-mix(in srgb,#176653 7%, var(--surface))',stroke:'#176653',strokeWidth:1.8});
+    svgAdd(svg,'text',{x:x+w/2,y:y0+27,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--ink)'},n.t);
+    svgAdd(svg,'text',{x:x+w/2,y:y0+46,'text-anchor':'middle','font-size':9.5,fill:'var(--muted)'},n.s);
+    if(i<nodes.length-1){
+      const xa=x+w,xb=x+w+gap;
+      svgAdd(svg,'line',{x1:xa,y1:y0+h/2,x2:xb,y2:y0+h/2,stroke:'#176653',strokeWidth:2,markerEnd:mk});
+    }
+  });
+  svgHalo(svg,x0+3*(w+gap)+w/2,y0+h+34,'理论保证（③④）让 ①② 的愿望可行；操作流程（⑤⑥）把它变成算法',{font:10.5,fill:'var(--muted)'});
+})();
+
+/* ---------- §13 checklist ---------- */
+(()=>{
+  const items=[
+    '我能写出 φ、Φ、w、α 的维度，并说清 d（输入维）与 p（特征维）的区别。',
+    '我能手算 x=(2,3) 在圆例子中的 f(x)=4−x₁²−x₂²=−9 并判断圆内外。',
+    '我能推导 ∇L(w)=(1/n)Σcᵢφ(xᵢ)∈S，并说出 w₀≠0 时会发生什么。',
+    '我能复述 representer theorem 的条件（损失只经训练预测 + 平方范数正则 λ>0）与勾股定理的作用。',
+    '我能从 w=Φᵀα 逐步推出 f_α(x)=Σαᵢk(xᵢ,x)=k_xᵀα。',
+    '我能从 Φ 手算 K=ΦΦᵀ，并用 ŷ=Kα 得到训练预测（题 1：ŷ=(2,5,8)）。',
+    '我知道 (1+xᵀz)² 的特征映射需要 √2 缩放，并能指出漏掉 √2 的错误。',
+    '我能说明 RBF 的 σ 小 / 大分别对 f_α 产生什么影响，以及为什么带宽要用验证集选。',
+    '我能证明 aᵀKa=‖Φᵀa‖²≥0，并举出一个对称但不是 Gram matrix 的 2×2 例子。'
+  ];
+  const box=$('#checkList');
+  box.innerHTML=items.map((t,i)=>`<label><input type="checkbox" data-ck="${i}"><span>${t}</span></label>`).join('');
+  const score=$('#checkScore');
+  function upd(){
+    const done=$$('#checkList input').filter(c=>c.checked).length;
+    score.textContent=`已确认 ${done}/${items.length} 项${done===items.length?'——第 9 讲可以收官，向第 10 讲出发。':'。全部勾掉再进入下一讲。'}`;
+    $$('#checkList label').forEach(l=>l.classList.toggle('done',l.querySelector('input').checked));
+  }
+  box.addEventListener('change',upd);
+  upd();
+})();
+
+/* ---------- mode system ---------- */
+(()=>{
+  window.FLOW_META={
+    hero:{mode:'core',tag:'起点'},map:{mode:'core',tag:'地图'},
+    feature:{mode:'core',tag:'特征映射'},explosion:{mode:'core',tag:'特征爆炸'},
+    gradspan:{mode:'core',tag:'梯度'},representer:{mode:'core',tag:'representer'},
+    reparam:{mode:'core',tag:'核函数'},gram:{mode:'core',tag:'Gram'},threesteps:{mode:'core',tag:'三步'},
+    poly:{mode:'extra',tag:'拓展'},rbf:{mode:'extra',tag:'拓展'},psd:{mode:'extra',tag:'拓展'},cost:{mode:'extra',tag:'拓展'},
+    confuse:{mode:'core',tag:'误区'},takeaway:{mode:'core',tag:'收束'}
+  };
+  const REASON={
+    map:'先给全图：第 9 讲在整门课的位置，以及 kernel trick 的主线。',
+    feature:'一切从“加特征、边界变直”开始——先建立几何直觉与记号。',
+    explosion:'直觉的代价：显式构造特征在组合意义下不可行。',
+    gradspan:'第一条理论线索：梯度下降走不出训练特征的张成空间。',
+    representer:'更强的保证：正则化最优解主动住在同一个 span 中。',
+    reparam:'换成 α 表示后，预测公式里只剩特征内积——替换的大门在此打开。',
+    gram:'训练点之间的内积一次收进 K，训练预测变成一次矩阵乘法。',
+    threesteps:'把整套流程压缩成三步操作规程，并确认凸性没丢。',
+    poly:'工具箱第一件：多项式族 kernel 与它的 √2 系数陷阱。',
+    rbf:'工具箱第二件：高斯 RBF、尺度 σ 与无限维特征空间。',
+    psd:'合法性判据：Gram matrix 一定是 PSD，反过来怎么证伪。',
+    cost:'经济账：n×p 换 n×n，什么时候赚、什么时候亏。',
+    confuse:'收束前先扫掉五句“听起来对”的常见误区。',
+    takeaway:'最后把核心问题、公式、自查清单和下一讲串起来。'
+  };
+  const sections=[...document.querySelectorAll('#main section')];
+  let mode=localStorage.getItem('iml-mode')||'core';
+  const pathHint=$('#pathHint');
+  function visible(){return sections.filter(sec=>!sec.classList.contains('mode-hidden'));}
+  function secTitle(sec){
+    const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+    if(!h)return sec.id;
+    const n=h.querySelector('.num');
+    return n?n.textContent+' '+[...h.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent.trim()).filter(Boolean).join('').trim():h.textContent.trim();
+  }
+  function rebuildBridges(){
+    $$('.next-bridge').forEach(b=>b.remove());
+    const vis=visible();
+    vis.forEach((sec,idx)=>{
+      const next=vis[idx+1];if(!next)return;
+      const reason=REASON[next.id];if(!reason)return;
+      const b=document.createElement('div');b.className='next-bridge';
+      b.innerHTML=`<span class="nb-label">下一步 →</span><span><a href="#${next.id}">${secTitle(next)}</a>：${reason}</span>`;
+      sec.appendChild(b);
+    });
+  }
+  function applyTags(){
+    sections.forEach(sec=>{
+      if(sec.querySelector(':scope > .sec-tag'))return;
+      const meta=window.FLOW_META[sec.id]||{mode:'core',tag:''};
+      const tag=document.createElement('span');tag.className='sec-tag '+(meta.mode==='core'?'core':'extra');tag.textContent=meta.mode==='core'?'核心':'拓展';
+      const h=sec.querySelector('h2.sec-title')||sec.querySelector('h1');
+      if(h)h.insertBefore(tag,h.firstChild);
+    });
+  }
+  function applyMode(){
+    document.body.dataset.mode=mode;
+    localStorage.setItem('iml-mode',mode);
+    sections.forEach(sec=>{
+      const meta=window.FLOW_META[sec.id]||{mode:'core'};
+      sec.classList.toggle('mode-hidden',mode==='core'&&meta.mode==='extra');
+    });
+    $$('#pathBar [data-mode]').forEach(b=>{
+      const on=b.dataset.mode===mode;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on));
+    });
+    const hiddenCount=sections.filter(s=>s.classList.contains('mode-hidden')).length;
+    pathHint.textContent=mode==='core'
+      ? `已聚焦 ${sections.length-hiddenCount} 个核心小节；隐藏 ${hiddenCount} 个拓展小节。切换“完整课程”可查看全部。`
+      : `完整模式：${sections.length} 个小节全部展开。`;
+    $$('#toc a').forEach(a=>{const sec=document.getElementById(a.getAttribute('href').slice(1));if(sec)a.style.display=sec.classList.contains('mode-hidden')?'none':'';});
+    $$('#conceptMap .cm-node').forEach(g=>{
+      const id=g.getAttribute('data-target');if(!id)return;
+      const sec=document.getElementById(id);
+      const hidden=mode==='core'&&sec&&sec.classList.contains('mode-hidden');
+      g.style.opacity=hidden?'.42':'1';
+      if(hidden){
+        g.addEventListener('click',()=>{
+          mode='full';applyMode();
+          setTimeout(()=>sec.scrollIntoView({behavior:'smooth',block:'start'}),80);
+        });
+      }
+    });
+    setTimeout(rebuildBridges,0); // build bridges after the glossary pass so link text doesn't steal first-occurrence marks
+    if(mode==='full'){ // redraw every interactive now that hidden sections are visible
+      $$('.control input[type=range]').forEach(r=>r.dispatchEvent(new Event('input',{bubbles:true})));
+    }
+    document.dispatchEvent(new CustomEvent('iml-mode-change'));
+  }
+  $('#pathBar').addEventListener('click',e=>{
+    const b=e.target.closest('[data-mode]');if(!b)return;
+    mode=b.dataset.mode;applyMode();
+  });
+  applyTags();applyMode();
+})();
+
+/* ---------- glossary ---------- */
+(()=>{
+  const G=[
+    {t:'特征映射',en:'feature map',f:'\\phi:\\mathcal X\\to\\mathbb R^p',d:'把原始输入变换成特征向量的函数；圆例子取全部次数≤2 的单项式。',r:'位置：§1。用处：给线性模型装上非线性表达力。重要：模型对 φ(x) 线性、对 x 非线性；p 可以远大于 d。'},
+    {t:'特征矩阵',en:'feature matrix',f:'\\Phi\\in\\mathbb R^{n\\times p},\\ \\Phi_{i,:}=\\phi(x_i)^\\top',d:'n 个样本的特征向量逐行堆叠的大表；配合 w=Φᵀα、K=ΦΦᵀ 使用。',r:'位置：§1。用处：把逐样本公式压缩成矩阵乘法并检查维度。重要：无限维时 Φ 只是记号，真正存在的是逐对内积。'},
+    {t:'张成子空间',en:'span',f:'S=\\operatorname{span}\\{\\phi(x_1),\\ldots,\\phi(x_n)\\}',d:'训练特征向量所有线性组合的集合，至多 n 维。',r:'位置：§3。用处：把搜索范围从 p 维缩到 n 维。重要：p≫n 时 S 只是特征空间薄薄一片，梯度与最优解都住在里面。'},
+    {t:'正交分解',en:'orthogonal decomposition',f:'w=w_\\parallel+w_\\perp,\\ w_\\perp\\perp S',d:'把任意 w 拆成训练数据“看得见”的平行分量与“完全看不见”的垂直分量。',r:'位置：§4。用处：证明 w⊥ 不改变训练预测、只增加范数。重要：勾股定理把“看不见”换算成正则化的差价。'},
+    {t:'Representer 定理',en:'representer theorem',f:'w^*=\\textstyle\\sum_i\\alpha_i\\phi(x_i)',d:'损失只经训练预测进入目标、复杂度项是范数平方且 λ>0 时，最优解可写成训练特征的组合。',r:'位置：§4。用处：把未知量从 w∈R^p 换成 α∈R^n。重要：条件不满足时不能套用（如 L1 正则）。'},
+    {t:'核函数',en:'kernel function',f:'k(x,z)=\\phi(x)^\\top\\phi(z)',d:'两个点特征内积的直接记号；不必知道或写出 φ 本身。',r:'位置：§5。用处：把高维几何压缩成一次标量计算。重要：合法性判据是 PSD（§10）。'},
+    {t:'核化模型',en:'kernelized model',f:'f_\\alpha(x)=\\textstyle\\sum_{i=1}^n\\alpha_i\\,k(x_i,x)',d:'重参数化后的预测模型：各训练点按“像不像”加权投票。',r:'位置：§5。用处：p≫n 时预测只需 n 个 kernel 值。重要：与显式构造数学等价、只有成本不同。'},
+    {t:'Gram 矩阵',en:'Gram matrix',f:'K=\\Phi\\Phi^\\top,\\ K_{ij}=k(x_i,x_j)',d:'训练样本两两特征内积组成的 n×n 相似度地图。',r:'位置：§6。用处：训练预测 ŷ=Kα 一次收齐所有核值。重要：RBF 时对角线为 1、样本成块出现深色块；必须 PSD。'},
+    {t:'核向量',en:'kernel vector',f:'k_x=\\big(k(x_1,x),\\ldots,k(x_n,x)\\big)^\\top',d:'新输入与所有训练点的核值列成的向量。',r:'位置：§6。用处：预测阶段的全部工作量 f(x)=k_xᵀα。重要：x=x_j 时与 K 的第 j 行重合。'},
+    {t:'核化',en:'kernelization',f:'\\phi(x_i)^\\top\\phi(x_j)\\to k(x_i,x_j)',d:'把只通过内积使用特征的算法改写成只含 kernel 值的三步流程。',r:'位置：§7。用处：同时兑现 §2 的三个愿望。重要：前提是算法只以内积使用特征，凸性得以保留。'},
+    {t:'多项式核',en:'polynomial kernel',f:'k(x,z)=(c+x^\\top z)^m',d:'一次幂运算隐式使用全部次数≤m 的单项式特征。',r:'位置：§8。用处：O(d) 内积加一次幂替代 C(d+m,m) 维构造。重要：匹配的特征映射带 √2 缩放，漏掉是最常见错误。'},
+    {t:'RBF 核',en:'radial basis function kernel',f:'k_\\sigma(x,z)=\\exp(-\\lVert x-z\\rVert^2/2\\sigma^2)',d:'以距离为自变量的高斯相似度：近则趋 1、远则趋 0，对应无限维特征空间。',r:'位置：§9。用处：每个训练点变成一个局部基函数。重要：γ=1/(2σ²)；用一次有限计算得到无限维总内积。'},
+    {t:'带宽',en:'bandwidth',f:'\\sigma\\ \\ (\\gamma=1/2\\sigma^2)',d:'RBF 的尺度参数：小 σ 局部灵活、大 σ 平滑全局。',r:'位置：§9。用处：控制模型的方差/偏差位置，最重要的单个超参数。重要：读图标尺 r=σ 处恒为 e^{-1/2}≈0.607；须用验证集选。'},
+    {t:'半正定',en:'positive semidefinite',f:'a^\\top Ka=\\lVert\\Phi^\\top a\\rVert^2\\ge0',d:'任意系数 a 的二次型都非负；Gram matrix 的合法性条件。',r:'位置：§10。用处：几何（真内积）、谱（特征值非负）、优化（凸二次型）三层意义。重要：对称+元素非负不够，第 10 讲提升为 valid kernel 判据。'},
+    {t:'Nyström 方法',en:'Nyström method',f:'K\\approx K_{:,I}K_{I,I}^{-1}K_{I,:}',d:'用采样子集近似巨大 kernel matrix 的技术，与随机 Fourier 特征并列。',r:'位置：§11。用处：n 达百万量级时朴素 K 不可行的出路。重要：说明 kernel trick 的代价是 n² 存储与 O(n³) 求解。'}
+  ];
+  const KEYS={};
+  G.forEach(c=>KEYS[c.t]=c.t);
+  const GLOSS_SKIP='.katex,pre,code,script,style,svg,.term-ref';
+  const walker=()=>document.createTreeWalker($('#main'),NodeFilter.SHOW_TEXT,{acceptNode:node=>{
+    if(!node.nodeValue||!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;
+    let p=node.parentElement;while(p&&p!==document.querySelector('#main')){if(p.matches&&(p.matches(GLOSS_SKIP)||p.id==='hero'||p.id==='map'))return NodeFilter.FILTER_REJECT;p=p.parentElement;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const byLongKey=[...G].map((c,i)=>({c,i,key:KEYS[c.t]||c.t})).sort((a,b)=>b.key.length-a.key.length);
+  const found={};
+  for(const item of byLongKey){
+    const tw=walker();let node=null;
+    while((node=tw.nextNode())){if(node.nodeValue.includes(item.key))break;}
+    if(!node){found[item.i]=null;continue;}
+    const section=node.parentElement.closest('section');
+    const before=node.nodeValue.slice(0,node.nodeValue.indexOf(item.key));
+    const after=node.nodeValue.slice(node.nodeValue.indexOf(item.key)+item.key.length);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='term-ref';btn.dataset.gidx=String(item.i);btn.textContent=item.key;
+    btn.setAttribute('aria-label','查看术语：'+item.c.t);btn.title='点击查看定义';
+    const frag=document.createDocumentFragment();
+    if(before)frag.appendChild(document.createTextNode(before));
+    frag.appendChild(btn);
+    if(after)frag.appendChild(document.createTextNode(after));
+    node.parentNode.replaceChild(frag,node);
+    found[item.i]={section,key:item.key};
+  }
+  const rail=$('#glossRailBody');
+  const order=[...document.querySelectorAll('#main section')];
+  function buildRail(){
+    rail.innerHTML='';
+    for(const sec of order){
+      if(document.body.dataset.mode==='core'&&window.FLOW_META&&window.FLOW_META[sec.id]&&window.FLOW_META[sec.id].mode==='extra')continue;
+      const items=[...G.keys()].filter(i=>found[i]&&found[i].section===sec);
+      if(!items.length)continue;
+      const h=sec.querySelector('h2.sec-title');
+      const label=h?h.childNodes[h.childNodes.length-1].textContent.trim().replace(/^§\d+\s*/,''):'总览与概念地图';
+      const div=document.createElement('div');div.className='gloss-sec';div.textContent=(h&&h.querySelector('.num')?h.querySelector('.num').textContent+' ':'')+label;
+      rail.appendChild(div);
+      for(const i of items){
+        const c=G[i];
+        const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.sec=sec.id;
+        b.innerHTML=`<span class="gt">${c.t}</span><span class="ge">${c.en}</span><span class="gd">${c.d}</span>`;
+        b.addEventListener('click',()=>{sec.scrollIntoView({behavior:'smooth',block:'start'});const ref=sec.querySelector('.term-ref[data-gidx="'+i+'"]');if(ref)setTimeout(()=>ref.scrollIntoView({behavior:'smooth',block:'center'}),450);});
+        rail.appendChild(b);
+      }
+    }
+  }
+  buildRail();
+  document.addEventListener('iml-mode-change',buildRail);
+  const spy=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){rail.querySelectorAll('.gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.sec===e.target.id));}});
+  },{rootMargin:'-20% 0px -65% 0px'});
+  order.forEach(sec=>spy.observe(sec));
+  let pop=null;
+  function closePop(){if(pop){pop.remove();pop=null;}}
+  document.addEventListener('click',e=>{
+    const ref=e.target.closest('.term-ref');
+    if(!ref){closePop();return;}
+    e.preventDefault();closePop();
+    const c=G[+ref.dataset.gidx];if(!c)return;
+    pop=document.createElement('div');pop.className='term-pop';
+    let html=`<div class="tp-head">${c.t}</div><div class="tp-en">${c.en}</div><div class="tp-f">${c.f?'$$'+c.f+'$$':''}</div><p><b>定义：</b>${c.d}</p><p class="tp-role"><b>位置 · 用处 · 为什么重要：</b>${c.r}</p>`;
+    pop.innerHTML=html;
+    document.body.appendChild(pop);
+    if(c.f){renderMathInElement(pop,{delimiters:[{left:'$$',right:'$$',display:true}],throwOnError:false});}
+    const r=ref.getBoundingClientRect();
+    const pw=Math.min(360,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    const top=r.bottom+8>window.innerHeight-120?Math.max(8,r.top-200):r.bottom+8;
+    pop.style.left=String(Math.max(12,Math.min(window.innerWidth-pw-12,r.left)))+'px';
+    pop.style.top=top+'px';
+    pop.addEventListener('click',e=>e.stopPropagation());
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePop();});
+  addEventListener('scroll',()=>closePop(),{passive:true});
+})();
+
+/* ---------- quiz ---------- */
+(()=>{
+  const Q=[
+    {q:'若 $\\Phi\\in\\mathbb R^{n\\times p}$，$\\alpha\\in\\mathbb R^n$，则 $w=\\Phi^\\top\\alpha$ 是多少维？',a:'$w\\in\\mathbb R^p$：$(p\\times n)\\times(n\\times1)=(p\\times1)$。它是 $n$ 个训练特征的组合，组合系数是 $\\alpha$。'},
+    {q:'为什么 $w_\\perp$ 不影响训练损失？',a:'因为 $w_\\perp\\perp\\phi(x_i)$，所以对每个训练点都有 $w_\\perp^\\top\\phi(x_i)=0$，训练预测 $w^\\top\\phi(x_i)=w_\\parallel^\\top\\phi(x_i)$ 不变；经验损失只依赖这些预测。'},
+    {q:'若 $K$ 对称，平方损失 $\\lVert y-K\\alpha\\rVert_2^2$ 的 Hessian 是什么？为什么 PSD？',a:'Hessian 为 $2K^2$（差常数因子 $1/n$ 时为 $\\tfrac2nK^2$）；对任意 $v$，$v^\\top K^2v=(Kv)^\\top(Kv)=\\lVert Kv\\rVert_2^2\\ge0$，所以关于 $\\alpha$ 仍是凸函数。'},
+    {q:'Gaussian RBF kernel 中，$\\sigma$ 变大时 $K$ 会发生什么趋势？',a:'不同样本之间的相似度普遍增大；极端情况下 $K$ 接近全 $1$ 矩阵，模型变得更全局、更平滑（也更接近常数 $\\sum_i\\alpha_i$）。'},
+    {q:'手算：$\\Phi=\\begin{bmatrix}1&0\\\\1&1\\\\1&2\\end{bmatrix}$，$\\alpha=(1,-1,2)^\\top$。求 $K=\\Phi\\Phi^\\top$、$w=\\Phi^\\top\\alpha$ 与训练预测。',a:'$K=\\begin{bmatrix}1&1&1\\\\1&2&3\\\\1&3&5\\end{bmatrix}$（$K_{ij}=1+x_ix_j$，$x=0,1,2$）；$w=(2,3)^\\top$；$\\Phi w=K\\alpha=(2,5,8)^\\top$，两条路线一致（§7 互动逐步演示）。'},
+    {q:'训练点 $x=0,1,2$，$\\alpha=(1,-1,2)$，$k(x,z)=(1+xz)^2$。不构造 $\\phi$，计算查询点 $x_q=3$ 的预测。',a:'$k$ 值分别为 $(1+0)^2=1$、$(1+3)^2=16$、$(1+6)^2=49$；$f=1\\cdot1+(-1)\\cdot16+2\\cdot49=1-16+98=83$。'},
+    {q:'$x_1=(1,0)$、$x_2=(0,1)$、$x_3=(1,1)$，$k(x,z)=(1+x^\\top z)^2$。求 $K$ 并判断正定性。',a:'内积：$x_1^\\top x_2=0$，$x_1^\\top x_3=x_2^\\top x_3=1$，各自范数平方 $1,1,2$。$K=\\begin{bmatrix}4&1&4\\\\1&4&4\\\\4&4&9\\end{bmatrix}$；前三个顺序主子式 $4,15,39$ 全正，故正定。'},
+    {q:'$\\begin{bmatrix}1&2\\\\2&1\\end{bmatrix}$ 能作为某组实特征向量的 Gram matrix 吗？',a:'不能。取 $a=(1,-1)^\\top$ 得 $a^\\top Ka=-2<0$；等价地特征值为 $3$ 和 $-1$。任何 $\\Phi\\Phi^\\top$ 的二次型都是范数平方，不可能为负（§10 互动把 $\\rho$ 滑到 2 即复现）。'},
+    {q:'为什么匹配 $(1+x^\\top z)^2$ 的特征映射需要 $\\sqrt2$？漏掉会怎样？',a:'展开式 $1+2x_1z_1+2x_2z_2+x_1^2z_1^2+2x_1x_2z_1z_2+x_2^2z_2^2$ 中交叉项系数为 2；取 $\\phi=(1,\\sqrt2x_1,\\sqrt2x_2,x_1^2,\\sqrt2x_1x_2,x_2^2)$ 时 $(\\sqrt2a)(\\sqrt2b)=2ab$ 恰好配平。漏掉 $\\sqrt2$ 的特征能表达同类二次函数，但其内积不等于这个特定 kernel（§8 互动实时对账）。'}
+  ];
+  const list=$('#quizList');
+  list.innerHTML=Q.map((item,i)=>`
+    <div class="quiz-item" id="quiz${i}">
+      <div class="q">${i+1}. ${item.q}</div>
+      <div class="label-row"><button class="btn ghost" data-open="${i}" type="button">显示答案</button></div>
+      <div class="ans">${item.a}</div>
+    </div>`).join('');
+  if(window.renderMathInElement)renderMathInElement(list,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],throwOnError:false});
+  let opened=0;
+  list.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open]');if(!b)return;
+    const item=$('#quiz'+b.dataset.open);const was=item.classList.contains('open');
+    item.classList.toggle('open',!was);
+    if(!was){opened++;b.textContent='隐藏答案';}else{opened--;b.textContent='显示答案';}
+    const score=$('#quizScore');
+    if(opened>0){score.style.display='block';score.innerHTML=`已打开 <b>${opened}/${Q.length}</b> 道参考答案。建议先自己写一句话答案，再对照。`;}
+    else score.style.display='none';
+  });
+})();
+</script>
+</body>
+</html>
