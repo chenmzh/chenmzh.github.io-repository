@@ -1,6 +1,57 @@
 {
-  "updated": "2026-08-15",
+  "updated": "2026-08-16",
   "briefs": [
+    {
+      "date": "2026-08-16",
+      "title": "每日股票市场简报｜2026-08-16",
+      "markets": [
+        "美股",
+        "科技",
+        "半导体",
+        "能源",
+        "金融",
+        "亚洲",
+        "欧洲",
+        "外汇",
+        "利率",
+        "原油",
+        "黄金",
+        "加密资产",
+        "宏观",
+        "AI",
+        "云计算",
+        "电商",
+        "消费",
+        "数据中心",
+        "银行",
+        "全球市场"
+      ],
+      "tickers": [
+        "SPY",
+        "QQQ",
+        "IWM",
+        "DIA",
+        "XLK",
+        "SMH",
+        "XLF",
+        "XLE",
+        "NVDA",
+        "AMD",
+        "XOM",
+        "JPM",
+        "AMZN"
+      ],
+      "items": [
+        "NVDA NVIDIA",
+        "AMD Advanced Micro Devices",
+        "XOM Exxon Mobil",
+        "JPM JPMorgan Chase",
+        "AMZN Amazon"
+      ],
+      "summary": "周日口径采用 8/14 美股收盘：指数从纪录附近回落、Russell 2000 相对抗跌；零售销售 -0.6%、Brent 88.52 美元与 10 年期 4.68% 加大“增长转弱但通胀/利率偏高”矛盾，SMH 仍低于 50 日线，NVDA 财报前五只观察股均等待量价确认。",
+      "markdown": "briefs/2026-08-16.md",
+      "url": "reader.html?date=2026-08-16"
+    },
     {
       "date": "2026-08-15",
       "title": "每日股票市场简报｜2026-08-15",
