@@ -1,6 +1,49 @@
 {
-  "updated": "2026-08-15",
+  "updated": "2026-08-16",
   "briefs": [
+    {
+      "date": "2026-08-16",
+      "title": "每日合成与发育生物学简报 - 2026-08-16",
+      "summary": "过去 24 小时的强信号集中在“反馈如何把形态和生理状态做稳”：神经嵴迁移与神经管闭合形成相互强化的机械化学回路；微生物群落则用可切换的胆汁酸产物连接工程菌、宿主受体和炎症表型。合成生物学的工程层面继续向“可制造、可编辑、可装配”推进：环状单链 DNA 的规模化制备、原代人肝细胞中的高效 CRISPR 编辑，以及可温度调节的共价蛋白组装，分别补齐了底盘、遗传材料和分子构件。控制论与生物学方向今天并非纯控制理论论文，而是明确落在细胞、神经回路、微生物群体和生物膜：光控 cAMP/HCN 通路、线虫趋化之外的生物控制入口，以及 quorum-sensing 反馈模型都提供了可解释的输入—状态—输出关系。发育合成生物学的天然机制素材很丰富：细胞外蛋白水解的剂量敏感性、Hydra 再生中的 ECM 降解—沉积平衡，以及表皮生长对叶片气腔图案的非细胞自主控制，都可作为后续工程化形态发生的模块候选。",
+      "items": [
+        "Reciprocal mechanochemical feedback couples neural crest migration and neurulation",
+        "An engineered Clostridial mini consortium modulates intestinal inflammation",
+        "Optogenetic Control of cAMP Levels and HCN Channels: Implications in Cardiac Physiology and Parkinson's Disease",
+        "A Robust and Scalable Workflow for the Production of Circular Single-Stranded DNA for Genome Engineering Applications",
+        "De novo design of autocatalytically forming intra- and intermolecular isopeptide bonds to construct rigid covalent protein assemblies",
+        "A CRISPR-Cas9 platform for primary human hepatocytes enables arrayed screening and in vivo validation of HBV host factors",
+        "Hybrid cellular automaton-based model for quorum sensing-controlled biofilm evolution",
+        "The extracellular protease AdamTS-B is a dosage-sensitive regulator of unicellular tracheal branch morphogenesis",
+        "Collagen remodeling supports Hydra vulgaris head regeneration and stem cell invasion",
+        "Brassinosteroid controls leaf air space patterning non-cell autonomously by promoting epidermal growth"
+      ],
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "markets": [],
+      "tickers": [],
+      "markdown": "briefs/2026-08-16.md",
+      "url": "reader.html?date=2026-08-16",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Reciprocal mechanochemical feedback couples neural crest migration and neurulation",
+        "An engineered Clostridial mini consortium modulates intestinal inflammation",
+        "Optogenetic Control of cAMP Levels and HCN Channels: Implications in Cardiac Physiology and Parkinson's Disease",
+        "A Robust and Scalable Workflow for the Production of Circular Single-Stranded DNA for Genome Engineering Applications",
+        "De novo design of autocatalytically forming intra- and intermolecular isopeptide bonds to construct rigid covalent protein assemblies",
+        "A CRISPR-Cas9 platform for primary human hepatocytes enables arrayed screening and in vivo validation of HBV host factors",
+        "Hybrid cellular automaton-based model for quorum sensing-controlled biofilm evolution",
+        "The extracellular protease AdamTS-B is a dosage-sensitive regulator of unicellular tracheal branch morphogenesis",
+        "Collagen remodeling supports Hydra vulgaris head regeneration and stem cell invasion",
+        "Brassinosteroid controls leaf air space patterning non-cell autonomously by promoting epidermal growth"
+      ]
+    },
     {
       "date": "2026-08-15",
       "title": "每日合成与发育生物学简报 - 2026-08-15",
