@@ -1,6 +1,39 @@
 {
-  "updated": "2026-08-16",
+  "updated": "2026-08-17",
   "briefs": [
+    {
+      "date": "2026-08-17",
+      "title": "每日合成与发育生物学简报 - 2026-08-17",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Multilevel metabolic and enzyme engineering enables efficient biosynthesis of cyanidin-3-O-glucoside from dihydroquercetin in *Escherichia coli*",
+        "Secretion Engineering Enables Production of a Structurally Stable and Long-Continuous Type III Collagen Fragment in *Pichia pastoris*",
+        "Engineered Exosome-Mediated FIH-1 Delivery for Targeted Therapy of Hyperuricemic Nephropathy by Inhibiting NF-κB/NLRP3 Inflammasome Signaling and Restoring Autophagic Homeostasis",
+        "Piezo1 drives fibroblast activation in epidural fibrotic remodelling via the ET-1/HIF-1α pathway",
+        "Reprogramming lineage-traced Müller glia for robust proliferation and neurogenesis in adult mammalian retinas",
+        "A traveling network model predicts emergent dynamics and search behavior from local remodeling in *Physarum polycephalum*"
+      ],
+      "summary": "过去 24 小时最清晰的信号，是把“工程化输入”接到细胞、组织或代谢输出：*E. coli* 代谢通路、*Pichia pastoris* 分泌系统和工程化外泌体都在解决可制造性与可控递送问题。 控制论与生物学方向出现了两个很好的机制型例子：Piezo1—ET-1/HIF-1α 轴形成与纤维化相关的正反馈；*Physarum* 的局部管网重塑则被抽象成能预测整体迁移和搜索行为的动态网络模型。 发育合成生物学的直接新论文仍然偏少，但成人 Müller 胶质细胞的两阶段再编程把“增殖启动—神经生成”拆成了可干预的状态转换序列，具有再生工程价值。 本期没有发现可可靠落在窗口内、且强相关的 arXiv q-bio 新提交；medRxiv 区间内的新增计数为 0。bioRxiv 的官方区间 API 返回异常，因此对其使用官方 RSS 和论文页面逐条复核，结果以较保守的相关性标准筛选。",
+      "markdown": "briefs/2026-08-17.md",
+      "url": "reader.html?date=2026-08-17",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Multilevel metabolic and enzyme engineering enables efficient biosynthesis of cyanidin-3-O-glucoside from dihydroquercetin in *Escherichia coli*",
+        "Secretion Engineering Enables Production of a Structurally Stable and Long-Continuous Type III Collagen Fragment in *Pichia pastoris*",
+        "Engineered Exosome-Mediated FIH-1 Delivery for Targeted Therapy of Hyperuricemic Nephropathy by Inhibiting NF-κB/NLRP3 Inflammasome Signaling and Restoring Autophagic Homeostasis",
+        "Piezo1 drives fibroblast activation in epidural fibrotic remodelling via the ET-1/HIF-1α pathway",
+        "Reprogramming lineage-traced Müller glia for robust proliferation and neurogenesis in adult mammalian retinas",
+        "A traveling network model predicts emergent dynamics and search behavior from local remodeling in *Physarum polycephalum*"
+      ]
+    },
     {
       "date": "2026-08-16",
       "title": "每日合成与发育生物学简报 - 2026-08-16",
