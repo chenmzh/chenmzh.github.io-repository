@@ -88,6 +88,8 @@ h3 .en{font-size:.78em;color:var(--muted);font-weight:400}
 .viz .caption{margin:10px 0 0;color:var(--muted);font-size:.85rem;line-height:1.6}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(340px,100%),1fr));gap:16px}
 .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr));gap:16px}
+.grid2>*,.grid3>*,.overview-grid>*,.formula-grid>*,.gallery>*,.gloss-grid>*{min-width:0}
+.formula{max-width:100%;overflow-x:auto}
 .def{border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface));border-radius:10px;padding:14px 18px;margin:14px 0}
 .def .term{font-weight:800;font-size:1.02rem}
 .def .en{font-family:Menlo,Monaco,monospace;font-size:.75rem;color:var(--muted)}
