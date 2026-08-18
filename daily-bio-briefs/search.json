@@ -1,6 +1,45 @@
 {
-  "updated": "2026-08-17",
+  "updated": "2026-08-18",
   "briefs": [
+    {
+      "date": "2026-08-18",
+      "title": "每日合成与发育生物学简报 - 2026-08-18",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Chemically programmed multistage morphogenesis in coacervate microdroplets",
+        "Ultrasound-reconfigurable scaffolds enable dynamic control of biochemical and biophysical cues for vascular network formation",
+        "Evolverator: An engineered yeast system to drive rapid continuous in vivo evolution of proteins",
+        "An Integrated Spatially Resolved Mechanistic Model of Hierarchical Auxin-Cytokinin-Ethylene Crosstalk Underlying Root Growth Inhibition in Arabidopsis",
+        "Glucose Metabolism Mediates Feedback Control of Innate Immune Signaling in Human Macrophages",
+        "Dll4 and Jag1a signalling act sequentially and cooperatively to drive hematopoietic stem cell fate specification",
+        "The combination of morphogenic regulators BABY BOOM and GRF-GIF improves maize transformation efficiency and promotes leaf regeneration",
+        "Enhanced heparosan biosynthesis in Corynebacterium glutamicum by systematic metabolic engineering and translation-level fine-tuning",
+        "Hydrophobic unnatural base pair promotes trigger loop closure and catalysis in cellular RNA polymerase independent of hydrogen bonding"
+      ],
+      "summary": "今天最鲜明的合成形态发生信号，是把化学反应直接接到人工微区室的形态变化和光学读出：coacervate 微滴可经历多阶段结构重塑，并把葡萄糖感知、形态发生和荧光输出串成一条链。 工程化组织系统正在从“预先做好的材料”转向“运行中可重构”：超声可按需改变支架的生化与力学线索，动态推动血管网络形成；植物转化则把多个形态发生调节因子组合成更高效的再生入口。 合成生物学的底盘工程继续呈现多层协同：模型指导的酵母连续进化把蛋白功能接到细胞增殖，Corynebacterium 的基因组改造与翻译层微调则把复杂多糖产量推向克级发酵。 控制论与生物学方向的强信号集中在“时序和反馈”：拟南芥的多激素报告器揭示根生长抑制中的层级互作，人巨噬细胞中糖酵解—PFKFB3—STAT1/NF-κB 轴形成代谢驱动的放大回路；medRxiv 与 arXiv 本窗口没有筛出更强的主题匹配结果。",
+      "markdown": "briefs/2026-08-18.md",
+      "url": "reader.html?date=2026-08-18",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Chemically programmed multistage morphogenesis in coacervate microdroplets",
+        "Ultrasound-reconfigurable scaffolds enable dynamic control of biochemical and biophysical cues for vascular network formation",
+        "Evolverator: An engineered yeast system to drive rapid continuous in vivo evolution of proteins",
+        "An Integrated Spatially Resolved Mechanistic Model of Hierarchical Auxin-Cytokinin-Ethylene Crosstalk Underlying Root Growth Inhibition in Arabidopsis",
+        "Glucose Metabolism Mediates Feedback Control of Innate Immune Signaling in Human Macrophages",
+        "Dll4 and Jag1a signalling act sequentially and cooperatively to drive hematopoietic stem cell fate specification",
+        "The combination of morphogenic regulators BABY BOOM and GRF-GIF improves maize transformation efficiency and promotes leaf regeneration",
+        "Enhanced heparosan biosynthesis in Corynebacterium glutamicum by systematic metabolic engineering and translation-level fine-tuning",
+        "Hydrophobic unnatural base pair promotes trigger loop closure and catalysis in cellular RNA polymerase independent of hydrogen bonding"
+      ]
+    },
     {
       "date": "2026-08-17",
       "title": "每日合成与发育生物学简报 - 2026-08-17",
