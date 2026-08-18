@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-17",
+  "updated": "2026-08-18",
   "briefs": [
+    {
+      "date": "2026-08-18",
+      "title": "每日科技新闻简报｜2026-08-18",
+      "categories": [
+        "AI",
+        "芯片",
+        "云",
+        "软件",
+        "开发者工具",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "隐私",
+        "公司"
+      ],
+      "items": [
+        "NVIDIA 为 OpenAI 俄亥俄 AI 工厂锁定首期 4.25GW 容量",
+        "Apple 新一批“雇佣间谍软件”威胁通知引发异常高求助量",
+        "Groq 融资 3.5 亿美元，转向英伟达 GPU 驱动的推理云",
+        "Anthropic 年化收入据报升至 650 亿美元以上",
+        "自动化平台 Relay 宣布停止服务，创始人加入 Google Chrome 团队",
+        "Uber 与 Zipline 合作推进餐饮无人机配送",
+        "Spotify 推出 Playlist Notes，让用户和编辑解释歌曲选择",
+        "SafePal 与 Trezor 用户的订单和物流数据相继暴露，钱包密钥未受影响"
+      ],
+      "summary": "NVIDIA 与 OpenAI 的俄亥俄项目把 AI 竞争推进到土地、电力、厂房和长期融资；Groq 则从自有 LPU 部署转向 NVIDIA GPU 推理云，推理基础设施成为独立竞争层。Apple 间谍软件告警和 SafePal/Trezor 供应链数据事件提醒人们关注安全通知、物流和第三方服务。Relay 关停、Uber 与 Zipline 的无人机配送合作及 Spotify 的 Playlist Notes，显示 AI、自动化和平台服务继续向主流软件与现实工作流渗透。",
+      "markdown": "daily-tech-news/briefs/2026-08-18.md",
+      "url": "reader.html?date=2026-08-18",
+      "tags": [
+        "AI",
+        "芯片",
+        "云",
+        "软件",
+        "开发者工具",
+        "硬件",
+        "机器人",
+        "网络安全",
+        "隐私",
+        "公司"
+      ]
+    },
     {
       "date": "2026-08-17",
       "title": "每日科技新闻简报｜2026-08-17",
