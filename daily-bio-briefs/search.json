@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-18",
+  "updated": "2026-08-19",
   "briefs": [
+    {
+      "date": "2026-08-19",
+      "title": "每日合成与发育生物学简报 - 2026-08-19",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Compact Oligomerized-Motif Promoters for Adjustable Control of Transcription (COMPACT) for Robust, Tunable and Bidirectional Gene Expression in Mammalian Cells",
+        "A self-regulating dCas9 system enables robust, portable and multiplexed CRISPR interference",
+        "Photodictated Programmed Orthogonal DNA Microdroplets Enable Molecular Communication between Transient Self-Sorting Membraneless Artificial Cells",
+        "Spatially Encoded Protocell Network for Non-Cascaded Parallel Biocomputation",
+        "A novel self-organizing human pluripotent stem cell system reveals the role of Wnt signaling parameters in anterior-posterior patterning of the nervous system",
+        "Initiation of rotational collective migration in Drosophila through tissue geometry and mechanochemical feedback",
+        "Morphogenesis of bacterial colonies in liquid crystalline environments",
+        "From chemical oscillators to biological synchrony: a programmable reaction-diffusion model for studying signal coordination in cardiomyocyte networks",
+        "The structural origin of irreversible transitions in biological networks",
+        "An information-theoretic perspective on feed-forward loop abundances in transcriptional networks"
+      ],
+      "summary": "本期合成生物学信号集中在可调启动子、反馈自调节 CRISPRi 和人工细胞的信息流；发育方向由 Wnt 时序、机械化学反馈和液晶环境中的细菌形态发生串联；控制论方向则覆盖不可逆状态转换、心肌同步和基因网络前馈环的鲁棒性权衡。",
+      "markdown": "briefs/2026-08-19.md",
+      "url": "reader.html?date=2026-08-19",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Compact Oligomerized-Motif Promoters for Adjustable Control of Transcription (COMPACT) for Robust, Tunable and Bidirectional Gene Expression in Mammalian Cells",
+        "A self-regulating dCas9 system enables robust, portable and multiplexed CRISPR interference",
+        "Photodictated Programmed Orthogonal DNA Microdroplets Enable Molecular Communication between Transient Self-Sorting Membraneless Artificial Cells",
+        "Spatially Encoded Protocell Network for Non-Cascaded Parallel Biocomputation",
+        "A novel self-organizing human pluripotent stem cell system reveals the role of Wnt signaling parameters in anterior-posterior patterning of the nervous system",
+        "Initiation of rotational collective migration in Drosophila through tissue geometry and mechanochemical feedback",
+        "Morphogenesis of bacterial colonies in liquid crystalline environments",
+        "From chemical oscillators to biological synchrony: a programmable reaction-diffusion model for studying signal coordination in cardiomyocyte networks",
+        "The structural origin of irreversible transitions in biological networks",
+        "An information-theoretic perspective on feed-forward loop abundances in transcriptional networks"
+      ]
+    },
     {
       "date": "2026-08-18",
       "title": "每日合成与发育生物学简报 - 2026-08-18",
