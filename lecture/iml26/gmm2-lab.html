@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 23 讲 · Gaussian Mixture Models II 互动实验室 | IML 2026</title>
+<meta name="description" content="第23讲 Gaussian Mixture Models II 的互动附属页：组件数 K 的选择、协方差塌缩与正则化、GMM 生成式分类、异常检测与半监督学习。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+.chain.c5{grid-template-columns:repeat(5,1fr)}.btn.xs{padding:3px 9px;font-size:.74rem}.pick-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin:4px 0}.pick-row .pk-name{flex:none;min-width:52px;color:var(--muted);font:700 .74rem Menlo,Monaco,monospace}table.ktab{border-collapse:collapse;width:100%;font-size:.8rem}.ktab td,.ktab th{padding:3px 7px;border-bottom:1px solid var(--line);text-align:right}.ktab th{color:var(--muted);font-weight:700}.ktab td:first-child,.ktab th:first-child{text-align:left}.ktab tr.best td{color:var(--accent);font-weight:700}
+</style>
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 23</span><span class="top-title">Gaussian Mixture Models II · 选 K、塌缩与应用</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-23">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 23 讲 · 互动附属页</p>
+      <h1>Gaussian Mixture Models II</h1>
+      <p class="lead">第 22 讲给了我们责任度 $\gamma$ 与加权 MLE 的 E/M 闭环；本讲回答工程上躲不开的三个问题：组件数 $K$ 选几个？为什么训练 likelihood 可能被协方差塌缩“骗高”？$p(x)$ 和 $\gamma$ 怎样服务分类、异常检测与半监督学习？</p>
+      <div class="course-ribbon"><span class="pill">第 22 讲：责任度 γ 与加权 MLE（E/M 闭环）</span><span class="pill core">本讲：选 K · 塌缩与正则化 · 密度与 γ 的用法</span><span class="pill extra">第 24 讲：EM 的单调性与下界证明</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>从“会算”到“会选、会防、会用”</h3><p>模型选择（验证似然与信息准则）、协方差塌缩与正则化、GMM 在分类 / 异常检测 / 半监督中的三种用法。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>高训练 likelihood ≠ 好模型</h3><p>无约束 MLE 允许组件塌到单个点上，把目标推向 $+\infty$；不验证、不正则化，就会把过拟合误认为结构。</p></div>
+        <div class="card"><span class="card-kicker">主线逻辑</span><h3>选 K → 防塌缩 → 用起来</h3><p>先在验证集上选复杂度，再用 $\Sigma+\nu^2I$ 封住病态解，最后把 $p(x)$ 与 $\gamma$ 接到下游任务。</p></div>
+      </div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 选 K</b>每个候选 $K$ 重新训练，在同一<span class="term-ref" data-term="vallik">验证集</span>上比较。</div><div class="chain-step"><b>2 · 警惕</b>协方差<span class="term-ref" data-term="degeneracy">塌缩</span>可把训练似然推向 $+\infty$。</div><div class="chain-step"><b>3 · 封住</b>$\Sigma+\nu^2I$ 给特征值装地板，堵住作弊。</div><div class="chain-step"><b>4 · 用起来</b>$p(x)$ 负责密度：非线性分类与异常检测。</div><div class="chain-step"><b>5 · 接标签</b>少量标签作为锚点固定 $\gamma$，接入半监督。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 320" role="img" aria-label="从选 K 到半监督应用的概念地图"></svg></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先解决最上层的问题：在训练 EM 之前，组件数 $K$ 应该允许多大？</span></div>
+    </section>
+
+    <section id="sec-select" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 选组件数 K：训练拟合不是泛化</h2></div>
+      <p class="section-intro">$K$ 太小，一个高斯被迫盖住多个峰（欠拟合）；$K$ 太大，一个峰被拆成多个组件，甚至给少数离群点各发一个很窄的高斯（过拟合）。关键事实：随着 $K$ 增大，旧模型通常能嵌入新模型（把新增组件权重压得接近零），所以训练 likelihood 几乎只会变好——它不为额外自由度收费。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="modelsel">模型选择</span>：在拟合之前选定 $K$、协方差结构与正则化强度；<span class="term-ref" data-term="vallik">验证似然</span> $\ell_{\mathrm{val}}$ 在未参与拟合的数据上评价平均 log-density。</p></div>
+        <div class="five"><h3>白话理解</h3><p>训练集是“开卷考”，验证集是“闭卷考”。模型背下课本不代表会做题。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>给每个候选 $K$ 一个公平的泛化分数，选出既拟合得好又数值健康的模型。</p></div>
+        <div class="five"><h3>怎么算</h3><p>每个 $K$ 单独训练（多次 <span class="term-ref" data-term="restart">restart</span> 取训练似然最好的一次），再算 $\ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)$，除以 $|\mathcal V|$ 让不同验证集大小可比。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>验证样本只用来算 $p_{\hat\theta_K}(x)$，绝不能再参与责任度或参数更新，否则它就不再是独立的泛化检查。</p></div>
+      </div>
+      <div class="formula"><p>两个分数的方向完全不同：</p><p>$$\ell_{\mathrm{train}}(K)=\sum_{i\in\mathrm{train}}\log p_{\hat\theta_K}(x_i)\ \text{随 }K\text{ 单调变好},\qquad \ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)\ \text{有峰}.$$</p><p class="small">$\hat\theta_K$ 表示“用候选 $K$ 独立拟合出的一整套参数”，不是在一次运行里临时增减组件。$\ell$ 是希腊字母 ell（log-likelihood），$K$ 是组件数；下文求和下标用 $i$（样本）与 $j$（组件），不要与 $K$ 混淆。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="selRegen" type="button">重新生成数据</button><span class="pill" id="selSeedPill">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="selN">样本量 $n$（70/30 划分）</label><input id="selN" type="range" min="60" max="600" step="20" value="300"><output id="selNOut"></output></div>
+          </div>
+          <p class="small">数据真实来自三高斯混合 $p(x)=\frac12\mathcal N(x;0,4)+\frac13\mathcal N(x;3,1)+\frac16\mathcal N(x;-3,9)$（第三个参数是<strong>方差</strong> $\sigma^2$）。「重新生成数据」用 <code>Math.random()</code> 做 Box–Muller 采样，连点结果不同。每个 $K=1..6$ 跑 5 次随机初始化、各 60 轮 EM，取训练似然最好的 restart；方差下限 $10^{-6}$ 防止 NaN——这正是下一节正则化的最小动机。下方曲线与表格全部由当前这次采样现算。</p></div>
+        <div class="step-box" id="selSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="selViz" class="viz-svg" viewBox="0 0 940 440" role="img" aria-label="K 选择：训练与验证平均对数似然曲线"></svg></div>
+      <p class="viz-caption">读图：训练曲线（蓝）几乎单调上升；验证曲线（绿）在中间某处有峰。验证最优的 $K$ 用圆点标出——它经常落在真实值 $3$ 附近，但不保证每次都命中。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>验证曲线为什么会下降？一个极端原因是：组件可以塌缩到单个点上，把训练 likelihood 骗到任意高。</span></div>
+    </section>
+
+    <section id="sec-collapse" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. 协方差塌缩：病态的高 likelihood</h2></div>
+      <p class="section-intro">一个看似矛盾的现象：训练 log-likelihood 还在上升，模型却已经坏掉。问题来自连续密度可以在极窄区域变得任意高。注意区分：$\sigma$ 是标准差，$\sigma^2$ 是方差；本节推导里塌向零的是方差 $\sigma^2$。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="degeneracy">塌缩 / 退化（degeneracy）</span>：某组件均值恰落在训练点上、方差趋近零，使密度尖峰无限拔高。</p></div>
+        <div class="five"><h3>白话理解</h3><p>一个组件“只记住了某一个样本”，把全部质量压成一根无限细的针。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>识别它才能解释：为什么某次 restart 的训练 likelihood 异常高，反而要优先怀疑。</p></div>
+        <div class="five"><h3>怎么算</h3><p>令 $\mu=x_i$：$\mathcal N(x_i;x_i,\sigma^2)=\frac{1}{\sqrt{2\pi\sigma^2}}$；取对数得 $-\frac12\log(2\pi\sigma^2)\to+\infty$（$\sigma^2\to0$）。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>这不是 EM 算错了，而是<strong>无约束 MLE 目标本身允许病态解</strong>：这个参数序列没有正常的有限最大值。</p></div>
+      </div>
+      <div class="formula"><p>先单点，再把它接回混合目标。混合密度是各项之和，所以任意一项都能给它下界：</p><p>$$\log\mathcal N(x_i;x_i,\sigma^2)=-\frac12\log(2\pi\sigma^2)\to+\infty,$$</p><p>$$p(x_i)=\sum_{k=1}^K w_k\,\mathcal N(x_i;\mu_k,\sigma_k^2)\ \ge\ w_j\,\mathcal N(x_i;x_i,\sigma_j^2)=\frac{w_j}{\sqrt{2\pi\sigma_j^2}}.$$</p><p class="small">只要 $w_j&gt;0$ 不以更快速度消失，$\sigma_j^2\to0$ 就把 $\log p(x_i)$ 推向无穷；其余训练点仍由别的组件提供有限正密度，于是总 log-likelihood 被这一项单独推走。优化器看到的是“目标越来越好”，我们看到的是一个组件只背下了一个样本。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="colT">标准差 $\sigma$（对数刻度）</label><input id="colT" type="range" min="-1.7" max="0.301" step="0.005" value="-0.301"><output id="colTOut"></output></div>
+          <div class="control"><label for="colW">组件权重 $w_j$</label><input id="colW" type="range" min="0.05" max="0.95" step="0.05" value="0.3"><output id="colWOut"></output></div>
+        </div><p class="small">滑杆控制 $\log_{10}\sigma$，输出框显示 $\sigma$ 本身。左图：$\log\mathcal N(x_i;x_i,\sigma^2)$ 随 $\sigma$ 变化的曲线（公式现算，不是手画）；右图：二维版本——协方差 $\Sigma=\operatorname{diag}(\sigma^2,0.36\sigma^2)$ 的椭圆随 $\sigma$ 压到数据点 $x_i$ 上。</p></div>
+        <div class="step-box" id="colSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="colViz" class="viz-svg" viewBox="0 0 940 430" role="img" aria-label="协方差塌缩演示：对数密度曲线与二维椭圆"></svg></div>
+      <p class="viz-caption">把 $\sigma$ 拖向 $0.02$：左图对数密度持续上升没有顶点，右图椭圆被压成薄片，最小特征值与 $\det\Sigma$ 同步奔向零。</p>
+      <div class="source-grid"><figure><img src="assets/gmm2-lab/fig4.png" alt="协方差塌缩导致的似然异常增长" loading="lazy"><figcaption>本地化讲义原图：协方差塌缩导致的似然异常增长</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>既然问题出在“特征值可以无限接近零”，最直接的封堵就是给特征值装一个地板：$\Sigma+\nu^2I$。</span></div>
+    </section>
+
+    <section id="sec-reg" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>3. 正则化与协方差结构</h2></div>
+      <p class="section-intro">工程上最常用的稳定化是对角加载：$\Sigma_j^{\mathrm{reg}}=\Sigma_j^{\mathrm{MLE}}+\nu^2I$，$\nu&gt;0$。$I$ 是单位矩阵，$\nu^2$ 是加在每条对角线上的小正数。它的效果用特征分解一句话说清。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="covreg">协方差正则化</span> $\Sigma+\nu^2I$；它实现一个 <span class="term-ref" data-term="eigfloor">特征值下限</span>：所有特征值至少被抬高 $\nu^2$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>给椭圆的最窄方向垫上厚度 $\nu$ 的“地板”，针再尖也尖不过地板。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>阻止塌缩方向上的密度爆炸；同时让 $\Sigma^{-1}$ 与 $\log|\Sigma|$ 数值稳定。</p></div>
+        <div class="five"><h3>怎么算</h3><p>若 $\Sigma u_r=\lambda_r u_r$，则 $(\Sigma+\nu^2I)u_r=(\lambda_r+\nu^2)u_r$：<strong>特征向量不变，每个特征值加 $\nu^2$</strong>。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>$\nu$ 太小塌缩风险仍在，太大则所有组件被迫很宽而欠拟合——可用验证集选 $\nu$。</p></div>
+      </div>
+      <div class="callout warn"><strong>一个诚实警示。</strong> $\Sigma+\nu^2I$ 是工程稳定化操作，<em>不能</em>自动等同于 Wishart 先验下的 MAP 更新。真正的 Wishart/MAP 推导会在目标里出现由先验超参数决定的 $\log|\Sigma|$ 与 $\operatorname{tr}(\Psi\Sigma^{-1})$ 项；只有明确写出先验和后验目标，才能把“加对角项”解释成某个特定 MAP。</div>
+      <div class="formula"><p>除了正则化强度，还要同时选 <span class="term-ref" data-term="covstruct">协方差结构</span>（$d$ 为维度，$j$ 为组件索引）：</p><p class="small">$\sigma_j^2$ 指组件 $j$ 的方差（标量），$\Sigma_j$ 指组件 $j$ 的协方差矩阵；注意与求和号 $\sum$ 区分。</p></div>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">spherical 球形</span><h3>$\Sigma_j=\sigma_j^2 I$</h3><p>好处：参数最少、最稳定。代价：只能表示球形云。</p></div>
+        <div class="card"><span class="card-kicker">diagonal 对角</span><h3>$\Sigma_j=\operatorname{diag}(\sigma_{j1}^2,\ldots,\sigma_{jd}^2)$</h3><p>好处：允许各维不同尺度。代价：忽略维度间相关性。</p></div>
+        <div class="card"><span class="card-kicker">tied 共享</span><h3>$\Sigma_1=\cdots=\Sigma_K$</h3><p>好处：组件间共享统计强度。代价：不同组件不能有不同形状。</p></div>
+        <div class="card"><span class="card-kicker">full 完整</span><h3>任意对称正定 $\Sigma_j$</h3><p>好处：能表达旋转椭圆。代价：参数多，易过拟合和奇异。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="regL1">特征值 $\lambda_1$</label><input id="regL1" type="range" min="0.02" max="4" step="0.02" value="1.6"><output id="regL1Out"></output></div>
+          <div class="control"><label for="regL2">特征值 $\lambda_2$</label><input id="regL2" type="range" min="0.02" max="4" step="0.02" value="0.04"><output id="regL2Out"></output></div>
+          <div class="control"><label for="regNu">正则化 $\nu$</label><input id="regNu" type="range" min="0" max="1.5" step="0.05" value="0.6"><output id="regNuOut"></output></div>
+        </div><p class="small">左图：协方差椭圆（半轴 $2\sqrt{\lambda}$），红色虚线是正则化前，绿色实线是 $\Sigma+\nu^2I$ 之后。右图：四个特征值的条形与归一化因子的对数刻度——把 $\lambda_2$ 拖向 $0.02$、把 $\nu$ 拖到 $0$，看“前”的标记冲出去。</p></div>
+        <div class="step-box" id="regSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="regViz" class="viz-svg" viewBox="0 0 940 430" role="img" aria-label="特征值地板：正则化前后的椭圆与特征值"></svg></div>
+      <div class="source-grid"><figure><img src="assets/gmm2-lab/fig2.png" alt="协方差正则化对塌缩组件的几何作用" loading="lazy"><figcaption>本地化讲义原图：协方差正则化对塌缩组件的几何作用</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>除了验证集，还有一把不用留数据的尺子：信息准则——给参数数量明码标价。</span></div>
+    </section>
+
+    <section id="sec-bic" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>4. 信息准则与参数计数</h2></div>
+      <p class="section-intro">信息准则把“拟合得好”与“用了多少参数”放进同一个分数。先数清楚参数：$d$ 维、full 协方差的 GMM 中，权重只有 $K-1$ 个自由参数（必须加和为 1），均值有 $Kd$ 个，对称协方差有 $Kd(d+1)/2$ 个。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="bic">BIC</span> 与 <span class="term-ref" data-term="aic">AIC</span> 是带复杂度惩罚的模型分数；<span class="term-ref" data-term="labelswitch">标签交换</span> 指 $K!$ 个组件排列给出等价模型。</p></div>
+        <div class="five"><h3>白话理解</h3><p>每加一个参数都要“交税”：BIC 的税随 $\log n$ 涨，AIC 收固定税。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>不想留验证集时，用同一份训练数据比较不同 $K$；也用来给协方差结构的选择记账。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$p_K=(K-1)+Kd+\frac{Kd(d+1)}{2}$；$\mathrm{BIC}=-2\ell_{\mathrm{train}}+p_K\log n$，$\mathrm{AIC}=-2\ell_{\mathrm{train}}+2p_K$，取最小。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>为什么有负号？$\ell$ 越大越好，而 BIC/AIC 约定“越小越好”，所以写成 $-2\ell$；且只对似然有限、数值健康的模型有意义——塌缩的运行先丢弃。</p></div>
+      </div>
+      <div class="formula"><p>参数账本与两个准则：</p><p>$$p_K=(K-1)+Kd+K\frac{d(d+1)}{2},$$</p><p>$$\operatorname{BIC}(K)=-2\ell_{\mathrm{train}}+p_K\log n,\qquad \operatorname{AIC}(K)=-2\ell_{\mathrm{train}}+2p_K.$$</p><p class="small">换 diagonal / tied / spherical 协方差时 $p_K$ 要重算。另一个陷阱：交换组件编号得到 $K!$ 个等价参数表示——不要按原始组件编号直接比较不同 restart 的均值或责任度，应比较密度与预测指标，或先做组件对齐。</p></div>
+      <div class="control-panel">
+        <div><p class="small">下图数据来自同一三高斯混合，但用<strong>固定种子的 LCG</strong> 生成（$n=400$，可复现，不用 <code>Math.random()</code>）；每个 $K$ 用分位数初始化加 LCG 抖动跑 3 次确定性 restart、各 60 轮 EM，取最好者。三条曲线全部现算。</p><div class="step-box" id="bicSteps"></div></div>
+        <div class="step-box"><strong>参数计数账本（与左图独立）</strong><div class="controls"><div class="control"><label for="ledK">组件数 $K$</label><input id="ledK" type="range" min="1" max="8" step="1" value="3"><output id="ledKOut"></output></div><div class="control"><label for="ledD">维度 $d$</label><input id="ledD" type="range" min="1" max="6" step="1" value="2"><output id="ledDOut"></output></div></div><div class="step-box" id="ledSteps" style="margin-top:8px"></div></div>
+      </div>
+      <div class="svg-wrap"><svg id="bicViz" class="viz-svg" viewBox="0 0 940 400" role="img" aria-label="BIC 与 AIC 随 K 的变化曲线"></svg></div>
+      <div class="svg-wrap"><svg id="ledgerViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="参数计数账本条形图"></svg></div>
+      <div class="source-grid"><figure><img src="assets/gmm2-lab/fig1.png" alt="用 BIC 选择组件数 K" loading="lazy"><figcaption>本地化讲义原图：用 BIC 在拟合与复杂度之间选择组件数 $K$</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>模型选定、数值健康之后，$p(x)$ 就能干活了：先看它怎样变成一个非线性的生成式分类器。</span></div>
+    </section>
+
+    <section id="sec-classifier" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>5. GMM 作为非线性生成式分类器</h2></div>
+      <p class="section-intro">给每个类别单独拟合一个 GMM 作为<span class="term-ref" data-term="classcond">类条件密度</span>，再用 Bayes 公式比较类别，就得到 <span class="term-ref" data-term="gmmbayes">Gaussian-mixture Bayes classifier</span>。关键区分：<strong>组件索引 ≠ 类别索引</strong>——一个类别内部可以有多个组件。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p>生成式分类器：$p(x\mid Y=c)=\sum_{k\in\mathcal K_c}\pi_{k\mid c}\,\mathcal N(x;\mu_{k\mid c},\Sigma_{k\mid c})$，其中 $\mathcal K_c$ 是类别 $c$ 的组件集合。</p></div>
+        <div class="five"><h3>白话理解</h3><p>“正类”不是一种形状，而是两堆点的混合；分类时先在类内把多个模式求和，再比较类间。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>表达多峰类别的决策边界可以是非线性、多段的——单个高斯做不到。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$P(Y=c\mid x)\propto P(Y=c)\,p(x\mid Y=c)$；类内组件权重 $\pi_{k\mid c}\ge0$、$\sum_{k\in\mathcal K_c}\pi_{k\mid c}=1$，与类间先验 $P(Y=c)$ 是<strong>两层不同的权重</strong>。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>不能把一个 component 的编号直接当成类别标签；这正是第 22 讲“组件不等于语义”的正面用法。</p></div>
+      </div>
+      <div class="formula"><p>讲义 worked example 2：$P(Y=+)=0.4$、$P(Y=-)=0.6$，正类双峰、负类单峰：</p><p>$$p(x\mid +)=\tfrac12\mathcal N(x;0,1)+\tfrac12\mathcal N(x;4,1),\qquad p(x\mid -)=\mathcal N(x;2,1).$$</p><p class="small">评分 $s_c(x)=P(Y=c)\,p(x\mid Y=c)$，后验 $P(+\mid x)=s_+/(s_++s_-)$。$s$ 这里是未归一化的类别分数，与异常检测节的 $s(x)=-\log p(x)$ 是两回事，注意上下文。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="clsP">类别先验 $P(Y=+)$</label><input id="clsP" type="range" min="0.05" max="0.95" step="0.05" value="0.4"><output id="clsPOut"></output></div>
+          <div class="control"><label for="clsX">查询点 $x$</label><input id="clsX" type="range" min="-4" max="8" step="0.1" value="0"><output id="clsXOut"></output></div>
+        </div><p class="small">上图：两条加权密度 $s_+(x)$（蓝）与 $s_-(x)$（橙），阴影区域是预测正类的决策区（非线性、两段）；下图：后验 $P(+\mid x)$。默认 $x=0$ 复现讲义手算；把 $x$ 拖到 $2$ 看后验跌到约 $0.08$。</p></div>
+        <div class="step-box" id="clsSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="clsViz" class="viz-svg" viewBox="0 0 940 470" role="img" aria-label="双峰生成式分类器的加权密度与后验"></svg></div>
+      <p class="viz-caption">读图：正类的两个高密度区域让“判正”的区域分成两段；单个正类高斯表达不了这种双峰。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>同一个 $p(x)$ 换一个问法：不问“属于哪类”，改问“这个点有多常见”——这就是异常检测。</span></div>
+    </section>
+
+    <section id="sec-anomaly" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>6. 用 GMM 做异常检测</h2></div>
+      <p class="section-intro">训练好 GMM 后，每个点都有密度 $p_{\hat\theta}(x)$。把“模型觉得这个输入有多常见”变成可排序的分数，就得到异常检测器。注意：比较的是<strong>密度</strong>不是概率——连续变量满足 $P(X=x)=0$，且密度随单位与坐标变换改变，所以阈值必须在同一特征表示、同一标准化下校准；低密度也不自动等于业务异常。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="anoscore">异常分数</span> $s(x)=-\log p_{\hat\theta}(x)$；<span class="term-ref" data-term="farate">误报率</span> $P_{\mathrm{FA}}(\tau)=P_{\mathrm{normal}}(-\log p_{\hat\theta}(X)\ge\tau)$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>密度越低分数越高；阈值 $\tau$ 是报警线，越过才告警。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把连续的密度分数变成可操作的告警队列；用验证集分位数控制误报。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$x$ 被标记为异常 $\iff s(x)\ge\tau \iff p(x)\le e^{-\tau}$；想减少误报就<strong>增大</strong> $\tau$（等价地降低密度阈值 $\delta=e^{-\tau}$）。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>这套解释依赖“训练数据近似代表正常分布”；否则低密度只说明“在当前模型下少见”。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="anoT">阈值 $\tau$</label><input id="anoT" type="range" min="0.2" max="10" step="0.05" value="2"><output id="anoTOut"></output></div>
+          <div class="control"><label for="anoX">查询点 $x$</label><input id="anoX" type="range" min="-10" max="9" step="0.1" value="4"><output id="anoXOut"></output></div>
+        </div><div class="label-row"><button class="btn primary" id="anoCal" type="button">按 95% 分位数校准</button></div><p class="small">密度模型沿用 $p(x)=\frac12\mathcal N(x;0,4)+\frac13\mathcal N(x;3,1)+\frac16\mathcal N(x;-3,9)$。红色区域是 $p(x)\le e^{-\tau}$ 的报警区；误报率 $P_{\mathrm{FA}}(\tau)=\int_{s(x)\ge\tau}p(x)\,dx$ 用细网格数值积分现算；校准按钮用二分法解 $P_{\mathrm{FA}}=5\%$ 并把滑杆设过去。</p></div>
+        <div class="step-box" id="anoSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="anoViz" class="viz-svg" viewBox="0 0 940 440" role="img" aria-label="GMM 密度阈值与误报率"></svg></div>
+      <div class="source-grid"><figure><img src="assets/gmm2-lab/fig3.png" alt="从密度分数到异常告警队列" loading="lazy"><figcaption>本地化讲义原图：从密度分数到排序后的异常告警队列</figcaption></figure><figure><img src="assets/gmm2-lab/fig5.png" alt="用 GMM 密度阈值识别异常点" loading="lazy"><figcaption>本地化讲义原图：用 GMM 密度阈值识别异常点</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>到目前为止标签完全缺席；如果手头有少量标签，怎样让它们进入同一个 M-step？</span></div>
+    </section>
+
+    <section id="sec-semi" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>7. 半监督 GMM：只固定有标签点的责任度</h2></div>
+      <p class="section-intro">少量样本知道语义类别，大量样本只有特征。做法出奇地温和：无标签点照常算软责任度，有标签点（在一类别一组件时）把责任度固定成 0/1，然后所有点进入同一组加权 MLE 更新。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="semisup">半监督学习</span>：同时使用 $(x_i,y_i)$ 与裸 $x_i$；其有效性依赖 <span class="term-ref" data-term="cluster">聚类假设</span>——同一高密度区域更可能共享标签。</p></div>
+        <div class="five"><h3>白话理解</h3><p>有标签点是硬锚点，把组件“钉”在语义上；无标签点仍以软权重提供密度结构。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>标注昂贵时，用少量标签引导大量无标签数据的组件归属。</p></div>
+        <div class="five"><h3>怎么算</h3><p>无标签：$\gamma_{ij}=P(Z_i=j\mid x_i,\theta^{\mathrm{old}})$；有标签（一类别一组件）：$\gamma_{ij}=\mathbf 1\{j=y_i\}$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>若语义边界穿过高密度区域（聚类假设不成立），无标签数据可能误导而非帮忙。</p></div>
+      </div>
+      <div class="formula"><p>一类别多组件时，$\mathbf 1\{j=y_i\}$ 不再适用。设类别 $c$ 允许的组件集合为 $\mathcal K_c$：已知 $y_i=c$ 只能断定 $Z_i\in\mathcal K_c$，于是集合外置零、集合内按当前联合分数重新归一化：</p><p>$$\gamma_{ij}=\begin{cases}\dfrac{w_j\,\mathcal N(x_i;\mu_j,\Sigma_j)}{\sum_{\ell\in\mathcal K_c}w_\ell\,\mathcal N(x_i;\mu_\ell,\Sigma_\ell)},&j\in\mathcal K_c,\\[10pt]0,&j\notin\mathcal K_c.\end{cases}$$</p><p class="small">这就是“标签提供锚点”的准确含义：排除不可能的组件，但不一定消除类别内部的模式不确定性。随后统一 $N_j=\sum_i\gamma_{ij}$、$w_j=N_j/n$、$\mu_j=\sum_i\gamma_{ij}x_i/N_j$。</p></div>
+      <div class="control-panel">
+        <div><p class="small">讲义 §10.1 的四个点 $x=0,1,4,5$。默认两组件模型调成使无标签点的 $\gamma$ 复现讲义的 $0.8/0.2$ 与 $0.1/0.9$；每个点可在 无标签 / 标为 1 / 标为 2 之间切换，右侧统计量即时重算。</p>
+          <div id="semiPick"></div>
+          <div class="controls">
+            <div class="control"><label for="semiM1">组件 1 均值 $\mu_1$</label><input id="semiM1" type="range" min="-1" max="2.5" step="0.02" value="1.3"><output id="semiM1Out"></output></div>
+            <div class="control"><label for="semiM2">组件 2 均值 $\mu_2$</label><input id="semiM2" type="range" min="2.5" max="6" step="0.02" value="3.02"><output id="semiM2Out"></output></div>
+            <div class="control"><label for="semiS">共同标准差 $\sigma$</label><input id="semiS" type="range" min="0.5" max="3" step="0.05" value="1.2"><output id="semiSOut"></output></div>
+          </div></div>
+        <div class="step-box" id="semiSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="semiViz" class="viz-svg" viewBox="0 0 940 400" role="img" aria-label="半监督四点锚点与责任度条形"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>回头把讲义最常用的一维混合模型彻底算透：矩与责任度的手算复核（拓展）。</span></div>
+    </section>
+
+    <section id="sec-moments" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. Worked example：三高斯混合的矩与责任度</h2></div>
+      <p class="section-intro">这是贯穿全讲的基准模型：$p(x)=\frac12\mathcal N(x;0,4)+\frac13\mathcal N(x;3,1)+\frac16\mathcal N(x;-3,9)$。<span class="term-ref" data-term="responsibility">责任度</span> 在第 22 讲已建立，这里作为复核：$\gamma_{ij}=P(Z_i=j\mid x_i,\theta)$，每行加和为 1。权重检查：$\frac12+\frac13+\frac16=1$。再次提醒：括号里第三个参数是方差 $\sigma^2$，所以三个标准差是 $2,1,3$。</p>
+      <div class="stat-grid" id="momStats"></div>
+      <div class="formula"><p>混合矩用“全期望”逐组件加权（$\mathbb E[X^2]$ 用 $\mathbb E[X^2\mid Z=j]=\sigma_j^2+\mu_j^2$）：</p><p>$$\mathbb E[X]=\sum_j w_j\mu_j,\qquad \mathbb E[X^2]=\sum_j w_j(\sigma_j^2+\mu_j^2),\qquad \operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb E[X])^2.$$</p><p class="small">上面三张统计卡的数字由这两条公式在页面加载时现算，不是写死的文本。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="gamX">查询点 $x$</label><input id="gamX" type="range" min="-8" max="9" step="0.05" value="4"><output id="gamXOut"></output></div>
+        </div><p class="small">三条曲线是 $\gamma_j(x)$ 随 $x$ 的变化（公式现算）。默认 $x=4$ 复现讲义 §3.2；把滑杆拖到 $x=1.8$ 复现 §3.3——该点在前两个组件之间，Hard-EM 必须在两个几乎相等的选项里强行选一个。</p></div>
+        <div class="step-box" id="gamSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="gamViz" class="viz-svg" viewBox="0 0 940 420" role="img" aria-label="三高斯混合的责任度曲线"></svg></div>
+      <div class="source-grid"><figure><img src="assets/gmm2-lab/fig0.png" alt="重叠云团中的 Hard-EM 与 Soft-EM" loading="lazy"><figcaption>本地化讲义原图（回顾）：重叠云团中的 Hard-EM 与 Soft-EM——软责任度保留不确定性，硬分配压成 0/1</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>把前面所有判断整理成一份可执行的实践工作流和一张避坑清单（拓展）。</span></div>
+    </section>
+
+    <section id="sec-practice" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>9. 实践工作流与常见误区</h2></div>
+      <p class="section-intro">把本讲落成操作顺序；每一条都能在前面的小节里找到原因。</p>
+      <div class="panel"><h3>实践工作流（讲义 §13，七步）</h3><p class="small">1) 先按训练集统计量标准化特征，避免单位差异主导协方差。2) 预先设定候选 $K$、协方差结构和正则化强度。3) 每个设置运行多次 restart，并用相同停止标准。4) 记录训练/验证 log-likelihood、每个 $N_j$、最小协方差特征值和数值警告。5) 用验证 likelihood、BIC/AIC 或任务指标选模型。6) 聚类时检查稳定性与可解释性；异常检测时单独选阈值。7) 若组件很小、协方差极端或某次 restart 的 likelihood 异常高，优先怀疑塌缩。</p></div>
+      <div class="panel"><h3>常见误区（讲义 §15，六条）</h3><p class="small">1) 只用训练 likelihood 选 $K$：更大的模型可能只是更会过拟合。2) 以为 Soft-EM 自动消除过拟合：塌缩在 Soft-EM 中同样存在。3) 把 $\Sigma+\nu^2I$ 自动当作 Wishart-MAP：它是工程稳定化，声称 MAP 必须给出匹配的先验目标与推导。4) 把低密度直接解释成异常：先确认训练分布代表正常样本。5) 把一个类别限制为一个 component：GMM Bayes classifier 允许每个类别有多个模式。6) 认为半监督总会提高性能：聚类假设不成立时，无标签数据可能伤害结果。</p></div>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">讲义 §11</span><h3>分类与异常检测可分开建模</h3><p>生成式分类写 $p(x,y)=p(y)\,p(x\mid y)$；也可以学 $p(x,y)=p(x)\,p(y\mid x)$——$p(y\mid x)$ 负责分类准确，$p(x)$ 负责检测分布外输入。别把“分类置信度高”当作“输入一定正常”：陌生输入上判别式模型也可能过度自信。</p></div>
+        <div class="card"><span class="card-kicker">讲义 §12</span><h3>高 likelihood ≠ 有意义的聚类</h3><p>GMM 优化的是 $\sum_i\log p_{\hat\theta}(x_i)$，不是“与人类语义标签的一致程度”。一个语义类别可能由多个组件表达，一个组件也可能跨语义类别；接受模型前至少联合检查验证 likelihood、协方差特征值、restart 稳定性、责任度合理性与下游指标。</p></div>
+      </div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲，并把接力棒交给第 24 讲的 EM 理论。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：让高 likelihood 通过安检</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 训练 likelihood 不可信怎么办？——每个候选 $K$ 重新训练并多次 restart，用没参与拟合的验证集（或信息准则）比较；用 $\Sigma+\nu^2I$ 封住协方差塌缩这种“合法作弊”；记录 $N_j$、最小特征值等健康指标；最后才把健康的 $p(x)$ 与 $\gamma$ 用于分类、异常检测和半监督。</div>
+      <div class="closing-formulas">
+        <div class="formula"><p><strong>验证似然（有峰，可信）</strong></p><p>$$\ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)$$</p></div>
+        <div class="formula"><p><strong>BIC（越小越好）</strong></p><p>$$\operatorname{BIC}(K)=-2\ell_{\mathrm{train}}+p_K\log n$$</p></div>
+        <div class="formula"><p><strong>特征值地板</strong></p><p>$$(\Sigma+\nu^2I)u_r=(\lambda_r+\nu^2)u_r$$</p></div>
+        <div class="formula"><p><strong>生成式分类</strong></p><p>$$P(Y=c\mid x)\propto P(Y=c)\,p(x\mid Y=c)$$</p></div>
+        <div class="formula"><p><strong>异常分数</strong></p><p>$$s(x)=-\log p_{\hat\theta}(x),\quad \text{报警}\iff s(x)\ge\tau$$</p></div>
+        <div class="formula"><p><strong>半监督责任度</strong></p><p>$$\gamma_{ij}=\mathbf 1\{j=y_i\}\ \text{（有标签）};\quad P(Z_i=j\mid x_i,\theta)\ \text{（无标签）}$$</p></div>
+      </div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能解释为什么训练 likelihood 随 $K$ 单调变好、却不能用来选 $K$。</label><label><input type="checkbox">我能写出塌缩推导链 $\mathcal N(x_i;x_i,\sigma^2)=1/\sqrt{2\pi\sigma^2}\to+\infty$，并说明这不是 EM 的 bug。</label><label><input type="checkbox">我能推出 $(\Sigma+\nu^2I)u_r=(\lambda_r+\nu^2)u_r$，并说清它为何不等于自动的 Wishart-MAP。</label><label><input type="checkbox">我能数出 $p_K=(K-1)+Kd+Kd(d+1)/2$，并解释 BIC 负号的方向约定。</label><label><input type="checkbox">我能用 $s(x)=-\log p(x)$ 与 $\tau$ 的权衡说明“想减少误报就增大 $\tau$”。</label><label><input type="checkbox">我能说明半监督中有标签点固定 $\gamma_{ij}=\mathbf1\{j=y_i\}$、一类别多组件时集合外置零再归一化。</label></div>
+      <div class="callout"><strong>与下一讲连接。</strong> 第 22 讲给了责任度 $\gamma$ 与加权 MLE 的闭环；本讲把它放进模型选择、正则化与三类应用。第 24 讲将回答“为什么这样做是对的”：证明 E-step 与 M-step 的组合让 observed likelihood 单调不降，并给出 EM 的下界视角，同时说明 Hard-EM 优化的其实是另一个交替目标。</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-23">返回原讲义第 23 讲</a>，或直接前往 <a href="index.html#lecture-24">第 24 讲</a> 的 EM 单调性与下界证明。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const pct=x=>fmt(100*x,1)+'%';
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function gauss(x,mu,s){s=Math.max(s,1e-12);const z=(x-mu)/s;return Math.exp(-.5*z*z)/(s*Math.sqrt(2*Math.PI))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function curvePath(fn,xmin,xmax,x0,y0,w,h,ymin,ymax){let d='';for(let k=0;k<=180;k++){const x=xmin+(xmax-xmin)*k/180;const y=clamp(fn(x),ymin,ymax);d+=(k?' L':'M')+scaleX(x,xmin,xmax,x0,w).toFixed(2)+','+scaleY(y,ymin,ymax,y0,h).toFixed(2)}return d}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+/* axes with edge-safe tick labels: first/last x tick anchored inward */
+function frame(svg,o){const{x0,y0,w,h,xmin,xmax,ymin,ymax}=o;line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});(o.yticks||[]).forEach(v=>{const y=scaleY(v,ymin,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,fmt(v,o.yp===undefined?2:o.yp),{anchor:'end',size:10})});(o.xticks||[]).forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});const anc=o.xticks.length>1?(i===0?'start':(i===o.xticks.length-1?'end':'middle')):'middle';svgLabel(svg,x,y0+h+17,fmt(v,o.xp===undefined?1:o.xp),{anchor:anc,size:10})})}
+/* endpoint label anti-collision: sort by y, enforce min gap, clamp into [lo,hi] */
+function spreadLabels(items,minGap,lo,hi){const a=items.slice().sort((p,q)=>p.y-q.y);for(let i=1;i<a.length;i++)a[i].y=Math.max(a[i].y,a[i-1].y+minGap);if(a.length&&a[a.length-1].y>hi){a[a.length-1].y=hi;for(let i=a.length-2;i>=0;i--)a[i].y=Math.min(a[i].y,a[i+1].y-minGap)}if(a.length&&a[0].y<lo){const s=lo-a[0].y;a.forEach(q=>q.y+=s)}return a}
+/* the running worked-example mixture: w=(1/2,1/3,1/6), mu=(0,3,-3), sigma^2=(4,1,9) */
+const MW=[1/2,1/3,1/6],MM=[0,3,-3],MS=[2,1,3];
+function mix3(x){return MW[0]*gauss(x,MM[0],MS[0])+MW[1]*gauss(x,MM[1],MS[1])+MW[2]*gauss(x,MM[2],MS[2])}
+function mix3parts(x){return MW.map((w,j)=>w*gauss(x,MM[j],MS[j]))}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('gmm2-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('gmm2-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('gmm2-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('gmm2-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留选 K、塌缩、正则化与三类应用的主线；拓展小节已隐藏。':'完整模式：额外显示 BIC 参数账本、矩与责任度复核、实践工作流。';document.dispatchEvent(new CustomEvent('lab-mode-change'))}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and bridge-aware scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map: every edge begins and ends at a node boundary */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');
+  const nodes=[
+    {id:'n-select',target:'sec-select',x:20,y:130,w:140,h:60,title:'选组件数 K',sub:'验证似然',color:'var(--blue)'},
+    {id:'n-collapse',target:'sec-collapse',x:215,y:130,w:140,h:60,title:'协方差塌缩',sub:'病态高似然',color:'var(--warm)'},
+    {id:'n-reg',target:'sec-reg',x:410,y:130,w:140,h:60,title:'正则化',sub:'Σ+ν²I',color:'var(--accent)'},
+    {id:'n-cls',target:'sec-classifier',x:640,y:20,w:170,h:52,title:'生成式分类',sub:'P(c)·p(x|c)',color:'var(--blue)'},
+    {id:'n-anom',target:'sec-anomaly',x:640,y:130,w:170,h:52,title:'异常检测',sub:'s=−log p(x)',color:'var(--danger)'},
+    {id:'n-semi',target:'sec-semi',x:640,y:240,w:170,h:52,title:'半监督',sub:'固定锚点 γ',color:'var(--gold)'},
+    {id:'n-bic',target:'sec-bic',extra:true,x:20,y:240,w:140,h:52,title:'BIC / AIC',sub:'参数计数',color:'var(--violet)'},
+    {id:'n-moments',target:'sec-moments',extra:true,x:215,y:240,w:140,h:52,title:'矩与 γ 复核',sub:'讲义手算',color:'var(--violet)'},
+    {id:'n-practice',target:'sec-practice',extra:true,x:410,y:240,w:140,h:52,title:'实践工作流',sub:'误区清单',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M160 160 H215','var(--accent)',mk,'验证',187,148);
+  edge('M355 160 H410','var(--accent)',mk,'骗高',382,148);
+  edge('M550 160 H595 V46 H640','var(--accent)',mk,'p(x|c)',595,103);
+  edge('M550 160 H640','var(--accent)',mk,'密度',595,146);
+  edge('M550 160 H620 V266 H640','var(--accent)',mk,'锚点',620,220);
+  edge('M90 190 V240','var(--violet)',mv,'准则',90,218);
+  edge('M285 190 V240','var(--violet)',mv,'复核',285,218);
+  edge('M640 266 H550','var(--violet)',mv,'落地',580,254);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+
+/* ============ 实验 A：K 选择工作台（真实一维 GMM EM，真随机） ============ */
+(()=>{const svg=$('#selViz');let results=null,TRAIN=[],VAL=[];
+function pdf1(x,w,mu,vr){let s=0;for(let j=0;j<w.length;j++)s+=w[j]*gauss(x,mu[j],Math.sqrt(vr[j]));return s}
+function emFit1d(xs,K){const n=xs.length,gv=xs.reduce((a,x)=>a+x,0)/n,gv2=Math.max(xs.reduce((a,x)=>a+(x-gv)**2,0)/n,1e-2);let best=null;
+  for(let r=0;r<5;r++){let mu=[];for(let j=0;j<K;j++)mu.push(xs[Math.floor(Math.random()*n)]);let vr=mu.map(()=>gv2),w=mu.map(()=>1/K);
+    for(let it=0;it<60;it++){const gam=xs.map(x=>{const s=mu.map((m,j)=>w[j]*gauss(x,m,Math.sqrt(vr[j])));const t=s.reduce((a,b)=>a+b,0)||1e-300;return s.map(v=>v/t)});
+      const N=new Array(K).fill(0),sx=new Array(K).fill(0);
+      for(let i=0;i<n;i++)for(let j=0;j<K;j++){N[j]+=gam[i][j];sx[j]+=gam[i][j]*xs[i]}
+      for(let j=0;j<K;j++){if(N[j]<1e-8){w[j]=1e-8;mu[j]=xs[Math.floor(Math.random()*n)];vr[j]=gv2;continue}
+        const m=sx[j]/N[j];let vv=0;for(let i=0;i<n;i++)vv+=gam[i][j]*(xs[i]-m)**2;vv/=N[j];
+        w[j]=N[j]/n;mu[j]=m;vr[j]=Math.max(vv,1e-6)}
+      const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws)}
+    const ll=xs.reduce((a,x)=>a+Math.log(Math.max(pdf1(x,w,mu,vr),1e-300)),0);
+    if(!best||ll>best.ll)best={w,mu,vr,ll}}
+  return best}
+function regenerate(){const n=Number($('#selN').value),seed=Math.random(),xs=[];
+  for(let i=0;i<n;i++){const u=Math.random(),j=u<MW[0]?0:(u<MW[0]+MW[1]?1:2);let u1=Math.random();if(u1<1e-12)u1=1e-12;const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*Math.random());xs.push(MM[j]+MS[j]*z)}
+  for(let i=xs.length-1;i>0;i--){const k=Math.floor(Math.random()*(i+1)),t=xs[i];xs[i]=xs[k];xs[k]=t}
+  TRAIN=xs.slice(0,Math.round(n*.7));VAL=xs.slice(Math.round(n*.7));
+  results=[];for(let K=1;K<=6;K++){const b=emFit1d(TRAIN,K);const lv=VAL.reduce((a,x)=>a+Math.log(Math.max(pdf1(x,b.w,b.mu,b.vr),1e-300)),0);results.push({K,tr:b.ll/TRAIN.length,va:lv/VAL.length})}
+  $('#selSeedPill').textContent='seed '+fmt(seed,4);draw()}
+function draw(){svgClear(svg);if(!results)return;const x0=80,y0=30,w=560,h=250;
+  const all=results.flatMap(r=>[r.tr,r.va]),ymin=Math.min(...all)-.12,ymax=Math.max(...all)+.12;
+  const mid=(ymin+ymax)/2;
+  frame(svg,{x0,y0,w,h,xmin:1,xmax:6,ymin,ymax,xticks:[1,2,3,4,5,6],xp:0,yticks:[ymin+.1,mid,ymax-.1],yp:2});
+  const pt=(K,v)=>[scaleX(K,1,6,x0,w),scaleY(v,ymin,ymax,y0,h)];
+  [['tr','var(--blue)'],['va','var(--accent)']].forEach(([key,c])=>{let d='';results.forEach((r,i)=>{const[px,py]=pt(r.K,r[key]);d+=(i?' L':'M')+px.toFixed(1)+','+py.toFixed(1)});path(svg,d,{stroke:c,'stroke-width':2.8});results.forEach(r=>{const[px,py]=pt(r.K,r[key]);svgAdd(svg,'circle',{cx:px,cy:py,r:3.6,fill:c})})});
+  const labels=spreadLabels([{y:pt(6,results[5].tr)[1],t:'训练 ℓ̄',c:'var(--blue)'},{y:pt(6,results[5].va)[1],t:'验证 ℓ̄',c:'var(--accent)'}],16,y0+10,y0+h-6);
+  labels.forEach(q=>{svgLabel(svg,x0+w+10,q.y+3.5,q.t,{anchor:'start',size:11,fill:q.c})});
+  const best=results.reduce((a,r)=>r.va>a.va?r:a,results[0]);const[bx,by]=pt(best.K,best.va);
+  svgAdd(svg,'circle',{cx:bx,cy:by,r:7,fill:'none',stroke:'var(--danger)','stroke-width':2.4});
+  svgLabel(svg,clamp(bx,x0+70,x0+w-70),clamp(by-16,y0+10,y0+h-6),'验证最优 K='+best.K,{size:11,fill:'var(--danger)'});
+  /* data rug */
+  const ry=362,rx0=80,rw=560,rxmin=-11,rxmax=10;line(svg,rx0,ry,rx0+rw,ry,{class:'svg-axis'});
+  [-9,-6,-3,0,3,6,9].forEach((v,i)=>{const x=scaleX(v,rxmin,rxmax,rx0,rw);svgLabel(svg,x,ry+18,fmt(v,0),{anchor:i===0?'start':(i===6?'end':'middle'),size:9})});
+  TRAIN.forEach(v=>{svgAdd(svg,'circle',{cx:scaleX(v,rxmin,rxmax,rx0,rw),cy:ry-8,r:2.6,fill:'var(--blue)',opacity:.4})});
+  VAL.forEach(v=>{svgAdd(svg,'circle',{cx:scaleX(v,rxmin,rxmax,rx0,rw),cy:ry+7,r:2.6,fill:'var(--warm)',opacity:.55})});
+  svgLabel(svg,700,ry-26,'● 训练 70%',{anchor:'start',size:10,fill:'var(--blue)'});
+  svgLabel(svg,820,ry-26,'● 验证 30%',{anchor:'start',size:10,fill:'var(--warm)'});
+  let rows=results.map(r=>`<tr${r.K===best.K?' class="best"':''}><td>$K=${r.K}$</td><td>${fmt(r.tr,4)}</td><td>${fmt(r.va,4)}</td></tr>`).join('');
+  $('#selSteps').innerHTML=String.raw`<p><strong>各 $K$ 的平均对数似然（现算，5 restart 取训练最优）</strong></p><table class="ktab"><tr><th>$K$</th><th>训练 $\bar\ell$</th><th>验证 $\bar\ell$</th></tr>${rows}</table><p class="small">$n=${TRAIN.length+VAL.length}$（训练 ${TRAIN.length} / 验证 ${VAL.length}）。训练列几乎单调升；验证列在 $K=${best.K}$ 处取峰。方差下限 $10^{-6}$ 已内建——这就是下一节正则化的动机。</p>`;rerender($('#selSteps'))}
+$('#selRegen').addEventListener('click',()=>{regenerate();toast('已用 Math.random() 重新采样并重训')});
+range('selN',()=>regenerate(),0);regenerate();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 B：塌缩演示 ============ */
+(()=>{const svg=$('#colViz');
+function draw(){svgClear(svg);const t=Number($('#colT').value),sig=Math.pow(10,t),wj=Number($('#colW').value);
+  const x0=90,y0=40,w=420,h=250,lmin=-1.7,lmax=0.301,logN=s2=>-0.5*Math.log(2*Math.PI*s2);
+  const ymin=-1.9,ymax=3.4;
+  frame(svg,{x0,y0,w,h,xmin:lmin,xmax:lmax,ymin,ymax,xticks:[],yticks:[-1.5,0,1.5,3],yp:1});
+  const ts=[[0.02,'0.02'],[0.05,'0.05'],[0.1,'0.1'],[0.2,'0.2'],[0.5,'0.5'],[1,'1'],[2,'2']];
+  ts.forEach(([v,name],i)=>{const x=scaleX(Math.log10(v),lmin,lmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});svgLabel(svg,x,y0+h+17,name,{anchor:i===0?'start':(i===ts.length-1?'end':'middle'),size:9})});
+  svgLabel(svg,x0+w/2,y0+h+38,'标准差 σ（对数刻度）',{size:10,fill:'var(--muted)'});
+  path(svg,curvePath(u=>logN(Math.pow(10,2*u)),lmin,lmax,x0,y0,w,h,ymin,ymax),{stroke:'var(--danger)','stroke-width':2.8});
+  const cx=scaleX(t,lmin,lmax,x0,w),cy=scaleY(logN(sig*sig),ymin,ymax,y0,h);
+  svgAdd(svg,'circle',{cx,cy,r:6,fill:'var(--danger)',stroke:'var(--surface)','stroke-width':2});
+  svgLabel(svg,clamp(cx+14,x0+50,x0+w-50),clamp(cy-14,y0+12,y0+h-8),'σ='+fmt(sig,3),{size:11,fill:'var(--danger)'});
+  svgLabel(svg,x0+w-8,y0+16,'log N(xᵢ;xᵢ,σ²)',{anchor:'end',size:11,fill:'var(--danger)'});
+  /* right: 2D ellipse diag(sig^2, 0.36 sig^2) collapsing onto xi=(1.2,0.5) */
+  const ex0=620,ey0=60,ew=260,eh=200,dxmin=-3,dxmax=3,dymin=-2.3,dymax=2.3;
+  line(svg,ex0,ey0+eh,ex0+ew,ey0+eh,{class:'svg-axis'});line(svg,ex0,ey0,ex0,ey0+eh,{class:'svg-axis'});
+  [-2,0,2].forEach(v=>{const x=scaleX(v,dxmin,dxmax,ex0,ew);line(svg,x,ey0,x,ey0+eh,{class:'svg-grid'});svgLabel(svg,x,ey0+eh+15,fmt(v,0),{size:9})});
+  const px=scaleX(1.2,dxmin,dxmax,ex0,ew),py=scaleY(0.5,dymin,dymax,ey0,eh),sxu=ew/(dxmax-dxmin),syu=eh/(dymax-dymin);
+  svgAdd(svg,'ellipse',{cx:px,cy:py,rx:Math.max(sig*sxu,.4),ry:Math.max(0.6*sig*syu,.4),fill:'var(--danger)',opacity:.22,stroke:'var(--danger)','stroke-width':2});
+  svgAdd(svg,'circle',{cx:px,cy:py,r:4.5,fill:'var(--ink)'});
+  svgLabel(svg,px+14,py-12,'xᵢ',{anchor:'start',size:11});
+  svgLabel(svg,ex0+ew/2,ey0-12,'Σ = diag(σ², 0.36σ²)',{size:10,fill:'var(--danger)'});
+  const minL=0.36*sig*sig,det=sig*sig*0.36*sig*sig;
+  svgLabel(svg,ex0-10,ey0+eh+52,'min λ = '+fmt(minL,4),{anchor:'start',size:10,fill:'var(--danger)'});
+  svgLabel(svg,ex0+150,ey0+eh+52,'det Σ = '+fmt(det,4),{anchor:'start',size:10,fill:'var(--danger)'});
+  const dens=1/Math.sqrt(2*Math.PI*sig*sig),lb=Math.log(wj*dens);
+  $('#colSteps').innerHTML=String.raw`<p><strong>当前</strong> $\sigma=${fmt(sig,4)}$，$\sigma^2=${fmt(sig*sig,5)}$。</p><p><strong>第 1 步：尖峰密度</strong> $\mathcal N(x_i;x_i,\sigma^2)=\frac{1}{\sqrt{2\pi\sigma^2}}=${fmt(dens,4)}$。</p><p><strong>第 2 步：取对数</strong> $\log\mathcal N(x_i;x_i,\sigma^2)=-\frac12\log(2\pi\sigma^2)=${fmt(logN(sig*sig),4)}$。</p><p><strong>第 3 步：混合下界</strong> $\log p(x_i)\ge\log\frac{w_j}{\sqrt{2\pi\sigma_j^2}}=${fmt(lb,4)}$（$w_j=${fmt(wj,2)}$）。$\sigma\to0$ 时两者都 $\to+\infty$。</p><p><strong>2D 版本</strong> 最小特征值 $0.36\sigma^2=${fmt(minL,4)}$，$\det\Sigma=0.36\sigma^4=${fmt(det,5)}$，同步奔向零。</p>`;rerender($('#colSteps'))}
+const colTEl=$('#colT'),colTOut=$('#colTOut');const colTUpdate=()=>{colTOut.textContent=fmt(Math.pow(10,Number(colTEl.value)),3);draw()};colTEl.addEventListener('input',colTUpdate);colTUpdate();range('colW',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 C：特征值地板 ============ */
+(()=>{const svg=$('#regViz');
+function draw(){svgClear(svg);const l1=Number($('#regL1').value),l2=Number($('#regL2').value),nu=Number($('#regNu').value),nu2=nu*nu;
+  const r1=l1+nu2,r2=l2+nu2;
+  /* left: ellipses, semi-axes 2*sqrt(lambda) */
+  const x0=80,y0=45,w=300,h=300,dmin=-5,dmax=5;
+  frame(svg,{x0,y0,w,h,xmin:dmin,xmax:dmax,ymin:dmin,ymax:dmax,xticks:[-4,-2,0,2,4],xp:0,yticks:[-4,0,4],yp:0});
+  const cx=scaleX(0,dmin,dmax,x0,w),cy=scaleY(0,dmin,dmax,y0,h),u=w/(dmax-dmin);
+  svgAdd(svg,'ellipse',{cx,cy,rx:Math.max(2*Math.sqrt(l1)*u,.5),ry:Math.max(2*Math.sqrt(l2)*u,.5),fill:'var(--danger)',opacity:.14,stroke:'var(--danger)','stroke-width':2.2,'stroke-dasharray':'6 4'});
+  svgAdd(svg,'ellipse',{cx,cy,rx:2*Math.sqrt(r1)*u,ry:2*Math.sqrt(r2)*u,fill:'var(--accent)',opacity:.14,stroke:'var(--accent)','stroke-width':2.4});
+  svgLabel(svg,x0+2,y0-14,'--- 前：Σ',{anchor:'start',size:10,fill:'var(--danger)'});
+  svgLabel(svg,x0+140,y0-14,'— 后：Σ+ν²I',{anchor:'start',size:10,fill:'var(--accent)'});
+  svgLabel(svg,cx,y0+h+38,'半轴 = 2√λ',{size:10,fill:'var(--muted)'});
+  /* right top: eigenvalue bars */
+  const bx0=470,by0=60,bw=420,bh=170,vmax=6.25;
+  line(svg,bx0,by0+bh,bx0+bw,by0+bh,{class:'svg-axis'});
+  const bars=[{v:l1,n:'λ₁',c:'var(--danger)'},{v:r1,n:'λ₁+ν²',c:'var(--accent)'},{v:l2,n:'λ₂',c:'var(--danger)'},{v:r2,n:'λ₂+ν²',c:'var(--accent)'}];
+  bars.forEach((b,i)=>{const x=bx0+18+i*105,hh=bh*b.v/vmax;svgAdd(svg,'rect',{x,y:by0+bh-hh,width:70,height:hh,rx:6,fill:b.c,opacity:.75});svgLabel(svg,x+35,by0+bh-hh-12,fmt(b.v,2),{size:10,fill:b.c});svgLabel(svg,x+35,by0+bh+17,b.n,{size:10})});
+  svgLabel(svg,bx0+2,by0-14,'特征值：正则化前 vs 后',{anchor:'start',size:10,fill:'var(--muted)'});
+  /* right bottom: log10 meter of the normalization factor */
+  const norm=(a,b)=>1/(2*Math.PI*Math.sqrt(a*b));
+  const nB=norm(l1,l2),nA=norm(r1,r2),mx0=470,mx1=890,my=352,lmin=-2,lmax=2;
+  line(svg,mx0,my,mx1,my,{class:'svg-axis'});
+  [-2,-1,0,1,2].forEach((v,i)=>{const x=scaleX(v,lmin,lmax,mx0,mx1-mx0);line(svg,x,my-5,x,my+5,{class:'svg-axis'});svgLabel(svg,x,my+18,fmt(v,0),{anchor:i===0?'start':(i===4?'end':'middle'),size:9})});
+  const xB=scaleX(clamp(Math.log10(nB),lmin,lmax),lmin,lmax,mx0,mx1-mx0),xA=scaleX(clamp(Math.log10(nA),lmin,lmax),lmin,lmax,mx0,mx1-mx0);
+  svgAdd(svg,'circle',{cx:xB,cy:my,r:6,fill:'var(--danger)'});svgAdd(svg,'circle',{cx:xA,cy:my,r:6,fill:'var(--accent)'});
+  svgLabel(svg,clamp(xB,mx0+30,mx1-30),my-16,'前 '+fmt(nB,3),{size:10,fill:'var(--danger)'});
+  svgLabel(svg,clamp(xA,mx0+30,mx1-30),my+36,'后 '+fmt(nA,3),{size:10,fill:'var(--accent)'});
+  svgLabel(svg,mx0,my-38,'log₁₀ 归一化因子 1/((2π)·|Σ|¹ᐟ²)，d=2',{anchor:'start',size:10,fill:'var(--muted)'});
+  const detB=l1*l2,detA=r1*r2,nCap=1/(2*Math.PI*Math.pow(Math.max(nu,1e-12),2));
+  $('#regSteps').innerHTML=String.raw`<p><strong>特征值</strong> $(\lambda_1,\lambda_2)=(${fmt(l1,2)},${fmt(l2,2)})\to(${fmt(r1,2)},${fmt(r2,2)})$；特征向量不变，每个 $+\nu^2=${fmt(nu2,3)}$。</p><p><strong>行列式</strong> $\det\Sigma:${fmt(detB,4)}\to${fmt(detA,4)}$。</p><p><strong>归一化因子</strong> $\frac{1}{(2\pi)^{d/2}|\Sigma|^{1/2}}:${fmt(nB,4)}\to${fmt(nA,4)}$。</p><p class="small">无正则化时令 $\lambda_{\min}\to0$，归一化因子无界（把 $\lambda_2$ 拖到 $0.02$、$\nu$ 拖到 $0$ 试试）；有 $\nu$ 时 $\lambda_{\min}\ge\nu^2=${fmt(nu2,3)}$，归一化因子 $\le${fmt(nu>0?nCap:Infinity,3)}$——有界。</p>`;rerender($('#regSteps'))}
+range('regL1',()=>{draw()},2);range('regL2',()=>{draw()},2);range('regNu',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 D：BIC 工作台（确定性 LCG，可复现） ============ */
+(()=>{const svg=$('#bicViz'),lsvg=$('#ledgerViz');
+function lcg(seed){let s=seed>>>0;return()=>{s=(Math.imul(s,1103515245)+12345)&0x7fffffff;return s/2147483648}}
+function sampleDet(n){const rnd=lcg(2026),xs=[];for(let i=0;i<n;i++){const u=rnd(),j=u<MW[0]?0:(u<MW[0]+MW[1]?1:2);let u1=rnd();if(u1<1e-12)u1=1e-12;const z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*rnd());xs.push(MM[j]+MS[j]*z)}return xs}
+function pdf1(x,w,mu,vr){let s=0;for(let j=0;j<w.length;j++)s+=w[j]*gauss(x,mu[j],Math.sqrt(vr[j]));return s}
+function emDet(xs,K){const n=xs.length,sorted=xs.slice().sort((a,b)=>a-b),gv=xs.reduce((a,x)=>a+x,0)/n,gv2=Math.max(xs.reduce((a,x)=>a+(x-gv)**2,0)/n,1e-2);let best=null;
+  for(let r=0;r<3;r++){const rnd=lcg(1000*K+r+7);let mu=[];for(let j=0;j<K;j++)mu.push(sorted[Math.min(n-1,Math.floor((j+.5)/K*n))]+(rnd()-.5)*.8);let vr=mu.map(()=>gv2),w=mu.map(()=>1/K);
+    for(let it=0;it<60;it++){const gam=xs.map(x=>{const s=mu.map((m,j)=>w[j]*gauss(x,m,Math.sqrt(vr[j])));const t=s.reduce((a,b)=>a+b,0)||1e-300;return s.map(v=>v/t)});
+      const N=new Array(K).fill(0),sx=new Array(K).fill(0);
+      for(let i=0;i<n;i++)for(let j=0;j<K;j++){N[j]+=gam[i][j];sx[j]+=gam[i][j]*xs[i]}
+      for(let j=0;j<K;j++){if(N[j]<1e-8){w[j]=1e-8;vr[j]=gv2;continue}const m=sx[j]/N[j];let vv=0;for(let i=0;i<n;i++)vv+=gam[i][j]*(xs[i]-m)**2;vv/=N[j];w[j]=N[j]/n;mu[j]=m;vr[j]=Math.max(vv,1e-6)}
+      const ws=w.reduce((a,b)=>a+b,0);w=w.map(v=>v/ws)}
+    const ll=xs.reduce((a,x)=>a+Math.log(Math.max(pdf1(x,w,mu,vr),1e-300)),0);if(!best||ll>best.ll)best={ll}}
+  return best}
+const DATA=sampleDet(400);
+const rows=[];for(let K=1;K<=6;K++){const b=emDet(DATA,K),p=3*K-1;rows.push({K,nll:-2*b.ll,bic:-2*b.ll+p*Math.log(DATA.length),aic:-2*b.ll+2*p,p})}
+function drawBic(){svgClear(svg);const x0=80,y0=30,w=780,h=270;
+  const all=rows.flatMap(r=>[r.nll,r.bic,r.aic]),ymin=Math.min(...all)-8,ymax=Math.max(...all)+8,mid=(ymin+ymax)/2;
+  frame(svg,{x0,y0,w,h,xmin:1,xmax:6,ymin,ymax,xticks:[1,2,3,4,5,6],xp:0,yticks:[ymin+6,mid,ymax-6],yp:0});
+  const series=[['nll','−2ℓ','var(--blue)'],['bic','BIC','var(--danger)'],['aic','AIC','var(--gold)']];
+  series.forEach(([key,,c])=>{let d='';rows.forEach((r,i)=>{const px=scaleX(r.K,1,6,x0,w),py=scaleY(r[key],ymin,ymax,y0,h);d+=(i?' L':'M')+px.toFixed(1)+','+py.toFixed(1)});path(svg,d,{stroke:c,'stroke-width':2.6});rows.forEach(r=>{svgAdd(svg,'circle',{cx:scaleX(r.K,1,6,x0,w),cy:scaleY(r[key],ymin,ymax,y0,h),r:3.2,fill:c})})});
+  const ends=spreadLabels(series.map(([key,name,c])=>({y:scaleY(rows[5][key],ymin,ymax,y0,h),t:name,c})),16,y0+10,y0+h-6);
+  ends.forEach(q=>{svgLabel(svg,x0+w+10,q.y+3.5,q.t,{anchor:'start',size:11,fill:q.c})});
+  const bBic=rows.reduce((a,r)=>r.bic<a.bic?r:a),bAic=rows.reduce((a,r)=>r.aic<a.aic?r:a);
+  const bx=scaleX(bBic.K,1,6,x0,w),by=scaleY(bBic.bic,ymin,ymax,y0,h);
+  svgAdd(svg,'circle',{cx:bx,cy:by,r:7,fill:'none',stroke:'var(--danger)','stroke-width':2.2});
+  svgLabel(svg,clamp(bx,x0+80,x0+w-80),clamp(by-16,y0+10,y0+h-30),'BIC 最优 K='+bBic.K,{size:10,fill:'var(--danger)'});
+  const ax=scaleX(bAic.K,1,6,x0,w),ay=scaleY(bAic.aic,ymin,ymax,y0,h);
+  svgAdd(svg,'circle',{cx:ax,cy:ay,r:7,fill:'none',stroke:'var(--gold)','stroke-width':2.2});
+  svgLabel(svg,clamp(ax,x0+80,x0+w-80),clamp(ay+24,y0+16,y0+h-4),'AIC 最优 K='+bAic.K,{size:10,fill:'var(--gold)'});
+  series.forEach(([key,name,c],i)=>{svgLabel(svg,x0+14,y0+h-52+i*20,'— '+name,{anchor:'start',size:10,fill:c})});
+  let trs=rows.map(r=>`<tr${r===bBic?' class="best"':''}><td>$K=${r.K}$</td><td>${r.p}</td><td>${fmt(r.nll,1)}</td><td>${fmt(r.bic,1)}</td><td>${fmt(r.aic,1)}</td></tr>`).join('');
+  $('#bicSteps').innerHTML=String.raw`<p><strong>现算结果（$n=${DATA.length}$，$d=1$，$p_K=3K-1$）</strong></p><table class="ktab"><tr><th>$K$</th><th>$p_K$</th><th>$-2\ell$</th><th>BIC</th><th>AIC</th></tr>${trs}</table><p class="small">$-2\ell$ 随 $K$ 单调下降（拟合总是变好）；BIC 收 $p_K\log n$ 的税、AIC 收 $2p_K$ 的税，曲线的最低点才是它们的推荐。当前 BIC 选 $K=${bBic.K}$，AIC 选 $K=${bAic.K}$。</p>`;rerender($('#bicSteps'))}
+function drawLedger(){svgClear(lsvg);const K=Number($('#ledK').value),d=Number($('#ledD').value);
+  const rows2=[{name:'权重 K−1',n:K-1,c:'var(--gold)'},{name:'均值 Kd',n:K*d,c:'var(--blue)'},{name:'协方差 Kd(d+1)/2',n:K*d*(d+1)/2,c:'var(--accent)'}];
+  const total=rows2.reduce((a,q)=>a+q.n,0),x0=110,base=290,max=Math.max(...rows2.map(q=>q.n),1);
+  line(lsvg,70,base,870,base,{class:'svg-axis'});
+  rows2.forEach((q,i)=>{const x=x0+i*260,h=200*q.n/max;svgAdd(lsvg,'rect',{x,y:base-h,width:165,height:h,rx:7,fill:q.c,opacity:.78});svgLabel(lsvg,x+82,base-h-13,fmt(q.n,0),{size:12,fill:q.c});svgLabel(lsvg,x+82,base+20,q.name,{size:10})});
+  svgLabel(lsvg,470,34,'p_K = (K−1) + Kd + Kd(d+1)/2 = '+fmt(total,0),{size:12,fill:'var(--accent)'});
+  $('#ledSteps').innerHTML=String.raw`<p>$K=${K}$，$d=${d}$：权重 $${K-1}$，均值 $${K*d}$，协方差 $${K*d*(d+1)/2}$，合计 $p_K=${total}$。BIC 惩罚 $p_K\log n$，AIC 惩罚 $2p_K$。</p>`;rerender($('#ledSteps'))}
+range('ledK',drawLedger,0);range('ledD',drawLedger,0);drawBic();drawLedger();svg.addEventListener('themechange',drawBic);lsvg.addEventListener('themechange',drawLedger)})();
+
+/* ============ 实验 E：双峰分类器（worked example 2） ============ */
+(()=>{const svg=$('#clsViz');
+const cplus=x=>0.5*gauss(x,0,1)+0.5*gauss(x,4,1),cminus=x=>gauss(x,2,1);
+function draw(){svgClear(svg);const pp=Number($('#clsP').value),pm=1-pp,xq=Number($('#clsX').value);
+  const splus=x=>pp*cplus(x),sminus=x=>pm*cminus(x);
+  const x0=70,y0=30,w=800,h=210,xmin=-4,xmax=8;
+  let ymax=0;for(let k=0;k<=240;k++){const x=xmin+(xmax-xmin)*k/240;ymax=Math.max(ymax,splus(x),sminus(x))}ymax*=1.18;
+  /* decision-region shading: where s+ > s- */
+  let run=null;const runs=[];for(let k=0;k<=400;k++){const x=xmin+(xmax-xmin)*k/400,on=splus(x)>sminus(x);if(on&&run===null)run=x;if(!on&&run!==null){runs.push([run,x]);run=null}}if(run!==null)runs.push([run,xmax]);
+  runs.forEach(([a,b])=>{svgAdd(svg,'rect',{x:scaleX(a,xmin,xmax,x0,w),y:y0,width:scaleX(b,xmin,xmax,x0,w)-scaleX(a,xmin,xmax,x0,w),height:h,fill:'var(--blue)',opacity:.09})});
+  frame(svg,{x0,y0,w,h,xmin,xmax,ymin:0,ymax,xticks:[],yticks:[0,ymax/2,ymax],yp:2});
+  path(svg,curvePath(splus,xmin,xmax,x0,y0,w,h,0,ymax),{stroke:'var(--blue)','stroke-width':2.8});
+  path(svg,curvePath(sminus,xmin,xmax,x0,y0,w,h,0,ymax),{stroke:'var(--warm)','stroke-width':2.8});
+  const ends=spreadLabels([{y:scaleY(splus(xmax),0,ymax,y0,h),t:'s₊(x)',c:'var(--blue)'},{y:scaleY(sminus(xmax),0,ymax,y0,h),t:'s₋(x)',c:'var(--warm)'}],16,y0+10,y0+h-4);
+  ends.forEach(q=>{svgLabel(svg,x0+w+10,q.y+3.5,q.t,{anchor:'start',size:11,fill:q.c})});
+  if(runs.length)svgLabel(svg,scaleX((runs[0][0]+runs[0][1])/2,xmin,xmax,x0,w),y0+16,'判 + 区',{size:10,fill:'var(--blue)'});
+  /* posterior panel */
+  const y0b=300,hb=110;
+  runs.forEach(([a,b])=>{svgAdd(svg,'rect',{x:scaleX(a,xmin,xmax,x0,w),y:y0b,width:scaleX(b,xmin,xmax,x0,w)-scaleX(a,xmin,xmax,x0,w),height:hb,fill:'var(--blue)',opacity:.09})});
+  frame(svg,{x0,y0:y0b,w,h:hb,xmin,xmax,ymin:0,ymax:1,xticks:[-4,-2,0,2,4,6,8],xp:0,yticks:[0,.5,1],yp:1});
+  line(svg,x0,scaleY(.5,0,1,y0b,hb),x0+w,scaleY(.5,0,1,y0b,hb),{stroke:'var(--muted)','stroke-dasharray':'4 4'});
+  path(svg,curvePath(x=>splus(x)/(splus(x)+sminus(x)),xmin,xmax,x0,y0b,w,hb,0,1),{stroke:'var(--accent)','stroke-width':2.8});
+  svgLabel(svg,x0+w-8,y0b+16,'P(+|x)',{anchor:'end',size:11,fill:'var(--accent)'});
+  /* query marker across both panels */
+  const qx=scaleX(xq,xmin,xmax,x0,w),sp=splus(xq),sm=sminus(xq),post=sp/(sp+sm);
+  line(svg,qx,y0,qx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});
+  line(svg,qx,y0b,qx,y0b+hb,{stroke:'var(--ink)','stroke-dasharray':'5 4'});
+  svgAdd(svg,'circle',{cx:qx,cy:scaleY(sp,0,ymax,y0,h),r:5,fill:'var(--blue)'});
+  svgAdd(svg,'circle',{cx:qx,cy:scaleY(sm,0,ymax,y0,h),r:5,fill:'var(--warm)'});
+  svgAdd(svg,'circle',{cx:qx,cy:scaleY(post,0,1,y0b,hb),r:5,fill:'var(--accent)'});
+  svgLabel(svg,clamp(qx+14,x0+46,x0+w-46),y0+16,'x='+fmt(xq,2),{size:10});
+  $('#clsSteps').innerHTML=String.raw`<p><strong>第 1 步：类条件密度</strong> $p(x\mid +)=${fmt(cplus(xq),6)}$，$p(x\mid -)=${fmt(cminus(xq),6)}$（$x=${fmt(xq,2)}$）。</p><p><strong>第 2 步：乘先验</strong> $s_+=${fmt(pp,2)}\times${fmt(cplus(xq),6)}=${fmt(sp,6)}$，$s_-=${fmt(pm,2)}\times${fmt(cminus(xq),6)}=${fmt(sm,6)}$。</p><p><strong>第 3 步：归一化</strong> $P(+\mid x)=\frac{s_+}{s_++s_-}=${fmt(post,4)}$，判定为 <strong>${post>=.5?'+':'-'}</strong> 类。</p><p class="small">讲义基准：$x=0$ 时 $s_+=0.079815$、$s_-=0.032395$、$P(+\mid x)\approx0.7113$；$x=2$ 时 $P(+\mid x)\approx0.0828$。当前显示全部由公式现算。</p>`;rerender($('#clsSteps'))}
+range('clsP',()=>{draw()},2);range('clsX',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 F：阈值与误报 ============ */
+(()=>{const svg=$('#anoViz');
+function pfa(tau){const del=Math.exp(-tau);let s=0;const a=-16,b=12,m=4000,dx=(b-a)/m;for(let i=0;i<m;i++){const x=a+(i+.5)*dx,v=mix3(x);if(v<=del)s+=v*dx}return s}
+function draw(){svgClear(svg);const tau=Number($('#anoT').value),xq=Number($('#anoX').value),del=Math.exp(-tau);
+  const x0=70,y0=30,w=800,h=250,xmin=-12,xmax=10;
+  let ymax=0;for(let k=0;k<=300;k++){ymax=Math.max(ymax,mix3(xmin+(xmax-xmin)*k/300))}ymax*=1.2;
+  let run=null;const runs=[];for(let k=0;k<=600;k++){const x=xmin+(xmax-xmin)*k/600,on=mix3(x)<=del;if(on&&run===null)run=x;if(!on&&run!==null){runs.push([run,x]);run=null}}if(run!==null)runs.push([run,xmax]);
+  runs.forEach(([a,b])=>{svgAdd(svg,'rect',{x:scaleX(a,xmin,xmax,x0,w),y:y0,width:scaleX(b,xmin,xmax,x0,w)-scaleX(a,xmin,xmax,x0,w),height:h,fill:'var(--danger)',opacity:.1})});
+  frame(svg,{x0,y0,w,h,xmin,xmax,ymin:0,ymax,xticks:[-12,-8,-4,0,4,8],xp:0,yticks:[0,ymax/2,ymax],yp:2});
+  path(svg,curvePath(mix3,xmin,xmax,x0,y0,w,h,0,ymax),{stroke:'var(--accent)','stroke-width':3});
+  svgLabel(svg,scaleX(5.5,xmin,xmax,x0,w),y0+18,'p(x)',{size:11,fill:'var(--accent)'});
+  const yd=scaleY(Math.min(del,ymax),0,ymax,y0,h);
+  line(svg,x0,yd,x0+w,yd,{stroke:'var(--danger)','stroke-width':2,'stroke-dasharray':'7 5'});
+  svgLabel(svg,x0+w-8,clamp(yd-10,y0+12,y0+h-6),'δ=e^(−τ)='+fmt(del,4),{anchor:'end',size:10,fill:'var(--danger)'});
+  const px=mix3(xq),sx=-Math.log(px),qx=scaleX(xq,xmin,xmax,x0,w);
+  line(svg,qx,y0,qx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});
+  svgAdd(svg,'circle',{cx:qx,cy:scaleY(Math.min(px,ymax),0,ymax,y0,h),r:5.5,fill:px<=del?'var(--danger)':'var(--accent)'});
+  svgLabel(svg,clamp(qx+14,x0+50,x0+w-50),y0+16,'x='+fmt(xq,2),{size:10});
+  /* P_FA gauge */
+  const pf=pfa(tau),gy=356,gx0=120,gw=640,gmax=.2;
+  line(svg,gx0,gy,gx0+gw,gy,{class:'svg-axis'});
+  [0,.05,.1,.15,.2].forEach((v,i)=>{const x=scaleX(v,0,gmax,gx0,gw);line(svg,x,gy-5,x,gy+5,{class:'svg-axis'});svgLabel(svg,x,gy+18,pct(v),{anchor:i===0?'start':(i===4?'end':'middle'),size:9})});
+  const mx=scaleX(clamp(pf,0,gmax),0,gmax,gx0,gw);
+  svgAdd(svg,'circle',{cx:mx,cy:gy,r:6,fill:'var(--danger)'});
+  svgLabel(svg,clamp(mx,gx0+40,gx0+gw-40),gy-16,'P_FA='+pct(pf),{size:10,fill:'var(--danger)'});
+  svgLabel(svg,70,gy+4,'误报率',{anchor:'start',size:10,fill:'var(--muted)'});
+  $('#anoSteps').innerHTML=String.raw`<p><strong>第 1 步：密度</strong> $p(x=${fmt(xq,2)})=${fmt(px,6)}$（现算）。</p><p><strong>第 2 步：异常分数</strong> $s(x)=-\log p(x)=${fmt(sx,4)}$。</p><p><strong>第 3 步：比较</strong> $\tau=${fmt(tau,2)}$；$s(x)\ ${sx>=tau?'\\ge':'<'}\ \tau$，所以该点 <strong>${sx>=tau?'被标记为异常':'不报警'}</strong>。</p><p><strong>误报率</strong> $P_{\mathrm{FA}}(\tau)=\int_{s(x)\ge\tau}p(x)\,dx=${pct(pf)}$（细网格数值积分现算）。</p><p class="small">讲义基准：$x=4$ 时 $p(4)\approx0.095611$、$s(4)\approx2.347$；$\tau=2$ 会标记、$\tau=3$ 不会。增大 $\tau$ 减少误报，但可能增加漏报。</p>`;rerender($('#anoSteps'))}
+$('#anoCal').addEventListener('click',()=>{let lo=.2,hi=10;for(let i=0;i<50;i++){const mid=(lo+hi)/2;if(pfa(mid)>0.05)lo=mid;else hi=mid}const t=Math.round(((lo+hi)/2)*20)/20;const el=$('#anoT');el.value=String(clamp(t,.2,10));el.dispatchEvent(new Event('input'));toast('已校准到 P_FA ≈ 5%')});
+range('anoT',()=>{draw()},2);range('anoX',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 G：四点锚点（半监督，讲义 §10.1） ============ */
+(()=>{const svg=$('#semiViz');const XS=[0,1,4,5];const labs=[1,0,0,2];/* 0=无标签 1/2=类别 */
+const pick=$('#semiPick');
+XS.forEach((x,i)=>{const row=document.createElement('div');row.className='pick-row';
+  row.innerHTML=`<span class="pk-name">x=${x}</span>`;
+  [['无标签',0],['标为 1',1],['标为 2',2]].forEach(([name,v])=>{const b=document.createElement('button');b.type='button';b.className='btn xs'+(labs[i]===v?' active':'');b.textContent=name;b.dataset.pt=i;b.dataset.lab=v;b.addEventListener('click',()=>{labs[i]=v;$$('button',row).forEach(q=>q.classList.toggle('active',Number(q.dataset.lab)===v));draw();toast('x='+x+' 的标注已更新')});row.appendChild(b)});
+  pick.appendChild(row)});
+function draw(){svgClear(svg);const mu1=Number($('#semiM1').value),mu2=Number($('#semiM2').value),sg=Number($('#semiS').value);
+  const gam=XS.map((x,i)=>{if(labs[i]===1)return[1,0];if(labs[i]===2)return[0,1];const a=gauss(x,mu1,sg),b=gauss(x,mu2,sg),t=a+b||1e-300;return[a/t,b/t]});
+  const N1=gam.reduce((a,g)=>a+g[0],0),N2=gam.reduce((a,g)=>a+g[1],0),n=XS.length;
+  const w1=N1/n,w2=N2/n;
+  const m1=N1>1e-9?gam.reduce((a,g,i)=>a+g[0]*XS[i],0)/N1:NaN,m2=N2>1e-9?gam.reduce((a,g,i)=>a+g[1]*XS[i],0)/N2:NaN;
+  const x0=70,y0=40,w=800,h=150,xmin=-1.5,xmax=6.5;
+  let ymax=0;for(let k=0;k<=200;k++){const x=xmin+(xmax-xmin)*k/200;ymax=Math.max(ymax,.5*gauss(x,mu1,sg),.5*gauss(x,mu2,sg))}ymax*=1.25;
+  frame(svg,{x0,y0,w,h,xmin,xmax,ymin:0,ymax,xticks:[-1,0,1,2,3,4,5,6],xp:0,yticks:[0,ymax],yp:2});
+  path(svg,curvePath(x=>.5*gauss(x,mu1,sg),xmin,xmax,x0,y0,w,h,0,ymax),{stroke:'var(--blue)','stroke-width':2.2,'stroke-dasharray':'6 4'});
+  path(svg,curvePath(x=>.5*gauss(x,mu2,sg),xmin,xmax,x0,y0,w,h,0,ymax),{stroke:'var(--warm)','stroke-width':2.2,'stroke-dasharray':'6 4'});
+  XS.forEach((x,i)=>{const cx=scaleX(x,xmin,xmax,x0,w),c=labs[i]===1?'var(--blue)':(labs[i]===2?'var(--warm)':'var(--muted)');
+    svgAdd(svg,'circle',{cx,cy:y0+h,r:7,fill:c,stroke:'var(--surface)','stroke-width':2})});
+  const mLabels=spreadLabels([{y:1,px:scaleX(mu1,xmin,xmax,x0,w),t:'μ₁='+fmt(mu1,2),c:'var(--blue)'},{y:1,px:scaleX(mu2,xmin,xmax,x0,w),t:'μ₂='+fmt(mu2,2),c:'var(--warm)'}].map(q=>({y:q.px,ref:q})),70,x0+30,x0+w-30);
+  mLabels.forEach(q=>{svgLabel(svg,q.y,y0-12,q.ref.t,{size:10,fill:q.ref.c})});
+  line(svg,scaleX(mu1,xmin,xmax,x0,w),y0,scaleX(mu1,xmin,xmax,x0,w),y0+h,{stroke:'var(--blue)','stroke-width':3});
+  line(svg,scaleX(mu2,xmin,xmax,x0,w),y0,scaleX(mu2,xmin,xmax,x0,w),y0+h,{stroke:'var(--warm)','stroke-width':3});
+  /* responsibility bars */
+  const by=250,bh=80,bwd=46;
+  svgLabel(svg,x0,by-30,'每点责任度 γ（蓝=组件1，橙=组件2）',{anchor:'start',size:10,fill:'var(--muted)'});
+  XS.forEach((x,i)=>{const cx=scaleX(x,xmin,xmax,x0,w),g1=gam[i][0],h1=bh*g1;
+    svgAdd(svg,'rect',{x:cx-bwd/2,y:by,width:bwd,height:bh,rx:6,fill:'var(--surface2)',stroke:'var(--line)'});
+    svgAdd(svg,'rect',{x:cx-bwd/2,y:by+bh-h1,width:bwd,height:h1,rx:4,fill:'var(--blue)',opacity:.8});
+    svgAdd(svg,'rect',{x:cx-bwd/2,y:by,width:bwd,height:bh-h1,rx:4,fill:'var(--warm)',opacity:.75});
+    svgLabel(svg,cx,by-10,'x='+x,{size:10});
+    svgLabel(svg,cx,by+bh+16,'γ₁='+fmt(g1,2),{size:9,fill:'var(--blue)'});
+    svgLabel(svg,cx,by+bh+32,'γ₂='+fmt(1-g1,2),{size:9,fill:'var(--warm)'})});
+  $('#semiSteps').innerHTML=String.raw`<p><strong>责任度</strong> $\gamma=$ (${gam.map(g=>`(${fmt(g[0],2)},${fmt(g[1],2)})`).join(', ')}) —— 有标签点固定为 0/1，无标签点由当前模型现算。</p><p><strong>第 1 步：软计数</strong> $N_1=${fmt(N1,2)}$，$N_2=${fmt(N2,2)}$。</p><p><strong>第 2 步：权重</strong> $w_1=N_1/n=${fmt(w1,3)}$，$w_2=${fmt(w2,3)}$。</p><p><strong>第 3 步：均值</strong> $\mu_1^{\rm new}=\frac{\sum_i\gamma_{i1}x_i}{N_1}=${fmt(m1,4)}$，$\mu_2^{\rm new}=${fmt(m2,4)}$。</p><p class="small">讲义 §10.1 基准（默认配置复现）：$N_1=1.9$、$N_2=2.1$、$w_1=0.475$、$\mu_1\approx0.6316$。注意讲义原文把 $\mu_2$ 的分子写作 $9.8$ 得 $4.6667$，但按它自己的 $\gamma$ 表现算分子是 $0.2(1)+0.9(4)+1(5)=8.8$，即 $\mu_2=8.8/2.1\approx4.19$——本页显示现算值。</p>`;rerender($('#semiSteps'))}
+range('semiM1',()=>{draw()},2);range('semiM2',()=>{draw()},2);range('semiS',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 H：矩与责任度计算器 ============ */
+(()=>{const svg=$('#gamViz');
+const EX=MW.reduce((a,w,j)=>a+w*MM[j],0),EX2=MW.reduce((a,w,j)=>a+w*(MS[j]*MS[j]+MM[j]*MM[j]),0),VX=EX2-EX*EX;
+$('#momStats').innerHTML=String.raw`<div class="stat"><h3>$\mathbb E[X]=\sum_jw_j\mu_j$</h3><p>$\frac12(0)+\frac13(3)+\frac16(-3)=${fmt(EX,4)}$</p></div><div class="stat"><h3>$\mathbb E[X^2]=\sum_jw_j(\sigma_j^2+\mu_j^2)$</h3><p>$2+\frac{10}{3}+\frac{18}{6}=\frac{25}{3}\approx${fmt(EX2,4)}$</p></div><div class="stat"><h3>$\operatorname{Var}(X)=\mathbb E[X^2]-\mu^2$</h3><p>$\frac{25}{3}-0.25=\frac{97}{12}\approx${fmt(VX,4)}$</p></div><div class="stat"><h3>标准差 $\sqrt{\operatorname{Var}(X)}$</h3><p>$\sqrt{97/12}\approx${fmt(Math.sqrt(VX),4)}$（对照各组件 $\sigma=2,1,3$）</p></div>`;
+function draw(){svgClear(svg);const xq=Number($('#gamX').value);
+  const x0=70,y0=30,w=800,h=270,xmin=-8,xmax=9;
+  frame(svg,{x0,y0,w,h,xmin,xmax,ymin:0,ymax:1,xticks:[-8,-4,0,4,8],xp:0,yticks:[0,.5,1],yp:1});
+  const cols=['var(--blue)','var(--warm)','var(--violet)'];
+  const gj=(x,j)=>{const s=mix3parts(x);return s[j]/(s[0]+s[1]+s[2])};
+  cols.forEach((c,j)=>{path(svg,curvePath(x=>gj(x,j),xmin,xmax,x0,y0,w,h,0,1),{stroke:c,'stroke-width':2.6})});
+  const ends=spreadLabels(cols.map((c,j)=>({y:scaleY(gj(xmax,j),0,1,y0,h),t:'γ'+(j+1),c})),16,y0+10,y0+h-4);
+  ends.forEach(q=>{svgLabel(svg,x0+w+10,q.y+3.5,q.t,{anchor:'start',size:11,fill:q.c})});
+  const qx=scaleX(xq,xmin,xmax,x0,w);
+  line(svg,qx,y0,qx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});
+  cols.forEach((c,j)=>{svgAdd(svg,'circle',{cx:qx,cy:scaleY(gj(xq,j),0,1,y0,h),r:5,fill:c})});
+  svgLabel(svg,clamp(qx+14,x0+50,x0+w-50),y0+16,'x='+fmt(xq,2),{size:10});
+  const d=[gauss(xq,MM[0],MS[0]),gauss(xq,MM[1],MS[1]),gauss(xq,MM[2],MS[2])],s=mix3parts(xq),p=s[0]+s[1]+s[2],g=s.map(v=>v/p);
+  $('#gamSteps').innerHTML=String.raw`<p><strong>第 1 步：三个密度</strong> $\mathcal N(x;0,4)=${fmt(d[0],6)}$，$\mathcal N(x;3,1)=${fmt(d[1],6)}$，$\mathcal N(x;-3,9)=${fmt(d[2],6)}$（$x=${fmt(xq,2)}$）。</p><p><strong>第 2 步：加权</strong> $s=(${fmt(s[0],6)},${fmt(s[1],6)},${fmt(s[2],6)})$。</p><p><strong>第 3 步：总密度</strong> $p(x)=\sum_js_j=${fmt(p,6)}$。</p><p><strong>第 4 步：归一化</strong> $\gamma=(${fmt(g[0],4)},${fmt(g[1],4)},${fmt(g[2],4)})$，核对和 $=${fmt(g[0]+g[1]+g[2],4)}$；最可能来自第 ${g.indexOf(Math.max(...g))+1} 个组件。</p><p class="small">讲义基准：$x=4$ 得 $\gamma\approx(0.1412,0.8436,0.0152)$；试 $x=1.8$ 得 $(0.4841,0.4711,0.0448)$。</p>`;rerender($('#gamSteps'))}
+range('gamX',()=>{draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* glossary: grouped by first appearance, with clickable inline refs */
+(()=>{const G=[
+{id:'modelsel',t:'模型选择',en:'model selection',f:'(K,\\text{协方差结构},\\text{正则化})',d:'在拟合之前选定组件数 K、协方差结构与正则化强度等模型设置。',s:'sec-select',u:'组织“每个候选重新训练、同一规则比较”的实验流程。',why:'复杂度选错，后面的 EM 写得再对也救不回来。'},
+{id:'vallik',t:'验证似然',en:'validation likelihood',f:'\\ell_{val}(K)=\\frac{1}{|\\mathcal V|}\\sum_{i\\in\\mathcal V}\\log p_{\\hat\\theta_K}(x_i)',d:'在未参与拟合的数据上评价平均 log-density；除以 |V| 让不同验证集大小可比。',s:'sec-select',u:'比较不同 K 的泛化表现。',why:'训练似然随 K 单调变好，只有独立数据能揭穿过拟合。'},
+{id:'restart',t:'多次重启',en:'restart',f:'\\text{同一停止规则，多次随机初始化}',d:'用不同初始化重复运行同一 EM 算法，取数值健康且目标最好的运行。',s:'sec-select',u:'缓解 EM 的局部最优与初始化敏感。',why:'单次运行的坏运气不应被误认为模型本身的优劣。'},
+{id:'degeneracy',t:'塌缩 / 退化',en:'degeneracy',f:'\\mathcal N(x_i;x_i,\\sigma^2)=\\frac{1}{\\sqrt{2\\pi\\sigma^2}}\\to+\\infty',d:'组件均值落在训练点上、协方差特征值趋近零，训练 likelihood 病态增大。',s:'sec-collapse',u:'识别“ likelihood 异常高”的可疑运行。',why:'这是无约束 MLE 目标本身允许的病态解，不是 EM 算错。'},
+{id:'covreg',t:'协方差正则化',en:'covariance regularization',f:'\\Sigma_j^{reg}=\\Sigma_j^{MLE}+\\nu^2I',d:'给协方差加对角小项的稳定化操作。',s:'sec-reg',u:'阻止塌缩方向上的密度爆炸。',why:'工程上最有效的防塌缩手段；但不自动等于 Wishart-MAP。'},
+{id:'eigfloor',t:'特征值下限',en:'eigenvalue floor',f:'(\\Sigma+\\nu^2I)u_r=(\\lambda_r+\\nu^2)u_r',d:'正则化后每个特征值至少被抬高 ν²，特征向量不变。',s:'sec-reg',u:'保证 Σ⁻¹ 与 log|Σ| 数值稳定。',why:'把“无限尖的针”从可行参数集合里排除。'},
+{id:'covstruct',t:'协方差结构',en:'covariance structure',f:'\\text{spherical / diagonal / tied / full}',d:'对组件协方差施加的参数化约束。',s:'sec-reg',u:'在表达能力、样本量与数值稳定性之间取舍。',why:'结构、K 与 ν 应同时选择，而不是只调一个数字。'},
+{id:'bic',t:'贝叶斯信息准则',en:'BIC',f:'\\operatorname{BIC}=-2\\ell_{train}+p_K\\log n',d:'拟合优度减去随 log n 增长的复杂度惩罚，越小越好。',s:'sec-bic',u:'不留验证集时比较不同 K。',why:'负号来自“ℓ 越大越好 vs BIC 越小越好”的方向约定。'},
+{id:'aic',t:'赤池信息准则',en:'AIC',f:'\\operatorname{AIC}=-2\\ell_{train}+2p_K',d:'复杂度惩罚为固定每项 2 的信息准则，越小越好。',s:'sec-bic',u:'与 BIC 对照，惩罚更轻、倾向更大模型。',why:'两个准则给出复杂度税的两种税率，便于敏感性检查。'},
+{id:'labelswitch',t:'标签交换',en:'label switching',f:'K!\\ \\text{个等价参数表示}',d:'交换组件编号不改变混合密度与 likelihood。',s:'sec-bic',u:'比较不同 restart 时先对齐组件或只比密度。',why:'按原始组件编号直接比较均值或责任度是无意义的。'},
+{id:'gmmbayes',t:'高斯混合贝叶斯分类器',en:'Gaussian-mixture Bayes classifier',f:'P(Y=c\\mid x)\\propto P(Y=c)\\,p(x\\mid Y=c)',d:'每个类别的类条件密度由 GMM 表示的生成式分类器。',s:'sec-classifier',u:'表达多峰类别与非线性、多段决策边界。',why:'单个高斯表达不了双峰类别；组件索引 ≠ 类别索引。'},
+{id:'classcond',t:'类条件密度',en:'class-conditional density',f:'p(x\\mid Y=c)=\\sum_{k\\in\\mathcal K_c}\\pi_{k\\mid c}\\mathcal N(x;\\mu_{k\\mid c},\\Sigma_{k\\mid c})',d:'类别 c 内部多个组件按 π_{k|c} 归一化混合的密度。',s:'sec-classifier',u:'先在类内对模式求和，再用 Bayes 比较类间。',why:'π_{k|c}（类内）与 P(Y=c)（类间）是两层不同的权重。'},
+{id:'anoscore',t:'异常分数',en:'anomaly score',f:'s(x)=-\\log p_{\\hat\\theta}(x)',d:'密度越低分数越高的可排序分数；比较的是密度不是概率。',s:'sec-anomaly',u:'把连续密度变成可排序的告警队列。',why:'连续变量 P(X=x)=0，阈值必须在同特征、同标准化下校准。'},
+{id:'farate',t:'误报率',en:'false alarm rate',f:'P_{FA}(\\tau)=P_{normal}(-\\log p_{\\hat\\theta}(X)\\ge\\tau)',d:'正常样本被错误标记为异常的概率。',s:'sec-anomaly',u:'用正常验证集分位数校准阈值 τ。',why:'增大 τ 减少误报但可能增加漏报，这是显式权衡。'},
+{id:'semisup',t:'半监督学习',en:'semi-supervised learning',f:'\\gamma_{ij}=\\mathbf 1\\{j=y_i\\}\\ \\text{（有标签）}',d:'同时使用有标签与无标签样本；有标签点责任度固定，无标签点照常软计算。',s:'sec-semi',u:'标注昂贵时用小部分标签引导组件语义。',why:'两类数据进入同一组加权 MLE，锚点与密度结构各司其职。'},
+{id:'cluster',t:'聚类假设',en:'cluster assumption',f:'\\text{同一高密度区域更可能共享标签}',d:'半监督有效性的前提假设。',s:'sec-semi',u:'判断无标签数据会不会帮忙。',why:'语义边界穿过高密度区域时，半监督可能误导。'},
+{id:'responsibility',t:'责任度（复核）',en:'responsibility',f:'\\gamma_{ij}=P(Z_i=j\\mid x_i,\\theta)',d:'第 22 讲已建立的后验概率；此处在手算例子中复核。',s:'sec-moments',u:'软计数、异常解释与半监督锚点的共同语言。',why:'每行加和为 1 是合法性的快速核对。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
