@@ -67,7 +67,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
 
     <section id="sec-mixture" data-mode="core">
       <div class="section-head"><h2><span class="sec-tag core">核心</span>2. GMM 的生成故事与混合密度</h2></div>
-      <p class="section-intro">先写生成过程，再推观测密度。这里的“混合”不是挑一个最像的高斯，而是按 $w_j$ 把所有可能组件的密度相加。</p>
+      <p class="section-intro">先写生成过程，再推观测密度。这里的“混合”不是挑一个最像的高斯，而是按 <span class="term-ref" data-term="mixweight">混合权重 $w_j$</span> 把所有可能组件的密度相加。</p>
       <div class="five-grid">
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="gmm">GMM</span> 假设 $Z\sim\operatorname{Categorical}(w_1,\ldots,w_K)$，且 $X\mid Z=j\sim\mathcal N(\mu_j,\Sigma_j)$。</p></div>
         <div class="five"><h3>白话理解</h3><p>先转动一个有 $K$ 个结果的转盘，再从对应的高斯云里抽点；我们只看到点，没看到转盘结果。</p></div>
@@ -108,7 +108,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
 
     <section id="sec-responsibility" data-mode="core">
       <div class="section-head"><h2><span class="sec-tag core">核心</span>4. E-step：责任度是后验概率</h2></div>
-      <p class="section-intro">责任度不是另一个神秘分数，而是第 21 讲 Bayes 后验在隐藏组件上的直接复用：观察到 $x_i$ 后，第 $j$ 个组件应承担多少概率质量？</p>
+      <p class="section-intro">责任度不是另一个神秘分数，而是第 21 讲 Bayes 后验在隐藏组件上的直接复用：观察到 $x_i$ 后，第 $j$ 个组件应承担多少概率质量？这一计算步骤叫 <span class="term-ref" data-term="estep">E-step</span>。</p>
       <div class="five-grid">
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="responsibility">责任度</span> $\gamma_{ij}=P(Z_i=j\mid X_i=x_i,\theta)$，组成 $\Gamma\in\mathbb R^{n\times K}$。</p></div>
         <div class="five"><h3>白话理解</h3><p>一个点可以同时“像”两个组件；$0.8/0.2$ 比突然切成 $1/0$ 更诚实。</p></div>
@@ -116,7 +116,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>算每个组件的加权密度 $s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j)$，再除以所有 $s_{ik}$ 的总和。</p></div>
         <div class="five"><h3>为什么重要</h3><p>每行和为 1 是合法性的核对；它把 posterior 与 weighted MLE 连接起来，是整讲的铰链。</p></div>
       </div>
-      <div class="formula"><p>先算未归一化贡献，再归一化：</p><p>$$s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j),\qquad \gamma_{ij}=\frac{s_{ij}}{\sum_{k=1}^K s_{ik}}.$$</p><p>因此 $\sum_j\gamma_{ij}=1$。注意这里的 $\gamma$ 是概率向量，不是硬标签；特殊的逐元素乘法 $\odot$ 本讲不需要，若在向量化代码中出现，它表示同形状逐元素相乘，不是矩阵乘法。</p></div>
+      <div class="formula"><p>先算未归一化贡献，再归一化：</p><p>$$s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j),\qquad \gamma_{ij}=\frac{s_{ij}}{\sum_{k=1}^K s_{ik}}.$$</p><p>因此 $\sum_j\gamma_{ij}=1$。注意这里的 $\gamma$ 是概率向量，不是硬标签；特殊的逐元素乘法 $\odot$ 本讲不需要，若在向量化代码中出现，它表示同形状逐元素相乘，不是矩阵乘法；使用它是为了让每个位置独立加权，而不混合维度。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="respX">样本值 $x_i$</label><input id="respX" type="range" min="-3" max="8" step="0.25" value="1"><output id="respXOut"></output></div>
@@ -137,7 +137,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
       <div class="section-head"><h2><span class="sec-tag core">核心</span>5. M-step：把责任度当作软计数</h2></div>
       <p class="section-intro">E-step 固定参数、估计归属；M-step 固定归属、重新估计参数。关键转换是：有标签 MLE 里的 $\mathbf1\{z_i=j\}$，被 $\gamma_{ij}$ 替代。</p>
       <div class="five-grid">
-        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="mstep">M-step</span> 在固定 $\Gamma$ 后最大化加权 complete likelihood；$N_j=\sum_i\gamma_{ij}$ 是有效样本量。</p></div>
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="mstep">M-step</span> 在固定 $\Gamma$ 后最大化加权 complete likelihood；$N_j=\sum_i\gamma_{ij}$ 是<span class="term-ref" data-term="effective">有效样本量</span>。</p></div>
         <div class="five"><h3>白话理解</h3><p>组件 1 收到 $0.8$ 个样本、组件 2 收到 $0.2$ 个样本；允许“半个样本”参与平均。</p></div>
         <div class="five"><h3>干嘛用</h3><p>把每个组件的责任证据集中起来，得到新的比例、中心与椭圆形状。</p></div>
         <div class="five"><h3>怎么算</h3><p>先列 $N_j$，再算加权均值，最后算围绕新均值的加权协方差；分母是 $N_j$，因为这里是 MLE。</p></div>
@@ -298,16 +298,19 @@ $('#emStep').addEventListener('click',()=>{step();draw();toast('已完成一轮 
 (()=>{const svg=$('#hardViz');function draw(){svgClear(svg);const xq=Number($('#hardX').value),s=Number($('#hardSig').value),mu1=0,mu2=6,a=gauss(xq,mu1,s),b=gauss(xq,mu2,s),g=a/(a+b),xmin=-3,xmax=9,x0=70,y0=28,w=800,h=210,ymax=gauss(mu1,mu1,s)*1.2;drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,[-2,0,2,4,6,8]);path(svg,curvePath(x=>gauss(x,mu1,s),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--blue)','stroke-width':2.6});path(svg,curvePath(x=>gauss(x,mu2,s),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--warm)','stroke-width':2.6});const xx=scaleX(xq,xmin,xmax,x0,w);line(svg,xx,y0,xx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});svgLabel(svg,xx+13,y0+20,'x='+fmt(xq,2),{anchor:xx>x0+w-110?'end':'start',size:10});const by=296,bw=270,bh=50;[{x:100,name:'Soft-EM',v:g,c:'var(--blue)'},{x:535,name:'Hard-EM',v:g>=.5?1:0,c:'var(--warm)'}].forEach(q=>{svgAdd(svg,'rect',{x:q.x,y:by,width:bw,height:bh,rx:7,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'rect',{x:q.x,y:by,width:bw*q.v,height:bh,rx:7,fill:q.c,opacity:.76});svgLabel(svg,q.x+12,by+20,q.name,{anchor:'start',size:10,fill:q.c,bg:'var(--surface)'});svgLabel(svg,q.x+bw-12,by+20,fmt(q.v,2),{anchor:'end',size:11,bg:'var(--surface)'})});$('#hardSteps').innerHTML=String.raw`<p>在 $x=${fmt(xq,2)}$：$s_1=\mathcal N(x;0,\sigma^2)=${fmt(a,4)}$，$s_2=\mathcal N(x;6,\sigma^2)=${fmt(b,4)}$。</p><p>Soft-EM 保留 $\gamma_1=${fmt(g,4)}$、$\gamma_2=${fmt(1-g,4)}$；Hard-EM 只保留组件 ${g>=.5?'1':'2'}，即 $(${g>=.5?'1':'0'},${g>=.5?'0':'1'})$。</p>`;rerender($('#hardSteps'))}range('hardX',draw,2);range('hardSig',draw,2);draw();svg.addEventListener('themechange',draw)})();
 
 /* covariance parameter ledger */
-(()=>{const svg=$('#modelViz');function draw(){svgClear(svg);const K=Number($('#modelK').value),d=Number($('#modelD').value),kind=$('#modelKind').value;$('#modelKindOut').textContent=kind;const cov={spherical:1,diagonal:d,full:d*(d+1)/2};const rows=[{name:'权重',n:K-1,c:'var(--gold)'},{name:'均值',n:K*d,c:'var(--blue)'},{name:'协方差',n:K*cov[kind],c:'var(--accent)'}],total=rows.reduce((a,q)=>a+q.n,0),x0=100,y0=55,bw=165,max=Math.max(...rows.map(q=>q.n),1),base=310;line(svg,70,base,870,base,{class:'svg-axis'});rows.forEach((q,i)=>{const x=x0+i*260,h=190*q.n/max;svgAdd(svg,'rect',{x,y:base-h,width:bw,height:h,rx:7,fill:q.c,opacity:.78});svgLabel(svg,x+bw/2,base-h-13,fmt(q.n,0),{size:12,fill:q.c});svgLabel(svg,x+bw/2,base+23,q.name,{size:11});});svgLabel(svg,470,30,'参数量：K='+fmt(K,0)+'，d='+fmt(d,0)+'，结构='+kind,{size:12,fill:'var(--accent)'});$('#modelSteps').innerHTML=String.raw`<p><strong>协方差自由参数 / 组件</strong>：${kind} = ${fmt(cov[kind],0)}。</p><p><strong>总参数量</strong>：$(K-1)+Kd+K\,c=${fmt(K-1,0)}+${fmt(K*d,0)}+${fmt(K*cov[kind],0)}=${fmt(total,0)}$。</p><p class="small">权重只有 $K-1$ 个自由度，因为它们必须加和为 1；均值有 $Kd$ 个；协方差按结构计数。</p>`;rerender($('#modelSteps'))}range('modelK',draw,0);range('modelD',draw,0);$('#modelKind').addEventListener('change',draw);draw();svg.addEventListener('themechange',draw)})();
+(()=>{const svg=$('#modelViz');function draw(){svgClear(svg);const K=Number($('#modelK').value),d=Number($('#modelD').value),kind=$('#modelKind').value;$('#modelKindOut').textContent=kind;const cov={spherical:1,diagonal:d,full:d*(d+1)/2};const rows=[{name:'权重',n:K-1,c:'var(--gold)'},{name:'均值',n:K*d,c:'var(--blue)'},{name:'协方差',n:K*cov[kind],c:'var(--accent)'}],total=rows.reduce((a,q)=>a+q.n,0),x0=100,y0=55,bw=165,max=Math.max(...rows.map(q=>q.n),1),base=310;line(svg,70,base,870,base,{class:'svg-axis'});rows.forEach((q,i)=>{const x=x0+i*260,h=190*q.n/max;svgAdd(svg,'rect',{x,y:base-h,width:bw,height:h,rx:7,fill:q.c,opacity:.78});svgLabel(svg,x+bw/2,base-h-13,fmt(q.n,0),{size:12,fill:q.c});svgLabel(svg,x+bw/2,base+23,q.name,{size:11});});svgLabel(svg,470,30,'参数量：K='+fmt(K,0)+'，d='+fmt(d,0)+'，结构='+kind,{size:12,fill:'var(--accent)'});$('#modelSteps').innerHTML=String.raw`<p><strong>协方差自由参数 / 组件</strong>：${kind} = ${fmt(cov[kind],0)}。</p><p><strong>总参数量</strong>：$(K-1)+Kd+K\,c=${fmt(K-1,0)}+${fmt(K*d,0)}+${fmt(K*cov[kind],0)}=${fmt(total,0)}$。</p><p class="small">这里的 $c$ 表示每个组件的协方差自由参数数。权重只有 $K-1$ 个自由度，因为它们必须加和为 1；均值有 $Kd$ 个；协方差按结构计数。</p>`;rerender($('#modelSteps'))}range('modelK',draw,0);range('modelD',draw,0);$('#modelKind').addEventListener('change',draw);draw();svg.addEventListener('themechange',draw)})();
 
 /* glossary: grouped by first appearance, with clickable inline refs */
 (()=>{const G=[
 {id:'latent',t:'潜变量 / 隐藏变量',en:'latent variable',f:'Z_i\\in\\{1,\\ldots,K\\}',d:'没有被直接观测、但参与生成观测数据的随机变量。',s:'sec-latent',u:'为无标签数据提供组件归属的概率对象。',why:'把未知标签保留下来，才能在 E-step 中用后验而不是武断的 0/1 标签。'},
+{id:'mixweight',t:'混合权重',en:'mixing proportion',f:'w_j=P(Z=j),\\;w_j\\ge0,\\;\\sum_jw_j=1',d:'生成故事中先抽到组件 j 的概率；它是潜变量 Z 的先验比例，不是参数的 prior，也不保证对应语义类别频率。',s:'sec-mixture',u:'控制每个高斯对总体密度的贡献大小。',why:'它把组件出现频率写进混合密度，并在 M-step 中由有效样本量更新。'},
 {id:'gmm',t:'高斯混合模型',en:'Gaussian mixture model (GMM)',f:'p(x)=\\sum_jw_j\\mathcal N(x;\\mu_j,\\Sigma_j)',d:'用多个高斯条件分布和混合权重表示一个整体密度。',s:'sec-mixture',u:'密度估计、软聚类、异常候选与生成式分类。',why:'它把复杂密度拆成组件，责任度再把整体密度反解为后验归属。'},
 {id:'observed',t:'观测似然',en:'observed likelihood',f:'\\ell_{obs}(\\theta)=\\sum_i\\log p(x_i\\mid\\theta)',d:'只使用实际看见的观测 X，对隐藏标签求和后的目标。',s:'sec-likelihood',u:'EM 最终要监控的真实数据目标。',why:'它与 complete likelihood 不同；混淆二者会误读 EM 的优化对象。'},
 {id:'complete',t:'完整似然',en:'complete likelihood',f:'\\ell_{complete}=\\sum_i\\log p(x_i,z_i\\mid\\theta)',d:'假设隐藏标签也已知时的联合 log-likelihood。',s:'sec-likelihood',u:'在固定责任度后组织加权 MLE。',why:'标签信息让参数更新变得可分解，但训练时标签本身并未真的观测到。'},
+{id:'estep',t:'E-step',en:'expectation step',f:'\\gamma_{ij}=P(Z_i=j\\mid x_i,\\theta)',d:'固定当前参数，计算隐藏组件标签的后验责任度。',s:'sec-responsibility',u:'为 M-step 生成每个样本对每个组件的软分配。',why:'它把 Bayes 后验变成下一步可累加的权重。'},
 {id:'responsibility',t:'责任度',en:'responsibility',f:'\\gamma_{ij}=P(Z_i=j\\mid x_i,\\theta)',d:'给定当前参数与样本后，第 j 个组件承担该样本的后验概率。',s:'sec-responsibility',u:'把隐藏标签转成每个组件可累加的软证据。',why:'它同时连接 Bayes 后验和 M-step 的加权统计量。'},
 {id:'mstep',t:'M-step',en:'maximization step',f:'N_j=\\sum_i\\gamma_{ij}',d:'固定责任度，最大化加权 complete likelihood 来更新参数的一步。',s:'sec-mstep',u:'更新权重、均值与协方差。',why:'它把后验软分配落成可计算的 Gaussian MLE。'},
+{id:'effective',t:'有效样本量',en:'effective sample size',f:'N_j=\\sum_i\\gamma_{ij}',d:'组件 j 从所有样本收到的责任度总和，可以是非整数。',s:'sec-mstep',u:'作为权重、均值和协方差更新的计数分母。',why:'它是软计数的总账，替代带标签 MLE 中的硬计数。'},
 {id:'em',t:'EM 算法',en:'expectation–maximization',f:'E\\text{-step}\\leftrightarrow M\\text{-step}',d:'在隐藏变量模型中交替计算后验期望与参数最大化的算法。',s:'sec-em',u:'拟合含隐藏标签的 GMM 等模型。',why:'E 与 M 互相提供对方需要的量；第 24 讲会解释其目标下界与单调性。'},
 {id:'soft',t:'软 EM',en:'Soft-EM',f:'\\gamma_{ij}\\in[0,1]',d:'保留整行后验责任度，把分数作为加权计数。',s:'sec-hard',u:'处理组件重叠与归属不确定性。',why:'不把 0.55/0.45 的证据过早压成单一标签。'},
 {id:'hard',t:'硬 EM',en:'Hard-EM',f:'\\gamma_{ij}^{hard}=\\mathbf1\\{z_i=j\\}',d:'只保留最大后验组件的 0/1 分配。',s:'sec-hard',u:'得到更快但更粗糙的近似更新。',why:'在特定等权、球形协方差条件下连接 k-means。'},
