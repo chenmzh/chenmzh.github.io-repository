@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 22 讲 · Gaussian Mixture Models 互动实验室 | IML 2026</title>
+<meta name="description" content="第22讲 Gaussian Mixture Models 的互动附属页：从隐藏组件标签、混合密度与责任度，到 E/M 的软计数、Hard-EM 与 k-means 极限。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+</style>
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 22</span><span class="top-title">Gaussian Mixture Models · 从隐藏标签到 EM</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-22">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 22 讲 · 互动附属页</p>
+      <h1>Gaussian Mixture Models</h1>
+      <p class="lead">把一个“没有标签”的数据集看成多个生成机制的叠加：先用当前参数计算每个点对每个组件的<strong>责任度</strong>，再把责任度当作软计数更新参数。这条链把第 21 讲的 Bayes 后验和 MLE/MAP，接成第 23 讲的模型选择与病态性判断。</p>
+      <div class="course-ribbon"><span class="pill">第 21 讲：Bayesian posterior + MLE/MAP</span><span class="pill core">本讲：GMM + responsibility + E/M</span><span class="pill extra">第 23 讲：选择 K、塌缩、应用</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>隐藏组件如何变成可计算的后验？</h3><p>从生成故事、混合密度，走到责任度、软计数与一轮完整 EM。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>无标签不等于不能做 MLE</h3><p>标签未知使直接优化出现 <code>log ∑</code>；E/M 把难题拆成“先猜后算”。</p></div>
+        <div class="card"><span class="card-kicker">主线逻辑</span><h3>后验 → 加权 MLE → 重新后验</h3><p>每个点可以分给多个组件；不把模糊证据过早切成 0/1。</p></div>
+      </div>
+      <div class="chain" aria-label="本讲主线四步"><div class="chain-step"><b>1 · 生成</b>先抽隐藏组件 <span class="term-ref" data-term="latent">Z</span>，再生成 $X$。</div><div class="chain-step"><b>2 · 混合</b>所有组件加权相加，得到 $p(x)$。</div><div class="chain-step"><b>3 · E-step</b>Bayes 反推责任度 $\gamma_{ij}$。</div><div class="chain-step"><b>4 · M-step</b>责任度变软计数，更新 $w,\mu,\Sigma$。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 300" role="img" aria-label="从隐藏组件到 E M 的概念地图"></svg></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先把“没有标签”翻译成一个明确的生成模型，再看混合密度为何是求和而不是挑一个高斯。</span></div>
+    </section>
+
+    <section id="sec-latent" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 从一个没有标签的样本开始</h2></div>
+      <p class="section-intro">第 21 讲中，类别标签 $Y$ 可以进入 Bayes 后验；本讲把“类别”换成不可见的组件编号。先固定记号：大写是随机变量，小写是观测；$i$ 是样本索引，$j$ 是组件索引，二者不是同一个下标。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="latent">潜变量</span> $Z_i\in\{1,\ldots,K\}$ 是看不见的组件标签；$X_i\in\mathbb R^d$ 是第 $i$ 个观测。</p></div>
+        <div class="five"><h3>白话理解</h3><p>每个点像是由某个“工厂”生成的，但数据表只给了成品，没有告诉我们工厂编号。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把复杂数据分解成若干局部生成机制；组件是建模工具，不自动等于语义类别。</p></div>
+        <div class="five"><h3>怎么用</h3><p>假设 $Z_i$ 先被抽出，再按组件的高斯分布生成 $X_i$；训练时反过来估计 $Z_i$ 的后验。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>标签未知正是难点；责任度会把“未知”保留成概率，连接下一节的混合密度。</p></div>
+      </div>
+      <div class="formula"><p>记号总表（本页始终沿用这一套）：</p><p>$$X_i\in\mathbb R^d,\quad Z_i\in\{1,\ldots,K\},\quad w_j\ge0,\quad \sum_{j=1}^K w_j=1,$$</p><p>$$\mu_j\in\mathbb R^d,\quad \Sigma_j\in\mathbb R^{d\times d},\quad \theta=\{w_j,\mu_j,\Sigma_j\}_{j=1}^K.$$</p><p class="small">$d$ 是特征维度；$K$ 是组件数；$w_j$ 是第 $j$ 个组件被抽到的概率；$\mu_j$ 与 $\Sigma_j$ 分别控制中心和形状。注意大写 $\Sigma$ 是协方差矩阵，而求和符号写作 $\sum$；$\ell_{\mathrm{obs}}$ 中的希腊字母 $\ell$ 是 log-likelihood，不是层号 $l$。</p></div>
+      <div class="callout"><strong>和第 21 讲的对应关系。</strong> 第 21 讲的 $p(\theta\mid D)$ 是“参数的不确定性”；这里的 $p(Z_i=j\mid x_i,\theta)$ 是“样本组件归属的不确定性”。两者都用 Bayes 规则，但随机对象不同：一个是参数 $\theta$，一个是隐藏标签 $Z_i$。</div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>有了隐藏组件 $Z$，就能写出条件分布；把组件标签消掉，得到所有高斯贡献相加的混合密度。</span></div>
+    </section>
+
+    <section id="sec-mixture" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. GMM 的生成故事与混合密度</h2></div>
+      <p class="section-intro">先写生成过程，再推观测密度。这里的“混合”不是挑一个最像的高斯，而是按 $w_j$ 把所有可能组件的密度相加。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="gmm">GMM</span> 假设 $Z\sim\operatorname{Categorical}(w_1,\ldots,w_K)$，且 $X\mid Z=j\sim\mathcal N(\mu_j,\Sigma_j)$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>先转动一个有 $K$ 个结果的转盘，再从对应的高斯云里抽点；我们只看到点，没看到转盘结果。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>用多个简单高斯拼出多峰、椭圆或倾斜的密度；比 k-means 多了密度与不确定性。</p></div>
+        <div class="five"><h3>怎么算</h3><p>固定一个 $x$，分别算 $w_j\mathcal N(x;\mu_j,\Sigma_j)$，然后相加。求和在取对数之前。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>$\log\sum_j$ 不能拆成各项的和，导致观测 likelihood 没有直接闭式解，引出 E/M。</p></div>
+      </div>
+      <div class="formula"><p>把隐藏标签边缘化：</p><p>$$p(x\mid\theta)=\sum_{j=1}^K p(z=j\mid\theta)p(x\mid z=j,\theta)=\sum_{j=1}^K w_j\,\mathcal N(x;\mu_j,\Sigma_j).$$</p><p class="small">$p(x)$ 是密度，不是“第几个簇”的概率；若要问组件归属，必须再用 Bayes 得到责任度。这个区分正是第 23 讲讨论异常检测和分类时的入口。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="mixW">组件 1 权重 $w_1$</label><input id="mixW" type="range" min="0.1" max="0.9" step="0.05" value="0.5"><output id="mixWOut"></output></div>
+          <div class="control"><label for="mixMu1">组件 1 均值 $\mu_1$</label><input id="mixMu1" type="range" min="-3" max="3" step="0.5" value="-1"><output id="mixMu1Out"></output></div>
+          <div class="control"><label for="mixMu2">组件 2 均值 $\mu_2$</label><input id="mixMu2" type="range" min="2" max="8" step="0.5" value="5"><output id="mixMu2Out"></output></div>
+          <div class="control"><label for="mixSig">共同标准差 $\sigma$</label><input id="mixSig" type="range" min="0.4" max="2.2" step="0.1" value="1"><output id="mixSigOut"></output></div>
+          <div class="control"><label for="mixX">查询点 $x$</label><input id="mixX" type="range" min="-4" max="8" step="0.25" value="2"><output id="mixXOut"></output></div>
+        </div><p class="small">拖动参数：蓝线与橙线是各组件密度，绿色线是按权重相加后的 $p(x)$。曲线由高斯公式逐点计算，不手画形状。</p></div>
+        <div class="step-box" id="mixSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="mixViz" class="viz-svg" viewBox="0 0 940 410" role="img" aria-label="混合高斯密度互动图"></svg></div>
+      <p class="viz-caption">读图：同一个查询点可以同时得到两个组件的贡献；当峰重叠时，不能只看最近均值就宣布归属。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>混合密度告诉我们“这个点有多常见”；现在反过来问“它更应该由谁负责”，这就是责任度。</span></div>
+    </section>
+
+    <section id="sec-likelihood" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>3. 两个 likelihood：为什么需要拆步</h2></div>
+      <p class="section-intro">不要把带隐藏标签的 complete likelihood 和只看见 $x_i$ 的 observed likelihood 混为一谈。前者便于计算，后者才是我们真正想最大化的观测数据目标。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="observed">observed likelihood</span> 是 $\prod_i p(x_i\mid\theta)$；<span class="term-ref" data-term="complete">complete likelihood</span> 是 $\prod_i p(x_i,z_i\mid\theta)$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>一个只看成品，一个还拿到了每件成品的生产线标签；后者信息更多，所以更容易算。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>用 complete 目标组织 M-step，同时用 observed likelihood 检查真实训练目标是否没有下降。</p></div>
+        <div class="five"><h3>怎么算</h3><p>先用 $\gamma$ 估计标签的软证据，再固定这张软表做加权 MLE；重复 E 与 M。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>若把两个目标当成一层，就会误以为每一步都在直接最大化同一个简单公式；第 24 讲才会证明单调性。</p></div>
+      </div>
+      <div class="formula"><p>只观测 $x$ 时：</p><p>$$\ell_{\mathrm{obs}}(\theta)=\sum_{i=1}^n\log\left[\sum_{j=1}^K w_j\mathcal N(x_i;\mu_j,\Sigma_j)\right].$$</p><p>若 $z_i$ 已知，则：</p><p>$$\ell_{\mathrm{complete}}(\theta)=\sum_{i=1}^n\left[\log w_{z_i}+\log\mathcal N(x_i;\mu_{z_i},\Sigma_{z_i})\right].$$</p><p class="small">难点集中在 observed 目标的 $\log\sum$；不是“高斯不会算”，而是未知标签把求和放进了对数。</p></div>
+      <div class="callout warn"><strong>一个记号警报。</strong> 本页用 $\ell$（希腊小写 ell）表示对数似然，用 $i$ 表示样本索引、$j$ 表示组件索引；不要把 $\ell_{\mathrm{obs}}$ 看成神经网络层号 $l$，也不要把 $i$ 读成数字 1。</div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>既然标签未知但可以问后验，就先固定参数，用 Bayes 规则算每个 $\gamma_{ij}$；这一步叫 E-step。</span></div>
+    </section>
+
+    <section id="sec-responsibility" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>4. E-step：责任度是后验概率</h2></div>
+      <p class="section-intro">责任度不是另一个神秘分数，而是第 21 讲 Bayes 后验在隐藏组件上的直接复用：观察到 $x_i$ 后，第 $j$ 个组件应承担多少概率质量？</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="responsibility">责任度</span> $\gamma_{ij}=P(Z_i=j\mid X_i=x_i,\theta)$，组成 $\Gamma\in\mathbb R^{n\times K}$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>一个点可以同时“像”两个组件；$0.8/0.2$ 比突然切成 $1/0$ 更诚实。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把未知标签转换为可加权的证据；下一步用它当软计数更新均值、方差和权重。</p></div>
+        <div class="five"><h3>怎么算</h3><p>算每个组件的加权密度 $s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j)$，再除以所有 $s_{ik}$ 的总和。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>每行和为 1 是合法性的核对；它把 posterior 与 weighted MLE 连接起来，是整讲的铰链。</p></div>
+      </div>
+      <div class="formula"><p>先算未归一化贡献，再归一化：</p><p>$$s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j),\qquad \gamma_{ij}=\frac{s_{ij}}{\sum_{k=1}^K s_{ik}}.$$</p><p>因此 $\sum_j\gamma_{ij}=1$。注意这里的 $\gamma$ 是概率向量，不是硬标签；特殊的逐元素乘法 $\odot$ 本讲不需要，若在向量化代码中出现，它表示同形状逐元素相乘，不是矩阵乘法。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="respX">样本值 $x_i$</label><input id="respX" type="range" min="-3" max="8" step="0.25" value="1"><output id="respXOut"></output></div>
+          <div class="control"><label for="respMu1">$\mu_1$</label><input id="respMu1" type="range" min="-3" max="2" step="0.5" value="0"><output id="respMu1Out"></output></div>
+          <div class="control"><label for="respMu2">$\mu_2$</label><input id="respMu2" type="range" min="3" max="8" step="0.5" value="5"><output id="respMu2Out"></output></div>
+          <div class="control"><label for="respS1">$\sigma_1$</label><input id="respS1" type="range" min="0.4" max="2.4" step="0.1" value="1"><output id="respS1Out"></output></div>
+          <div class="control"><label for="respS2">$\sigma_2$</label><input id="respS2" type="range" min="0.4" max="2.4" step="0.1" value="1.4"><output id="respS2Out"></output></div>
+          <div class="control"><label for="respW1">$w_1$（$w_2=1-w_1$）</label><input id="respW1" type="range" min="0.1" max="0.9" step="0.05" value="0.5"><output id="respW1Out"></output></div>
+        </div></div>
+        <div class="step-box" id="respSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="responsibilityViz" class="viz-svg" viewBox="0 0 940 470" role="img" aria-label="责任度 Bayes 归一化互动图"></svg></div>
+      <p class="viz-caption">上图的两条贡献曲线来自同一套参数；下方条形把未归一化贡献除以总和，显示责任度而不是只显示最大组件。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>责任度已经是一张 $n\times K$ 的软分配表；M-step 要做的就是把每一列加起来，得到有效样本量。</span></div>
+    </section>
+
+    <section id="sec-mstep" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>5. M-step：把责任度当作软计数</h2></div>
+      <p class="section-intro">E-step 固定参数、估计归属；M-step 固定归属、重新估计参数。关键转换是：有标签 MLE 里的 $\mathbf1\{z_i=j\}$，被 $\gamma_{ij}$ 替代。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="mstep">M-step</span> 在固定 $\Gamma$ 后最大化加权 complete likelihood；$N_j=\sum_i\gamma_{ij}$ 是有效样本量。</p></div>
+        <div class="five"><h3>白话理解</h3><p>组件 1 收到 $0.8$ 个样本、组件 2 收到 $0.2$ 个样本；允许“半个样本”参与平均。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把每个组件的责任证据集中起来，得到新的比例、中心与椭圆形状。</p></div>
+        <div class="five"><h3>怎么算</h3><p>先列 $N_j$，再算加权均值，最后算围绕新均值的加权协方差；分母是 $N_j$，因为这里是 MLE。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>它把“后验”落地为参数更新；更新后的参数再回到 E-step，形成闭环。</p></div>
+      </div>
+      <div class="formula"><p>三条更新式（$n$ 是样本总数）：</p><p>$$N_j=\sum_{i=1}^n\gamma_{ij},\qquad w_j^{\mathrm{new}}=\frac{N_j}{n},$$</p><p>$$\mu_j^{\mathrm{new}}=\frac{\sum_{i=1}^n\gamma_{ij}x_i}{N_j},\qquad \Sigma_j^{\mathrm{new}}=\frac{\sum_{i=1}^n\gamma_{ij}(x_i-\mu_j^{\mathrm{new}})(x_i-\mu_j^{\mathrm{new}})^\top}{N_j}.$$</p><p class="small">协方差中的 $\top$ 把列向量转成行向量，形成 $d\times d$ 矩阵；标量例子里它退化成平方。不要把 $N_j-1$ 的无偏估计修正混进这里：GMM 的 Gaussian MLE 分母是 $N_j$。</p></div>
+      <div class="control-panel">
+        <div><div class="controls"><div class="control"><label for="mTemp">责任度温度 $\tau$</label><input id="mTemp" type="range" min="0.35" max="2.5" step="0.05" value="1"><output id="mTempOut"></output></div><div class="control"><label for="mShift">组件中心间距</label><input id="mShift" type="range" min="3" max="8" step="0.5" value="6"><output id="mShiftOut"></output></div></div><p class="small">温度越低，软分配越接近 0/1；温度越高，两个组件共同分担更多责任。图中所有数字与下方步骤由同一个 <code>draw()</code> 计算。</p></div>
+        <div class="step-box" id="mstepSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="mstepViz" class="viz-svg" viewBox="0 0 940 460" role="img" aria-label="责任度软计数与 M-step 更新互动图"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>现在把 E 与 M 串成一轮：先在固定参数下算责任度，再用同一张表更新参数，并核对 observed log-likelihood。</span></div>
+    </section>
+
+    <section id="sec-em" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>6. Worked example：完整的一次标量 EM</h2></div>
+      <p class="section-intro">用讲义中的一维数据 $x=(-1,0,1,5,6,7)$、$K=2$ 展开一轮；默认初始化与原讲义 worked example 3 对齐。示例把“公式链”变成可检查的数值流程：责任度 → 有效样本量 → 新均值/方差 → 新 likelihood。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="em">EM</span> 是在隐藏变量存在时交替进行 E-step 与 M-step 的算法。</p></div>
+        <div class="five"><h3>白话理解</h3><p>先按当前模型给每个点分“概率票”，再按这些票重画两个高斯；反复修正。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>求 GMM 参数的局部最优解；它不是自动找到真实语义，也不保证不同初始化得到同一解。</p></div>
+        <div class="five"><h3>怎么算</h3><p>每一轮保存 $\ell_{\mathrm{obs}}$；若新值没有明显下降，才继续迭代。实际代码还要防止协方差退化。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>这是本讲从后验到参数的完整闭环；第 23 讲会问如何选 $K$、如何防塌缩与评估。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="emStep" type="button">迭代 1 轮</button><button class="btn" id="emRun" type="button">连续迭代 5 轮</button><button class="btn warm" id="emRandom" type="button">随机初始化</button><span class="pill" id="emIterPill">当前迭代：0</span></div><p class="small">“随机初始化”真的调用 <code>Math.random()</code>，每次会改变初始均值与记录的 seed；它不是伪装成随机的固定按钮。</p><div class="step-box" id="emSteps"></div></div>
+        <div class="step-box"><strong>停止判断</strong><p>比较相邻两轮的 $\ell_{\mathrm{obs}}$，而不是只看均值是否移动。$\ell$ 是希腊字母 ell；它在这里表示 log-likelihood。</p><p id="emHealth"></p></div>
+      </div>
+      <div class="svg-wrap"><svg id="emViz" class="viz-svg" viewBox="0 0 940 470" role="img" aria-label="一维 EM 迭代过程与 likelihood 曲线"></svg></div>
+      <p class="viz-caption">上半部是当前分配与中心；下半部是已记录的 observed log-likelihood。每次 E/M 更新都重新计算，而不是把讲义里的某个小数写死。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>Soft-EM 保留整行责任度；如果只留最大项，就得到 Hard-EM。比较二者，才能理解为什么模糊证据有价值。</span></div>
+    </section>
+
+    <section id="sec-hard" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>7. Hard-EM 与 Soft-EM</h2></div>
+      <p class="section-intro">Hard-EM 把后验向量压成一个 0/1 标签：$z_i^{\mathrm{new}}=\arg\max_j\gamma_{ij}$；Soft-EM 保留完整的 $\gamma_{i1},\ldots,\gamma_{iK}$。下面改变查询点和方差，观察“软”在哪里。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="soft">Soft-EM</span> 用连续责任度；<span class="term-ref" data-term="hard">Hard-EM</span> 用最大后验的 0/1 分配。</p></div>
+        <div class="five"><h3>白话理解</h3><p>模糊点不是被迫站队：Soft-EM 说“主要像 1，也有一部分像 2”。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>重叠组件或小样本时，保留不确定性通常比突然切换更平滑。</p></div>
+        <div class="five"><h3>怎么算</h3><p>先有 $\gamma$；Hard 取最大索引并把它写成指示函数，Soft 直接把整行带进 M-step。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>下一节 k-means 正是 Hard-EM 在等权、共享球形协方差下的特殊极限，不是所有 GMM 都等于 k-means。</p></div>
+      </div>
+      <div class="control-panel"><div class="controls"><div class="control"><label for="hardX">查询点 $x$</label><input id="hardX" type="range" min="-2" max="8" step="0.25" value="3"><output id="hardXOut"></output></div><div class="control"><label for="hardSig">共同 $\sigma$</label><input id="hardSig" type="range" min="0.3" max="2.2" step="0.1" value="1"><output id="hardSigOut"></output></div></div><div class="step-box" id="hardSteps"></div></div>
+      <div class="svg-wrap"><svg id="hardViz" class="viz-svg" viewBox="0 0 940 390" role="img" aria-label="Hard-EM 与 Soft-EM 责任度比较图"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>把参数进一步收紧：等权、共享球形协方差时，Hard-EM 的最近中心规则才会退化成 k-means。</span></div>
+    </section>
+
+    <section id="sec-kmeans" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. k-means 是什么极限</h2></div>
+      <p class="section-intro">这里要严格区分两句话：Hard-EM 与 Lloyd 更新相同，需要等权 $w_j=1/K$ 与共享球形协方差 $\Sigma_j=\sigma^2I$；Soft-EM 在 $\sigma^2\to0$ 时才趋近硬分配。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="kmeans">k-means</span> 最小化到最近中心的平方距离和；在上述 GMM 限制下与 Hard-EM 对应。</p></div>
+        <div class="five"><h3>白话理解</h3><p>密度云变得极窄、每个组件一样重，谁的中心最近谁就负责。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>解释 k-means 为何快、为何没有协方差与概率密度；也解释它为何表达能力更窄。</p></div>
+        <div class="five"><h3>怎么算</h3><p>比较 $\log w_j-\tfrac12\log|\Sigma_j|-\tfrac12\|x-\mu_j\|^2_{\Sigma_j^{-1}}$；约束后只剩距离项。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>它是模型假设的结论，不是算法名称的同义词；第 23 讲会回到更一般的协方差结构。</p></div>
+      </div>
+      <div class="formula"><p>限制条件：</p><p>$$w_j=\frac1K,\qquad\Sigma_j=\sigma^2I.$$</p><p>此时最大责任度等价于最小 $\|x-\mu_j\|^2$；但若权重不等、方差不同或协方差非球形，就不能直接叫 k-means。</p></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>模型越灵活，参数越多，数值风险越大；接着统计 spherical、diagonal、full 三种协方差的代价。</span></div>
+    </section>
+
+    <section id="sec-model" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>9. 协方差结构与参数复杂度</h2></div>
+      <p class="section-intro">GMM 的每个组件至少有权重、均值和协方差。full 协方差能表达旋转椭圆，但参数最多；diagonal 忽略维度间相关性，换取稳定性；spherical 更省参数。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="covariance">协方差矩阵</span> $\Sigma_j$ 描述各维波动与相关方向，必须对称半正定。</p></div>
+        <div class="five"><h3>白话理解</h3><p>它决定高斯云是圆、轴对齐椭圆，还是可以旋转的椭圆。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>在表达能力、样本量与数值稳定性之间做选择；不是越复杂越好。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$d$ 维时，spherical 每组件 1 个方差，diagonal 有 $d$ 个，full 有 $d(d+1)/2$ 个自由参数。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>参数太多会估计噪声，太小会错过相关结构；第 23 讲会加入正则化与验证集判断。</p></div>
+      </div>
+      <div class="control-panel"><div class="controls"><div class="control"><label for="modelK">组件数 $K$</label><input id="modelK" type="range" min="2" max="8" step="1" value="3"><output id="modelKOut"></output></div><div class="control"><label for="modelD">维度 $d$</label><input id="modelD" type="range" min="1" max="6" step="1" value="2"><output id="modelDOut"></output></div><div class="control"><label for="modelKind">协方差结构</label><select id="modelKind"><option value="spherical">spherical · 球形</option><option value="diagonal">diagonal · 对角</option><option value="full" selected>full · 完整</option></select><output id="modelKindOut">full</output></div></div><div class="step-box" id="modelSteps"></div></div>
+      <div class="svg-wrap"><svg id="modelViz" class="viz-svg" viewBox="0 0 940 370" role="img" aria-label="GMM 协方差结构参数量比较图"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>参数量只是静态账本；实际训练还会被初始化影响，下一节用 restart 的视角理解局部解。</span></div>
+    </section>
+
+    <section id="sec-init" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>10. 初始化：同一目标可能有不同解</h2></div>
+      <p class="section-intro">EM 通常只保证在当前局部路径上不降低目标，不保证找到全局最优。组件标签还存在 permutation symmetry：交换组件编号，密度不变，名字却会交换。</p>
+      <div class="card-grid"><div class="card"><h3>多次 restart 看什么</h3><p>固定停止规则，比较最终 $\ell_{\mathrm{obs}}$、协方差是否正定、有效样本量是否塌到接近零；不要只比较“第几次运行”。</p></div><div class="card"><h3>标签交换不是新模型</h3><p>若把组件 1 与 2 同时交换 $w,\mu,\Sigma$，混合密度和 likelihood 不变。语义解释要结合稳定性、标签锚点或下游任务。</p></div></div>
+      <div class="callout warn"><strong>数值健康检查。</strong> 每轮都应检查 $w_j\ge0$、$\sum_jw_j=1$、$\Sigma_j$ 正定（或加正则化）；第 23 讲会具体讨论协方差塌缩如何把训练 likelihood “骗高”。</div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>算法闭环之外，模型还要被用来做密度、异常检测和分类；但“组件”不能自动解释成真实类别。</span></div>
+    </section>
+
+    <section id="sec-apps" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>11. 应用与限制：密度不是语义</h2></div>
+      <div class="five-grid"><div class="five"><h3>是什么</h3><p>GMM 直接给出 $p(x)$ 与责任度 $\gamma$，可用于聚类、密度估计、异常检测、缺失值处理、生成式分类与半监督学习。</p></div><div class="five"><h3>白话理解</h3><p>它不仅回答“离哪个中心近”，还回答“这个点在整体分布中有多常见”。</p></div><div class="five"><h3>干嘛用</h3><p>低密度点可作为异常候选；带标签时可按类别分别拟合 GMM 做 Bayes classifier。</p></div><div class="five"><h3>怎么算</h3><p>用混合密度评估常见性，用责任度解释组件归属；模型选择、正则化和验证集不能省略。</p></div><div class="five"><h3>为什么重要</h3><p>一个语义类别可能需要多个组件，一个组件也可能跨语义类别；第 23 讲会把这个限制变成实践判断。</p></div></div>
+      <div class="source-grid"><figure><img src="assets/gmm-lab/fig0.png" alt="本地化的第22讲 GMM 责任度图" loading="lazy"><figcaption>本地化讲义原图：软责任度场</figcaption></figure><figure><img src="assets/gmm-lab/fig3.png" alt="本地化的第22讲 E step 图" loading="lazy"><figcaption>本地化讲义原图：E-step 与加权更新</figcaption></figure><figure><img src="assets/gmm-lab/fig5.png" alt="本地化的第22讲示意图" loading="lazy"><figcaption>本地化讲义原图：组件责任度示意</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲：记住“隐藏变量后验 → 软计数 → 加权 MLE”的答案链，再把问题交给第 23 讲的模型选择与退化分析。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：把一个隐藏标签问题变成 E/M 闭环</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 无标签数据怎样用多个高斯拟合？先给每个点对各组件一个 Bayes 后验责任度，再把责任度当软计数做加权 MLE；更新后的参数重新计算责任度，循环进行。</div>
+      <div class="closing-formulas"><div class="formula"><p><strong>混合密度</strong></p><p>$$p(x)=\sum_jw_j\mathcal N(x;\mu_j,\Sigma_j)$$</p></div><div class="formula"><p><strong>责任度</strong></p><p>$$\gamma_{ij}=\frac{w_j\mathcal N(x_i;\mu_j,\Sigma_j)}{\sum_k w_k\mathcal N(x_i;\mu_k,\Sigma_k)}$$</p></div><div class="formula"><p><strong>有效样本量</strong></p><p>$$N_j=\sum_i\gamma_{ij},\qquad w_j^{new}=N_j/n$$</p></div><div class="formula"><p><strong>加权均值</strong></p><p>$$\mu_j^{new}=\frac{\sum_i\gamma_{ij}x_i}{N_j}$$</p></div><div class="formula"><p><strong>加权协方差</strong></p><p>$$\Sigma_j^{new}=\frac{\sum_i\gamma_{ij}(x_i-\mu_j^{new})(x_i-\mu_j^{new})^\top}{N_j}$$</p></div><div class="formula"><p><strong>Hard-EM 特例</strong></p><p>$$z_i^{new}=\arg\max_j\gamma_{ij}$$</p></div></div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能说明 $Z_i$ 为什么是潜变量，并区分它和第 21 讲的参数后验。</label><label><input type="checkbox">我能解释为什么混合密度是 $\sum_j$，以及为什么 $\log\sum_j$ 阻止直接套用有标签 MLE。</label><label><input type="checkbox">我能从未归一化贡献 $s_{ij}$ 推出责任度，并检查每一行和为 1。</label><label><input type="checkbox">我能写出 $N_j,w_j^{new},\mu_j^{new},\Sigma_j^{new}$，并说清分母为什么是 $N_j$。</label><label><input type="checkbox">我能说出 Hard-EM 何时与 k-means 对应，并列出不同协方差结构的风险。</label></div>
+      <div class="callout"><strong>与下一讲连接。</strong> 第 23 讲接手本讲的责任度和加权 MLE，继续问三个实践问题：$K$ 应该怎么选？协方差为什么会塌缩、怎样正则化？GMM 的密度和后验怎样进入异常检测、非线性分类与半监督学习？</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-22">返回原讲义第 22 讲</a>，或直接前往 <a href="index.html#lecture-23">第 23 讲</a> 的模型选择与退化分析。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const pct=x=>fmt(100*x,1)+'%';
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}
+}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function gauss(x,mu,s){const z=(x-mu)/s;return Math.exp(-.5*z*z)/(s*Math.sqrt(2*Math.PI))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,ticks){line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});ticks.forEach(v=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});svgLabel(svg,x,y0+h+25,fmt(v,1),{size:10});});[0,ymax/2,ymax].forEach(v=>{const y=scaleY(v,0,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-12,y+4,fmt(v,2),{anchor:'end',size:10});});}
+function curvePath(fn,xmin,xmax,x0,y0,w,h,ymax){let d='';for(let k=0;k<=180;k++){const x=xmin+(xmax-xmin)*k/180;const y=clamp(fn(x),0,ymax);d+=(k?' L':'M')+scaleX(x,xmin,xmax,x0,w).toFixed(2)+','+scaleY(y,0,ymax,y0,h).toFixed(2)}return d}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('gmm-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('gmm-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('gmm-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('gmm-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留从生成故事到一次 EM 的闭环；拓展小节已隐藏。':'完整模式：显示 k-means 极限、协方差复杂度、初始化与应用限制。';document.dispatchEvent(new CustomEvent('lab-mode-change'));}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and bridge-aware scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map: every edge begins and ends at a node boundary */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');const nodes=[{id:'n-input',target:'sec-latent',x:22,y:112,w:145,h:62,title:'观测 X',sub:'只有成品',color:'var(--blue)'},{id:'n-z',target:'sec-latent',x:226,y:112,w:145,h:62,title:'隐藏 Z',sub:'组件标签',color:'var(--warm)'},{id:'n-mix',target:'sec-mixture',x:428,y:35,w:180,h:62,title:'混合密度',sub:'p(x)=Σ wⱼNⱼ',color:'var(--blue)'},{id:'n-resp',target:'sec-responsibility',x:428,y:185,w:180,h:62,title:'责任度 Γ',sub:'Bayes 后验',color:'var(--accent)'},{id:'n-em',target:'sec-em',x:706,y:112,w:180,h:62,title:'E / M 闭环',sub:'软计数 → MLE',color:'var(--accent)'},{id:'n-extra',target:'sec-kmeans',extra:true,x:706,y:218,w:180,h:54,title:'k-means 极限',sub:'拓展',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M167 143 H226','var(--blue)',mk,'观测',195,132);edge('M371 143 H397 V66 H428','var(--accent)',mk,'边缘化',397,53);edge('M371 143 H397 V216 H428','var(--accent)',mk,'Bayes',397,202);edge('M608 66 H650 V143 H706','var(--accent)',mk,'E-step',650,57);edge('M608 216 H650 V167 H706','var(--accent)',mk,'M-step',650,229);edge('M796 174 V218','var(--violet)',mv,'特例',817,204);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+
+/* mixture density */
+(()=>{const svg=$('#mixViz');function draw(){svgClear(svg);const w1=Number($('#mixW').value),mu1=Number($('#mixMu1').value),mu2=Number($('#mixMu2').value),sig=Number($('#mixSig').value),xq=Number($('#mixX').value),w2=1-w1,xmin=-4,xmax=8,x0=70,y0=28,w=800,h=270,ymax=Math.max(gauss(mu1,mu1,sig)*w1,gauss(mu2,mu2,sig)*w2)*1.3;drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,[-4,-2,0,2,4,6,8]);const p1=x=>gauss(x,mu1,sig),p2=x=>gauss(x,mu2,sig),pm=x=>w1*p1(x)+w2*p2(x);path(svg,curvePath(x=>w1*p1(x),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--blue)','stroke-width':2.4});path(svg,curvePath(x=>w2*p2(x),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--warm)','stroke-width':2.4});path(svg,curvePath(pm,xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--accent)','stroke-width':3.6});const x=scaleX(xq,xmin,xmax,x0,w),y=scaleY(pm(xq),0,ymax,y0,h);line(svg,x,y0,x,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});svgLabel(svg,scaleX(mu1,xmin,xmax,x0,w),y0+18,'w₁N₁',{size:11,fill:'var(--blue)'});svgLabel(svg,scaleX(mu2,xmin,xmax,x0,w),y0+18,'w₂N₂',{size:11,fill:'var(--warm)'});svgLabel(svg,clamp(x+38,x0+45,x0+w-38),clamp(y-13,y0+25,y0+h-25),'p(x)',{size:12,fill:'var(--accent)'});svgLabel(svg,x+14,y0+h+50,'x = '+fmt(xq,2),{anchor:x>x0+w-100?'end':'start',size:10});$('#mixSteps').innerHTML=String.raw`<p><strong>第 1 步：两项贡献</strong> $s_1=w_1\mathcal N(x;\mu_1,\sigma^2)=${fmt(w1*p1(xq),4)}$，$s_2=w_2\mathcal N(x;\mu_2,\sigma^2)=${fmt(w2*p2(xq),4)}$。</p><p><strong>第 2 步：相加</strong> $p(x)=s_1+s_2=${fmt(pm(xq),4)}$。求和在取对数之前。</p>`;rerender($('#mixSteps'))}range('mixW',draw,2);range('mixMu1',draw,1);range('mixMu2',draw,1);range('mixSig',draw,1);range('mixX',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* responsibility */
+(()=>{const svg=$('#responsibilityViz');function draw(){svgClear(svg);const xq=Number($('#respX').value),mu1=Number($('#respMu1').value),mu2=Number($('#respMu2').value),s1=Number($('#respS1').value),s2=Number($('#respS2').value),w1=Number($('#respW1').value),w2=1-w1,xmin=-4,xmax=9,x0=70,y0=28,w=800,h=185,ymax=Math.max(w1/(s1*Math.sqrt(2*Math.PI)),w2/(s2*Math.sqrt(2*Math.PI)))*1.25,p1=gauss(xq,mu1,s1),p2=gauss(xq,mu2,s2),u1=w1*p1,u2=w2*p2,total=u1+u2,g1=u1/total,g2=u2/total;drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,[-4,-2,0,2,4,6,8]);path(svg,curvePath(x=>w1*gauss(x,mu1,s1),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--blue)','stroke-width':2.5});path(svg,curvePath(x=>w2*gauss(x,mu2,s2),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--warm)','stroke-width':2.5});const xx=scaleX(xq,xmin,xmax,x0,w);line(svg,xx,y0,xx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});svgLabel(svg,xx+12,y0+18,'xᵢ = '+fmt(xq,2),{anchor:xx>x0+w-110?'end':'start',size:10});const by=285,bw=265,bh=70;[{name:'组件 1',u:u1,g:g1,c:'var(--blue)',x:95},{name:'组件 2',u:u2,g:g2,c:'var(--warm)',x:500}].forEach(q=>{svgAdd(svg,'rect',{x:q.x,y:by,width:bw,height:bh,rx:8,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'rect',{x:q.x,y:by,width:bw*q.g,height:bh,rx:8,fill:q.c,opacity:.72});svgLabel(svg,q.x+12,by+23,q.name,{anchor:'start',size:11,fill:q.c,bg:'var(--surface)'});svgLabel(svg,q.x+bw-12,by+23,'γ = '+pct(q.g),{anchor:'end',size:11,fill:'var(--ink)',bg:'var(--surface)'})});svgLabel(svg,470,270,'归一化后的责任度',{size:11,fill:'var(--accent)'});$('#respSteps').innerHTML=String.raw`<p><strong>第 1 步：未归一化贡献</strong> $s_1=w_1\mathcal N(x_i;\mu_1,\sigma_1^2)=${fmt(u1,4)}$，$s_2=w_2\mathcal N(x_i;\mu_2,\sigma_2^2)=${fmt(u2,4)}$。</p><p><strong>第 2 步：总和</strong> $s_1+s_2=${fmt(total,4)}$。</p><p><strong>第 3 步：除以总和</strong> $\gamma_{i1}=${fmt(g1,4)}$，$\gamma_{i2}=${fmt(g2,4)}$；核对 $\gamma_{i1}+\gamma_{i2}=${fmt(g1+g2,4)}$。</p>`;rerender($('#respSteps'))}['respX','respMu1','respMu2','respS1','respS2','respW1'].forEach(id=>range(id,draw,2));draw();svg.addEventListener('themechange',draw)})();
+
+/* soft counts and M-step */
+(()=>{const svg=$('#mstepViz');const xs=[-1,0,1,5,6,7];function draw(){svgClear(svg);const tau=Number($('#mTemp').value),shift=Number($('#mShift').value),mu1=0,mu2=shift,s1=1.25,s2=1.25,x0=70,y0=50,w=800,h=165,xmin=-2,xmax=8;const rows=xs.map(x=>{const a=Math.exp(-((x-mu1)**2)/(2*s1*s1*tau)),b=Math.exp(-((x-mu2)**2)/(2*s2*s2*tau));const g=a/(a+b);return{x,g}});const n1=rows.reduce((a,q)=>a+q.g,0),n2=xs.length-n1,m1=rows.reduce((a,q)=>a+q.g*q.x,0)/n1,m2=rows.reduce((a,q)=>a+(1-q.g)*q.x,0)/n2,v1=rows.reduce((a,q)=>a+q.g*(q.x-m1)**2,0)/n1,v2=rows.reduce((a,q)=>a+(1-q.g)*(q.x-m2)**2,0)/n2;drawAxes(svg,x0,y0,w,h,xmin,xmax,1,[-2,0,2,4,6,8]);line(svg,x0,y0+h/2,x0+w,y0+h/2,{stroke:'var(--line)','stroke-dasharray':'4 4'});rows.forEach(q=>{const x=scaleX(q.x,xmin,xmax,x0,w),barY=280,bw=70;svgAdd(svg,'circle',{cx:x,cy:y0+h/2,r:9+8*q.g,fill:'var(--blue)',opacity:.32+.55*q.g,stroke:'var(--blue)','stroke-width':1.5});svgAdd(svg,'circle',{cx:x,cy:y0+h/2+44,r:9+8*(1-q.g),fill:'var(--warm)',opacity:.32+.55*(1-q.g),stroke:'var(--warm)','stroke-width':1.5});svgAdd(svg,'rect',{x:x-bw/2,y:barY,width:bw,height:55,rx:6,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'rect',{x:x-bw/2,y:barY,width:bw*q.g,height:55,rx:6,fill:'var(--blue)',opacity:.7});svgLabel(svg,x,barY-10,'x='+fmt(q.x,0),{size:10});svgLabel(svg,x,barY+34,'γ₁='+fmt(q.g,2),{size:9,bg:'var(--surface)'});});line(svg,scaleX(m1,xmin,xmax,x0,w),y0-2,scaleX(m1,xmin,xmax,x0,w),y0+h+5,{stroke:'var(--blue)','stroke-width':4});line(svg,scaleX(m2,xmin,xmax,x0,w),y0-2,scaleX(m2,xmin,xmax,x0,w),y0+h+5,{stroke:'var(--warm)','stroke-width':4});svgLabel(svg,scaleX(m1,xmin,xmax,x0,w),y0-13,'μ₁new='+fmt(m1,2),{size:10,fill:'var(--blue)'});svgLabel(svg,scaleX(m2,xmin,xmax,x0,w),y0-13,'μ₂new='+fmt(m2,2),{size:10,fill:'var(--warm)'});svgLabel(svg,x0+w/2,360,'上排：组件 1 的 γ；下排：组件 2 的 1−γ',{size:11,fill:'var(--accent)'});$('#mstepSteps').innerHTML=String.raw`<p><strong>第 1 步：软计数</strong> $N_1=\sum_i\gamma_{i1}=${fmt(n1,3)}$，$N_2=${fmt(n2,3)}$，总和=${fmt(n1+n2,3)}$。</p><p><strong>第 2 步：权重</strong> $w_1^{new}=N_1/n=${fmt(n1/xs.length,3)}$，$w_2^{new}=${fmt(n2/xs.length,3)}$。</p><p><strong>第 3 步：加权矩</strong> $\mu_1^{new}=${fmt(m1,3)}$，$\mu_2^{new}=${fmt(m2,3)}$；$\sigma_1^{2,new}=${fmt(v1,3)}$，$\sigma_2^{2,new}=${fmt(v2,3)}$。</p>`;rerender($('#mstepSteps'))}range('mTemp',draw,2);range('mShift',draw,1);draw();svg.addEventListener('themechange',draw)})();
+
+/* one-dimensional EM loop */
+(()=>{const svg=$('#emViz'),data=[-1,0,1,5,6,7];let state={mu1:0,mu2:6,s1:1,s2:1,w1:.5,iter:0,history:[]};function calc(){const r=data.map(x=>{const a=state.w1*gauss(x,state.mu1,state.s1),b=(1-state.w1)*gauss(x,state.mu2,state.s2),g=a/(a+b);return{x,g,a,b}});const n1=r.reduce((a,q)=>a+q.g,0),n2=data.length-n1,m1=r.reduce((a,q)=>a+q.g*q.x,0)/n1,m2=r.reduce((a,q)=>a+(1-q.g)*q.x,0)/n2,v1=r.reduce((a,q)=>a+q.g*(q.x-m1)**2,0)/n1,v2=r.reduce((a,q)=>a+(1-q.g)*(q.x-m2)**2,0)/n2;const ll=r.reduce((a,q)=>a+Math.log(q.a+q.b),0);return{r,n1,n2,m1,m2,v1,v2,s1:Math.sqrt(Math.max(v1,.08)),s2:Math.sqrt(Math.max(v2,.08)),w1:n1/data.length,ll}}
+function step(){const old=calc(),prev={...state};state={...state,mu1:old.m1,mu2:old.m2,s1:old.s1,s2:old.s2,w1:old.w1,iter:state.iter+1};const next=calc();state.history=[...state.history,next.ll];return{old,next,prev}}
+function draw(){svgClear(svg);const cur=calc(),x0=70,y0=38,w=800,h=190,xmin=-2,xmax=8,ymax=.55;drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,[-2,0,2,4,6,8]);data.forEach(q=>{const xx=scaleX(q,xmin,xmax,x0,w),g=cur.r.find(v=>v.x===q).g;svgAdd(svg,'circle',{cx:xx,cy:y0+h/2,r:8,fill:'var(--blue)',opacity:.35+.6*g,stroke:'var(--blue)','stroke-width':1.5});svgAdd(svg,'circle',{cx:xx,cy:y0+h/2+50,r:8,fill:'var(--warm)',opacity:.35+.6*(1-g),stroke:'var(--warm)','stroke-width':1.5});});const m1x=scaleX(state.mu1,xmin,xmax,x0,w),m2x=scaleX(state.mu2,xmin,xmax,x0,w);line(svg,m1x,y0-2,m1x,y0+h+8,{stroke:'var(--blue)','stroke-width':4});line(svg,m2x,y0-2,m2x,y0+h+8,{stroke:'var(--warm)','stroke-width':4});svgLabel(svg,x0+85,25,'● 组件 1（蓝）',{anchor:'start',size:10,fill:'var(--blue)'});svgLabel(svg,x0+250,25,'● 组件 2（橙）',{anchor:'start',size:10,fill:'var(--warm)'});svgLabel(svg,m1x,y0+h+38,'μ₁='+fmt(state.mu1,2),{size:10,fill:'var(--blue)'});svgLabel(svg,m2x,y0+h+38,'μ₂='+fmt(state.mu2,2),{size:10,fill:'var(--warm)'});const hy=315,hh=90,hist=state.history.length?state.history:[cur.ll],lo=Math.min(...hist)-.15,hi=Math.max(...hist)+.15;line(svg,70,hy+hh,870,hy+hh,{class:'svg-axis'});line(svg,70,hy,70,hy+hh,{class:'svg-axis'});hist.forEach((v,i)=>{const xx=hist.length===1?470:70+i/(hist.length-1)*800,yy=scaleY(v,lo,hi,hy,hh);if(i)line(svg,70+(i-1)/(hist.length-1)*800,scaleY(hist[i-1],lo,hi,hy,hh),xx,yy,{stroke:'var(--accent)','stroke-width':2.5});svgAdd(svg,'circle',{cx:xx,cy:yy,r:4,fill:'var(--accent)'});svgLabel(svg,xx,yy-12,fmt(v,3),{size:9,fill:'var(--accent)'});});svgLabel(svg,470,hy-12,'observed log-likelihood（越大越好）',{size:11,fill:'var(--accent)'});$('#emIterPill').textContent='当前迭代：'+fmt(state.iter,0);$('#emSteps').innerHTML=String.raw`<p><strong>当前参数</strong> $\mu_1=${fmt(state.mu1,3)}$，$\mu_2=${fmt(state.mu2,3)}$，$\sigma_1=${fmt(state.s1,3)}$，$\sigma_2=${fmt(state.s2,3)}$，$w_1=${fmt(state.w1,3)}$。</p><p><strong>本轮 E-step</strong> $N_1=${fmt(cur.n1,3)}$，$N_2=${fmt(cur.n2,3)}$；<strong>M-step</strong> $\mu_1^{new}=${fmt(cur.m1,3)}$，$\mu_2^{new}=${fmt(cur.m2,3)}$，$\ell_{obs}=${fmt(cur.ll,3)}$。</p>`;const prev=state.history.length>1?state.history[state.history.length-2]:null;$('#emHealth').textContent=prev===null?'尚未有上一轮：先点击“迭代 1 轮”。':'相邻变化：Δℓ='+fmt(cur.ll-prev,4)+'；允许浮点误差，但不应系统性下降。';rerender($('#emSteps'))}
+$('#emStep').addEventListener('click',()=>{step();draw();toast('已完成一轮 E/M 更新')});$('#emRun').addEventListener('click',()=>{for(let i=0;i<5;i++)step();draw();toast('已连续完成 5 轮')});$('#emRandom').addEventListener('click',()=>{const a=Math.random(),b=Math.random();state={mu1:-1+2*a,mu2:4.5+2.5*b,s1:1.2+0.5*a,s2:1.2+0.5*b,w1:.35+.3*a,iter:0,history:[]};$('#emRandom').textContent='再随机一次 · seed '+fmt((a+b)%1,3);draw();toast('随机初始化已改变')});draw();svg.addEventListener('themechange',draw)})();
+
+/* hard versus soft */
+(()=>{const svg=$('#hardViz');function draw(){svgClear(svg);const xq=Number($('#hardX').value),s=Number($('#hardSig').value),mu1=0,mu2=6,a=gauss(xq,mu1,s),b=gauss(xq,mu2,s),g=a/(a+b),xmin=-3,xmax=9,x0=70,y0=28,w=800,h=210,ymax=gauss(mu1,mu1,s)*1.2;drawAxes(svg,x0,y0,w,h,xmin,xmax,ymax,[-2,0,2,4,6,8]);path(svg,curvePath(x=>gauss(x,mu1,s),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--blue)','stroke-width':2.6});path(svg,curvePath(x=>gauss(x,mu2,s),xmin,xmax,x0,y0,w,h,ymax),{stroke:'var(--warm)','stroke-width':2.6});const xx=scaleX(xq,xmin,xmax,x0,w);line(svg,xx,y0,xx,y0+h,{stroke:'var(--ink)','stroke-dasharray':'5 4'});svgLabel(svg,xx+13,y0+20,'x='+fmt(xq,2),{anchor:xx>x0+w-110?'end':'start',size:10});const by=296,bw=270,bh=50;[{x:100,name:'Soft-EM',v:g,c:'var(--blue)'},{x:535,name:'Hard-EM',v:g>=.5?1:0,c:'var(--warm)'}].forEach(q=>{svgAdd(svg,'rect',{x:q.x,y:by,width:bw,height:bh,rx:7,fill:'var(--surface2)',stroke:'var(--line)'});svgAdd(svg,'rect',{x:q.x,y:by,width:bw*q.v,height:bh,rx:7,fill:q.c,opacity:.76});svgLabel(svg,q.x+12,by+20,q.name,{anchor:'start',size:10,fill:q.c,bg:'var(--surface)'});svgLabel(svg,q.x+bw-12,by+20,fmt(q.v,2),{anchor:'end',size:11,bg:'var(--surface)'})});$('#hardSteps').innerHTML=String.raw`<p>在 $x=${fmt(xq,2)}$：$s_1=\mathcal N(x;0,\sigma^2)=${fmt(a,4)}$，$s_2=\mathcal N(x;6,\sigma^2)=${fmt(b,4)}$。</p><p>Soft-EM 保留 $\gamma_1=${fmt(g,4)}$、$\gamma_2=${fmt(1-g,4)}$；Hard-EM 只保留组件 ${g>=.5?'1':'2'}，即 $(${g>=.5?'1':'0'},${g>=.5?'0':'1'})$。</p>`;rerender($('#hardSteps'))}range('hardX',draw,2);range('hardSig',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* covariance parameter ledger */
+(()=>{const svg=$('#modelViz');function draw(){svgClear(svg);const K=Number($('#modelK').value),d=Number($('#modelD').value),kind=$('#modelKind').value;$('#modelKindOut').textContent=kind;const cov={spherical:1,diagonal:d,full:d*(d+1)/2};const rows=[{name:'权重',n:K-1,c:'var(--gold)'},{name:'均值',n:K*d,c:'var(--blue)'},{name:'协方差',n:K*cov[kind],c:'var(--accent)'}],total=rows.reduce((a,q)=>a+q.n,0),x0=100,y0=55,bw=165,max=Math.max(...rows.map(q=>q.n),1),base=310;line(svg,70,base,870,base,{class:'svg-axis'});rows.forEach((q,i)=>{const x=x0+i*260,h=190*q.n/max;svgAdd(svg,'rect',{x,y:base-h,width:bw,height:h,rx:7,fill:q.c,opacity:.78});svgLabel(svg,x+bw/2,base-h-13,fmt(q.n,0),{size:12,fill:q.c});svgLabel(svg,x+bw/2,base+23,q.name,{size:11});});svgLabel(svg,470,30,'参数量：K='+fmt(K,0)+'，d='+fmt(d,0)+'，结构='+kind,{size:12,fill:'var(--accent)'});$('#modelSteps').innerHTML=String.raw`<p><strong>协方差自由参数 / 组件</strong>：${kind} = ${fmt(cov[kind],0)}。</p><p><strong>总参数量</strong>：$(K-1)+Kd+K\,c=${fmt(K-1,0)}+${fmt(K*d,0)}+${fmt(K*cov[kind],0)}=${fmt(total,0)}$。</p><p class="small">权重只有 $K-1$ 个自由度，因为它们必须加和为 1；均值有 $Kd$ 个；协方差按结构计数。</p>`;rerender($('#modelSteps'))}range('modelK',draw,0);range('modelD',draw,0);$('#modelKind').addEventListener('change',draw);draw();svg.addEventListener('themechange',draw)})();
+
+/* glossary: grouped by first appearance, with clickable inline refs */
+(()=>{const G=[
+{id:'latent',t:'潜变量 / 隐藏变量',en:'latent variable',f:'Z_i\\in\\{1,\\ldots,K\\}',d:'没有被直接观测、但参与生成观测数据的随机变量。',s:'sec-latent',u:'为无标签数据提供组件归属的概率对象。',why:'把未知标签保留下来，才能在 E-step 中用后验而不是武断的 0/1 标签。'},
+{id:'gmm',t:'高斯混合模型',en:'Gaussian mixture model (GMM)',f:'p(x)=\\sum_jw_j\\mathcal N(x;\\mu_j,\\Sigma_j)',d:'用多个高斯条件分布和混合权重表示一个整体密度。',s:'sec-mixture',u:'密度估计、软聚类、异常候选与生成式分类。',why:'它把复杂密度拆成组件，责任度再把整体密度反解为后验归属。'},
+{id:'observed',t:'观测似然',en:'observed likelihood',f:'\\ell_{obs}(\\theta)=\\sum_i\\log p(x_i\\mid\\theta)',d:'只使用实际看见的观测 X，对隐藏标签求和后的目标。',s:'sec-likelihood',u:'EM 最终要监控的真实数据目标。',why:'它与 complete likelihood 不同；混淆二者会误读 EM 的优化对象。'},
+{id:'complete',t:'完整似然',en:'complete likelihood',f:'\\ell_{complete}=\\sum_i\\log p(x_i,z_i\\mid\\theta)',d:'假设隐藏标签也已知时的联合 log-likelihood。',s:'sec-likelihood',u:'在固定责任度后组织加权 MLE。',why:'标签信息让参数更新变得可分解，但训练时标签本身并未真的观测到。'},
+{id:'responsibility',t:'责任度',en:'responsibility',f:'\\gamma_{ij}=P(Z_i=j\\mid x_i,\\theta)',d:'给定当前参数与样本后，第 j 个组件承担该样本的后验概率。',s:'sec-responsibility',u:'把隐藏标签转成每个组件可累加的软证据。',why:'它同时连接 Bayes 后验和 M-step 的加权统计量。'},
+{id:'mstep',t:'M-step',en:'maximization step',f:'N_j=\\sum_i\\gamma_{ij}',d:'固定责任度，最大化加权 complete likelihood 来更新参数的一步。',s:'sec-mstep',u:'更新权重、均值与协方差。',why:'它把后验软分配落成可计算的 Gaussian MLE。'},
+{id:'em',t:'EM 算法',en:'expectation–maximization',f:'E\\text{-step}\\leftrightarrow M\\text{-step}',d:'在隐藏变量模型中交替计算后验期望与参数最大化的算法。',s:'sec-em',u:'拟合含隐藏标签的 GMM 等模型。',why:'E 与 M 互相提供对方需要的量；第 24 讲会解释其目标下界与单调性。'},
+{id:'soft',t:'软 EM',en:'Soft-EM',f:'\\gamma_{ij}\\in[0,1]',d:'保留整行后验责任度，把分数作为加权计数。',s:'sec-hard',u:'处理组件重叠与归属不确定性。',why:'不把 0.55/0.45 的证据过早压成单一标签。'},
+{id:'hard',t:'硬 EM',en:'Hard-EM',f:'\\gamma_{ij}^{hard}=\\mathbf1\\{z_i=j\\}',d:'只保留最大后验组件的 0/1 分配。',s:'sec-hard',u:'得到更快但更粗糙的近似更新。',why:'在特定等权、球形协方差条件下连接 k-means。'},
+{id:'kmeans',t:'k-means 极限',en:'k-means limit',f:'w_j=1/K,\\;\\Sigma_j=\\sigma^2I',d:'Hard-EM 在等权共享球形协方差限制下的最近中心形式。',s:'sec-kmeans',u:'解释 k-means 是哪一类 GMM 假设的特例。',why:'避免把所有 GMM 都误称为 k-means，明确模型假设的代价。'},
+{id:'covariance',t:'协方差矩阵',en:'covariance matrix',f:'\\Sigma_j\\in\\mathbb R^{d\\times d}',d:'描述各维方差与维度间相关方向的对称矩阵。',s:'sec-model',u:'控制高斯云的大小、方向和形状。',why:'full/diagonal/spherical 的表达能力和数值稳定性不同。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
