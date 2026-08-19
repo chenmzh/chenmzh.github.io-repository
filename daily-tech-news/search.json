@@ -1,6 +1,44 @@
 {
-  "updated": "2026-08-18",
+  "updated": "2026-08-19",
   "briefs": [
+    {
+      "date": "2026-08-19",
+      "title": "每日科技新闻简报｜2026-08-19",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "政策",
+        "公司"
+      ],
+      "items": [
+        "OpenAI 因 Astra 可能达到关键网络安全能力门槛而放缓前沿模型开发",
+        "Apple 重写欧盟 App Store 条款，改用统一费率并降低替代分发门槛",
+        "Etched 首个 AI 推理机架交付 Jane Street，融资 7 亿美元、估值升至 210 亿美元",
+        "Atalanta 发布面向关键系统的 Argo 软件理解平台",
+        "Cursor 推出 Origin，开始提供代码托管和拉取请求能力",
+        "Warp 推出 Warp Factories，把多智能体软件工厂封装为基础设施层",
+        "Microsoft 在 Windows 11 预览版本中开始移除 WMIC",
+        "CISA 将 Windows Task Host 权限提升漏洞标注为勒索软件利用目标",
+        "Bluesky 称近期长时间中断由 DDoS 攻击造成"
+      ],
+      "summary": "OpenAI 因 Astra 可能达到关键网络安全能力门槛而暂时放缓前沿模型开发，模型隔离、行为监控和运行时告警正在成为训练流程的一部分；Apple 在欧盟以统一费率和 5% Core Technology Commission 重写 App Store 分发与支付规则，Etched 则以首个 Jane Street 推理机架和 7 亿美元融资展示 AI 硬件向系统交付推进。Cursor、Warp 和 Windows WMIC 退役显示开发者平台与系统安全边界继续变化；Atalanta 的形式化软件理解、CISA 对已知漏洞利用的更新和 Bluesky 的 DDoS 事件共同提醒，AI 和云平台的可用性、验证与抗攻击能力需要同时建设。",
+      "markdown": "daily-tech-news/briefs/2026-08-19.md",
+      "url": "reader.html?date=2026-08-19",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "政策",
+        "公司"
+      ]
+    },
     {
       "date": "2026-08-18",
       "title": "每日科技新闻简报｜2026-08-18",
