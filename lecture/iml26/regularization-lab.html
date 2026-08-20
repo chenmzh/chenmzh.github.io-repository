@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 6 讲 · Model Selection & Regularization 互动实验室 | IML 2026</title>
+<meta name="description" content="第6讲 Model Selection & Regularization 的互动附属页：validation/CV 选择超参数、Ridge 谱收缩、Lasso soft-thresholding、标准化与无泄漏流程。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+.chain.c5{grid-template-columns:repeat(5,1fr)}.btn.xs{padding:3px 9px;font-size:.74rem}.pick-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin:4px 0}.pick-row .pk-name{flex:none;min-width:52px;color:var(--muted);font:700 .74rem Menlo,Monaco,monospace}table.ktab{border-collapse:collapse;width:100%;font-size:.8rem}.ktab td,.ktab th{padding:3px 7px;border-bottom:1px solid var(--line);text-align:right}.ktab th{color:var(--muted);font-weight:700}.ktab td:first-child,.ktab th:first-child{text-align:left}.ktab tr.best td{color:var(--accent);font-weight:700}
+.mis-card{cursor:pointer}.mis-card .mis-a{display:none;margin-top:6px}.mis-card.open .mis-a{display:block}.mis-card .mis-q{color:var(--warm);font-weight:700}.hist-note{font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 06</span><span class="top-title">Model Selection & Regularization · 用数据选择复杂度</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-06">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 6 讲 · 互动附属页</p>
+      <h1>Model Selection &amp; Regularization</h1>
+      <p class="lead">第 5 讲区分了训练误差与泛化风险；本讲回答两个随之而来的问题：只有有限数据时怎样选择多项式次数、特征或正则化强度（由 validation / cross-validation 回答）？又怎样限制模型不要为降低训练误差而使用极端参数（由 regularization 回答）？</p>
+      <div class="course-ribbon"><span class="pill">第 5 讲：Generalization——训练误差 vs 泛化风险</span><span class="pill core">本讲：validation / CV 选方法，Ridge / Lasso 调复杂度</span><span class="pill extra">第 7 讲：Classification——margins 与 loss</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>选方法与调旋钮</h3><p>训练误差不能用来选模型；用验证集 / K 折 CV 比较候选，用正则化强度 λ 连续调节复杂度。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>有限数据是硬约束</h3><p>10 个点总能被 9 次多项式精确穿过——训练误差为零不代表点与点之间预测稳定。选错复杂度，后面再优化也是白费。</p></div>
+        <div class="card"><span class="card-kicker">主线逻辑</span><h3>估计 → 选择 → 约束 → 防泄漏</h3><p>先用验证误差估计每个候选，再用 λ 把复杂度变成旋钮，最后把所有预处理关进每个训练折。</p></div>
+      </div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 警示</b>训练误差对复杂度单调乐观，不能选模型。</div><div class="chain-step"><b>2 · 估计</b>留出 <span class="term-ref" data-term="valset">验证集</span>或用 <span class="term-ref" data-term="cv">K 折 CV</span> 估计泛化。</div><div class="chain-step"><b>3 · 旋钮</b><span class="term-ref" data-term="regularization">正则化</span> 把复杂度变成连续参数 λ。</div><div class="chain-step"><b>4 · 两种收缩</b><span class="term-ref" data-term="ridge">Ridge</span> 按比例收缩，<span class="term-ref" data-term="lasso">Lasso</span> 产生精确零。</div><div class="chain-step"><b>5 · 防泄漏</b>标准化等预处理必须在每个训练折内重新拟合。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 300" role="img" aria-label="从模型选择到正则化的概念地图"></svg></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先分清两个层次：参数 $w$ 由数据拟合，超参数 $\phi$ 决定训练方法本身。</span></div>
+    </section>
+
+    <section id="sec-hyper" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 模型选择不是参数拟合</h2></div>
+      <p class="section-intro">比较三个候选：线性模型、五次多项式、大神经网络。训练误差可能满足 $\widehat R_D(\widehat f_3)&lt;\widehat R_D(\widehat f_2)&lt;\widehat R_D(\widehat f_1)$，但这只说明大模型更擅长拟合这份训练集——模型正是通过降低训练误差被训练出来的，这个量对已拟合模型有系统性乐观倾向。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="hyper">超参数</span> $\phi\in\{\text{degree},\lambda,\text{feature set},\text{architecture}\}$ 决定训练方法本身；<span class="term-ref" data-term="emprisk">经验风险</span> $\widehat R_D$ 是训练集上的平均损失。</p></div>
+        <div class="five"><h3>白话理解</h3><p>$w$ 是“答案”，$\phi$ 是“学习方法”；用同一份作业既学习又评奖，肯定偏乐观。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把“拟合参数”与“选择方法”分成两个层次，各自使用不同的数据规则。</p></div>
+        <div class="five"><h3>怎么算</h3><p>对每个候选 $\phi$ 训练 $\widehat f_\phi=M_\phi(D_{\mathrm{train}})$；嵌套函数类中增加复杂度不会增大最小训练误差。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>$n=10$ 个不同横坐标的点总能被不超过 9 次的多项式精确插值——训练误差为 0，点间预测却可以任意乱跳。注意区分：$\phi$ 是超参数，$\phi_m(x)=[1,x,\ldots,x^m]^\top$ 这种花体用法是特征映射，二者形似而义不同。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="polyResample" type="button">重新采样数据</button><span class="pill" id="polySeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="polyM">多项式次数 $m$</label><input id="polyM" type="range" min="0" max="9" step="1" value="3"><output id="polyMOut"></output></div>
+            <div class="control"><label for="polySig">噪声标准差 $\sigma$</label><input id="polySig" type="range" min="0.05" max="1" step="0.05" value="0.3"><output id="polySigOut"></output></div>
+          </div>
+          <p class="small">真实曲线 $f^*(x)=\sin(1.5x)+0.3x$。「重新采样」真用 <code>Math.random()</code>：$n=10$ 个训练点（$x$ 均匀 + 高斯噪声）与 200 个独立验证点。最小二乘用法方程 + 高斯消元现算（$x$ 先缩放到 $[-1,1]$ 防数值爆炸），$m=0..9$ 的整条误差曲线每次重算。拖到 $m=9$：10 个点被精确穿过，训练 MSE$\to 0$。</p></div>
+        <div class="step-box" id="polySteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="polyViz" class="viz-svg" viewBox="0 0 940 470" role="img" aria-label="多项式插值与过拟合：拟合曲线与误差曲线"></svg></div>
+      <p class="viz-caption">读图：上半部——灰虚线是真实曲线，蓝点是训练样本，绿线是次数 $m$ 的拟合；下半部——训练 MSE（蓝）随 $m$ 单调降到 0，验证 MSE（绿）有谷。验证集才是选 $m$ 的依据。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>一次留出验证有运气成分；把数据轮流当验证集，就得到 K 折交叉验证。</span></div>
+    </section>
+
+    <section id="sec-cv" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. Hold-out 与 K 折交叉验证</h2></div>
+      <p class="section-intro">固定候选 $\phi$ 后，$\widehat f_\phi$ 可暂时看成固定函数；若验证集独立于训练集，$\widehat R_{\mathrm{val}}(\phi)=\frac{1}{|D_{\mathrm{val}}|}\sum_{D_{\mathrm{val}}}\ell(y_i,\widehat f_\phi(x_i))$ 能无偏估计它的风险。但 $\min_\phi\widehat R_{\mathrm{val}}(\phi)$ 会偏向随机波动中碰巧较低的候选——这就是 <span class="term-ref" data-term="valoverfit">validation overfitting</span>；验证集一旦参与选择，就不再是中立的最终评估集。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="valset">验证集</span> 是不参与拟合、只用于比较 $\phi$ 的数据；<span class="term-ref" data-term="cv">交叉验证</span> 把 $D_{\mathrm{sel}}$ 切成 $K$ 折，轮流留一折验证。</p></div>
+        <div class="five"><h3>白话理解</h3><p>与其留一张大考卷，不如把题库切成 $K$ 份，轮流当考卷——每份数据都既当过学生又当过考官。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>在有限数据上为每个候选 $\phi$ 得到更稳的泛化估计；选定 $\widehat\phi$ 后在全部 $D_{\mathrm{sel}}$ 上重训，再用 $D_{\mathrm{test}}$ 评估整个流程。</p></div>
+        <div class="five"><h3>怎么算</h3><p>等折：$\operatorname{CV}_K(\phi)=\frac1K\sum_{k=1}^K\widehat R_k(\phi)$；折大小不等时用样本加权 $\frac{1}{|D_{\mathrm{sel}}|}\sum_k|V_k|\widehat R_k(\phi)$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>折训练集大量重叠 ⇒ 折误差不独立，不能当作 $K$ 个独立实验算普通标准误；$K=5$ 或 $10$ 是常见的计算量/稳定性折中。注意 $K$ 是折数、$k$ 是折下标，与聚类的组件数 $K$ 复用同一字母但含义不同。</p></div>
+      </div>
+      <div class="formula"><p>每一折都把 $V_k$ 当未见数据，预处理与模型都必须在 $D_{-k}=\{z_i\in D_{\mathrm{sel}}:z_i\notin V_k\}$ 内重新拟合：</p><p>$$\widehat R_k(\phi)=\frac{1}{|V_k|}\sum_{(x_i,y_i)\in V_k}\ell\bigl(y_i,\widehat f_\phi^{(-k)}(x_i)\bigr),\qquad \operatorname{CV}_K(\phi)=\frac1K\sum_{k=1}^K\widehat R_k(\phi).$$</p><p class="small">等折大小时两种平均完全一致；不等时只有样本加权式让每个样本贡献相同权重。CV 曲线用于比较 $\phi$——不是说某一折模型就是最终模型。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="cvPerturb" type="button">随机扰动折误差</button><button class="btn" id="cvReset" type="button">恢复讲义数值</button><span class="pill" id="cvSeed">seed —</span></div>
+          <p class="small">讲义计算题 1：$K=3$ 折，$|V|=(2,3,5)$，$\lambda=0.1$ 的折 MSE 为 $(4,2,3)$，$\lambda=1$ 为 $(3,3,2)$。「随机扰动」真用 <code>Math.random()</code> 给 6 个折误差各加 $\pm0.8$ 均匀扰动；两种平均都现算，比较谁胜出。</p></div>
+        <div class="step-box" id="cvSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="cvViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="两个候选的折误差与两种 CV 平均"></svg></div>
+      <div class="source-grid"><figure><img src="assets/regularization-lab/fig0.png" alt="各折验证误差与平均 CV 误差随正则化强度变化" loading="lazy"><figcaption>本地化讲义原图：各折验证误差与平均 CV 误差随 $\log_{10}\lambda$ 变化；平均曲线先降后升，最低点才是候选 $\widehat\lambda$</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>如果连独立测试集都留不出，怎样评估“选择流程”本身？nested CV（拓展）。</span></div>
+    </section>
+
+    <section id="sec-nested" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>3. Nested CV：评估选择流程本身</h2></div>
+      <p class="section-intro">普通 CV 的最小值已经参与了选择，直接当成最终性能会偏乐观。<span class="term-ref" data-term="ncv">Nested cross-validation</span> 用外层折评估整个“内层选择 + 重训”算法：外层留出的数据从未参与内层选择。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p>两层 CV：内层在每个外层训练折 $D_{-j}^{\mathrm{out}}$ 内选 $\widehat\phi_j$，外层在 $O_j$ 上评估。</p></div>
+        <div class="five"><h3>白话理解</h3><p>普通 CV 是“用同一份考卷选课代表再报分”；nested CV 是“每次换一批人重新选课代表，再用他们没见过的题考”。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>数据很少、要比较完整建模管线、候选很多（validation overfitting 风险高）时，给出选择流程的尽量无偏评估。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$E_j^{\mathrm{out}}=\frac{1}{|O_j|}\sum_{O_j}\ell\bigl(y_i,M_{\widehat\phi_j}(D_{-j}^{\mathrm{out}})(x_i)\bigr)$，$\operatorname{NCV}=\frac{1}{K_{\mathrm{out}}}\sum_jE_j^{\mathrm{out}}$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>nested CV 评估的是“选择流程”，不会自动给出唯一超参数——部署前仍可在全部非测试数据上再做一次普通 CV 选 $\widehat\phi$ 并重训。</p></div>
+      </div>
+      <div class="callout"><strong>什么时候不必做。</strong> 若已有足够大、完全独立、最后只使用一次的 $D_{\mathrm{test}}$，内层普通 CV 负责选择、独立测试集负责最终评估，通常已够。</div>
+      <div class="source-grid"><figure><img src="assets/regularization-lab/fig1.png" alt="普通 K 折与 nested CV 的信息边界" loading="lazy"><figcaption>本地化讲义原图：普通 K 折与 nested CV 中“选择”和“评估”的信息边界</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>估计工具就绪。现在把“复杂度”本身变成一个连续旋钮：正则化。</span></div>
+    </section>
+
+    <section id="sec-ridge" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>4. Ridge：目标、推导与谱收缩</h2></div>
+      <p class="section-intro">多项式次数大时，高次项能拟合训练噪声、系数也会非常大。<span class="term-ref" data-term="regularization">正则化</span> 的思路是：在尽量贴合 $y$ 的同时，抑制系数在数据弱约束方向上变得过大。为避开常数因子，统一用 $J_\lambda(w)=\frac12\|y-Xw\|_2^2+\frac\lambda2\|w\|_2^2$（$\lambda\ge0$）。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="ridge">Ridge</span> 用 $\ell_2$ 惩罚；<span class="term-ref" data-term="shrink">收缩因子</span> $\mu_j/(\mu_j+\lambda)$ 描述每个特征值方向被压多少；<span class="term-ref" data-term="condnum">条件数</span> $\kappa_\lambda=\frac{\mu_{\max}+\lambda}{\mu_{\min}+\lambda}$ 衡量数值病态。</p></div>
+        <div class="five"><h3>白话理解</h3><p>给每个方向的系数装上“弹簧”：数据证据强（$\mu_j$ 大）的方向几乎不动，证据弱的方向被狠狠拉回零。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>即使 $X^\top X$ 奇异也能得到唯一稳定解；同时缓和弱方向上的方差。</p></div>
+        <div class="five"><h3>怎么算</h3><p>闭式解 $\widehat w_\lambda=(X^\top X+\lambda I)^{-1}X^\top y$；沿 $X^\top X$ 的特征方向逐方向收缩。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>正定性证明解释了 Ridge 为何总有唯一解；谱解释把“稳定化”量化成逐方向因子。注意 $\lambda$ 是正则强度、$\mu_j=s_j^2$ 是 $X^\top X$ 的特征值，二者同框时别混淆。</p></div>
+      </div>
+      <div class="formula"><p><strong>逐步推导（每步注明用了什么）。</strong> 第一步，求梯度——链式法则，系数 $1/2$ 正好抵消平方求导的 $2$：$\nabla J_\lambda(w)=X^\top(Xw-y)+\lambda w$。第二步，凸二次目标的驻点——令梯度为零：$X^\top Xw-X^\top y+\lambda w=0$。第三步，整理得正规方程：</p><p>$$(X^\top X+\lambda I)w=X^\top y.$$</p><p>第四步，证明可逆——对任意非零 $v$：$v^\top(X^\top X+\lambda I)v=\|Xv\|_2^2+\lambda\|v\|_2^2&gt;0$（拆开括号，两项分别是范数平方），所以 $\lambda&gt;0$ 时矩阵正定、解唯一：</p><p>$$\widehat w_\lambda=(X^\top X+\lambda I)^{-1}X^\top y.$$</p><p>第五步，SVD 分解——紧致 SVD $X=U\operatorname{diag}(s_j)V^\top$ 给出 $X^\top X=V\operatorname{diag}(s_j^2)V^\top$，且 $X^\top y\in\operatorname{span}(V)$（正交补项乘上去等于零），代入后矩阵乘法在每个奇异方向上退化为标量：</p><p>$$\widehat w_\lambda=\sum_{j=1}^r\frac{s_j}{s_j^2+\lambda}(u_j^\top y)v_j,\qquad \widehat w_{\mathrm{OLS},j}=\frac{u_j^\top y}{s_j}\ \Rightarrow\ \text{收缩因子}=\frac{s_j^2}{s_j^2+\lambda}=\frac{\mu_j}{\mu_j+\lambda}.$$</p><p class="small">$\mu_j$ 小 ⇒ 数据对该方向约束弱 ⇒ 因子接近零；$\mu_j$ 大 ⇒ 收缩轻微。预测向量同理：$X\widehat w_\lambda=\sum_j\frac{s_j^2}{s_j^2+\lambda}(u_j^\top y)u_j$。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="rgLam">正则强度 $\lambda$</label><input id="rgLam" type="range" min="0" max="4" step="0.05" value="1"><output id="rgLamOut"></output></div>
+        </div><p class="small">讲义计算题 2：$X^\top X=\operatorname{diag}(4,1)$、$X^\top y=(8,2)$。拖动 $\lambda$，右侧逐步现算 Ridge 解、两方向收缩因子与条件数；左图画两条收缩因子曲线 $\mu/(\mu+\lambda)$。默认 $\lambda=1$ 复现 $\widehat w=(1.6,1)$、收缩 $4/5$ 与 $1/2$、$\kappa:4\to2.5$。提示：自测题 4 的 $\mu=0.2,\lambda=0.8$ 给出 $0.2/1.0=0.2$——弱方向被强烈收缩。</p></div>
+        <div class="step-box" id="ridgeSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="ridgeViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="Ridge 收缩因子随 lambda 变化"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>Ridge 把系数连续压小却很少精确归零；换成 $\ell_1$ 惩罚会怎样？推导会给你精确答案。</span></div>
+    </section>
+
+    <section id="sec-lasso" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>5. Lasso 与 soft-thresholding</h2></div>
+      <p class="section-intro"><span class="term-ref" data-term="lasso">Lasso</span> 把惩罚换成 $\ell_1$：$\widehat w_\lambda\in\arg\min_w\{\frac12\|y-Xw\|_2^2+\lambda\|w\|_1\}$，$\|w\|_1=\sum_j|w_j|$。绝对值在零点不可微，但目标仍凸，可用次梯度求解；关键是它能把部分坐标压到<strong>严格等于零</strong>。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="softth">soft-thresholding</span> $S_\lambda(z)=\operatorname{sign}(z)\max\{|z|-\lambda,0\}$ 是一维 Lasso 的精确解；<span class="term-ref" data-term="subgrad">次梯度</span> $\partial|w||_{w=0}=[-1,1]$ 处理零点不可微；<span class="term-ref" data-term="sparsity">稀疏性</span> 指部分系数严格为零。</p></div>
+        <div class="five"><h3>白话理解</h3><p>平方损失把 $w$ 拉向 $z=x^\top y$，$\lambda|w|$ 把它拉回零；拉力不超过 $\lambda$ 时，零赢。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>同时收缩并筛除特征，得到较少非零系数的模型。</p></div>
+        <div class="five"><h3>怎么算</h3><p>标准化特征（$x^\top x=1$）下三种情况：$z&gt;\lambda\Rightarrow w=z-\lambda$；$z&lt;-\lambda\Rightarrow w=z+\lambda$；$|z|\le\lambda\Rightarrow w=0$（次梯度条件 $0\in-z+\lambda[-1,1]$）。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>零点不是“近似舍入”，而是次梯度最优性条件的结果；正交设计 $X^\top X=I$ 下逐坐标 $\widehat w_j=S_\lambda(z_j)$，而 Ridge 对照为 $z_j/(1+\lambda)$——连续收缩、无零区间。</p></div>
+      </div>
+      <div class="formula"><p>推导第一步，展开平方（$x^\top x=1$，$z=x^\top y$）：</p><p>$$\frac12\|y-xw\|_2^2=\frac12y^\top y-wz+\frac12w^2\ \Rightarrow\ j(w)=\frac12(w-z)^2+\lambda|w|+\text{const}.$$</p><p>第二步分三种情况：$w&gt;0$ 时 $|w|=w$，一阶条件 $(w-z)+\lambda=0$ 得 $w=z-\lambda$（需 $z&gt;\lambda$）；$w&lt;0$ 时得 $w=z+\lambda$（需 $z&lt;-\lambda$）；$w=0$ 时用次梯度，最优当且仅当 $0\in-z+\lambda[-1,1]\iff|z|\le\lambda$。合并：</p><p>$$\widehat w=S_\lambda(z)=\operatorname{sign}(z)\max\{|z|-\lambda,0\}.$$</p><p class="small">若 $x^\top x=a&gt;0$ 而非 $1$，同样推导得 $\widehat w=\frac1aS_\lambda(x^\top y)$。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="laZ">对齐度 $z=x^\top y$</label><input id="laZ" type="range" min="-3" max="3" step="0.05" value="3"><output id="laZOut"></output></div>
+          <div class="control"><label for="laLam">正则强度 $\lambda$</label><input id="laLam" type="range" min="0" max="2" step="0.05" value="1"><output id="laLamOut"></output></div>
+        </div><p class="small">讲义计算题 3。左图：$j(w)=\frac12(w-z)^2+\lambda|w|$ 的曲线与最小点；右图：$S_\lambda(z)$ 软阈值曲线（绿）与 Ridge 的 $z/(1+\lambda)$ 直线（灰虚线）对照。默认 $z=3,\lambda=1$ 复现 $S_1(3)=2$；试 $z=0.8$ 得 $0$、$z=-2.5$ 得 $-1.5$。讲义对照组：$z=(3,0.8,-0.2)\Rightarrow$ Lasso $(2,0,0)$、Ridge $(1.5,0.4,-0.1)$。</p></div>
+        <div class="step-box" id="lassoSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="lassoViz" class="viz-svg" viewBox="0 0 940 360" role="img" aria-label="Lasso 一维目标与软阈值函数"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>为什么 $\ell_1$ 能产生精确零而 $\ell_2$ 不能？几何直觉一目了然（拓展）。</span></div>
+    </section>
+
+    <section id="sec-geometry" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>6. 稀疏性的几何与方法选择</h2></div>
+      <p class="section-intro">惩罚形式对应一个约束形式：Ridge 是 $\min_w\frac12\|y-Xw\|_2^2\ \text{s.t.}\ \|w\|_2\le R$，Lasso 是 $\|w\|_1\le R$。二维中 $\ell_2$ 球 $w_1^2+w_2^2\le R^2$ 是圆，$\ell_1$ 球 $|w_1|+|w_2|\le R$ 是菱形。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p>约束最优点是损失等高线第一次接触可行域的位置；<span class="term-ref" data-term="enet">Elastic Net</span> 混合两者：$\frac12\|y-Xw\|_2^2+\lambda_1\|w\|_1+\frac{\lambda_2}{2}\|w\|_2^2$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>菱形尖角正好戳在坐标轴上——等高线更容易先碰到尖角，于是某个 $w_j=0$。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>几何图像与 soft-thresholding 的解析结果相互印证：尖角 ↔ 零点处的次梯度区间。</p></div>
+        <div class="five"><h3>怎么算</h3><p>圆形约束平滑缩小所有坐标；带尖角的菱形约束让接触点带上精确零。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>提醒：最早归零 ≠ 最不重要——特征相关时 Lasso 可能在一组可替代变量中随机保留一个；Ridge 更倾向共同缩小。</p></div>
+      </div>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">Ridge</span><h3>连续缩小，很少精确置零</h3><p>适合：许多特征都有小作用、特征高度相关、重视预测稳定性。</p></div>
+        <div class="card"><span class="card-kicker">Lasso</span><h3>缩小并筛除部分系数</h3><p>适合：相信真实信号稀疏、希望得到较少非零特征。</p></div>
+        <div class="card"><span class="card-kicker">Elastic Net</span><h3>$\ell_1$ 与 $\ell_2$ 同时使用</h3><p>适合：既要稀疏性，又希望相关特征组更稳定。</p></div>
+        <div class="card"><span class="card-kicker">共同提醒</span><h3>这些只是建模先验</h3><p>不是硬规则；最终仍应在无泄漏的 validation/CV 流程中比较。</p></div>
+      </div>
+      <div class="source-grid"><figure><img src="assets/regularization-lab/fig2.png" alt="Ridge 圆形约束与 Lasso 菱形约束接触损失等高线" loading="lazy"><figcaption>本地化讲义原图：Ridge 圆形约束与 Lasso 菱形约束接触损失等高线；蓝叉是 OLS 解，橙点是首次接触位置</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>无论选哪种惩罚，若特征尺度不公平，惩罚本身就失了准——先讲标准化，以及一个会悄悄毁掉验证的错误。</span></div>
+    </section>
+
+    <section id="sec-standard" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>7. 标准化、截距与泄漏</h2></div>
+      <p class="section-intro">两个特征表达同一物理量、一个用米一个用毫米时，毫米特征的系数会小约 1000 倍——直接惩罚 $|w_j|$ 或 $w_j^2$，单位选择就改变了惩罚强度。所以标准化是正则化的一部分，而不是可选的装饰。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="std">标准化</span>：$x'_{ij}=\frac{x_{ij}-\mu_j}{s_j}$，$\mu_j,s_j$ 只用训练集统计量；<span class="term-ref" data-term="leak">数据泄漏</span>：验证/测试信息通过预处理渗入训练。</p></div>
+        <div class="five"><h3>白话理解</h3><p>先拿全体数据算均值再切折，相当于考官提前看过考卷的统计特征。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>让不同单位的特征承受相同的有效惩罚；保持验证误差的“未见数据”含义。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$\mu_j=\frac1{n_{\mathrm{train}}}\sum_{\mathrm{train}}x_{ij}$，$s_j=\sqrt{\frac1{n_{\mathrm{train}}}\sum_{\mathrm{train}}(x_{ij}-\mu_j)^2}$；验证集套用同一组 $\mu_j,s_j$，不重新拟合。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>截距不惩罚：$P=\operatorname{diag}(0,1,\ldots,1)$，惩罚 $b$ 会让预测整体水平无意义地被拉向零；缺失值填补、PCA、特征选择等也都必须在每个训练折内单独拟合。</p></div>
+      </div>
+      <div class="formula"><p>合并 $\theta=(b,w^\top)^\top$ 后 Ridge 目标可写为 $\frac12\|y-\widetilde X\theta\|_2^2+\frac\lambda2\theta^\top P\theta$，第一个零明确表示截距不惩罚；中心化后可先估 $w$ 再恢复 $\widehat b=\overline y-\overline x^{\top}\widehat w$。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="stdX">验证样本 $x_{\mathrm{val}}$</label><input id="stdX" type="range" min="0" max="20" step="0.5" value="10"><output id="stdXOut"></output></div>
+        </div><p class="small">讲义计算题 4：$x_{\mathrm{train}}=(1,2,3)$，总体式分母 $n$。默认 $x_{\mathrm{val}}=10$ 复现 $\mu=2$、$s=\sqrt{2/3}$、$x'_{\mathrm{val}}=8\sqrt{3/2}\approx9.798$。右图并排对照“正确（只用训练统计量）”与“泄漏（把 $x_{\mathrm{val}}$ 拉进 $\mu,s$ 重算）”。</p></div>
+        <div class="step-box" id="stdSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="stdViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="标准化：正确做法与泄漏做法对照"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>$\lambda$ 到底在 bias 和 variance 之间做了什么交换？（拓展节给出机制解释。）</span></div>
+    </section>
+
+    <section id="sec-biasvar" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. λ 如何改变 bias 与 variance</h2></div>
+      <p class="section-intro"><span class="term-ref" data-term="biasvar">偏差-方差权衡</span>：$\lambda=0$ 退化为 OLS（偏差小、弱方向方差大）；$\lambda\to\infty$ 时斜率 $w\to0$（截距不惩罚则模型趋于常数预测：方差小、偏差大）；中间某个 $\lambda$ 使 $\mathrm{Bias}^2+\mathrm{Variance}$ 最小——总风险最低点不是训练误差最低点。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p>bias 是系统性偏离，variance 是随训练集抽样的波动；测试风险 $\approx$ bias²+variance+噪声。</p></div>
+        <div class="five"><h3>白话理解</h3><p>$\lambda$ 调节的不是“要不要拟合训练集”，而是允许模型在新数据上承担多少不稳定性。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>解释为什么收缩因子优先抑制小特征值方向——那些方向正是估计最不稳定的方向。</p></div>
+        <div class="five"><h3>怎么算</h3><p>Ridge 还可缓和插值阈值附近的高方差峰值；系数路径上 Ridge 连续收向零、Lasso 逐条贴住横轴。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>这只是机制解释，不能替代验证：实际 $\lambda$ 仍应由无泄漏的 validation/CV 选择，冻结后再用独立 test 评估。</p></div>
+      </div>
+      <div class="source-grid"><figure><img src="assets/regularization-lab/fig3.png" alt="正则化强度改变 bias、variance 与测试风险" loading="lazy"><figcaption>本地化讲义原图：$\lambda$ 改变 bias、variance 与测试风险</figcaption></figure><figure><img src="assets/regularization-lab/fig4.png" alt="Ridge 与 Lasso 系数路径" loading="lazy"><figcaption>本地化讲义原图：Ridge 与 Lasso 的系数路径；Lasso 路径贴住横轴即精确置零</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲：把“选方法”和“调旋钮”合成一条无泄漏的完整流程。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：training 拟合参数，validation 选方法，test 评流程</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 有限数据怎样选复杂度？——训练集拟合参数 $w$，验证集 / K 折 CV 选择超参数 $\phi$（含正则强度 $\lambda$），test set 只评估冻结后的完整流程。怎样防止极端参数？——正则化把复杂度变成连续旋钮：Ridge 沿特征值方向按 $\mu_j/(\mu_j+\lambda)$ 收缩，Lasso 用 soft-thresholding 产生精确零；所有预处理关进每个训练折，堵住数据泄漏。</div>
+      <div class="closing-formulas">
+        <div class="formula"><p><strong>K 折 CV（等折）</strong></p><p>$$\operatorname{CV}_K(\phi)=\frac1K\sum_{k=1}^K\widehat R_k(\phi)$$</p></div>
+        <div class="formula"><p><strong>样本加权 CV</strong></p><p>$$\operatorname{CV}^{w}_K(\phi)=\frac{1}{|D_{\mathrm{sel}}|}\sum_k|V_k|\widehat R_k(\phi)$$</p></div>
+        <div class="formula"><p><strong>Ridge 闭式解</strong></p><p>$$\widehat w_\lambda=(X^\top X+\lambda I)^{-1}X^\top y$$</p></div>
+        <div class="formula"><p><strong>谱收缩因子</strong></p><p>$$\frac{\mu_j}{\mu_j+\lambda},\quad \mu_j=s_j^2$$</p></div>
+        <div class="formula"><p><strong>Soft-thresholding</strong></p><p>$$S_\lambda(z)=\operatorname{sign}(z)\max\{|z|-\lambda,0\}$$</p></div>
+        <div class="formula"><p><strong>标准化（训练统计量）</strong></p><p>$$x'_{ij}=\frac{x_{ij}-\mu_j}{s_j},\quad P=\operatorname{diag}(0,1,\ldots,1)$$</p></div>
+      </div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能说清 $\phi$（超参数）与 $w$（参数）使用数据的层次差异，以及训练误差为何不能选模型。</label><label><input type="checkbox">我能写出两种 CV 平均式，并说明折大小不等时为什么必须样本加权。</label><label><input type="checkbox">我能从 $J_\lambda$ 的梯度逐步推出 Ridge 正规方程，并证明 $X^\top X+\lambda I$ 正定。</label><label><input type="checkbox">我能用收缩因子 $\mu_j/(\mu_j+\lambda)$ 解释弱方向为何被优先收缩，以及条件数如何改善。</label><label><input type="checkbox">我能对一维 Lasso 分三种情况推出 $S_\lambda(z)$，包括 $w=0$ 的次梯度条件。</label><label><input type="checkbox">我能指出“先标准化再切折”是数据泄漏，并说出哪些预处理必须折内拟合。</label></div>
+      <div class="callout"><strong>与下一讲连接。</strong> 第 7 讲转向 Classification：损失从平方误差变成 margin-based 损失（0-1、hinge、logistic），但本讲的框架原样保留——超参数仍由无泄漏的 validation/CV 选择，复杂度仍由正则化约束。</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-06">返回原讲义第 6 讲</a>，或前往 <a href="index.html#lecture-07">第 7 讲</a> 的分类与 margin。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const pct=x=>fmt(100*x,1)+'%';
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function gauss(x,mu,s){s=Math.max(s,1e-12);const z=(x-mu)/s;return Math.exp(-.5*z*z)/(s*Math.sqrt(2*Math.PI))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function curvePath(fn,xmin,xmax,x0,y0,w,h,ymin,ymax){let d='';for(let k=0;k<=180;k++){const x=xmin+(xmax-xmin)*k/180;const y=clamp(fn(x),ymin,ymax);d+=(k?' L':'M')+scaleX(x,xmin,xmax,x0,w).toFixed(2)+','+scaleY(y,ymin,ymax,y0,h).toFixed(2)}return d}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+function frame(svg,o){const{x0,y0,w,h,xmin,xmax,ymin,ymax}=o;line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});(o.yticks||[]).forEach(v=>{const y=scaleY(v,ymin,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,fmt(v,o.yp===undefined?2:o.yp),{anchor:'end',size:10})});(o.xticks||[]).forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});const anc=o.xticks.length>1?(i===0?'start':(i===o.xticks.length-1?'end':'middle')):'middle';svgLabel(svg,x,y0+h+17,fmt(v,o.xp===undefined?1:o.xp),{anchor:anc,size:10})})}
+function spreadLabels(items,minGap,lo,hi){const a=items.slice().sort((p,q)=>p.y-q.y);for(let i=1;i<a.length;i++)a[i].y=Math.max(a[i].y,a[i-1].y+minGap);if(a.length&&a[a.length-1].y>hi){a[a.length-1].y=hi;for(let i=a.length-2;i>=0;i--)a[i].y=Math.min(a[i].y,a[i+1].y-minGap)}if(a.length&&a[0].y<lo){const s=lo-a[0].y;a.forEach(q=>q.y+=s)}return a}
+function boxMuller(){let u1=Math.random();if(u1<1e-12)u1=1e-12;return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*Math.random())}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('reg-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('reg-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('reg-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('reg-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留 训练误差→CV→Ridge→Lasso→标准化 主线；拓展小节已隐藏。':'完整模式：额外显示 nested CV、几何直觉与 bias–variance 分析。';document.dispatchEvent(new CustomEvent('lab-mode-change'))}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map: every edge begins and ends at a node boundary */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');
+  const nodes=[
+    {id:'n-hyper',target:'sec-hyper',x:20,y:30,w:150,h:56,title:'超参数 φ',sub:'选方法本身',color:'var(--blue)'},
+    {id:'n-cv',target:'sec-cv',x:230,y:30,w:150,h:56,title:'validation / CV',sub:'估计泛化',color:'var(--accent)'},
+    {id:'n-ridge',target:'sec-ridge',x:440,y:30,w:150,h:56,title:'Ridge',sub:'ℓ₂ 收缩',color:'var(--warm)'},
+    {id:'n-lasso',target:'sec-lasso',x:650,y:30,w:150,h:56,title:'Lasso',sub:'ℓ₁ 稀疏',color:'var(--danger)'},
+    {id:'n-std',target:'sec-standard',x:230,y:180,w:150,h:56,title:'标准化与泄漏',sub:'折内拟合',color:'var(--accent)'},
+    {id:'n-nested',target:'sec-nested',extra:true,x:20,y:180,w:150,h:56,title:'nested CV',sub:'评估流程',color:'var(--violet)'},
+    {id:'n-geo',target:'sec-geometry',extra:true,x:440,y:180,w:150,h:56,title:'几何直觉',sub:'圆 vs 菱形',color:'var(--violet)'},
+    {id:'n-bv',target:'sec-biasvar',extra:true,x:650,y:180,w:150,h:56,title:'bias–variance',sub:'λ 的权衡',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M170 58 H230','var(--accent)',mk,'估计',200,46);
+  edge('M380 58 H440','var(--accent)',mk,'选 λ',410,46);
+  edge('M590 58 H650','var(--accent)',mk,'对照',620,46);
+  edge('M305 86 V180','var(--accent)',mk,'无泄漏',305,135);
+  edge('M95 86 V180','var(--violet)',mv,'偏乐观',95,135);
+  edge('M515 86 V180','var(--violet)',mv,'对偶',515,135);
+  edge('M725 86 V180','var(--violet)',mv,'旋钮',725,135);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+
+/* ============ 实验 A：多项式插值与过拟合 ============ */
+(()=>{const svg=$('#polyViz');const fstar=x=>Math.sin(1.5*x)+0.3*x;let TR=null,VA=null;
+function solve(A,b){const n=b.length,M=A.map((r,i)=>[...r,b[i]]);
+  for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;
+    if(Math.abs(M[p][c])<1e-13)M[p][c]=1e-13;
+    const t=M[c];M[c]=M[p];M[p]=t;
+    for(let r=0;r<n;r++){if(r===c)continue;const f=M[r][c]/M[c][c];for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k]}}
+  return M.map((r,i)=>r[n]/M[i][i])}
+function polyFit(xs,ys,m){const n=xs.length,d=m+1,G=Array.from({length:d},()=>new Array(d).fill(0)),b=new Array(d).fill(0);
+  for(let i=0;i<n;i++){const pw=[1];for(let j=1;j<d;j++)pw.push(pw[j-1]*(xs[i]/3));
+    for(let a=0;a<d;a++){b[a]+=pw[a]*ys[i];for(let c=0;c<d;c++)G[a][c]+=pw[a]*pw[c]}}
+  return solve(G,b)}
+function polyVal(w,x){let s=0,p=1;const xs=x/3;for(let j=0;j<w.length;j++){s+=w[j]*p;p*=xs}return s}
+function mse(w,pts){return pts.reduce((a,q)=>a+(q.y-polyVal(w,q.x))**2,0)/pts.length}
+function resample(){const sig=Number($('#polySig').value);TR=[];VA=[];
+  for(let i=0;i<10;i++){const x=-3+6*Math.random();TR.push({x,y:fstar(x)+boxMuller()*sig})}
+  TR.sort((a,b)=>a.x-b.x);
+  for(let i=0;i<200;i++){const x=-3+6*Math.random();VA.push({x,y:fstar(x)+boxMuller()*sig})}
+  $('#polySeed').textContent='seed '+fmt(Math.random(),4)}
+function sup(n){return String(Math.abs(n)).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[+c]??c).join('')}
+function draw(){svgClear(svg);if(!TR)resample();
+  const m=Number($('#polyM').value),w=polyFit(TR.map(q=>q.x),TR.map(q=>q.y),m);
+  const trE=[],vaE=[];for(let k=0;k<=9;k++){const wk=polyFit(TR.map(q=>q.x),TR.map(q=>q.y),k);trE.push(mse(wk,TR));vaE.push(mse(wk,VA))}
+  const trM=mse(w,TR),vaM=mse(w,VA);
+  /* top: fit */
+  const x0=70,y0=25,ww=800,hh=210,xmin=-3,xmax=3;
+  let ymin=Math.min(...TR.map(q=>q.y),-2),ymax=Math.max(...TR.map(q=>q.y),2);const pad=(ymax-ymin)*.25;ymin-=pad;ymax+=pad;
+  frame(svg,{x0,y0,w:ww,h:hh,xmin,xmax,ymin,ymax,xticks:[-3,-1.5,0,1.5,3],xp:1,yticks:[ymin+pad*.5,(ymin+ymax)/2,ymax-pad*.5],yp:1});
+  path(svg,curvePath(fstar,xmin,xmax,x0,y0,ww,hh,ymin,ymax),{stroke:'var(--muted)','stroke-width':2,'stroke-dasharray':'6 4'});
+  path(svg,curvePath(x=>polyVal(w,x),xmin,xmax,x0,y0,ww,hh,ymin,ymax),{stroke:'var(--accent)','stroke-width':2.8});
+  TR.forEach(q=>{svgAdd(svg,'circle',{cx:scaleX(q.x,xmin,xmax,x0,ww),cy:scaleY(q.y,ymin,ymax,y0,hh),r:5,fill:'var(--blue)',opacity:.85})});
+  svgLabel(svg,x0+14,y0+16,'--- 真实 f*',{anchor:'start',size:10,fill:'var(--muted)'});
+  svgLabel(svg,x0+150,y0+16,'— 拟合 m='+m,{anchor:'start',size:10,fill:'var(--accent)'});
+  /* bottom: MSE curves, log10 axis */
+  const y0b=300,hb=120;
+  const lg=v=>Math.log10(Math.max(v,1e-9));
+  const lvals=[...trE,...vaE].map(lg),lmin=Math.floor(Math.min(...lvals)),lmax=Math.ceil(Math.max(...lvals));
+  line(svg,x0,y0b+hb,x0+ww,y0b+hb,{class:'svg-axis'});line(svg,x0,y0b,x0,y0b+hb,{class:'svg-axis'});
+  const estep=Math.max(1,Math.ceil((lmax-lmin)/5));
+  for(let e=lmin;e<=lmax;e+=estep){const y=scaleY(e,lmin,lmax+1e-12,y0b,hb);line(svg,x0,y,x0+ww,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,e===0?'1':(e>0?'10'+sup(e):'10⁻'+sup(e)),{anchor:'end',size:9})}
+  for(let k=0;k<=9;k++){const x=scaleX(k,0,9,x0,ww);svgLabel(svg,x,y0b+hb+16,String(k),{anchor:k===0?'start':(k===9?'end':'middle'),size:9})}
+  [['var(--blue)',trE],['var(--accent)',vaE]].forEach(([c,arr])=>{let d='';arr.forEach((v,k)=>{d+=(k?' L':'M')+scaleX(k,0,9,x0,ww).toFixed(1)+','+scaleY(lg(v),lmin,lmax+1e-12,y0b,hb).toFixed(1)});path(svg,d,{stroke:c,'stroke-width':2.4});arr.forEach((v,k)=>{svgAdd(svg,'circle',{cx:scaleX(k,0,9,x0,ww),cy:scaleY(lg(v),lmin,lmax+1e-12,y0b,hb),r:3,fill:c})})});
+  const ends=spreadLabels([{y:scaleY(lg(trE[9]),lmin,lmax+1e-12,y0b,hb),t:'训练 MSE',c:'var(--blue)'},{y:scaleY(lg(vaE[9]),lmin,lmax+1e-12,y0b,hb),t:'验证 MSE',c:'var(--accent)'}],16,y0b+10,y0b+hb-4);
+  ends.forEach(q=>{svgLabel(svg,x0+ww+10,q.y+3.5,q.t,{anchor:'start',size:10,fill:q.c})});
+  const mx=scaleX(m,0,9,x0,ww);line(svg,mx,y0b,mx,y0b+hb,{stroke:'var(--danger)','stroke-dasharray':'4 4'});
+  const bestM=vaE.indexOf(Math.min(...vaE));
+  svgAdd(svg,'circle',{cx:scaleX(bestM,0,9,x0,ww),cy:scaleY(lg(vaE[bestM]),lmin,lmax+1e-12,y0b,hb),r:7,fill:'none',stroke:'var(--danger)','stroke-width':2.2});
+  svgLabel(svg,clamp(scaleX(bestM,0,9,x0,ww),x0+80,x0+ww-80),y0b-10,'验证最优 m='+bestM,{size:10,fill:'var(--danger)'});
+  $('#polySteps').innerHTML=String.raw`<p><strong>当前 $m=${m}$</strong>（$x$ 已缩放到 $[-1,1]$ 后用法方程 + 高斯消元求解）：训练 MSE $=${fmt(trM,4)}$，验证 MSE $=${fmt(vaM,4)}$。</p><p><strong>整条曲线</strong> $m=0..9$ 全部重算：训练 MSE 单调下降${m===9?'，当前 $m=9$ 精确插值 10 个点，训练 MSE 已降到 $'+fmt(trE[9],2)+'$（数值零）':''}；验证 MSE 在 $m=${bestM}$ 处取谷。</p><p class="small">把 $m$ 拖到 $9$：训练误差归零但点间曲线剧烈振荡——训练误差对复杂度有系统性乐观倾向，验证曲线（独立 200 点）才暴露这一点。每次重采样结论的方向一致、细节不同。</p>`;rerender($('#polySteps'))}
+$('#polyResample').addEventListener('click',()=>{resample();draw();toast('已用 Math.random() 重新采样')});
+$('#polySig').addEventListener('input',()=>{resample();draw()});
+range('polyM',draw,0);resample();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 B：CV 手算器（计算题 1） ============ */
+(()=>{const svg=$('#cvViz');const NV=[2,3,5];let E=null;const E0=[[4,2,3],[3,3,2]];
+function reset(){E=E0.map(r=>r.slice());$('#cvSeed').textContent='讲义原值'}
+function perturb(){E=E0.map(r=>r.map(v=>Math.max(.05,v+(Math.random()*2-1)*.8)));$('#cvSeed').textContent='seed '+fmt(Math.random(),4)}
+function plain(r){return r.reduce((a,b)=>a+b,0)/3}
+function weighted(r){return r.reduce((a,v,k)=>a+v*NV[k],0)/10}
+function draw(){svgClear(svg);if(!E)reset();
+  const ymax=Math.max(...E.flat())*1.35;
+  const cand=[{name:'λ=0.1',r:E[0],x0:90},{name:'λ=1',r:E[1],x0:520}];
+  cand.forEach(c=>{
+    const y0=50,h=190,w=330;
+    line(svg,c.x0,y0+h,c.x0+w,y0+h,{class:'svg-axis'});
+    c.r.forEach((v,k)=>{const bx=c.x0+25+k*100,bh=h*v/ymax;
+      svgAdd(svg,'rect',{x:bx,y:y0+h-bh,width:56,height:bh,rx:5,fill:'var(--blue)',opacity:.75});
+      svgLabel(svg,bx+28,y0+h-bh-12,fmt(v,2),{size:10,fill:'var(--blue)'});
+      svgLabel(svg,bx+28,y0+h+16,'V'+(k+1)+' (n='+NV[k]+')',{size:9,fill:'var(--muted)'})});
+    const yp=y0+h-h*plain(c.r)/ymax,yw=y0+h-h*weighted(c.r)/ymax;
+    line(svg,c.x0,yp,c.x0+w,yp,{stroke:'var(--muted)','stroke-dasharray':'5 4','stroke-width':1.6});
+    line(svg,c.x0,yw,c.x0+w,yw,{stroke:'var(--danger)','stroke-dasharray':'7 4','stroke-width':2.2});
+    const ls=spreadLabels([{y:yp,t:'普通平均 '+fmt(plain(c.r),3),c:'var(--muted)'},{y:yw,t:'样本加权 '+fmt(weighted(c.r),3),c:'var(--danger)'}],16,y0+8,y0+h-4);
+    ls.forEach(q=>{svgLabel(svg,c.x0+w-4,q.y+3.5,q.t,{anchor:'end',size:9,fill:q.c})});
+    svgLabel(svg,c.x0+165,30,'候选 '+c.name,{size:12,fill:'var(--ink)'})});
+  const w0=weighted(E[0]),w1=weighted(E[1]),p0=plain(E[0]),p1=plain(E[1]);
+  const winW=w1<w0?'λ=1':'λ=0.1',winP=p1<p0?'λ=1':'λ=0.1';
+  $('#cvSteps').innerHTML=String.raw`<p><strong>样本加权（正确做法，分母 $=|D_{\mathrm{sel}}|=10$）</strong></p><p>$\lambda=0.1$：$\frac{2\cdot${fmt(E[0][0],2)}+3\cdot${fmt(E[0][1],2)}+5\cdot${fmt(E[0][2],2)}}{10}=\frac{${fmt(2*E[0][0]+3*E[0][1]+5*E[0][2],2)}}{10}=${fmt(w0,3)}$；$\lambda=1$：$\frac{${fmt(2*E[1][0]+3*E[1][1]+5*E[1][2],2)}}{10}=${fmt(w1,3)}$。</p><p><strong>普通平均（分母 $=K=3$）</strong> $\lambda=0.1$ 得 $${fmt(p0,3)}$，$\lambda=1$ 得 $${fmt(p1,3)}$。</p><p><strong>选择</strong> 加权选 <strong>${winW}</strong>，普通平均选 <strong>${winP}</strong>${winW===winP?'，二者一致':'——二者不一致，折大小不等时必须用加权式'}。</p><p class="small">讲义基准：加权 $\operatorname{CV}(0.1)=29/10=2.9$、$\operatorname{CV}(1)=25/10=2.5$，故 $\widehat\lambda=1$；随后应在全部 $D_{\mathrm{sel}}$ 上以 $\lambda=1$ 重训，而不是从三折模型中挑一个。</p>`;rerender($('#cvSteps'))}
+$('#cvPerturb').addEventListener('click',()=>{perturb();draw();toast('折误差已随机扰动 ±0.8')});
+$('#cvReset').addEventListener('click',()=>{reset();draw();toast('已恢复讲义数值')});
+reset();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 C：Ridge 谱收缩工作台（计算题 2） ============ */
+(()=>{const svg=$('#ridgeViz');const MU=[4,1],XTY=[8,2];
+function draw(){svgClear(svg);const lam=Number($('#rgLam').value);
+  const w=XTY.map((b,j)=>b/(MU[j]+lam)),sh=MU.map(mu=>mu/(mu+lam)),kappa=(4+lam)/(1+lam);
+  const x0=70,y0=30,ww=800,hh=240;
+  frame(svg,{x0,y0,w:ww,h:hh,xmin:0,xmax:4,ymin:0,ymax:1,xticks:[0,1,2,3,4],xp:1,yticks:[0,.5,1],yp:1});
+  MU.forEach((mu,j)=>{path(svg,curvePath(l=>mu/(mu+l),0,4,x0,y0,ww,hh,0,1),{stroke:j?'var(--warm)':'var(--blue)','stroke-width':2.6})});
+  const lx=scaleX(lam,0,4,x0,ww);
+  line(svg,lx,y0,lx,y0+hh,{stroke:'var(--danger)','stroke-dasharray':'5 4'});
+  MU.forEach((mu,j)=>{svgAdd(svg,'circle',{cx:lx,cy:scaleY(sh[j],0,1,y0,hh),r:5.5,fill:j?'var(--warm)':'var(--blue)'})});
+  const ends=spreadLabels([{y:scaleY(4/8,0,1,y0,hh),t:'μ=4 方向',c:'var(--blue)'},{y:scaleY(1/5,0,1,y0,hh),t:'μ=1 方向',c:'var(--warm)'}],16,y0+10,y0+hh-4);
+  ends.forEach(q=>{svgLabel(svg,x0+ww+10,q.y+3.5,q.t,{anchor:'start',size:10,fill:q.c})});
+  svgLabel(svg,clamp(lx,x0+40,x0+ww-40),y0+hh+34,'λ='+fmt(lam,2),{size:10,fill:'var(--danger)'});
+  svgLabel(svg,x0+14,y0+16,'收缩因子 μ/(μ+λ)，纵轴 0..1',{anchor:'start',size:10,fill:'var(--muted)'});
+  $('#ridgeSteps').innerHTML=String.raw`<p><strong>第 1 步：OLS（$\lambda=0$ 对照）</strong> $\widehat w_{\mathrm{OLS}}=(X^\top X)^{-1}X^\top y=(8/4,\,2/1)=(2,2)$。</p><p><strong>第 2 步：加 $\lambda I$</strong> $X^\top X+\lambda I=\operatorname{diag}(${fmt(4+lam,2)},${fmt(1+lam,2)})$。</p><p><strong>第 3 步：Ridge 解</strong> $\widehat w_\lambda=(8/${fmt(4+lam,2)},\,2/${fmt(1+lam,2)})=(${fmt(w[0],4)},${fmt(w[1],4)})$。</p><p><strong>第 4 步：收缩因子核对</strong> $\mu_1/(\mu_1+\lambda)=4/${fmt(4+lam,2)}=${fmt(sh[0],4)}$，$\mu_2/(\mu_2+\lambda)=${fmt(sh[1],4)}$；$2\times${fmt(sh[0],4)}=${fmt(2*sh[0],4)}$、$2\times${fmt(sh[1],4)}=${fmt(2*sh[1],4)}$ 与第 3 步一致。$\mu_2=1$ 的方向收缩更强。</p><p><strong>第 5 步：条件数</strong> $\kappa_\lambda=\frac{4+\lambda}{1+\lambda}=${fmt(kappa,3)}$（$\lambda=0$ 时为 $4$）。</p><p class="small">讲义基准：$\lambda=1$ 时 $\widehat w=(1.6,1)$、收缩 $4/5$ 与 $1/2$、$\kappa:4\to2.5$。自测题 4：$\mu=0.2,\lambda=0.8\Rightarrow 0.2/1.0=0.2$。</p>`;rerender($('#ridgeSteps'))}
+range('rgLam',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 D：soft-thresholding 推导机（计算题 3） ============ */
+(()=>{const svg=$('#lassoViz');const S=(z,l)=>Math.sign(z)*Math.max(Math.abs(z)-l,0);
+function draw(){svgClear(svg);const z=Number($('#laZ').value),lam=Number($('#laLam').value),w=S(z,lam),wr=z/(1+lam);
+  /* left: j(w) */
+  const j=v=>0.5*(v-z)**2+lam*Math.abs(v);
+  const x0=70,y0=35,ww=380,hh=240,wmin=-3.5,wmax=3.5;
+  let jmax=0;for(let k=0;k<=100;k++)jmax=Math.max(jmax,j(wmin+(wmax-wmin)*k/100));jmax*=1.08;
+  frame(svg,{x0,y0,w:ww,h:hh,xmin:wmin,xmax:wmax,ymin:0,ymax:jmax,xticks:[-3,0,3],xp:1,yticks:[0,jmax/2,jmax/1.08*.95],yp:1});
+  path(svg,curvePath(j,wmin,wmax,x0,y0,ww,hh,0,jmax),{stroke:'var(--blue)','stroke-width':2.6});
+  const zx=scaleX(z,wmin,wmax,x0,ww),wx=scaleX(w,wmin,wmax,x0,ww);
+  line(svg,zx,y0,zx,y0+hh,{stroke:'var(--muted)','stroke-dasharray':'4 4'});
+  svgLabel(svg,clamp(zx+12,x0+30,x0+ww-30),y0+16,'z='+fmt(z,2),{size:10,fill:'var(--muted)'});
+  svgAdd(svg,'circle',{cx:wx,cy:scaleY(j(w),0,jmax,y0,hh),r:6.5,fill:'var(--accent)',stroke:'var(--surface)','stroke-width':2});
+  svgLabel(svg,clamp(wx,x0+50,x0+ww-50),clamp(scaleY(j(w),0,jmax,y0,hh)-16,y0+12,y0+hh-6),'ŵ='+fmt(w,2),{size:11,fill:'var(--accent)'});
+  svgLabel(svg,x0+ww/2,y0+hh+36,'j(w) = ½(w−z)² + λ|w|',{size:10,fill:'var(--muted)'});
+  /* right: S_lambda(z) vs ridge */
+  const rx0=560,rw=330;
+  frame(svg,{x0:rx0,y0,w:rw,h:hh,xmin:-3,xmax:3,ymin:-3.2,ymax:3.2,xticks:[-3,0,3],xp:1,yticks:[-3,0,3],yp:0});
+  path(svg,curvePath(v=>S(v,lam),-3,3,rx0,y0,rw,hh,-3.2,3.2),{stroke:'var(--accent)','stroke-width':2.8});
+  path(svg,curvePath(v=>v/(1+lam),-3,3,rx0,y0,rw,hh,-3.2,3.2),{stroke:'var(--muted)','stroke-width':2,'stroke-dasharray':'6 4'});
+  const qx=scaleX(z,-3,3,rx0,rw);
+  line(svg,qx,y0,qx,y0+hh,{stroke:'var(--danger)','stroke-dasharray':'4 4'});
+  svgLabel(svg,rx0+8,y0+hh-38,'— S_λ(z) Lasso',{anchor:'start',size:10,fill:'var(--accent)'});
+  svgLabel(svg,rx0+8,y0+hh-20,'--- z/(1+λ) Ridge',{anchor:'start',size:10,fill:'var(--muted)'});
+  svgLabel(svg,clamp(qx,rx0+34,rx0+rw-34),y0+hh+36,'z='+fmt(z,2),{size:10,fill:'var(--danger)'});
+  const az=Math.abs(z),branch=az<=lam?3:(z>0?1:2);
+  const branchTxt=branch===3?'$|z|\\le\\lambda$，落在<strong>情况 3</strong>：次梯度条件 $0\\in-z+\\lambda[-1,1]$ 成立，$\\widehat w=0$':(branch===1?'$z>\\lambda$，落在<strong>情况 1</strong>（$w>0$）：$\\widehat w=z-\\lambda$':'$z<-\\lambda$，落在<strong>情况 2</strong>（$w<0$）：$\\widehat w=z+\\lambda$');
+  $('#lassoSteps').innerHTML=String.raw`<p><strong>分支判断</strong> $|z|=${fmt(az,2)}$ vs $\lambda=${fmt(lam,2)}$：${branchTxt}。</p><p><strong>现算</strong> $S_${fmt(lam,2)}(${fmt(z,2)})=\operatorname{sign}(z)\max\{${fmt(az,2)}-${fmt(lam,2)},0\}=${fmt(w,3)}$。</p><p><strong>Ridge 对照</strong> $\widehat w^{\mathrm{ridge}}=z/(1+\lambda)=${fmt(wr,3)}$——连续收缩、永不精确归零；Lasso 的零区间宽度是 $2\lambda=${fmt(2*lam,2)}$。</p><p class="small">讲义基准：$S_1(3)=2$、$S_1(0.8)=0$、$S_1(-2.5)=-1.5$；向量 $z=(3,0.8,-0.2)$ 在 $\lambda=1$ 下 Lasso 得 $(2,0,0)$、Ridge 得 $(1.5,0.4,-0.1)$。</p>`;rerender($('#lassoSteps'))}
+range('laZ',draw,2);range('laLam',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 E：标准化与泄漏（计算题 4） ============ */
+(()=>{const svg=$('#stdViz');const XTR=[1,2,3];
+function draw(){svgClear(svg);const xv=Number($('#stdX').value);
+  const mu=2,s=Math.sqrt(2/3),xp=(x)=> (x-mu)/s;
+  const muL=(6+xv)/4,sL=Math.sqrt(((1-muL)**2+(2-muL)**2+(3-muL)**2+(xv-muL)**2)/4),xq=x=>(x-muL)/sL;
+  const rows=[{name:'正确：仅用训练统计量',y:105,tf:xp,pts:[...XTR.map(v=>({x:xp(v),c:'var(--blue)'})),{x:xp(xv),c:'var(--danger)',big:true}]},
+              {name:'泄漏：把 x_val 拉进 μ,s 重算',y:215,tf:xq,pts:[...XTR.map(v=>({x:xq(v),c:'var(--blue)'})),{x:xq(xv),c:'var(--danger)',big:true}]}];
+  svgLabel(svg,90,34,'● 训练点（蓝）',{anchor:'start',size:10,fill:'var(--blue)'});
+  svgLabel(svg,240,34,'● 验证点（红）',{anchor:'start',size:10,fill:'var(--danger)'});
+  rows.forEach(rw=>{
+    const xs=rw.pts.map(p=>p.x),lo=Math.min(...xs)-0.6,hi=Math.max(...xs)+0.6,x0=140,ww=720;
+    line(svg,x0,rw.y,x0+ww,rw.y,{class:'svg-axis'});
+    [lo,(lo+hi)/2,hi].forEach((v,i)=>{const x=scaleX(v,lo,hi,x0,ww);svgLabel(svg,x,rw.y+18,fmt(v,1),{anchor:i===0?'start':(i===2?'end':'middle'),size:9})});
+    const labels=spreadLabels(rw.pts.map(p=>({y:scaleX(p.x,lo,hi,x0,ww),ref:p})),60,x0+25,x0+ww-25);
+    labels.forEach(q=>{const p=q.ref,px=scaleX(p.x,lo,hi,x0,ww);
+      svgAdd(svg,'circle',{cx:px,cy:rw.y,r:p.big?7:5,fill:p.c});
+      svgLabel(svg,q.y,rw.y-16,fmt(p.x,2),{size:9,fill:p.c})});
+    svgLabel(svg,130,rw.y+4,rw.name,{anchor:'end',size:10,fill:'var(--muted)'})});
+  $('#stdSteps').innerHTML=String.raw`<p><strong>第 1 步：训练均值</strong> $\mu=\frac{1+2+3}{3}=2$（只用训练集）。</p><p><strong>第 2 步：训练标准差（分母 $n$）</strong> $s=\sqrt{\frac{(1-2)^2+(2-2)^2+(3-2)^2}{3}}=\sqrt{2/3}=${fmt(s,4)}$。</p><p><strong>第 3 步：变换验证样本</strong> $x'_{\mathrm{val}}=\frac{${fmt(xv,1)}-2}{${fmt(s,4)}}=${fmt(xp(xv),4)}$。</p><p><strong>泄漏对照</strong> 把 $x_{\mathrm{val}}$ 拉进统计量：$\mu'=(6+${fmt(xv,1)})/4=${fmt(muL,4)}$，$s'=${fmt(sL,4)}$，于是 $x''_{\mathrm{val}}=${fmt(xq(xv),4)}$——与正确值相差 $${fmt(Math.abs(xp(xv)-xq(xv)),4)}$。</p><p class="small">讲义基准：$x_{\mathrm{val}}=10$ 时 $x'_{\mathrm{val}}=8\sqrt{3/2}\approx9.798$。验证样本一旦参与 $\mu,s$ 的估计，训练数据的表示就被它改变，验证误差不再模拟真正未知数据——预处理必须在每个训练折内单独拟合。</p>`;rerender($('#stdSteps'))}
+range('stdX',draw,1);draw();svg.addEventListener('themechange',draw)})();
+
+/* glossary: grouped by first appearance */
+(()=>{const G=[
+{id:'hyper',t:'超参数',en:'hyperparameter',f:'\\phi\\in\\{\\text{degree},\\lambda,\\text{feature set},\\text{architecture}\\}',d:'决定训练方法本身的旋钮；与由数据拟合的参数 w 分属两个层次。',s:'sec-hyper',u:'组织“拟合参数 vs 选择方法”的数据使用规则。',why:'用同一份数据既学习又评奖会系统性乐观。'},
+{id:'emprisk',t:'经验风险',en:'empirical risk',f:'\\widehat R_D(f)=\\frac{1}{|D|}\\sum_{D}\\ell(y_i,f(x_i))',d:'模型在训练集上的平均损失。',s:'sec-hyper',u:'训练时被最小化的目标。',why:'嵌套函数类中它随复杂度单调不升，不能用来选模型。'},
+{id:'valset',t:'验证集',en:'validation set',f:'\\widehat R_{val}(\\phi)=\\frac{1}{|D_{val}|}\\sum_{D_{val}}\\ell(y_i,\\widehat f_\\phi(x_i))',d:'不参与拟合、只用于比较候选超参数的数据。',s:'sec-cv',u:'固定 φ 后无偏估计该模型的风险。',why:'一旦参与选择就不再是中立评估集。'},
+{id:'cv',t:'交叉验证',en:'cross-validation',f:'\\operatorname{CV}_K(\\phi)=\\frac1K\\sum_k\\widehat R_k(\\phi)',d:'把选择数据切成 K 折、轮流留一折验证的估计流程。',s:'sec-cv',u:'有限数据上更稳地比较超参数。',why:'折大小不等时必须用样本加权；折误差不独立。'},
+{id:'valoverfit',t:'验证过拟合',en:'validation overfitting',f:'\\min_\\phi\\widehat R_{val}(\\phi)\\ \\text{偏乐观}',d:'取最小值偏向随机波动中碰巧较低的候选。',s:'sec-cv',u:'解释为什么最终评估要留给 test set。',why:'候选越多越值得警惕；nested CV 是它的对策之一。'},
+{id:'ncv',t:'嵌套交叉验证',en:'nested cross-validation',f:'\\operatorname{NCV}=\\frac{1}{K_{out}}\\sum_jE_j^{out}',d:'内层选超参数、外层评估整个选择流程的两层 CV。',s:'sec-nested',u:'数据少或比较完整管线时估计流程性能。',why:'它评估流程而非给出唯一超参数。'},
+{id:'regularization',t:'正则化',en:'regularization',f:'J_\\lambda(w)=\\frac12\\|y-Xw\\|^2+\\text{penalty}(w)',d:'在拟合目标上加惩罚项以约束复杂度。',s:'sec-ridge',u:'把离散复杂度选择变成连续旋钮 λ。',why:'目标不是参数越小越好，而是泛化误差的平衡点。'},
+{id:'ridge',t:'岭回归',en:'Ridge regression',f:'\\widehat w_\\lambda=(X^\\top X+\\lambda I)^{-1}X^\\top y',d:'ℓ₂ 惩罚的最小二乘，闭式解总存在唯一。',s:'sec-ridge',u:'稳定病态方向、连续收缩系数。',why:'λI 让 X^TX+λI 正定可逆，即使 X^TX 奇异。'},
+{id:'shrink',t:'收缩因子',en:'shrinkage factor',f:'\\frac{\\mu_j}{\\mu_j+\\lambda},\\ \\mu_j=s_j^2',d:'Ridge 相对 OLS 在第 j 个特征值方向上的收缩比例。',s:'sec-ridge',u:'量化“弱方向收缩更强”。',why:'小特征值方向最易放大噪声，正是需要稳定的对象。'},
+{id:'condnum',t:'条件数',en:'condition number',f:'\\kappa_\\lambda=\\frac{\\mu_{max}+\\lambda}{\\mu_{min}+\\lambda}',d:'最大与最小特征值之比，衡量数值病态程度。',s:'sec-ridge',u:'解释 Ridge 为何也让梯度法更稳定。',why:'μ_min=0 时未正则化系统不可逆；λ>0 保证有限。'},
+{id:'lasso',t:'Lasso',en:'Lasso',f:'\\arg\\min_w\\frac12\\|y-Xw\\|^2+\\lambda\\|w\\|_1',d:'ℓ₁ 惩罚的最小二乘，产生稀疏解。',s:'sec-lasso',u:'同时收缩并筛除特征。',why:'精确零来自次梯度条件，不是近似舍入。'},
+{id:'softth',t:'软阈值',en:'soft-thresholding',f:'S_\\lambda(z)=\\operatorname{sign}(z)\\max\\{|z|-\\lambda,0\\}',d:'一维标准化 Lasso 的精确解：小坐标归零，其余向零缩 λ。',s:'sec-lasso',u:'正交设计下逐坐标求解。',why:'它解释 Lasso 稀疏性的来源。'},
+{id:'subgrad',t:'次梯度',en:'subgradient',f:'\\partial|w|\\big|_{w=0}=[-1,1]',d:'不可微凸函数在某点的全体“支撑斜率”集合。',s:'sec-lasso',u:'处理 |w| 在零点不可微的最优性条件。',why:'0∈−z+λ[−1,1] ⟺ |z|≤λ 正是零解的判据。'},
+{id:'sparsity',t:'稀疏性',en:'sparsity',f:'\\widehat w_j=0\\ \\text{对部分坐标严格成立}',d:'部分系数严格等于零的性质。',s:'sec-lasso',u:'特征筛选与可解释性。',why:'最早归零 ≠ 最不重要；相关特征间选择不稳定。'},
+{id:'enet',t:'弹性网络',en:'Elastic Net',f:'\\frac12\\|y-Xw\\|^2+\\lambda_1\\|w\\|_1+\\frac{\\lambda_2}{2}\\|w\\|^2',d:'同时使用 ℓ₁ 与 ℓ₂ 惩罚。',s:'sec-geometry',u:'既要稀疏性又要相关特征组的稳定。',why:'只是建模先验，仍需无泄漏 CV 比较。'},
+{id:'std',t:'标准化',en:'standardization',f:'x_{ij}\\leftarrow(x_{ij}-\\mu_j)/s_j',d:'用训练集均值与标准差把特征变成零均值单位尺度。',s:'sec-standard',u:'让不同单位的特征承受公平的惩罚。',why:'不标准化时单位选择会改变有效惩罚强度。'},
+{id:'leak',t:'数据泄漏',en:'data leakage',f:'\\text{预处理必须折内拟合}',d:'验证/测试信息通过预处理等环节渗入训练。',s:'sec-standard',u:'识别“先标准化再切折”这类隐性错误。',why:'它让验证误差偏乐观，悄悄毁掉模型选择。'},
+{id:'biasvar',t:'偏差-方差权衡',en:'bias-variance tradeoff',f:'\\text{risk}\\approx\\mathrm{Bias}^2+\\mathrm{Variance}+\\text{噪声}',d:'λ 增大：偏差升、方差降，中间存在总风险最小的折中。',s:'sec-biasvar',u:'理解 λ 旋钮的机制含义。',why:'机制解释不能替代验证，λ 仍由 CV 选择。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
