@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-19",
+  "updated": "2026-08-20",
   "briefs": [
+    {
+      "date": "2026-08-20",
+      "title": "每日合成与发育生物学简报 - 2026-08-20",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Synthetic tissue ecology: Ecological control of developmental self-organization across scales",
+        "Mechanical feedback drives fractal airway organization",
+        "Discovering what is possible: How synthetic biology illuminates development",
+        "A data-driven modeling framework for mapping genotypes to synthetic microbial community functions",
+        "Scalable enumeration and sampling of minimal metabolic pathways for organisms and communities",
+        "From chemical oscillators to biological synchrony: a programmable reaction-diffusion model for studying signal coordination in cardiomyocyte networks",
+        "Multiscale Synchronization in Beta Cell Networks: Connecting Cellular Oscillations to Hormone Secretion",
+        "Metabolic Engineering of *Yarrowia lipolytica* for High-Level de novo Biosynthesis of Xylitol from Glucose",
+        "Small RNA-guided transgene repression systems enable toxic gene cloning in bacteria",
+        "Rapid and efficient generation of human 8-cell-like cells for embryo modelling"
+      ],
+      "summary": "今日最集中的信号来自 Cell Systems：发育自组织被分别从“合成组织生态”、机械反馈驱动气道分形、以及合成微生物群落的基因型—功能映射三个层面重新表述，显示工程化发育系统正在从单一信号输入转向跨尺度约束与可预测设计。 合成生物学的工程端继续围绕“可编程底盘”推进：Yarrowia lipolytica 被改造成从葡萄糖合成木糖醇的细胞工厂，bioRxiv 的小 RNA/CRISPRi 平台则解决了有毒转基因在细菌中的克隆与扩增问题。 控制论与生物学方向的强条目都落在明确的生物系统上：心肌细胞网络的反应—扩散同步、胰岛 β 细胞的多时间尺度耦合，以及 Pseudomonas putida 的氧化还原稳态，分别对应传播、同步和稳态维持三类核心控制问题。 发育合成生物学方面，快速诱导人 8-cell-like cells 的预印本把早期胚胎短暂状态变成了可重复的化学诱导平台；这比单纯观察天然胚胎更接近“可调输入—细胞状态—形态输出”的工程接口。 本窗口没有筛出足够强的 medRxiv 核心主题稿；arXiv q-bio 精确窗口仅有少量条目，人工排除分子基础模型和胶原成像等边界结果后，未纳入优先阅读。",
+      "markdown": "briefs/2026-08-20.md",
+      "url": "reader.html?date=2026-08-20",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Synthetic tissue ecology: Ecological control of developmental self-organization across scales",
+        "Mechanical feedback drives fractal airway organization",
+        "Discovering what is possible: How synthetic biology illuminates development",
+        "A data-driven modeling framework for mapping genotypes to synthetic microbial community functions",
+        "Scalable enumeration and sampling of minimal metabolic pathways for organisms and communities",
+        "From chemical oscillators to biological synchrony: a programmable reaction-diffusion model for studying signal coordination in cardiomyocyte networks",
+        "Multiscale Synchronization in Beta Cell Networks: Connecting Cellular Oscillations to Hormone Secretion",
+        "Metabolic Engineering of *Yarrowia lipolytica* for High-Level de novo Biosynthesis of Xylitol from Glucose",
+        "Small RNA-guided transgene repression systems enable toxic gene cloning in bacteria",
+        "Rapid and efficient generation of human 8-cell-like cells for embryo modelling"
+      ]
+    },
     {
       "date": "2026-08-19",
       "title": "每日合成与发育生物学简报 - 2026-08-19",
