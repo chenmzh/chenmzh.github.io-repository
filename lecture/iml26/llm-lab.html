@@ -47,7 +47,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="card"><span class="card-kicker">为什么重要</span><h3>LLM 只是把“预测下一个 token”做到极致</h3><p>理解这一步就理解了训练目标、因果掩码与生成接口各自的职责——它们经常被混为一谈。</p></div>
         <div class="card"><span class="card-kicker">主线逻辑</span><h3>拆概率 → 算损失 → 造表示 → 做选择</h3><p>chain rule 拆任务，cross-entropy 给目标，embedding + attention 造表示，logits 经 decoding 变成词。</p></div>
       </div>
-      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 序列化</b>文本变成 <span class="term-ref" data-term="token">token</span> 随机变量序列。</div><div class="chain-step"><b>2 · 拆概率</b><span class="term-ref" data-term="chainrule">chain rule</span> 精确拆成逐位条件概率。</div><div class="chain-step"><b>3 · 训练</b>右移标签 + <span class="term-ref" data-term="ce">cross-entropy</span> 自监督。</div><div class="chain-step"><b>4 · 表示</b><span class="term-ref" data-term="embedding">embedding</span> + 因果 <span class="term-ref" data-term="attention-q">attention</span> 读前文。</div><div class="chain-step"><b>5 · 生成</b>logits → softmax → <span class="term-ref" data-term="decoding">decoding</span> 选词。</div></div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 序列化</b>文本变成 <span class="term-ref" data-term="token">token</span> 随机变量序列。</div><div class="chain-step"><b>2 · 拆概率</b><span class="term-ref" data-term="chainrule">chain rule</span> 精确拆成逐位条件概率。</div><div class="chain-step"><b>3 · 训练</b>右移标签 + <span class="term-ref" data-term="ce">cross-entropy</span> 自监督。</div><div class="chain-step"><b>4 · 表示</b><span class="term-ref" data-term="embedding">embedding</span> + 因果 <span class="term-ref" data-term="attention-q">attention</span> 读前文。</div><div class="chain-step"><b>5 · 生成</b><span class="term-ref" data-term="logits">logits</span> → <span class="term-ref" data-term="softmax">softmax</span> → <span class="term-ref" data-term="decoding">decoding</span> 选词。</div></div>
       <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 320" role="img" aria-label="从 token 到 decoding 的概念地图"></svg></div></div>
       <div class="source-grid"><figure><img src="assets/llm-lab/fig0.png" alt="自回归分解、位置与因果注意力示意" loading="lazy"><figcaption>本地化讲义原图：自回归分解、位置与因果注意力示意</figcaption></figure></div>
       <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先把“一句话”严格写成一个随机变量序列，并看看直接记住整个联合分布为什么不可行。</span></div>
@@ -57,7 +57,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
       <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 先把语言写成随机变量</h2></div>
       <p class="section-intro">实际送入模型的单位不是完整单词，而是 token：一个单词、词的一部分、标点或特殊符号都可能是一个 token。把一句话写成 $X_{1:T}=(X_1,\ldots,X_T)$，每个 $X_t\in\{1,2,\ldots,V\}$ 都是 categorical 随机变量；小写 $x_t$ 是它的一次实际观测。</p>
       <div class="five-grid">
-        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="token">token</span> 是送入模型的离散单位；<span class="term-ref" data-term="vocab">词表</span> $\mathcal V$ 是所有可输出 token 的有限集合，大小记为 $V$；每个位置是一个 <span class="term-ref" data-term="categorical">categorical variable</span>。</p></div>
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="token">token</span> 是送入模型的离散单位；<span class="term-ref" data-term="vocab">词表</span> $\mathcal V$ 是所有可输出 token 的有限集合，大小记为 $V$；每个位置是一个 <span class="term-ref" data-term="categorical">categorical variable</span>：取有限个类别值、每个类别各带一个概率的离散随机变量，像掷一个 $V$ 面的不均匀骰子。</p></div>
         <div class="five"><h3>白话理解</h3><p>词表像一本字典，token id 只是字典里的页码——编号 17 不比编号 3 “更大”或“更接近”。</p></div>
         <div class="five"><h3>干嘛用</h3><p>把“文本”翻译成概率论能处理的对象：有限类别上的离散随机变量序列。</p></div>
         <div class="five"><h3>怎么算</h3><p>小词表 $\mathcal V=\{\text{猫},\text{狗},\text{跑}\}$ 中，序列“猫 跑”记为 $(1,3)$；但模型关心的是事件 $P(X_1=\text{猫},X_2=\text{跑})$，不是数字 1 和 3 的算术关系。</p></div>
@@ -86,7 +86,8 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>截断近似写作 $P(x_t\mid x_{1:t-1})\approx P(x_t\mid x_{\max(1,t-k):t-1})$；$k\ge T-1$ 时小例子里能看到全部前文。</p></div>
         <div class="five"><h3>为什么重要</h3><p>chain rule 本身精确；近似的只是有限 context length $k$——容量、显存与计算量的工程折衷。注意这里的 $k$ 是上下文长度，与后面 attention 的 key 向量 $k_j$、第 22–24 讲的组件数 $K$ 都是不同对象。</p></div>
       </div>
-      <div class="formula"><p>训练对齐（shifted setup）：令 $x_0=\langle\mathrm{BOS}\rangle$，输入是左移前缀 $x_{0:T-1}$，标签是右移一位的 $x_{1:T}$：</p><p>$$P(x_{1:T})=P(x_1)\,P(x_2\mid x_1)\,P(x_3\mid x_{1:2})\cdots P(x_T\mid x_{1:T-1})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1}).$$</p><p class="small">编号预告：张量行号 $r=1..T$，零起点位置 $t=r-1\in\{0,\ldots,T-1\}$——输入位置 $t$ 的输出专门预测 $x_{t+1}$；后文 attention 数值例用行号 $i=1,2,3$。两者只是相差 1 的编号习惯，不代表多出一个 token。</p></div>
+      <div class="formula"><p>chain rule 的推导（逐步代回，每步只用条件概率定义 $P(A,B)=P(A)\,P(B\mid A)$）：</p><p>$$P(x_1,x_2)=P(x_1)\,P(x_2\mid x_1),$$</p><p>$$P(x_{1:3})=P(x_{1:2})\,P(x_3\mid x_{1:2})=P(x_1)\,P(x_2\mid x_1)\,P(x_3\mid x_{1:2}),$$</p><p>$$P(x_{1:4})=P(x_{1:3})\,P(x_4\mid x_{1:3})=\cdots$$</p><p class="small">每次把上一步的结果代回去，归纳到 $T$ 就得到下面的完整分解。全程没有丢掉任何依赖关系——所以它是恒等式，而不是“假设各 token 独立”。</p></div>
+      <div class="formula"><p>训练对齐（shifted setup）：令 $x_0=\langle\mathrm{BOS}\rangle$（beginning of sequence，一个不来自真实文本的起始符，为第一个位置提供空上下文占位；$x_{1:0}$ 也记空上下文），输入是左移前缀 $x_{0:T-1}$，标签是右移一位的 $x_{1:T}$：</p><p>$$P(x_{1:T})=P(x_1)\,P(x_2\mid x_1)\,P(x_3\mid x_{1:2})\cdots P(x_T\mid x_{1:T-1})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1}).$$</p><p class="small">编号预告：张量行号 $r=1..T$，零起点位置 $t=r-1\in\{0,\ldots,T-1\}$——输入位置 $t$ 的输出专门预测 $x_{t+1}$；后文 attention 数值例用行号 $i=1,2,3$。两者只是相差 1 的编号习惯，不代表多出一个 token。</p><p>每个位置的输出不是一个词，而是词表上的一整个分布：网络先给出未归一化分数 <span class="term-ref" data-term="logits">logits</span> $\boldsymbol z_t\in\mathbb R^V$（$V$ 个任意实数，可正可负），再由 <span class="term-ref" data-term="softmax">softmax</span> 归一化成概率：</p><p>$$p_{t,v}=\operatorname{softmax}(\boldsymbol z_t)_v=\frac{\exp(z_{t,v})}{\sum_{u=1}^{V}\exp(z_{t,u})},\qquad \sum_{v=1}^{V}p_{t,v}=1.$$</p><p class="small">$\exp$ 把任意实数变成正数并拉开差距，除以总和后各项非负且和为 $1$——这就是“分布”的含义。注意 $\boldsymbol p_t$ 只是模型对“下一步是什么”的看法，还没有决定要选哪一个 token；选择是第 7 节 decoding 的事。</p></div>
       <div class="control-panel">
         <div><div class="label-row"><button class="btn primary" id="chainGen" type="button">随机生成一句（T=3）</button><span class="pill" id="chainSeed">seed —</span></div>
           <div class="controls">
@@ -110,7 +111,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>$\mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})$；one-hot 写法的内层求和退化到同一项，二者是同一目标。</p></div>
         <div class="five"><h3>为什么重要</h3><p>分母是有效目标 token 数（padding 用掩码 $m_{bt}\in\{0,1\}$ 排除），不是词表大小；teacher forcing 不等于偷看未来——causal mask 仍然生效。</p></div>
       </div>
-      <div class="formula"><p>推导链（每一步都是恒等变形）：</p><p>$$p_\theta(x_{1:T}\mid x_0)=\prod_{t=0}^{T-1}p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\log\text{ 单调}}\ \log p_\theta=\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\times(-1),\ \div T}\ \mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t}).$$</p><p class="small">batch + padding 的通用写法：$\mathcal L(\theta)=-\dfrac{\sum_{b,t}m_{bt}\log p_\theta(x_{b,t+1}\mid x_{b,0:t})}{\sum_{b,t}m_{bt}}$。$B$ 是 batch 大小，$T_{\max}$ 是 padding 后的统一长度，$m_{bt}=1$ 表示该位置确有非 padding 目标。</p></div>
+      <div class="formula"><p>推导链（每一步都是恒等变形）：</p><p>$$p_\theta(x_{1:T}\mid x_0)=\prod_{t=0}^{T-1}p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\log\text{ 单调}}\ \log p_\theta=\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\times(-1),\ \div T}\ \mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t}).$$</p><p class="small">batch + padding 的通用写法：$\mathcal L(\theta)=-\dfrac{\sum_{b,t}m_{bt}\log p_\theta(x_{b,t+1}\mid x_{b,0:t})}{\sum_{b,t}m_{bt}}$。$B$ 是 batch 大小，$T_{\max}$ 是 padding 后的统一长度，$m_{bt}=1$ 表示该位置确有非 padding 目标。同一目标的 one-hot 写法是 $\mathcal L=-\frac1T\sum_{t}\sum_{v=1}^{V}y_{t+1,v}\log p_{t,v}$，其中 $y_{t+1,v}=\mathbf 1\{v=x_{t+1}\}$：内层 $V$ 项求和只有真实类别那一项为 $1$，于是退化为 $-\log p_{t,x_{t+1}}$——所以“交叉熵”与“自回归负对数似然”不是两个目标，只是同一个量的两种写法。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="ceP1">$p_\theta(B\mid A)$</label><input id="ceP1" type="range" min="0.01" max="1" step="0.01" value="0.5"><output id="ceP1Out"></output></div>
@@ -130,7 +131,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>白话理解</h3><p>$E$ 回答“是什么”，$P$ 回答“在哪里”；同一个“猫”站在位置 2 和位置 5，$E$ 不变、$P$ 变。</p></div>
         <div class="five"><h3>干嘛用</h3><p>把离散 id 变成 Transformer 能处理的连续矩阵 $H^{(0)}\in\mathbb R^{T\times d_{\mathrm{model}}}$。</p></div>
         <div class="five"><h3>怎么算</h3><p>$(H_{\mathrm{tok}})_{r,:}=E_{x_{r-1},:}$（行号 $r$ 从 1 起、token 下标从 0 起，所以有 $r-1$），然后 $H^{(0)}=H_{\mathrm{tok}}+P$。</p></div>
-        <div class="five"><h3>为什么重要</h3><p>相加要求两者维度完全一致——不能把一个 $T$ 维位置编号直接加到 $d_{\mathrm{model}}$ 维 token 向量上；没有 $P$，对称的 self-attention 拿不到顺序信息。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>相加要求两者维度完全一致——不能把一个 $T$ 维位置编号直接加到 $d_{\mathrm{model}}$ 维 token 向量上。为什么需要 $P$？self-attention 的匹配只由内容点积决定，交换两个输入位置，输出只是跟着换位（置换等价）——没有 $P$，它分不清“猫追狗”和“狗追猫”。</p></div>
       </div>
       <div class="control-panel">
         <div><div class="label-row" id="embPick"></div>
@@ -164,7 +165,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>$S_{\mathrm{raw}}=QK^\top$（行=谁在查询、列=查询谁），<span class="term-ref" data-term="scaled">scaled dot product</span> $S=QK^\top/\sqrt{d_k}$，再加 <span class="term-ref" data-term="cmask">causal mask</span> 后逐行 softmax。</p></div>
         <div class="five"><h3>为什么重要</h3><p>scaling 解决“分数的数值尺度”，mask 解决“不能看未来”——两者职责不同；mask 是可见性约束，不是删数据。注意 $k_j$ 是 key 向量，与上一节的 context length $k$ 不是一回事。</p></div>
       </div>
-      <div class="formula"><p>形状与两个独立技巧：</p><p>$$S=\frac{QK^\top}{\sqrt{d_k}}\in\mathbb R^{T\times T},\qquad M_{ij}=\begin{cases}0,&j\le i,\\-\infty,&j>i,\end{cases}\qquad A=\operatorname{softmax}_{\mathrm{row}}(S+M),\qquad O=AV\in\mathbb R^{T\times d_v}.$$</p><p class="small">若 $q_i,k_j$ 各维独立、均值 0、方差约 1，则 $q_ik_j^\top=\sum_{r=1}^{d_k}q_{ir}k_{jr}$ 的方差约随 $d_k$ 增长，典型幅度约 $\sqrt{d_k}$；除以 $\sqrt{d_k}$ 避免 softmax 过早饱和。$\exp(-\infty)=0$，所以未来位置权重为 0，可见项在行内重新归一化。</p></div>
+      <div class="formula"><p>形状与两个独立技巧：</p><p>$$S=\frac{QK^\top}{\sqrt{d_k}}\in\mathbb R^{T\times T},\qquad M_{ij}=\begin{cases}0,&j\le i,\\-\infty,&j>i,\end{cases}\qquad A=\operatorname{softmax}_{\mathrm{row}}(S+M),\qquad O=AV\in\mathbb R^{T\times d_v}.$$</p><p class="small">为什么除以 $\sqrt{d_k}$？若 $q_i,k_j$ 各维独立、均值 0、方差约 1，则每个乘积项 $q_{ir}k_{jr}$ 的均值约 0、方差约 1；$d_k$ 个独立项相加时方差相加，$\operatorname{Var}(q_ik_j^\top)\approx d_k$，所以点积的典型幅度约 $\sqrt{d_k}$。$d_k$ 越大分数差距越悬殊，softmax 越早饱和成接近 one-hot 的输出——此时非最大项的梯度接近 0，训练停滞；除以 $\sqrt{d_k}$ 把分数尺度钉回约 1，与维度脱钩。$\exp(-\infty)=0$，所以未来位置权重为 0，可见项在行内重新归一化。</p></div>
       <div class="control-panel">
         <div><div class="label-row"><button class="btn primary" id="scResample" type="button">重新采样（N=2000）</button><span class="pill" id="scSeed">seed —</span></div>
           <div class="controls">
@@ -213,12 +214,12 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
 
     <section id="sec-decoding" data-mode="core">
       <div class="section-head"><h2><span class="sec-tag core">核心</span>7. 必须分清的三件事：概率、选择、文本</h2></div>
-      <p class="section-intro">给定前缀 $c$，模型输出的是整个 categorical 分布 $p_\theta(\cdot\mid c)\in\Delta^{V-1}$（概率单纯形），不是一句话。<span class="term-ref" data-term="decoding">decoding</span> 是把分布变成 token 的规则；生成文本是反复选词并接回前缀后的产物。三者层次不同，decoding 不会回写参数 $\theta$。</p>
+      <p class="section-intro">给定前缀 $c$，模型输出的是整个 categorical 分布 $p_\theta(\cdot\mid c)\in\Delta^{V-1}$，不是一句话。这里 $\Delta^{V-1}=\{\boldsymbol p\in\mathbb R^V:p_v\ge0,\ \sum_vp_v=1\}$ 称为概率单纯形——所有“非负且和为 1”的词表分布构成的集合。<span class="term-ref" data-term="decoding">decoding</span> 是把分布变成 token 的规则；生成文本是反复选词并接回前缀后的产物。三者层次不同，decoding 不会回写参数 $\theta$。</p>
       <div class="five-grid">
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="temp">temperature</span> $\tau$：$p_\tau(v\mid c)=\operatorname{softmax}(\boldsymbol z/\tau)_v$；<span class="term-ref" data-term="topk">top-k</span>：只保留概率最高的 $k$ 个候选再归一化；top-p 先排序再取累计达 $p$ 的最小集合。</p></div>
         <div class="five"><h3>白话理解</h3><p>$\tau&lt;1$ 分布更尖、$\tau&gt;1$ 更平；top-k 剪掉长尾；greedy 是直接 argmax。用 $\tau$ 表示温度，避免和序列长度 $T$ 混淆。</p></div>
         <div class="five"><h3>干嘛用</h3><p>在“最可能的单词”与“多样性”之间做工程选择；beam search 则比较多条前缀，常用长度归一化 $\operatorname{score}_\alpha=\frac{1}{L^\alpha}\sum_{t=1}^L\log p_\theta(x_t\mid x_{0:t-1})$。</p></div>
-        <div class="five"><h3>怎么算</h3><p>生成循环：算 $p_\theta(\cdot\mid c_t)$ → 按规则选 $\hat x_{t+1}$ → 接回前缀 → 直到停止，再 detokenize。</p></div>
+        <div class="five"><h3>怎么算</h3><p>生成循环：算 $p_\theta(\cdot\mid c_t)$ → 按规则选 $\hat x_{t+1}$ → 接回前缀 → 直到停止，再 detokenize（把 token 序列拼回字符串）。</p></div>
         <div class="five"><h3>为什么重要</h3><p>高概率 ≠ 事实正确：模型学的是训练分布下的条件概率，不是外部世界真实性的证明。</p></div>
       </div>
       <div class="card-grid">
@@ -573,7 +574,8 @@ const grid=$('#misGrid');M.forEach(([q,a],i)=>{const c=document.createElement('d
 {id:'mha',t:'多头注意力',en:'multi-head attention',f:'O^{(a)}=\\operatorname{softmax}_{row}\\left(\\frac{Q^{(a)}K^{(a)\\top}}{\\sqrt{d_k}}+M\\right)V^{(a)}',d:'并行使用 h 组 Q/K/V 投影空间再拼接投回。',s:'sec-block',u:'让不同 head 学习不同关系。',why:'d_k=d_v=d_model/h 是工程惯例而非数学必需。'},
 {id:'residual',t:'残差连接',en:'residual connection',f:'U=H+\\operatorname{MHA}(\\operatorname{Norm}(H))',d:'把子层输入加回子层输出。',s:'sec-block',u:'保持信息流与梯度通路，支持深层堆叠。',why:'没有它深层 Transformer 很难训练。'},
 {id:'mlp',t:'前馈层',en:'MLP / feedforward',f:'\\operatorname{MLP}(u)=\\sigma(uW_1+b_1)W_2+b_2',d:'逐位置做通道维非线性变换，不跨 token 混合。',s:'sec-block',u:'与 MHA 互补：一个管位置间、一个管位置内。',why:'block 的参数量大头通常在 MLP。'},
-{id:'logits',t:'词表未归一化分数',en:'logits',f:'Z=H^{(L)}W_{out}+\\mathbf 1_Tb_{out}^\\top\\in\\mathbb R^{T\\times V}',d:'softmax 之前的词表分数。',s:'sec-block',u:'每行 V 个 logits 经 softmax 得到 next-token 概率。',why:'logits 不是概率，也不是逐类别的 log-odds 解释。'},
+{id:'logits',t:'词表未归一化分数',en:'logits',f:'\\boldsymbol z_t\\in\\mathbb R^V,\\;p_{t,v}=\\operatorname{softmax}(\\boldsymbol z_t)_v',d:'softmax 之前的词表分数，可以是任意实数。',s:'sec-chain',u:'每个位置的原始输出，经 softmax 变成 next-token 概率。',why:'logits 不是概率，也不应逐类别解释成 log-odds。'},
+{id:'softmax',t:'softmax 函数',en:'softmax',f:'\\operatorname{softmax}(\\boldsymbol z)_v=\\frac{\\exp(z_v)}{\\sum_u\\exp(z_u)}',d:'把任意实数分数向量变成非负、和为 1 的概率分布。',s:'sec-chain',u:'把 logits 变成合法分布；attention 里也按行使用。',why:'exp 拉开差距、归一化保证和为 1；分数过大时饱和、梯度变小——这正是 √d_k 缩放的动机。'},
 {id:'decoding',t:'解码 / 选词',en:'decoding',f:'p_\\theta(\\cdot\\mid c)\\in\\Delta^{V-1}\\to\\hat x_{t+1}',d:'把概率分布变成实际 token 的规则。',s:'sec-decoding',u:'greedy / sampling / top-k / top-p / beam 的选择层。',why:'它改变“怎样选”，不回写参数，也不改变已评价的概率。'},
 {id:'temp',t:'温度',en:'temperature',f:'p_\\tau=\\operatorname{softmax}(\\boldsymbol z/\\tau)',d:'对 logits 做缩放的 decoding 超参数：τ<1 更尖，τ>1 更平。',s:'sec-decoding',u:'调节生成的保守/多样程度。',why:'用 τ 记号以避免与序列长度 T 混淆。'},
 {id:'topk',t:'前 k 候选',en:'top-k',f:'\\text{保留概率最高的 }k\\text{ 个再归一化}',d:'只允许概率最高的 k 个 token 参与选择。',s:'sec-decoding',u:'剪掉长尾，k=1 时退化为 greedy。',why:'top-p 改按累计概率取集合；二者都是 decoding 而非训练。'},
