@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 25 讲 · 大语言模型（Large Language Models）互动实验室 | IML 2026</title>
+<meta name="description" content="第25讲 大语言模型的互动附属页：token 与 chain rule、自监督 cross-entropy、embedding、causal attention 与 decoding。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+.chain.c5{grid-template-columns:repeat(5,1fr)}.btn.xs{padding:3px 9px;font-size:.74rem}.pick-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin:4px 0}.pick-row .pk-name{flex:none;min-width:52px;color:var(--muted);font:700 .74rem Menlo,Monaco,monospace}table.ktab{border-collapse:collapse;width:100%;font-size:.8rem}.ktab td,.ktab th{padding:3px 7px;border-bottom:1px solid var(--line);text-align:right}.ktab th{color:var(--muted);font-weight:700}.ktab td:first-child,.ktab th:first-child{text-align:left}.ktab tr.best td{color:var(--accent);font-weight:700}
+.mis-card{cursor:pointer}.mis-card .mis-a{display:none;margin-top:6px}.mis-card.open .mis-a{display:block}.mis-card .mis-q{color:var(--warm);font-weight:700}.hist-note{font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 25</span><span class="top-title">大语言模型 · 从 token 到 next-token 再到文本</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-25">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 25 讲 · 互动附属页（收官讲）</p>
+      <h1>大语言模型（Large Language Models）</h1>
+      <p class="lead">第 22–24 讲用潜变量和 EM 做概率建模；本讲把同一套概率语言搬到离散 token 序列上：用 chain rule 把整句概率精确拆成“预测下一个 token”，用 cross-entropy 自监督训练，用 embedding 与 causal attention 构造表示，最后再分清“模型概率、decoding 选择、生成文本”这三件不同的事。</p>
+      <div class="course-ribbon"><span class="pill">第 22–24 讲：GMM / EM 的潜变量概率建模</span><span class="pill core">本讲：token → chain rule → cross-entropy → attention → decoding</span><span class="pill extra">收官：回看第 11–14 讲网络与第 19–21 讲概率建模</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>文本 → 概率分布 → 文本</h3><p>把句子写成 categorical token 序列；学习每个位置的 next-token 分布；生成时再用 decoding 规则把分布变回文本。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>LLM 只是把“预测下一个 token”做到极致</h3><p>理解这一步就理解了训练目标、因果掩码与生成接口各自的职责——它们经常被混为一谈。</p></div>
+        <div class="card"><span class="card-kicker">主线逻辑</span><h3>拆概率 → 算损失 → 造表示 → 做选择</h3><p>chain rule 拆任务，cross-entropy 给目标，embedding + attention 造表示，logits 经 decoding 变成词。</p></div>
+      </div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 序列化</b>文本变成 <span class="term-ref" data-term="token">token</span> 随机变量序列。</div><div class="chain-step"><b>2 · 拆概率</b><span class="term-ref" data-term="chainrule">chain rule</span> 精确拆成逐位条件概率。</div><div class="chain-step"><b>3 · 训练</b>右移标签 + <span class="term-ref" data-term="ce">cross-entropy</span> 自监督。</div><div class="chain-step"><b>4 · 表示</b><span class="term-ref" data-term="embedding">embedding</span> + 因果 <span class="term-ref" data-term="attention-q">attention</span> 读前文。</div><div class="chain-step"><b>5 · 生成</b>logits → softmax → <span class="term-ref" data-term="decoding">decoding</span> 选词。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 320" role="img" aria-label="从 token 到 decoding 的概念地图"></svg></div></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig0.png" alt="自回归分解、位置与因果注意力示意" loading="lazy"><figcaption>本地化讲义原图：自回归分解、位置与因果注意力示意</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先把“一句话”严格写成一个随机变量序列，并看看直接记住整个联合分布为什么不可行。</span></div>
+    </section>
+
+    <section id="sec-tokens" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 先把语言写成随机变量</h2></div>
+      <p class="section-intro">实际送入模型的单位不是完整单词，而是 token：一个单词、词的一部分、标点或特殊符号都可能是一个 token。把一句话写成 $X_{1:T}=(X_1,\ldots,X_T)$，每个 $X_t\in\{1,2,\ldots,V\}$ 都是 categorical 随机变量；小写 $x_t$ 是它的一次实际观测。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="token">token</span> 是送入模型的离散单位；<span class="term-ref" data-term="vocab">词表</span> $\mathcal V$ 是所有可输出 token 的有限集合，大小记为 $V$；每个位置是一个 <span class="term-ref" data-term="categorical">categorical variable</span>。</p></div>
+        <div class="five"><h3>白话理解</h3><p>词表像一本字典，token id 只是字典里的页码——编号 17 不比编号 3 “更大”或“更接近”。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把“文本”翻译成概率论能处理的对象：有限类别上的离散随机变量序列。</p></div>
+        <div class="five"><h3>怎么算</h3><p>小词表 $\mathcal V=\{\text{猫},\text{狗},\text{跑}\}$ 中，序列“猫 跑”记为 $(1,3)$；但模型关心的是事件 $P(X_1=\text{猫},X_2=\text{跑})$，不是数字 1 和 3 的算术关系。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>id 无语义意味着必须靠 embedding 学表示（第 4 节）；联合表 $V^T$ 爆炸意味着必须靠 chain rule 拆任务（第 2 节）。</p></div>
+      </div>
+      <div class="formula"><p>为什么不能直接记住整个联合分布？可能的序列数是</p><p>$$\#\{\text{序列}\}=V^T.$$</p><p class="small">$V$ 是词表大小、$T$ 是序列长度。即使每项概率只占 8 字节，这个表也随 $T$ 指数增长。问题不是“概率论不能描述文本”，而是朴素联合表没有利用序列里的重复结构。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="tokV">词表大小 $V$（对数刻度）</label><input id="tokV" type="range" min="0.301" max="4.699" step="0.001" value="0.301"><output id="tokVOut"></output></div>
+          <div class="control"><label for="tokT">序列长度 $T$</label><input id="tokT" type="range" min="1" max="1000" step="1" value="4"><output id="tokTOut"></output></div>
+        </div><p class="small">$V$ 的滑杆控制 $\log_{10}V$，输出框显示 $V$ 本身。下方所有数字现算：默认 $V=2,T=4$ 时有 $2^4=16$ 个序列；把 $V$ 拖到 $50{,}000$、$T$ 拖到 $1000$，看指数爆炸到什么量级。</p></div>
+        <div class="step-box" id="tokSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="tokViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="联合分布组合爆炸的对数刻度尺"></svg></div>
+      <p class="viz-caption">读图：对数刻度尺上，$V^T$ 的位数与“可观测宇宙原子数约 $10^{80}$”并排比较——超过它之后，任何逐枚举行列的物理存储都无从谈起。</p>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>联合表存不下，但概率论给了一条精确的拆分：chain rule 把整句概率拆成一串“下一步”的条件概率。</span></div>
+    </section>
+
+    <section id="sec-chain" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. Chain rule：把一个难问题拆成许多个下一个 token</h2></div>
+      <p class="section-intro">概率乘法规则给出精确恒等式——不是近似，也不是独立性假设（这是常见误区）：逐步按条件概率定义代回即可。生成也随之变得直接：从 $P(x_1)$ 抽样，观察到 $x_1$ 后从 $P(x_2\mid x_1)$ 抽样，如此循环。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="chainrule">chain rule</span>：$P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1})$；<span class="term-ref" data-term="autoreg">autoregressive</span> 指用已出现的前缀预测下一个 token；<span class="term-ref" data-term="ctxlen">context length</span> $k$ 是工程截断。</p></div>
+        <div class="five"><h3>白话理解</h3><p>不必一次猜完整句话；每次都只看已经写下的开头，猜下一个字。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把一个 $V^T$ 的联合表，换成每个位置一个 $V$ 类条件分布——存储与计算才可思议。</p></div>
+        <div class="five"><h3>怎么算</h3><p>截断近似写作 $P(x_t\mid x_{1:t-1})\approx P(x_t\mid x_{\max(1,t-k):t-1})$；$k\ge T-1$ 时小例子里能看到全部前文。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>chain rule 本身精确；近似的只是有限 context length $k$——容量、显存与计算量的工程折衷。注意这里的 $k$ 是上下文长度，与后面 attention 的 key 向量 $k_j$、第 22–24 讲的组件数 $K$ 都是不同对象。</p></div>
+      </div>
+      <div class="formula"><p>训练对齐（shifted setup）：令 $x_0=\langle\mathrm{BOS}\rangle$，输入是左移前缀 $x_{0:T-1}$，标签是右移一位的 $x_{1:T}$：</p><p>$$P(x_{1:T})=P(x_1)\,P(x_2\mid x_1)\,P(x_3\mid x_{1:2})\cdots P(x_T\mid x_{1:T-1})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1}).$$</p><p class="small">编号预告：张量行号 $r=1..T$，零起点位置 $t=r-1\in\{0,\ldots,T-1\}$——输入位置 $t$ 的输出专门预测 $x_{t+1}$；后文 attention 数值例用行号 $i=1,2,3$。两者只是相差 1 的编号习惯，不代表多出一个 token。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="chainGen" type="button">随机生成一句（T=3）</button><span class="pill" id="chainSeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="chainK">context length $k$</label><input id="chainK" type="range" min="1" max="2" step="1" value="2"><output id="chainKOut"></output></div>
+          </div>
+          <p class="small">小词表 $\mathcal V=\{\text{猫},\text{狗},\text{跑}\}$ 的手工三元模型，条件概率表内置且每行归一化。按钮真用 <code>Math.random()</code> 按 chain rule 逐位抽样，连点结果不同。$k=2=T-1$ 时用完整前文 $P(x_3\mid x_1,x_2)$；$k=1$ 时展示截断近似 $P(x_3\mid x_2)$（由全表精确边缘化现算，二者数值不同）。</p></div>
+        <div class="step-box" id="chainSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="chainViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="链式分解逐位抽样过程"></svg></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig1.png" alt="tokenization、chain rule 与逐步 next-token likelihood" loading="lazy"><figcaption>本地化讲义原图：tokenization、chain rule 与逐步 next-token likelihood</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>生成顺序有了；训练时怎样把“每个位置都猜下一个 token”写成一个可最小化的标量损失？</span></div>
+    </section>
+
+    <section id="sec-cetrain" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>3. 自监督 next-token 训练与 cross-entropy</h2></div>
+      <p class="section-intro">训练数据不需要人工标签：目标 token 已经存在于原文里。输入 $x_{0:T-1}$，标签是整体右移一位的 $x_{1:T}$——这就是 <span class="term-ref" data-term="selfsup">self-supervision</span>。例如 $(\langle\mathrm{BOS}\rangle,\text{The},\text{cat},\text{sat},\text{down})$ 一次给出四个输入—标签对：BOS→The、BOS The→cat、BOS The cat→sat、BOS The cat sat→down。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="ce">cross-entropy</span> 单位置写作 $\ell_t(\theta)=-\log p_\theta(x_{t+1}\mid x_{0:t})$；<span class="term-ref" data-term="teacher">teacher forcing</span> 指训练时直接喂真实前缀而非模型自己的预测。</p></div>
+        <div class="five"><h3>白话理解</h3><p>每个位置都是一道“看前缀猜下一个词”的题，答对的概率越高、损失越小；答案就在原文里。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把 chain rule 的乘积变成优化软件喜欢的最小化目标：取 $\log$ 变求和，乘 $-1$ 再除以有效目标数 $T$。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$\mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})$；one-hot 写法的内层求和退化到同一项，二者是同一目标。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>分母是有效目标 token 数（padding 用掩码 $m_{bt}\in\{0,1\}$ 排除），不是词表大小；teacher forcing 不等于偷看未来——causal mask 仍然生效。</p></div>
+      </div>
+      <div class="formula"><p>推导链（每一步都是恒等变形）：</p><p>$$p_\theta(x_{1:T}\mid x_0)=\prod_{t=0}^{T-1}p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\log\text{ 单调}}\ \log p_\theta=\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})\ \xrightarrow{\times(-1),\ \div T}\ \mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t}).$$</p><p class="small">batch + padding 的通用写法：$\mathcal L(\theta)=-\dfrac{\sum_{b,t}m_{bt}\log p_\theta(x_{b,t+1}\mid x_{b,0:t})}{\sum_{b,t}m_{bt}}$。$B$ 是 batch 大小，$T_{\max}$ 是 padding 后的统一长度，$m_{bt}=1$ 表示该位置确有非 padding 目标。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="ceP1">$p_\theta(B\mid A)$</label><input id="ceP1" type="range" min="0.01" max="1" step="0.01" value="0.5"><output id="ceP1Out"></output></div>
+          <div class="control"><label for="ceP2">$p_\theta(C\mid A,B)$</label><input id="ceP2" type="range" min="0.01" max="1" step="0.01" value="0.25"><output id="ceP2Out"></output></div>
+        </div><p class="small">讲义 Worked example 1：词表 $\{A,B,C\}$，前缀 $x_0=A$，目标 $x_1=B$、$x_2=C$（注意标签是 $B,C$，不是输入 $A,B$）。拖动两个概率，看逐位置损失、总 NLL 与平均 cross-entropy 的现算结果。</p></div>
+        <div class="step-box" id="ceSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="ceViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="两步交叉熵逐位置分解条形图"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>损失定义好了，但 token id 只是字典页码，不能直接做点积——先把它变成连续向量。</span></div>
+    </section>
+
+    <section id="sec-embedding" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>4. 从 token 到可计算表示：embedding</h2></div>
+      <p class="section-intro">token 编号是离散索引，不能做有意义的点积。可学习的 embedding 矩阵 $E\in\mathbb R^{V\times d_{\mathrm{model}}}$ 负责查表：第 $v$ 行 $E_{v,:}$ 是 token $v$ 的向量。再为每个位置加上位置向量，得到初始隐藏状态。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="embedding">embedding</span>：$E\in\mathbb R^{V\times d_{\mathrm{model}}}$ 的查表映射；<span class="term-ref" data-term="posemb">positional embedding</span>：$P\in\mathbb R^{T\times d_{\mathrm{model}}}$ 的位置向量。</p></div>
+        <div class="five"><h3>白话理解</h3><p>$E$ 回答“是什么”，$P$ 回答“在哪里”；同一个“猫”站在位置 2 和位置 5，$E$ 不变、$P$ 变。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把离散 id 变成 Transformer 能处理的连续矩阵 $H^{(0)}\in\mathbb R^{T\times d_{\mathrm{model}}}$。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$(H_{\mathrm{tok}})_{r,:}=E_{x_{r-1},:}$（行号 $r$ 从 1 起、token 下标从 0 起，所以有 $r-1$），然后 $H^{(0)}=H_{\mathrm{tok}}+P$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>相加要求两者维度完全一致——不能把一个 $T$ 维位置编号直接加到 $d_{\mathrm{model}}$ 维 token 向量上；没有 $P$，对称的 self-attention 拿不到顺序信息。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="label-row" id="embPick"></div>
+          <div class="controls">
+            <div class="control"><label for="embPos">位置 $r$（1..5）</label><input id="embPos" type="range" min="1" max="5" step="1" value="2"><output id="embPosOut"></output></div>
+          </div>
+          <p class="small">讲义 Worked example 2：$d_{\mathrm{model}}=3$，$E_{\text{猫},:}=[1,0,1]$，$P_{2,:}=[0,2,-1]$。默认“猫 @ 位置 2”复现 $H^{(0)}_{2,:}=[1,2,0]$。同一 token 换位置：左组条形不变、中组变、和随之变。</p></div>
+        <div class="step-box" id="embSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="embViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="token embedding 加 positional embedding 条形图"></svg></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="shV">词表 $V$</label><input id="shV" type="range" min="100" max="50000" step="100" value="10000"><output id="shVOut"></output></div>
+          <div class="control"><label for="shD">$d_{\mathrm{model}}$</label><input id="shD" type="range" min="64" max="1024" step="64" value="512"><output id="shDOut"></output></div>
+          <div class="control"><label for="shT">序列长度 $T$</label><input id="shT" type="range" min="8" max="512" step="8" value="128"><output id="shTOut"></output></div>
+        </div><p class="small">形状速查（默认值对应自测题 3）：$E$、$P$、$H^{(0)}$ 与 batch 维 $B$ 下的查表结果，全部随滑杆现算。</p></div>
+        <div class="step-box" id="shSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="shViz" class="viz-svg" viewBox="0 0 940 240" role="img" aria-label="embedding 各矩阵形状速查"></svg></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig2.png" alt="token embedding 与 positional embedding 相加" loading="lazy"><figcaption>本地化讲义原图：token embedding 与 positional embedding 相加</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>表示有了，但每个位置还只认识自己——attention 让当前位置按相关性读取前文。</span></div>
+    </section>
+
+    <section id="sec-attention" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>5. Attention：Q/K/V、$\sqrt{d_k}$ 缩放与 causal mask</h2></div>
+      <p class="section-intro">把 attention 想成由输入决定的软查表：当前位置提出 query，去匹配各位置的 key，最后把匹配上的 value 按权重加权搬运：$o_i=\sum_j a_{ij}v_j$，$a_{ij}\ge0$、$\sum_j a_{ij}=1$。三份投影都来自同一个 $H$：$Q=HW_Q$、$K=HW_K$、$V=HW_V$。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="attention-q">query</span> 是“我想找什么”，<span class="term-ref" data-term="attention-k">key</span> 是“我能怎样被匹配”，<span class="term-ref" data-term="attention-v">value</span> 是“真正被搬运的内容”；<span class="term-ref" data-term="score">score</span> 是 query-key 匹配值。</p></div>
+        <div class="five"><h3>白话理解</h3><p>query 像提问，key 像索引卡，value 像卡片背后的正文；点积只决定相关性，输出来自 value 的加权和。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>让每个位置有选择地读取前文，而不是固定窗口平均；self-attention 的两侧是同一组 token。</p></div>
+        <div class="five"><h3>怎么算</h3><p>$S_{\mathrm{raw}}=QK^\top$（行=谁在查询、列=查询谁），<span class="term-ref" data-term="scaled">scaled dot product</span> $S=QK^\top/\sqrt{d_k}$，再加 <span class="term-ref" data-term="cmask">causal mask</span> 后逐行 softmax。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>scaling 解决“分数的数值尺度”，mask 解决“不能看未来”——两者职责不同；mask 是可见性约束，不是删数据。注意 $k_j$ 是 key 向量，与上一节的 context length $k$ 不是一回事。</p></div>
+      </div>
+      <div class="formula"><p>形状与两个独立技巧：</p><p>$$S=\frac{QK^\top}{\sqrt{d_k}}\in\mathbb R^{T\times T},\qquad M_{ij}=\begin{cases}0,&j\le i,\\-\infty,&j>i,\end{cases}\qquad A=\operatorname{softmax}_{\mathrm{row}}(S+M),\qquad O=AV\in\mathbb R^{T\times d_v}.$$</p><p class="small">若 $q_i,k_j$ 各维独立、均值 0、方差约 1，则 $q_ik_j^\top=\sum_{r=1}^{d_k}q_{ir}k_{jr}$ 的方差约随 $d_k$ 增长，典型幅度约 $\sqrt{d_k}$；除以 $\sqrt{d_k}$ 避免 softmax 过早饱和。$\exp(-\infty)=0$，所以未来位置权重为 0，可见项在行内重新归一化。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="scResample" type="button">重新采样（N=2000）</button><span class="pill" id="scSeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="scDk">$d_k$（对数刻度）</label><input id="scDk" type="range" min="0" max="3.01" step="0.01" value="1.3"><output id="scDkOut"></output></div>
+          </div>
+          <p class="small"><strong>实验 E「$\sqrt{d_k}$ 缩放模拟」</strong>：滑杆控制 $\log_{10}d_k$。按钮真用 <code>Math.random()</code>（Box–Muller）生成 2000 对独立 $\mathcal N(0,1)$ 分量向量，现算未缩放点积与缩放后点积的实测标准差，并画出按理论 $\mu=0,\sigma=\sqrt{d_k}$ 与 $\sigma=1$ 的正态参考曲线。</p></div>
+        <div class="step-box" id="scSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="scViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="缩放点积的分布模拟直方图"></svg></div>
+      <div class="control-panel">
+        <div><div class="label-row" id="attPick"></div>
+          <div class="label-row"><button class="btn" id="attMask" type="button" aria-pressed="true">causal mask：开</button></div>
+          <p class="small"><strong>实验 F「masked attention 复算器」（讲义第 6 节数值例）</strong>：$T=3$、$d_k=d_v=2$，$Q=[[1,0],[1,1],[0,1]]$、$K=[[1,0],[0,1],[1,1]]$、$V=[[1,0],[0,2],[3,1]]$。行号 $i=1,2,3$ 对应输入 $x_0,x_1,x_2$，输出行用于预测 $x_1,x_2,x_3$。选行并切换 mask，右侧 step-box 逐步现算 $q_iK^\top\to/\sqrt2\to +M\to\mathrm{softmax}\to a_i\to o_i$。</p></div>
+        <div class="step-box" id="attSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="attViz" class="viz-svg" viewBox="0 0 940 380" role="img" aria-label="masked attention 权重热图与加权求和"></svg></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig3.png" alt="单个 query 如何通过 Q、K、V 生成 attention output" loading="lazy"><figcaption>本地化讲义原图：单个 query 如何通过 Q、K、V 生成 attention output</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>单个 head 只是一个投影空间；完整 block 还要并行多个 head、加残差与逐位置 MLP（拓展节）。</span></div>
+    </section>
+
+    <section id="sec-block" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>6. Multi-head 与 decoder-only block</h2></div>
+      <p class="section-intro">一个 head 只能在一个投影空间里组织依赖；$h$ 个 head 并行学习不同关系（局部搭配、指代、长程依赖——这是解释性直觉，不表示每个 head 永远只承担一个功能）。工程惯例取 $d_k=d_v=d_{\mathrm{model}}/h$ 让拼接前后通道一致，但这不是数学必需。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="mha">multi-head attention</span> 并行 $h$ 组投影；<span class="term-ref" data-term="residual">residual connection</span> 把子层输入加回输出；<span class="term-ref" data-term="mlp">MLP</span> 逐位置做通道变换；<span class="term-ref" data-term="logits">logits</span> 是 softmax 前的词表分数。</p></div>
+        <div class="five"><h3>白话理解</h3><p>MHA 在 token 之间交换信息，MLP 在每个位置内部加工信息，残差保住信息和梯度的通路。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把多个关系空间、跨层信息流和逐位置非线性组合成可堆叠的 block。</p></div>
+        <div class="five"><h3>怎么算</h3><p>pre-norm block：$U=H+\mathrm{MHA}(\mathrm{Norm}(H))$，$H'=U+\mathrm{MLP}(\mathrm{Norm}(U))$；输出投影 $Z=H^{(L)}W_{\mathrm{out}}+\mathbf 1_Tb_{\mathrm{out}}^\top\in\mathbb R^{T\times V}$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>完整对齐链：$x_{0:T-1}\to$ Transformer $\to Z_{1:T,:}$（$T\times V$ logits）$\to$ 逐行 cross-entropy $\to$ 目标 $x_{1:T}$。</p></div>
+      </div>
+      <div class="formula"><p>每个 head $a$：$O^{(a)}=\operatorname{softmax}_{\mathrm{row}}\left(\frac{Q^{(a)}K^{(a)\top}}{\sqrt{d_k}}+M\right)V^{(a)}$，拼接后乘 $W_O\in\mathbb R^{hd_v\times d_{\mathrm{model}}}$ 投回 $d_{\mathrm{model}}$ 维；MLP 逐位置：$\mathrm{MLP}(u)=\sigma(uW_1+b_1)W_2+b_2$，不跨 token 混合。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="blkD">$d_{\mathrm{model}}$</label><input id="blkD" type="range" min="64" max="1024" step="64" value="256"><output id="blkDOut"></output></div>
+          <div class="control"><label for="blkH">head 数 $h$</label><input id="blkH" type="range" min="1" max="16" step="1" value="4"><output id="blkHOut"></output></div>
+          <div class="control"><label for="blkF">$d_{\mathrm{ff}}$</label><input id="blkF" type="range" min="128" max="4096" step="128" value="1024"><output id="blkFOut"></output></div>
+          <div class="control"><label for="blkV">词表 $V$</label><input id="blkV" type="range" min="1000" max="50000" step="1000" value="10000"><output id="blkVOut"></output></div>
+          <div class="control"><label for="blkT">序列长度 $T$</label><input id="blkT" type="range" min="8" max="512" step="8" value="128"><output id="blkTOut"></output></div>
+        </div><p class="small">实验 G「形状与参数速查」：$d_k=d_{\mathrm{model}}/h$、每个 head 的 $W_Q/W_K/W_V$、MHA 总参数（含 $W_O$）、MLP 参数（$2d_{\mathrm{model}}d_{\mathrm{ff}}$ 加 bias）、$W_{\mathrm{out}}$ 参数，全部现算；$h$ 整除 $d_{\mathrm{model}}$ 只是惯例，不整除时也会如实提示。左图为 pre-norm block 数据流（残差边绕行，不穿节点）。</p></div>
+        <div class="step-box" id="blkSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="blkViz" class="viz-svg" viewBox="0 0 940 520" role="img" aria-label="pre-norm decoder-only block 数据流图"></svg></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig4.png" alt="decoder-only Transformer block 的残差与子层数据流" loading="lazy"><figcaption>本地化讲义原图：decoder-only Transformer block 的残差与子层数据流</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>网络输出的是 $V$ 个 logits——它是概率分布，还不是文本。最后一步是把“分布”变成“选择”。</span></div>
+    </section>
+
+    <section id="sec-decoding" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>7. 必须分清的三件事：概率、选择、文本</h2></div>
+      <p class="section-intro">给定前缀 $c$，模型输出的是整个 categorical 分布 $p_\theta(\cdot\mid c)\in\Delta^{V-1}$（概率单纯形），不是一句话。<span class="term-ref" data-term="decoding">decoding</span> 是把分布变成 token 的规则；生成文本是反复选词并接回前缀后的产物。三者层次不同，decoding 不会回写参数 $\theta$。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="temp">temperature</span> $\tau$：$p_\tau(v\mid c)=\operatorname{softmax}(\boldsymbol z/\tau)_v$；<span class="term-ref" data-term="topk">top-k</span>：只保留概率最高的 $k$ 个候选再归一化；top-p 先排序再取累计达 $p$ 的最小集合。</p></div>
+        <div class="five"><h3>白话理解</h3><p>$\tau&lt;1$ 分布更尖、$\tau&gt;1$ 更平；top-k 剪掉长尾；greedy 是直接 argmax。用 $\tau$ 表示温度，避免和序列长度 $T$ 混淆。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>在“最可能的单词”与“多样性”之间做工程选择；beam search 则比较多条前缀，常用长度归一化 $\operatorname{score}_\alpha=\frac{1}{L^\alpha}\sum_{t=1}^L\log p_\theta(x_t\mid x_{0:t-1})$。</p></div>
+        <div class="five"><h3>怎么算</h3><p>生成循环：算 $p_\theta(\cdot\mid c_t)$ → 按规则选 $\hat x_{t+1}$ → 接回前缀 → 直到停止，再 detokenize。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>高概率 ≠ 事实正确：模型学的是训练分布下的条件概率，不是外部世界真实性的证明。</p></div>
+      </div>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">greedy</span><h3>取概率最大的 token</h3><p>无随机性；局部最优不保证整句概率最高。</p></div>
+        <div class="card"><span class="card-kicker">sampling</span><h3>按 $p_\theta(\cdot\mid c)$ 抽样</h3><p>忠实保留随机性，可能抽到长尾候选。</p></div>
+        <div class="card"><span class="card-kicker">top-k / top-p</span><h3>先裁剪候选集再抽样</h3><p>top-k 固定个数；top-p 按排序后累计概率首次达阈值取最小集合（$k=1$ 时 top-k 退化为 greedy）。</p></div>
+        <div class="card"><span class="card-kicker">beam search</span><h3>同时维护多条高分前缀</h3><p>用长度归一化分数比较不同长度序列，避免偏向短句。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="decZ1">logit $z_1$（sitting）</label><input id="decZ1" type="range" min="-2" max="2" step="0.01" value="1.79"><output id="decZ1Out"></output></div>
+          <div class="control"><label for="decZ2">logit $z_2$（sleeping）</label><input id="decZ2" type="range" min="-2" max="2" step="0.01" value="1.1"><output id="decZ2Out"></output></div>
+          <div class="control"><label for="decZ3">logit $z_3$（blue）</label><input id="decZ3" type="range" min="-2" max="2" step="0.01" value="0"><output id="decZ3Out"></output></div>
+          <div class="control"><label for="decTau">temperature $\tau$</label><input id="decTau" type="range" min="0.2" max="2" step="0.05" value="1"><output id="decTauOut"></output></div>
+          <div class="control"><label for="decK">top-$k$</label><input id="decK" type="range" min="1" max="3" step="1" value="2"><output id="decKOut"></output></div>
+        </div><div class="label-row"><button class="btn" id="decGreedy" type="button">greedy 选词</button><button class="btn" id="decSample1" type="button">抽样 1 次</button><button class="btn primary" id="decSample20" type="button">抽样 20 次</button></div>
+          <p class="small">讲义 Worked example 3：前缀 The cat is，候选 [sitting, sleeping, blue]，默认 logits 对应 $p_\theta=[0.6,0.3,0.1]$；默认 $\tau=1$、top-2 复现 $p_{\mathrm{dec}}=[2/3,1/3,0]$。抽样按钮真用 <code>Math.random()</code>，20 次计数直方与 $p_{\mathrm{dec}}$ 对照。</p></div>
+        <div class="step-box" id="decSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="decViz" class="viz-svg" viewBox="0 0 940 380" role="img" aria-label="decoding 前后分布与抽样计数"></svg></div>
+      <div class="source-grid"><figure><img src="assets/llm-lab/fig5.png" alt="因果掩码与候选分布、温度接口示意" loading="lazy"><figcaption>本地化讲义原图：因果掩码与候选分布/温度接口示意</figcaption></figure><figure><img src="assets/llm-lab/fig6.png" alt="temperature 与 top-k 的 decoding 作用" loading="lazy"><figcaption>本地化讲义原图：temperature 与 top-k 的 decoding 作用</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>核心机制讲完了；训练阶段、挑战与九条常见误区放在拓展节，作为收官前的清点。</span></div>
+    </section>
+
+    <section id="sec-practice" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. 训练阶段、挑战与常见误区</h2></div>
+      <p class="section-intro">课件把语言模型训练分成若干阶段；这些<span class="term-ref" data-term="posttrain">后训练</span>阶段可能改变输出行为，但不应和“基础语言分布上的 next-token maximum likelihood”混为一谈。</p>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">阶段 1</span><h3><span class="term-ref" data-term="pretrain">Pre-training</span></h3><p>用大量数据模仿数据分布；核心 next-token 目标属于这一层。</p></div>
+        <div class="card"><span class="card-kicker">阶段 2</span><h3>Instruction tuning / SFT</h3><p>在有任务格式的数据上微调，让输出更符合指令。</p></div>
+        <div class="card"><span class="card-kicker">阶段 3</span><h3>Alignment（RLHF / DPO）</h3><p>依据人类或 AI 的偏好比较信号调整行为。</p></div>
+        <div class="card"><span class="card-kicker">阶段 4</span><h3>Reasoning / verifiable reward</h3><p>用数学、代码、多选题等可验证任务做奖励信号。</p></div>
+      </div>
+      <div class="panel"><h3>课件明确提出的四条挑战（attention 公式无法自动解决）</h3><p class="small">1) 生成文本可能流畅但事实错误。2) 训练需要大规模数据和计算。3) 对齐、评估、数据污染与滥用都很困难。4) 生成文本的检测和训练数据来源会带来新问题。从概率角度看，高概率只表示在该模型与上下文下更常见，不是真实性的证明。</p></div>
+      <h3>九条常见误区：先自答，再点开核对</h3>
+      <div class="card-grid" id="misGrid"></div>
+      <div class="card" style="margin-top:13px"><span class="card-kicker">与第 22–24 讲对照</span><h3>EM 潜变量 vs 标签右移</h3><p>GMM/EM 把组件分配当作潜变量，交替计算后验与参数更新；本讲的 token 序列没有把下一个 token 藏起来——训练标签直接由序列右移得到，自回归 Transformer 用梯度下降直接优化 next-token cross-entropy。二者都在做概率建模，训练结构不同。</p></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲，也收束整门课。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：文本 → 概率 → 文本</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 文本怎样变成可学习的概率、又怎样变回文本？——先把文本写成 categorical token 序列；chain rule 把整句概率精确拆成 next-token 条件概率；右移标签 + cross-entropy 给出自监督训练目标；embedding 加位置编码把离散 id 变成带顺序的表示；scaled dot-product attention 加 causal mask 让每个位置只读前文；最后模型输出的是分布 $p_\theta(\cdot\mid c)$，由 decoding 规则（greedy / sampling / temperature / top-k / beam）决定选词——decoding 不回写参数。</div>
+      <div class="closing-formulas">
+        <div class="formula"><p><strong>Chain rule（精确）</strong></p><p>$$P(x_{1:T})=\prod_{t=1}^{T}P(x_t\mid x_{1:t-1})$$</p></div>
+        <div class="formula"><p><strong>平均 cross-entropy</strong></p><p>$$\mathcal L(\theta)=-\frac1T\sum_{t=0}^{T-1}\log p_\theta(x_{t+1}\mid x_{0:t})$$</p></div>
+        <div class="formula"><p><strong>输入表示</strong></p><p>$$H^{(0)}=H_{\mathrm{tok}}+P,\quad (H_{\mathrm{tok}})_{r,:}=E_{x_{r-1},:}$$</p></div>
+        <div class="formula"><p><strong>Scaled dot-product</strong></p><p>$$S=\frac{QK^\top}{\sqrt{d_k}}$$</p></div>
+        <div class="formula"><p><strong>Causal mask + softmax</strong></p><p>$$A=\operatorname{softmax}_{\mathrm{row}}(S+M),\quad O=AV$$</p></div>
+        <div class="formula"><p><strong>Temperature decoding</strong></p><p>$$p_\tau(v\mid c)=\operatorname{softmax}(\boldsymbol z/\tau)_v$$</p></div>
+      </div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能解释 token id 为什么没有大小语义，以及 $V^T$ 为什么爆炸。</label><label><input type="checkbox">我能写出 chain rule 的逐步推导，并说清它是恒等式而非独立性假设。</label><label><input type="checkbox">我能从 chain rule 乘积推出平均 cross-entropy，说明分母 $T$ 与 padding 掩码 $m_{bt}$ 的作用。</label><label><input type="checkbox">我能区分 shifted setup 的行号 $r$ 与零起点 $t=r-1$，并写出 $H^{(0)}=H_{\mathrm{tok}}+P$ 的形状。</label><label><input type="checkbox">我能手算一遍 $QK^\top/\sqrt{d_k}\to +M \to$ softmax $\to AV$，并说明 scaling 与 mask 各自解决什么。</label><label><input type="checkbox">我能区分模型概率、decoding 选择与生成文本，并算出 temperature / top-k 后的分布。</label></div>
+      <div class="callout"><strong>收官：回看整门课。</strong> 第 19–21 讲的概率建模给出 likelihood 语言，本讲把每个 next-token categorical likelihood 相乘；第 20 讲的离散类别概率变成每个上下文下的词表 softmax；第 11–14 讲的神经网络变成 embedding、位置编码与 Transformer block；第 12–13 讲的链式法则与 SGD 仍是训练基础；第 22–24 讲的 EM 用潜变量交替优化，本讲则直接梯度下降优化右移标签的 cross-entropy。从这条主线看，LLM 并没有离开概率建模与神经网络。</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-25">返回原讲义第 25 讲</a>，或回到 <a href="index.html#lecture-24">第 24 讲</a> 的 EM 单调性与下界证明。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const pct=x=>fmt(100*x,1)+'%';
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function gauss(x,mu,s){s=Math.max(s,1e-12);const z=(x-mu)/s;return Math.exp(-.5*z*z)/(s*Math.sqrt(2*Math.PI))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+function frame(svg,o){const{x0,y0,w,h,xmin,xmax,ymin,ymax}=o;line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});(o.yticks||[]).forEach(v=>{const y=scaleY(v,ymin,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,fmt(v,o.yp===undefined?2:o.yp),{anchor:'end',size:10})});(o.xticks||[]).forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});const anc=o.xticks.length>1?(i===0?'start':(i===o.xticks.length-1?'end':'middle')):'middle';svgLabel(svg,x,y0+h+17,fmt(v,o.xp===undefined?1:o.xp),{anchor:anc,size:10})})}
+function spreadLabels(items,minGap,lo,hi){const a=items.slice().sort((p,q)=>p.y-q.y);for(let i=1;i<a.length;i++)a[i].y=Math.max(a[i].y,a[i-1].y+minGap);if(a.length&&a[a.length-1].y>hi){a[a.length-1].y=hi;for(let i=a.length-2;i>=0;i--)a[i].y=Math.min(a[i].y,a[i+1].y-minGap)}if(a.length&&a[0].y<lo){const s=lo-a[0].y;a.forEach(q=>q.y+=s)}return a}
+function softmaxArr(z){const m=Math.max(...z),e=z.map(v=>Math.exp(v-m)),s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)}
+function boxMuller(){let u1=Math.random();if(u1<1e-12)u1=1e-12;return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*Math.random())}
+/* big-int free power formatting: returns {digits, mant, exp10} for V^T */
+function bigPow(V,T){const e=T*Math.log10(V);const d=Math.floor(e)+1;const m=Math.pow(10,e-Math.floor(e));return{digits:d,mant:m,exp10:d-1}}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('llm-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('llm-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('llm-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('llm-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留 token→chain rule→cross-entropy→attention→decoding 主线；拓展小节已隐藏。':'完整模式：额外显示 Transformer block 细节与训练阶段/误区清点。';document.dispatchEvent(new CustomEvent('lab-mode-change'))}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map: every edge begins and ends at a node boundary */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');
+  const nodes=[
+    {id:'n-tokens',target:'sec-tokens',x:20,y:40,w:140,h:56,title:'token 序列',sub:'categorical',color:'var(--blue)'},
+    {id:'n-chain',target:'sec-chain',x:215,y:40,w:140,h:56,title:'chain rule',sub:'精确分解',color:'var(--accent)'},
+    {id:'n-ce',target:'sec-cetrain',x:410,y:40,w:150,h:56,title:'cross-entropy',sub:'自监督训练',color:'var(--accent)'},
+    {id:'n-emb',target:'sec-embedding',x:20,y:180,w:140,h:56,title:'embedding',sub:'E + P',color:'var(--blue)'},
+    {id:'n-att',target:'sec-attention',x:215,y:180,w:150,h:56,title:'causal attention',sub:'QK/√d_k + mask',color:'var(--warm)'},
+    {id:'n-block',target:'sec-block',extra:true,x:410,y:180,w:150,h:56,title:'Transformer block',sub:'MHA+残差+MLP',color:'var(--violet)'},
+    {id:'n-dec',target:'sec-decoding',x:640,y:110,w:170,h:56,title:'decoding',sub:'τ, top-k, beam',color:'var(--danger)'},
+    {id:'n-practice',target:'sec-practice',extra:true,x:640,y:240,w:170,h:52,title:'训练阶段与误区',sub:'拓展清点',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M160 68 H215','var(--accent)',mk,'拆开',187,56);
+  edge('M355 68 H410','var(--accent)',mk,'取 −log',382,56);
+  edge('M90 96 V180','var(--accent)',mk,'查表',90,140);
+  edge('M160 208 H215','var(--accent)',mk,'H⁰',187,196);
+  edge('M365 208 H410','var(--violet)',mv,'堆叠',387,196);
+  edge('M560 208 H600 V138 H640','var(--violet)',mv,'logits',600,170);
+  edge('M725 166 V240','var(--violet)',mv,'落地',725,205);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+
+/* ============ 实验 A：联合分布爆炸 ============ */
+(()=>{const svg=$('#tokViz');const el=$('#tokV'),out=$('#tokVOut');
+function draw(){svgClear(svg);const V=Math.round(Math.pow(10,Number(el.value))),T=Number($('#tokT').value);
+  out.textContent=fmt(V,0);
+  const lg=T*Math.log10(V),pw=bigPow(V,T),lgBytes=lg+Math.log10(8);
+  const xmax=Math.max(100,Math.ceil(lg+10)),x0=90,y0=120,w=760;
+  line(svg,x0,y0,x0+w,y0,{class:'svg-axis','stroke-width':2});
+  const ticks=[0,.25,.5,.75,1].map(f=>Math.round(xmax*f));
+  ticks.forEach((v,i)=>{const x=scaleX(v,0,xmax,x0,w);line(svg,x,y0-6,x,y0+6,{class:'svg-axis'});svgLabel(svg,x,y0+22,'10'+toSup(v),{anchor:i===0?'start':(i===ticks.length-1?'end':'middle'),size:9})});
+  const atoms={y:y0-46,px:scaleX(80,0,xmax,x0,w),t:'可观测宇宙原子 ~10⁸⁰',c:'var(--muted)'};
+  const mine={y:y0-46,px:scaleX(clamp(lg,0,xmax),0,xmax,x0,w),t:'V^T ≈ '+pw.mant.toFixed(2)+'×10^'+pw.exp10,c:'var(--danger)'};
+  const both=spreadLabels([{y:atoms.px,ref:atoms},{y:mine.px,ref:mine}],150,x0+40,x0+w-40);
+  both.forEach(q=>{const r=q.ref;svgAdd(svg,'path',{d:`M${r.px},${y0-8} l-7,-12 h14 z`,fill:r.c});svgLabel(svg,q.y,y0-46,r.t,{size:10,fill:r.c})});
+  svgLabel(svg,x0,y0+56,'对数刻度：组合数 / 存储字节数的数量级',{anchor:'start',size:10,fill:'var(--muted)'});
+  const ratio=lg-80;
+  $('#tokSteps').innerHTML=String.raw`<p><strong>组合数</strong> $V^T=${V}^{${T}}\approx${pw.mant.toFixed(2)}\times 10^{${pw.exp10}}$——共 ${fmt(pw.digits,0)} 位十进制数字。</p><p><strong>存储</strong> 每项 8 字节：约 $10^{${fmt(lgBytes,1)}}$ 字节 $\approx 10^{${fmt(lgBytes-12,1)}}$ TB。</p><p><strong>对比</strong> 是可观测宇宙原子数（$\sim10^{80}$）的 $10^{${fmt(ratio,1)}}$ 倍${ratio<0?'（比它还小）':''}。</p><p class="small">默认 $V=2,T=4$ 时 $V^T=16$，表还列得下；$V=5\times10^4,T=10^3$ 时彻底不可行——所以需要 chain rule 的结构化分解。</p>`;rerender($('#tokSteps'))}
+function toSup(n){return String(n).split('').map(c=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[+c]??c).join('')}
+el.addEventListener('input',draw);range('tokT',draw,0);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 B：链式分解生成器 ============ */
+(()=>{const svg=$('#chainViz');const W=['猫','狗','跑'];
+const P1=[.5,.3,.2];
+const P2=[[.2,.5,.3],[.4,.1,.5],[.3,.4,.3]];           /* P2[x1][x2] */
+const P3=[[[.6,.2,.2],[.1,.7,.2],[.3,.2,.5]],[[.2,.6,.2],[.4,.4,.2],[.2,.3,.5]],[[.5,.3,.2],[.3,.5,.2],[.3,.3,.4]]]; /* P3[x1][x2][x3] */
+const Px2=[0,0,0];for(let a=0;a<3;a++)for(let b=0;b<3;b++)Px2[b]+=P1[a]*P2[a][b];
+const P3big=[0,1,2].map(b=>{const r=[0,0,0];for(let a=0;a<3;a++)for(let c=0;c<3;c++)r[c]+=P1[a]*P2[a][b]*P3[a][b][c];return r.map(v=>v/Px2[b])}); /* P(x3|x2) 精确边缘化 */
+let state=null;
+function sampleOnce(dist){const u=Math.random();let s=0;for(let i=0;i<3;i++){s+=dist[i];if(u<s)return i}return 2}
+function generate(){const seed=Math.random();const x1=sampleOnce(P1),x2=sampleOnce(P2[x1]),x3=sampleOnce(P3[x1][x2]);
+  state={x1,x2,x3,seed};$('#chainSeed').textContent='seed '+fmt(seed,4);draw()}
+function draw(){svgClear(svg);const k=Number($('#chainK').value);
+  if(!state){$('#chainSteps').innerHTML='<p>点击「随机生成一句」开始。</p>';return}
+  const{x1,x2,x3}=state;
+  const d1=P1,d2=P2[x1],d3full=P3[x1][x2],d3=k>=2?d3full:P3big[x2];
+  const groups=[{t:'P(x₁)',d:d1,pick:x1,x0:90},{t:'P(x₂|x₁='+W[x1]+')',d:d2,pick:x2,x0:380},{t:(k>=2?'P(x₃|x₁,x₂)':'P(x₃|x₂)（截断）'),d:d3,pick:x3,x0:670}];
+  groups.forEach(g=>{
+    svgLabel(svg,g.x0+80,28,g.t,{size:11,fill:'var(--accent)'});
+    g.d.forEach((p,j)=>{const bx=g.x0+20+j*60,bh=140*p;svgAdd(svg,'rect',{x:bx,y:200-bh,width:44,height:bh,rx:5,fill:j===g.pick?'var(--accent)':'var(--surface2)',stroke:j===g.pick?'var(--accent)':'var(--line)','stroke-width':1.4});
+      svgLabel(svg,bx+22,200-bh-12,fmt(p,2),{size:9,fill:j===g.pick?'var(--accent)':'var(--muted)'});
+      svgLabel(svg,bx+22,220,W[j],{size:11,fill:j===g.pick?'var(--accent)':'var(--ink)'})});
+  });
+  [1,2].forEach(i=>{const mx=groups[i].x0-45;path(svg,`M${groups[i-1].x0+185} 160 H${mx} V100 H${groups[i].x0-8}`,{class:'svg-edge',stroke:'var(--accent)','marker-end':marker(svg,'chA'+i,'var(--accent)')});svgLabel(svg,mx,140,'抽样', {size:9,fill:'var(--accent)'})});
+  svgLabel(svg,470,268,'生成结果：'+W[x1]+' '+W[x2]+' '+W[x3],{size:13,fill:'var(--ink)'});
+  const pJoint=P1[x1]*P2[x1][x2]*P3[x1][x2][x3],pTrunc=P1[x1]*P2[x1][x2]*P3big[x2][x3];
+  $('#chainSteps').innerHTML=String.raw`<p><strong>逐位抽样（seed 已记录）</strong> $x_1=\text{${W[x1]}}$（用了 $P(x_1)=${fmt(P1[x1],2)}$），$x_2=\text{${W[x2]}}$（$P(x_2\mid x_1)=${fmt(P2[x1][x2],2)}$），$x_3=\text{${W[x3]}}$（$P(x_3\mid \cdot)=${fmt(d3[x3],2)}$）。</p><p><strong>精确联合（chain rule）</strong> $P=${fmt(P1[x1],2)}\times${fmt(P2[x1][x2],2)}\times${fmt(P3[x1][x2][x3],2)}=${fmt(pJoint,4)}$。</p><p><strong>截断视角</strong> $k=${k}$：${k>=2?'$k\\ge T-1$，看到全部前文，与精确联合一致':'只用 $P(x_3\\mid x_2)='+fmt(P3big[x2][x3],4)+'$（由全表精确边缘化现算），截断模型给本句的概率为 $'+fmt(pTrunc,4)+'$——与精确值 $'+fmt(pJoint,4)+'$ 不同，这就是有限 context 的近似代价'}。</p><p class="small">连点按钮：每次抽样都重新调用 <code>Math.random()</code>，序列与联合概率随之改变。</p>`;rerender($('#chainSteps'))}
+$('#chainGen').addEventListener('click',()=>{generate();toast('已按 chain rule 重新抽样')});
+range('chainK',draw,0);generate();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 C：两步交叉熵工作台（Worked example 1） ============ */
+(()=>{const svg=$('#ceViz');
+function draw(){svgClear(svg);const p1=Number($('#ceP1').value),p2=Number($('#ceP2').value);
+  const l1=-Math.log(p1),l2=-Math.log(p2),lsum=l1+l2,lmean=lsum/2;
+  const x0=90,y0=30,w=760,h=200,ymax=Math.max(lsum,1)*1.25;
+  frame(svg,{x0,y0,w,h,xmin:0,xmax:3,ymin:0,ymax,xticks:[],yticks:[0,ymax/2.5,ymax/1.25],yp:2});
+  const bars=[{n:'−log p(B|A)',v:l1,c:'var(--blue)'},{n:'−log p(C|A,B)',v:l2,c:'var(--warm)'},{n:'ℒ_sum',v:lsum,c:'var(--accent)'}];
+  bars.forEach((b,i)=>{const bx=x0+90+i*240,bh=h*b.v/ymax;svgAdd(svg,'rect',{x:bx,y:y0+h-bh,width:110,height:bh,rx:7,fill:b.c,opacity:.8});svgLabel(svg,bx+55,y0+h-bh-13,fmt(b.v,4),{size:11,fill:b.c});svgLabel(svg,bx+55,y0+h+18,b.n,{size:10})});
+  const ym=scaleY(lmean,0,ymax,y0,h);
+  line(svg,x0,ym,x0+w,ym,{stroke:'var(--danger)','stroke-dasharray':'6 4','stroke-width':2});
+  svgLabel(svg,x0+w-8,ym-12,'ℒ_mean = '+fmt(lmean,4),{anchor:'end',size:10,fill:'var(--danger)'});
+  const d2new=-Math.log(0.5);
+  $('#ceSteps').innerHTML=String.raw`<p><strong>第 1 步：逐位置 NLL</strong> $\ell_1=-\log ${fmt(p1,2)}=${fmt(l1,4)}$，$\ell_2=-\log ${fmt(p2,2)}=${fmt(l2,4)}$。</p><p><strong>第 2 步：求和（log 把乘积变和）</strong> $\mathcal L_{\mathrm{sum}}=-\log(${fmt(p1,2)}\times${fmt(p2,2)})=${fmt(lsum,4)}$。</p><p><strong>第 3 步：除以有效目标数 $T=2$</strong> $\mathcal L_{\mathrm{mean}}=${fmt(lmean,4)}$。</p><p class="small">动态对比：若把 $p_\theta(C\mid A,B)$ 从当前 $${fmt(p2,2)}$ 提到 $0.5$，第二项损失将从 $${fmt(l2,4)}$ 变为 $${fmt(d2new,4)}$。讲义基准：$0.5,0.25$ 时 $\mathcal L_{\mathrm{sum}}=\log 8\approx2.0794$、$\mathcal L_{\mathrm{mean}}\approx1.0397$；$0.25\to0.5$ 时第二项从 $1.3863$ 降到 $0.6931$。标签是 $B,C$ 而不是输入 $A,B$。</p>`;rerender($('#ceSteps'))}
+range('ceP1',draw,2);range('ceP2',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 D：查表加位置（Worked example 2） ============ */
+(()=>{const svg=$('#embViz');const TOK=['猫','狗','跑'];
+const E=[[1,0,1],[0,1,1],[1,1,0]],P=[[1,0,0],[0,2,-1],[1,1,1],[0,0,2],[-1,1,0]];
+let cur=0;
+const pick=$('#embPick');
+TOK.forEach((name,i)=>{const b=document.createElement('button');b.type='button';b.className='btn xs'+(i===0?' active':'');b.textContent=name;b.dataset.tok=i;b.addEventListener('click',()=>{cur=i;$$('button',pick).forEach(q=>q.classList.toggle('active',Number(q.dataset.tok)===i));draw()});pick.appendChild(b)});
+function draw(){svgClear(svg);const r=Number($('#embPos').value);
+  const ev=E[cur],pv=P[r-1],hv=ev.map((x,i)=>x+pv[i]);
+  const x0=90,y0=40,w=760,h=180,ymin=-2,ymax=3;
+  frame(svg,{x0,y0,w,h,xmin:0,xmax:3,ymin,ymax,xticks:[],yticks:[-2,0,3],yp:0});
+  const groups=[{t:'E（是什么）',v:ev,c:'var(--blue)',cx:180},{t:'P（在哪里）',v:pv,c:'var(--warm)',cx:470},{t:'H = E + P',v:hv,c:'var(--accent)',cx:760}];
+  groups.forEach(g=>{
+    svgLabel(svg,g.cx,y0-14,g.t,{size:11,fill:g.c});
+    g.v.forEach((val,j)=>{const bx=g.cx-97+j*65,zy=scaleY(0,ymin,ymax,y0,h),by=scaleY(Math.max(val,0),ymin,ymax,y0,h),bh=Math.abs(scaleY(val,ymin,ymax,y0,h)-zy);
+      svgAdd(svg,'rect',{x:bx,y:by,width:50,height:Math.max(bh,1),rx:4,fill:g.c,opacity:.8});
+      svgLabel(svg,bx+25,val>=0?by-12:by+bh+16,fmt(val,0),{size:10,fill:g.c});
+      svgLabel(svg,bx+25,y0+h+16,'d'+(j+1),{size:9,fill:'var(--muted)'})});
+  });
+  ['+','='].forEach((s,i)=>{svgLabel(svg,325+i*290,y0+h/2,s,{size:18,fill:'var(--muted)',bg:'transparent'})});
+  $('#embSteps').innerHTML=String.raw`<p><strong>查表</strong> $E_{\text{${TOK[cur]}},:}=[${ev.join(',')}]$，$P_{${r},:}=[${pv.join(',')}]$。</p><p><strong>相加</strong> $H^{(0)}_{${r},:}=E_{\text{${TOK[cur]}},:}+P_{${r},:}=[${hv.join(',')}]$。</p><p class="small">讲义基准：猫 @ 位置 2 得 $[1,2,0]$。换一个位置：$E$ 行不变、$P$ 行变——token embedding 负责“是什么”，position embedding 负责“在哪里”。行号 $r$ 从 1 起，token 下标从 0 起。</p>`;rerender($('#embSteps'))}
+range('embPos',draw,0);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 D2：形状速查（自测题 3） ============ */
+(()=>{const svg=$('#shViz');
+function draw(){svgClear(svg);const V=Number($('#shV').value),d=Number($('#shD').value),T=Number($('#shT').value);
+  const boxes=[{t:'E（token embedding）',s:V+' × '+d,c:'var(--blue)',x:90},{t:'P（positional）',s:T+' × '+d,c:'var(--warm)',x:400},{t:'H⁽⁰⁾ = H_tok + P',s:T+' × '+d,c:'var(--accent)',x:710}];
+  boxes.forEach(b=>{svgAdd(svg,'rect',{x:b.x,y:60,width:180,height:80,rx:10,fill:`color-mix(in srgb,${b.c} 10%,var(--surface))`,stroke:b.c,'stroke-width':1.8});svgLabel(svg,b.x+90,60+34,b.t,{size:10,fill:b.c});svgLabel(svg,b.x+90,60+62,b.s,{size:13,fill:'var(--ink)'})});
+  svgLabel(svg,325,105,'+',{size:16,fill:'var(--muted)',bg:'transparent'});svgLabel(svg,655,105,'=',{size:16,fill:'var(--muted)',bg:'transparent'});
+  svgLabel(svg,470,30,'矩阵形状（行 × 列）',{size:11,fill:'var(--muted)'});
+  $('#shSteps').innerHTML=String.raw`<p>$E\in\mathbb R^{${V}\times${d}}$（$V$ 行查表），$P\in\mathbb R^{${T}\times${d}}$，$H_{\mathrm{tok}}\in\mathbb R^{${T}\times${d}}$，$H^{(0)}=H_{\mathrm{tok}}+P\in\mathbb R^{${T}\times${d}}$。</p><p class="small">加 batch 维：token id 张量 $B\times T$，查表结果 $B\times T\times d_{\mathrm{model}}$。默认 $V=10^4,d=512,T=128$ 即自测题 3 答案。相加要求两者维度完全一致。</p>`;rerender($('#shSteps'))}
+range('shV',draw,0);range('shD',draw,0);range('shT',draw,0);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 E：√d_k 缩放模拟 ============ */
+(()=>{const svg=$('#scViz');const el=$('#scDk');let dots=null;
+function resample(){const dk=Math.round(Math.pow(10,Number(el.value)));const N=2000;dots=new Float64Array(N);
+  for(let i=0;i<N;i++){let s=0;for(let j=0;j<dk;j++)s+=boxMuller()*boxMuller();dots[i]=s}
+  $('#scSeed').textContent='seed '+fmt(Math.random(),4)}
+function panel(x0,vals,mu,si,title,c){const y0=45,w=400,h=200,lo=mu-4*si,hi=mu+4*si,nb=31,counts=new Array(nb).fill(0);
+  vals.forEach(v=>{const b=clamp(Math.floor((v-lo)/(hi-lo)*nb),0,nb-1);counts[b]++});
+  const cmax=Math.max(...counts)*1.15;
+  frame(svg,{x0,y0,w,h,xmin:lo,xmax:hi,ymin:0,ymax:cmax,xticks:[lo,mu,hi].map(v=>Math.round(v*100)/100),xp:1,yticks:[0,cmax/1.15],yp:0});
+  counts.forEach((cn,i)=>{const bx=scaleX(lo+(hi-lo)*i/nb,lo,hi,x0,w),bw=w/nb-1;svgAdd(svg,'rect',{x:bx,y:scaleY(cn,0,cmax,y0,h),width:bw,height:scaleY(0,0,cmax,y0,h)-scaleY(cn,0,cmax,y0,h),fill:c,opacity:.55})});
+  const bw2=(hi-lo)/nb;
+  let d='';for(let kk=0;kk<=120;kk++){const x=lo+(hi-lo)*kk/120,y=vals.length*gauss(x,mu,si)*bw2;d+=(kk?' L':'M')+scaleX(x,lo,hi,x0,w).toFixed(1)+','+scaleY(clamp(y,0,cmax),0,cmax,y0,h).toFixed(1)}
+  path(svg,d,{stroke:c,'stroke-width':2.6});
+  svgLabel(svg,x0+w/2,y0-14,title,{size:11,fill:c})}
+function draw(){svgClear(svg);const dk=Math.round(Math.pow(10,Number(el.value)));$('#scDkOut').textContent=fmt(dk,0);
+  if(!dots)resample();
+  const sd=Math.sqrt(dk),scaled=Array.from(dots,v=>v/sd);
+  const stat=a=>{const m=a.reduce((x,y)=>x+y,0)/a.length;const v=a.reduce((x,y)=>x+(y-m)**2,0)/a.length;return[m,Math.sqrt(v)]};
+  const [m1,s1]=stat(Array.from(dots)),[m2,s2]=stat(scaled);
+  panel(70,Array.from(dots),0,sd,'未缩放 q·k：理论 N(0, '+fmt(dk,0)+')','var(--danger)');
+  panel(520,scaled,0,1,'缩放后 /√d_k：理论 N(0, 1)','var(--accent)');
+  $('#scSteps').innerHTML=String.raw`<p><strong>设定</strong> $d_k=${dk}$，2000 对分量独立 $\mathcal N(0,1)$ 的向量（真 <code>Math.random()</code>）。</p><p><strong>未缩放点积</strong> 实测标准差 $${fmt(s1,2)}$，理论 $\sqrt{d_k}=${fmt(sd,2)}$；实测均值 $${fmt(m1,3)}$（理论 0）。</p><p><strong>缩放后</strong> 实测标准差 $${fmt(s2,3)}$，理论 $1$。</p><p class="small">点积 $q_ik_j^\top=\sum_{r=1}^{d_k}q_{ir}k_{jr}$ 的方差约随 $d_k$ 增长；不缩放时大 $d_k$ 让 softmax 过早饱和到近 one-hot、梯度消失。scaling 管数值尺度，mask 管看未来——职责不同。</p>`;rerender($('#scSteps'))}
+el.addEventListener('input',()=>{resample();draw()});
+$('#scResample').addEventListener('click',()=>{resample();draw();toast('已重新采样 2000 对向量')});
+resample();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 F：masked attention 复算器（讲义第 6 节） ============ */
+(()=>{const svg=$('#attViz');
+const Q=[[1,0],[1,1],[0,1]],K=[[1,0],[0,1],[1,1]],V=[[1,0],[0,2],[3,1]],SQ=Math.SQRT2;
+let row=3,maskOn=true;
+const pick=$('#attPick');
+[1,2,3].forEach(i=>{const b=document.createElement('button');b.type='button';b.className='btn xs'+(i===3?' active':'');b.textContent='行 i='+i;b.dataset.row=i;b.addEventListener('click',()=>{row=i;$$('button',pick).forEach(q=>q.classList.toggle('active',Number(q.dataset.row)===i));draw()});pick.appendChild(b)});
+const maskBtn=$('#attMask');maskBtn.addEventListener('click',()=>{maskOn=!maskOn;maskBtn.textContent='causal mask：'+(maskOn?'开':'关');maskBtn.setAttribute('aria-pressed',String(maskOn));draw()});
+function compute(){const raw=Q.map(q=>K.map(k=>q[0]*k[0]+q[1]*k[1]));
+  const S=raw.map(r=>r.map(v=>v/SQ));
+  const A=S.map((r,i)=>{const vis=r.map((v,j)=>(maskOn&&j>i)?-Infinity:v);const m=Math.max(...vis);const e=vis.map(v=>v===-Infinity?0:Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);return e.map(v=>v/s)});
+  const O=A.map(a=>[a[0]*V[0][0]+a[1]*V[1][0]+a[2]*V[2][0],a[0]*V[0][1]+a[1]*V[1][1]+a[2]*V[2][1]]);
+  return{raw,S,A,O}}
+function draw(){svgClear(svg);const{raw,S,A,O}=compute();const i=row-1;
+  /* heatmap */
+  const x0=120,y0=65,cs=64;
+  svgLabel(svg,x0+cs*1.5,y0-30,'A = softmax_row(S + M)',{size:11,fill:'var(--accent)'});
+  for(let a=0;a<3;a++){svgLabel(svg,x0+a*cs+cs/2,y0-10,'k'+(a+1),{size:10,fill:'var(--muted)'});svgLabel(svg,x0-16,y0+a*cs+cs/2+4,'q'+(a+1),{anchor:'end',size:10,fill:'var(--muted)'})}
+  for(let a=0;a<3;a++)for(let b=0;b<3;b++){const masked=maskOn&&b>a;const v=A[a][b];
+    svgAdd(svg,'rect',{x:x0+b*cs,y:y0+a*cs,width:cs-4,height:cs-4,rx:6,fill:masked?'var(--surface2)':'var(--accent)',opacity:masked?1:0.15+0.75*v,stroke:a===i?'var(--danger)':'var(--line)','stroke-width':a===i?2.4:1});
+    svgLabel(svg,x0+b*cs+cs/2-2,y0+a*cs+cs/2+2,masked?'—':fmt(v,3),{size:10,fill:masked?'var(--muted)':'var(--ink)',bg:'transparent'})}
+  svgLabel(svg,x0+cs*1.5,y0+3*cs+24,maskOn?'mask 开：屏蔽右上三角':'mask 关：全行可见（泄漏！）',{size:10,fill:maskOn?'var(--muted)':'var(--danger)'});
+  /* weighted sum panel */
+  const a=A[i],o=O[i],bx0=500,by=300,bhMax=190;
+  svgLabel(svg,680,30,'o'+row+' = Σⱼ a_'+row+'j·v_j',{size:11,fill:'var(--accent)'});
+  a.forEach((v,j)=>{const bx=bx0+j*125,bh=bhMax*v;
+    svgAdd(svg,'rect',{x:bx,y:by-bh,width:56,height:Math.max(bh,1),rx:5,fill:'var(--blue)',opacity:.75});
+    svgAdd(svg,'rect',{x:bx,y:by+34,width:56,height:26,rx:5,fill:'var(--surface2)',stroke:'var(--line)'});
+    svgLabel(svg,bx+28,by-bh-12,fmt(v,4),{size:10,fill:'var(--blue)'});
+    svgLabel(svg,bx+28,by+18,'a'+row+(j+1),{size:9,fill:'var(--muted)'});
+    svgLabel(svg,bx+28,by+51,'v'+(j+1)+'=['+V[j].join(',')+']',{size:9,fill:'var(--ink)',bg:'transparent'})});
+  line(svg,bx0-20,by,bx0+2*125+80,by,{class:'svg-axis'});
+  svgLabel(svg,680,62,'o'+row+' = ['+fmt(o[0],4)+', '+fmt(o[1],4)+']',{size:13,fill:'var(--accent)'});
+  const exps=a.map((v,j)=>{const sv=(maskOn&&j>i)?null:S[i][j];return sv===null?'0（被 mask）':fmt(Math.exp(sv),4)});
+  const denom=S[i].reduce((acc,v,j)=>(maskOn&&j>i)?acc:acc+Math.exp(v),0);
+  $('#attSteps').innerHTML=String.raw`<p><strong>第 1 步：raw score</strong> $q_${row}K^\top=[${raw[i].map(v=>fmt(v,0)).join(', ')}]$。</p><p><strong>第 2 步：$/\sqrt{d_k}=\sqrt2\approx1.4142$</strong> $S_{${row},:}=[${S[i].map(v=>fmt(v,4)).join(', ')}]$。</p><p><strong>第 3 步：${maskOn?'加 mask $M$':'mask 关闭'}</strong> ${maskOn?'$j>'+row+'$ 的位置变为 $-\\infty$，$\\exp(-\\infty)=0$':'所有位置可见'}。</p><p><strong>第 4 步：softmax</strong> $\exp$ 值为 $[${exps.join(', ')}]$，分母 $=${fmt(denom,4)}$，得 $a_${row}=[${a.map(v=>fmt(v,4)).join(', ')}]$。</p><p><strong>第 5 步：加权 value</strong> $o_${row}=${a.map((v,j)=>fmt(v,4)+'['+V[j].join(',')+']').join('+')}=[${fmt(o[0],4)}, ${fmt(o[1],4)}]$。</p>${(!maskOn&&row===1)?'<p class="small" style="color:var(--danger)"><strong>标签泄漏：</strong>mask 关闭时第 1 行读到 $v_2$（对应输入 $x_1$），而第 1 行的任务正是预测 $x_1$——虚假的低损失。</p>':''}<p class="small">讲义基准：$a_3\approx[0.1978,0.4011,0.4011]$、$o_3\approx[1.4011,1.2033]$；$a_2=[0.5,0.5,0]$、$o_2=[0.5,1]$；$a_1=[1,0,0]$、$o_1=[1,0]$。</p>`;rerender($('#attSteps'))}
+draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 G：形状与参数速查 + pre-norm block 数据流 ============ */
+(()=>{const svg=$('#blkViz');
+const NDEF=[['H⁽ˡ⁾','T×d_model'],['Norm','T×d_model'],['MHA（masked）','T×d_model'],['⊕','残差相加'],['Norm','T×d_model'],['MLP','T×d_model'],['⊕','残差相加'],['H⁽ˡ⁺¹⁾','T×d_model']];
+function draw(){svgClear(svg);const d=Number($('#blkD').value),h=Number($('#blkH').value),dff=Number($('#blkF').value),V=Number($('#blkV').value),T=Number($('#blkT').value);
+  const cx=300,bw=150,bhh=40,ys=[40,96,152,216,272,328,392,448];
+  const mk='url(#blkArrow)';marker(svg,'blkArrow','var(--accent)');
+  for(let i=0;i<8;i++){const y=ys[i];const isAdd=NDEF[i][0]==='⊕';
+    if(isAdd){svgAdd(svg,'circle',{cx,cy:y+bhh/2,r:16,fill:'var(--surface)',stroke:'var(--accent)','stroke-width':2});svgAdd(svg,'text',{x:cx,y:y+bhh/2+5,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'var(--accent)'},'⊕')}
+    else{svgAdd(svg,'rect',{x:cx-bw/2,y,width:bw,height:bhh,rx:10,fill:'color-mix(in srgb,var(--accent) 8%,var(--surface))',stroke:'var(--accent)','stroke-width':1.8});svgAdd(svg,'text',{x:cx,y:y+bhh/2+4,'text-anchor':'middle','font-size':12,'font-weight':700,fill:'var(--ink)'},NDEF[i][0])}
+    if(i<7){const y1=y+bhh,y2=ys[i+1];if(!isAdd)path(svg,`M${cx} ${y1} V${y2}`,{class:'svg-edge',stroke:'var(--accent)','marker-end':mk});else path(svg,`M${cx} ${y+bhh/2+16} V${y2}`,{class:'svg-edge',stroke:'var(--accent)','marker-end':mk})}
+    svgLabel(svg,cx+bw/2+16,y+bhh/2+4,NDEF[i][1].replace('T×d_model','T×d = '+T+'×'+d),{anchor:'start',size:9,fill:'var(--muted)',bg:'transparent'})}
+  /* residual bypasses: boundary to boundary, routed around nodes */
+  path(svg,`M${cx+bw/2} ${ys[0]+bhh/2} H500 V${ys[3]+bhh/2} H${cx+16}`,{class:'svg-edge',stroke:'var(--warm)','stroke-dasharray':'6 4','marker-end':marker(svg,'blkArrowW','var(--warm)')});
+  svgLabel(svg,500,140,'残差',{size:10,fill:'var(--warm)'});
+  path(svg,`M${cx-bw/2} ${ys[3]+bhh/2} H100 V${ys[6]+bhh/2} H${cx-16}`,{class:'svg-edge',stroke:'var(--warm)','stroke-dasharray':'6 4','marker-end':marker(svg,'blkArrowW2','var(--warm)')});
+  svgLabel(svg,100,315,'残差',{size:10,fill:'var(--warm)'});
+  svgLabel(svg,cx,24,'pre-norm decoder-only block',{size:11,fill:'var(--muted)'});
+  const dk=d/h,wqkv=h*3*d*dk,wo=h*dk*d,mha=wqkv+wo,mlp=2*d*dff+dff+d,wout=d*V+V;
+  $('#blkSteps').innerHTML=String.raw`<p><strong>维度</strong> $d_k=d_{\mathrm{model}}/h=${d}/${h}=${fmt(dk,2)}$${d%h===0?'（整除，工程惯例满足）':'（<strong>不整除</strong>——$hd_v\ne d_{\mathrm{model}}$ 时 $W_O$ 仍可投回，惯例非必需）'}。</p><p><strong>每个 head</strong> $W_Q,W_K,W_V\in\mathbb R^{${d}\times${fmt(dk,2)}}$，三者共 $3dd_k=${fmt(3*d*dk,0)}$ 参数。</p><p><strong>MHA 合计（含 $W_O$）</strong> $h\cdot 3dd_k+h d_v d_{\mathrm{model}}=${fmt(mha,0)}$。</p><p><strong>MLP</strong> $d d_{\mathrm{ff}}+d_{\mathrm{ff}}+d_{\mathrm{ff}}d+d=${fmt(mlp,0)}$（两个投影加 bias）。</p><p><strong>输出投影</strong> $W_{\mathrm{out}}\in\mathbb R^{${d}\times${V}}$：$${fmt(wout,0)}$ 参数；$Z\in\mathbb R^{${T}\times${V}}$。</p><p class="small">中间张量：$Q^{(a)},K^{(a)}\in\mathbb R^{${T}\times${fmt(dk,2)}}$，$A\in\mathbb R^{${T}\times${T}}$，Concat 后 $\mathbb R^{${T}\times${fmt(h*dk,2)}}$。</p>`;rerender($('#blkSteps'))}
+range('blkD',draw,0);range('blkH',draw,0);range('blkF',draw,0);range('blkV',draw,0);range('blkT',draw,0);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 H：decoding 工作台（Worked example 3） ============ */
+(()=>{const svg=$('#decViz');const NAMES=['sitting','sleeping','blue'];let counts=null,lastPick=null,greedyShown=null;
+function probs(){const z=[1,2,3].map(j=>Number($('#decZ'+j).value)),tau=Number($('#decTau').value),k=Number($('#decK').value);
+  const p0=softmaxArr(z),pt=softmaxArr(z.map(v=>v/tau));
+  const order=[0,1,2].sort((a,b)=>pt[b]-pt[a]);const keep=new Set(order.slice(0,k));
+  const pd=pt.map((v,j)=>keep.has(j)?v:0);const s=pd.reduce((a,b)=>a+b,0);return{z,tau,k,p0,pt,pd:pd.map(v=>v/s)}}
+function group(gx,vals,ymax,title,c,suffix){svgLabel(svg,gx+80,30,title,{size:11,fill:c});
+  vals.forEach((v,j)=>{const bx=gx+20+j*62,bh=180*v/ymax;
+    svgAdd(svg,'rect',{x:bx,y:250-bh,width:46,height:Math.max(bh,1),rx:5,fill:c,opacity:.8});
+    svgLabel(svg,bx+23,250-bh-12,fmt(v,suffix),{size:9,fill:c});
+    svgLabel(svg,bx+23,270,NAMES[j],{size:9,fill:'var(--ink)'})})}
+function draw(){svgClear(svg);const{z,tau,k,p0,pt,pd}=probs();
+  group(70,p0,1,'模型概率 p_θ','var(--blue)',3);
+  group(380,pd,1,'p_dec（τ='+fmt(tau,2)+', top-'+k+'）','var(--accent)',4);
+  group(690,(counts||[0,0,0]).map(v=>v/20),1,'20 次抽样频率','var(--warm)',2);
+  if(counts){counts.forEach((c,j)=>{svgLabel(svg,690+20+j*62+23,292,c+' 次',{size:9,fill:'var(--warm)',bg:'transparent'})})}
+  svgLabel(svg,70,330,'抽样分布 = p_dec（温度缩放 + top-k 截断后归一化）',{anchor:'start',size:9,fill:'var(--muted)'});
+  const gi=pd.indexOf(Math.max(...pd));
+  $('#decSteps').innerHTML=String.raw`<p><strong>logits</strong> $z=[${z.map(v=>fmt(v,2)).join(', ')}]$；$p_\theta=\operatorname{softmax}(z)=[${p0.map(v=>fmt(v,4)).join(', ')}]$。</p><p><strong>温度</strong> $p_\tau=\operatorname{softmax}(z/\tau)=[${pt.map(v=>fmt(v,4)).join(', ')}]$（$\tau=${fmt(tau,2)}$，$\tau<1$ 更尖、$\tau>1$ 更平）。</p><p><strong>top-$k$（$k=${k}$）</strong> 保留 {${[0,1,2].filter(j=>pd[j]>0).map(j=>NAMES[j]).join(', ')}}，重新归一化：$p_{\mathrm{dec}}=[${pd.map(v=>fmt(v,4)).join(', ')}]$。</p><p><strong>greedy</strong> argmax $p_{\mathrm{dec}}$ → <strong>${NAMES[gi]}</strong>${greedyShown?'（已点选）':''}；${lastPick!==null?'上一次抽样结果：<strong>'+NAMES[lastPick]+'</strong>；':''}${counts?'20 次抽样计数：['+counts.join(', ')+']。':''}</p><p class="small">讲义基准：$p_\theta=[0.6,0.3,0.1]$ 时 top-2 得 $[0.6/0.9,0.3/0.9,0]\approx[0.6667,0.3333,0]$。抽到 sleeping（概率 0.3）并不表示模型把它的概率改成了 1；decoding 不回写参数。</p>`;rerender($('#decSteps'))}
+function sampleFrom(p){const u=Math.random();let s=0;for(let j=0;j<3;j++){s+=p[j];if(u<s)return j}return 2}
+$('#decGreedy').addEventListener('click',()=>{greedyShown=true;draw();toast('greedy = argmax p_dec')});
+$('#decSample1').addEventListener('click',()=>{lastPick=sampleFrom(probs().pd);draw();toast('抽样 1 次完成')});
+$('#decSample20').addEventListener('click',()=>{const{pd}=probs();counts=[0,0,0];for(let i=0;i<20;i++)counts[sampleFrom(pd)]++;lastPick=null;draw();toast('已抽样 20 次（Math.random()）')});
+range('decZ1',()=>{counts=null;draw()},2);range('decZ2',()=>{counts=null;draw()},2);range('decZ3',()=>{counts=null;draw()},2);range('decTau',()=>{counts=null;draw()},2);range('decK',()=>{counts=null;draw()},0);
+draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 误区九连卡 ============ */
+(()=>{const M=[
+ ['token 编号本身有语义距离','错。token id 只是查表索引；语义与句法结构通过可学习的 embedding 和后续网络参数形成。'],
+ ['chain rule 是一种独立性假设','错。chain rule 是精确分解；有限 context length 才是近似或结构限制。'],
+ ['cross-entropy 的标签是当前输入 token','错。shifted next-token 记号下，位置 t 的输入预测的是下一位置标签；数据流必须是“前缀 → 下一个 token”。'],
+ ['causal mask 只在生成时需要','错。训练一次并行计算所有位置，但每个位置仍必须用 mask 阻止读取未来，否则标签泄漏。'],
+ ['attention 权重就是 token 的最终语义重要性','不一定。权重只描述某一层、某个 head、某个输入下的加权读取；残差、MLP、多层组合与输出投影都会继续改变信息。'],
+ ['query、key、value 是三份互相独立的原始数据','错。self-attention 中三者都由同一个 H 经不同线性映射得到；功能不同，来源相同。'],
+ ['−∞ 的 mask 会让整个位置失去表示','错。它只把某些 key 位置的权重变成 0；可见位置仍产生加权 value，随后还有残差与 MLP。'],
+ ['temperature / top-k 是模型训练出来的“新概率”','错。它们是把模型输出转换成 token 选择的 decoding 规则：temperature 改 logits 缩放，top-k 改候选集合。'],
+ ['生成了高概率文本就等于证明文本正确','错。概率拟合与事实验证是不同任务；高概率只表示在该模型与上下文下更常见。']];
+const grid=$('#misGrid');M.forEach(([q,a],i)=>{const c=document.createElement('div');c.className='card mis-card';c.innerHTML=`<span class="mis-q">误区 ${i+1} · 对还是错？（点击核对）</span><p>${q}</p><p class="mis-a">${a}</p>`;c.addEventListener('click',()=>c.classList.toggle('open'));grid.appendChild(c)})})();
+
+/* glossary: grouped by first appearance */
+(()=>{const G=[
+{id:'token',t:'token（词元）',en:'token',f:'X_t\\in\\{1,2,\\ldots,V\\}',d:'实际送入模型的离散单位：词、子词、标点或特殊符号。',s:'sec-tokens',u:'把文本翻译成概率论能处理的离散序列。',why:'token id 只是查表索引，编号本身没有大小或距离语义。'},
+{id:'vocab',t:'词表',en:'vocabulary',f:'\\mathcal V,\\;|\\mathcal V|=V',d:'所有可输出 token 的有限集合。',s:'sec-tokens',u:'softmax 与 embedding 矩阵的行数都由它决定。',why:'V 与 T 一起决定联合表 V^T 的爆炸速度。'},
+{id:'categorical',t:'分类随机变量',en:'categorical variable',f:'X_t\\sim\\operatorname{Categorical}(\\boldsymbol p)',d:'取有限类别值的离散随机变量。',s:'sec-tokens',u:'每个位置的 next-token 分布都是 categorical。',why:'它把“猜下一个词”严格化为类别概率问题。'},
+{id:'chainrule',t:'概率链式法则',en:'chain rule',f:'P(x_{1:T})=\\prod_{t=1}^{T}P(x_t\\mid x_{1:t-1})',d:'把序列联合概率分解为一串条件概率的精确恒等式。',s:'sec-chain',u:'把 V^T 的联合表换成逐位置的 V 类分布。',why:'它不是独立性假设；近似只来自有限 context length。'},
+{id:'autoreg',t:'自回归',en:'autoregressive',f:'x_t\\sim P(\\cdot\\mid x_{1:t-1})',d:'用已经出现的前缀预测下一个 token 的建模方式。',s:'sec-chain',u:'生成时逐位抽样并接回前缀。',why:'它是 LLM 训练与生成共用的结构。'},
+{id:'ctxlen',t:'上下文长度',en:'context length',f:'P(x_t\\mid x_{\\max(1,t-k):t-1})',d:'工程上只使用最近 k 个 token 作为上下文的截断。',s:'sec-chain',u:'在容量、显存与计算量之间折衷。',why:'k≥T−1 时小例子能看到全部前文；k 小则读不到远处。'},
+{id:'selfsup',t:'自监督',en:'self-supervision',f:'\\text{输入 }x_{0:T-1}\\to\\text{标签 }x_{1:T}',d:'从原始文本本身构造输入和标签，无需人工标注。',s:'sec-cetrain',u:'让海量文本直接变成训练信号。',why:'标签右移一位即可，这是 LLM 可扩展性的来源之一。'},
+{id:'ce',t:'交叉熵',en:'cross-entropy',f:'\\mathcal L=-\\frac1T\\sum_{t=0}^{T-1}\\log p_\\theta(x_{t+1}\\mid x_{0:t})',d:'对真实类别概率取负对数的训练损失。',s:'sec-cetrain',u:'交给优化器最小化的标量目标。',why:'它与自回归负对数似然是同一目标的两种写法；分母是有效目标数 T。'},
+{id:'teacher',t:'教师强制',en:'teacher forcing',f:'\\text{训练位置 }t\\text{ 喂真实前缀 }x_{0:t}',d:'训练时直接用真实前缀而非模型自己的预测。',s:'sec-cetrain',u:'并行、稳定地计算所有位置的损失。',why:'它不等于读取未来标签——causal mask 仍然生效。'},
+{id:'embedding',t:'嵌入',en:'embedding',f:'E\\in\\mathbb R^{V\\times d_{model}},\\;(H_{tok})_{r,:}=E_{x_{r-1},:}',d:'把离散 token id 查表映射为连续向量的可学习矩阵。',s:'sec-embedding',u:'回答“是什么”，让点积等运算有意义。',why:'坐标由训练调整，不是手工指定的语义。'},
+{id:'posemb',t:'位置嵌入',en:'positional embedding',f:'H^{(0)}=H_{tok}+P',d:'编码 token 在序列中位置的向量，与 token embedding 同维度相加。',s:'sec-embedding',u:'回答“在哪里”，给对称的 self-attention 提供顺序信息。',why:'维度必须一致才能相加；缺它则顺序信息不足。'},
+{id:'attention-q',t:'查询向量',en:'query',f:'Q=HW_Q\\in\\mathbb R^{T\\times d_k}',d:'表示当前位置想寻找什么信息。',s:'sec-attention',u:'与各位置 key 点积产生匹配分数。',why:'行=谁在查询，这决定 mask 与 softmax 的方向。'},
+{id:'attention-k',t:'键向量',en:'key',f:'K=HW_K\\in\\mathbb R^{T\\times d_k}',d:'表示某个位置可被怎样匹配的索引。',s:'sec-attention',u:'被 query 检索；列=查询谁。',why:'k_j 是 key 向量，与 context length k 是不同对象。'},
+{id:'attention-v',t:'值向量',en:'value',f:'V=HW_V,\\;o_i=\\sum_ja_{ij}v_j',d:'被 attention 权重实际加权搬运的内容。',s:'sec-attention',u:'attention 的输出是 value 的加权和，不是 score 本身。',why:'score 只决定权重；没有 value 就没有信息被搬运。'},
+{id:'score',t:'分数',en:'score',f:'S_{ij}=q_ik_j^\\top',d:'query 与 key 的未归一化匹配值。',s:'sec-attention',u:'softmax 的输入，决定注意力分配。',why:'QK^T 的行/列语义决定 mask 屏蔽右上三角。'},
+{id:'scaled',t:'缩放点积',en:'scaled dot product',f:'S=QK^\\top/\\sqrt{d_k}',d:'用 √d_k 除 query-key 点积。',s:'sec-attention',u:'稳定分数尺度，避免 softmax 过早饱和。',why:'分量独立零均值方差 1 时点积方差≈d_k，幅度≈√d_k。'},
+{id:'cmask',t:'因果掩码',en:'causal mask',f:'M_{ij}=0\\ (j\\le i),\\ -\\infty\\ (j>i)',d:'把未来位置的 attention 分数屏蔽的可见性约束。',s:'sec-attention',u:'训练并行与左到右生成共享的因果结构。',why:'exp(−∞)=0，可见项行内重新归一化；它不是删数据。'},
+{id:'mha',t:'多头注意力',en:'multi-head attention',f:'O^{(a)}=\\operatorname{softmax}_{row}\\left(\\frac{Q^{(a)}K^{(a)\\top}}{\\sqrt{d_k}}+M\\right)V^{(a)}',d:'并行使用 h 组 Q/K/V 投影空间再拼接投回。',s:'sec-block',u:'让不同 head 学习不同关系。',why:'d_k=d_v=d_model/h 是工程惯例而非数学必需。'},
+{id:'residual',t:'残差连接',en:'residual connection',f:'U=H+\\operatorname{MHA}(\\operatorname{Norm}(H))',d:'把子层输入加回子层输出。',s:'sec-block',u:'保持信息流与梯度通路，支持深层堆叠。',why:'没有它深层 Transformer 很难训练。'},
+{id:'mlp',t:'前馈层',en:'MLP / feedforward',f:'\\operatorname{MLP}(u)=\\sigma(uW_1+b_1)W_2+b_2',d:'逐位置做通道维非线性变换，不跨 token 混合。',s:'sec-block',u:'与 MHA 互补：一个管位置间、一个管位置内。',why:'block 的参数量大头通常在 MLP。'},
+{id:'logits',t:'词表未归一化分数',en:'logits',f:'Z=H^{(L)}W_{out}+\\mathbf 1_Tb_{out}^\\top\\in\\mathbb R^{T\\times V}',d:'softmax 之前的词表分数。',s:'sec-block',u:'每行 V 个 logits 经 softmax 得到 next-token 概率。',why:'logits 不是概率，也不是逐类别的 log-odds 解释。'},
+{id:'decoding',t:'解码 / 选词',en:'decoding',f:'p_\\theta(\\cdot\\mid c)\\in\\Delta^{V-1}\\to\\hat x_{t+1}',d:'把概率分布变成实际 token 的规则。',s:'sec-decoding',u:'greedy / sampling / top-k / top-p / beam 的选择层。',why:'它改变“怎样选”，不回写参数，也不改变已评价的概率。'},
+{id:'temp',t:'温度',en:'temperature',f:'p_\\tau=\\operatorname{softmax}(\\boldsymbol z/\\tau)',d:'对 logits 做缩放的 decoding 超参数：τ<1 更尖，τ>1 更平。',s:'sec-decoding',u:'调节生成的保守/多样程度。',why:'用 τ 记号以避免与序列长度 T 混淆。'},
+{id:'topk',t:'前 k 候选',en:'top-k',f:'\\text{保留概率最高的 }k\\text{ 个再归一化}',d:'只允许概率最高的 k 个 token 参与选择。',s:'sec-decoding',u:'剪掉长尾，k=1 时退化为 greedy。',why:'top-p 改按累计概率取集合；二者都是 decoding 而非训练。'},
+{id:'pretrain',t:'预训练',en:'pre-training',f:'\\max_\\theta\\sum_t\\log p_\\theta(x_{t+1}\\mid x_{0:t})',d:'从大规模数据学习基础分布的阶段。',s:'sec-practice',u:'核心 next-token 目标所属的阶段。',why:'后训练改变行为，但不替代这一阶段的目标。'},
+{id:'posttrain',t:'后训练',en:'post-training',f:'\\text{instruction / alignment / RLHF / DPO / verifiable}',d:'指令、偏好与可验证任务等后续调整阶段。',s:'sec-practice',u:'让模型输出更符合指令与人类偏好。',why:'不应与“基础分布上的 next-token MLE”混为一谈。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
