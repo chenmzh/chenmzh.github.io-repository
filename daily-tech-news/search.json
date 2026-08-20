@@ -1,6 +1,52 @@
 {
-  "updated": "2026-08-19",
+  "updated": "2026-08-20",
   "briefs": [
+    {
+      "date": "2026-08-20",
+      "title": "每日科技新闻简报｜2026-08-20",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "政策",
+        "公司",
+        "科研",
+        "硬件",
+        "机器人"
+      ],
+      "items": [
+        "Cerebras 发布 CS-4，将 AI 推理竞争推进到机架级系统",
+        "Anthropic 称 Claude 已在蛋白质设计和实验数据分析中缩短科研迭代",
+        "Marvell 给 Google 发行最高约 122 亿美元的股份认购权，绑定定制 AI 芯片合作",
+        "OpenAI 预览 Private Safety Processing，为零数据保留部署增加跨交互安全信号",
+        "OpenAI 将 ChatGPT Ads 扩展到 31 个欧洲市场",
+        "Flock 的 OS Investigate 暴露出从车牌检索到人物关系推断的监控能力",
+        "Reuters：Samsung 将提高先进代工价格，4nm/5nm 新订单最高涨约 15%",
+        "Stripe 确认收购 OpenRouter，交易金额仍未由公司公开",
+        "Unitree 在上海上市首日一度上涨 629%，收盘仍较发行价上涨 460%",
+        "Amazon 计划在 2026 年底前把无人机配送扩展到近 500 个美国城市",
+        "宾夕法尼亚州要求数据中心先取得地方批准并承担新增基础设施成本"
+      ],
+      "summary": "Cerebras 发布 CS-4 机架级 AI 推理系统，Marvell 通过附条件认股权证绑定 Google 定制芯片合作，AI 基础设施竞争继续从单芯片转向系统、供应链和长期商业承诺；Anthropic 披露 Claude 在蛋白质设计与实验数据分析中的早期结果，AI for Science 正向实验闭环推进。OpenAI 预览兼容零数据保留的 Private Safety Processing，并扩大欧洲广告试点；Flock 监控系统调查、Unitree 上市、Amazon 无人机扩张和宾州数据中心行政命令，则把 AI 的隐私、机器人商业化、物流部署与社会许可问题推到同一窗口。",
+      "markdown": "daily-tech-news/briefs/2026-08-20.md",
+      "url": "reader.html?date=2026-08-20",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "政策",
+        "公司",
+        "科研",
+        "硬件",
+        "机器人"
+      ]
+    },
     {
       "date": "2026-08-19",
       "title": "每日科技新闻简报｜2026-08-19",
