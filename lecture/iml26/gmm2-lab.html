@@ -61,7 +61,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>每个 $K$ 单独训练（多次 <span class="term-ref" data-term="restart">restart</span> 取训练似然最好的一次），再算 $\ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)$，除以 $|\mathcal V|$ 让不同验证集大小可比。</p></div>
         <div class="five"><h3>为什么重要</h3><p>验证样本只用来算 $p_{\hat\theta_K}(x)$，绝不能再参与责任度或参数更新，否则它就不再是独立的泛化检查。</p></div>
       </div>
-      <div class="formula"><p>两个分数的方向完全不同：</p><p>$$\ell_{\mathrm{train}}(K)=\sum_{i\in\mathrm{train}}\log p_{\hat\theta_K}(x_i)\ \text{随 }K\text{ 单调变好},\qquad \ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)\ \text{有峰}.$$</p><p class="small">$\hat\theta_K$ 表示“用候选 $K$ 独立拟合出的一整套参数”，不是在一次运行里临时增减组件。$\ell$ 是希腊字母 ell（log-likelihood），$K$ 是组件数；下文求和下标用 $i$（样本）与 $j$（组件），不要与 $K$ 混淆。</p></div>
+      <div class="formula"><p>两个分数的方向完全不同：</p><p>$$\ell_{\mathrm{train}}(K)=\sum_{i\in\mathrm{train}}\log p_{\hat\theta_K}(x_i)\ \text{随 }K\text{ 单调变好},\qquad \ell_{\mathrm{val}}(K)=\frac{1}{|\mathcal V|}\sum_{i\in\mathcal V}\log p_{\hat\theta_K}(x_i)\ \text{有峰}.$$</p><p class="small">$\hat\theta_K$ 表示“用候选 $K$ 独立拟合出的一整套参数”，不是在一次运行里临时增减组件。$\ell$ 是希腊字母 ell（log-likelihood），$K$ 是组件数；下文求和下标用 $i$（样本）与 $j$（组件），不要与 $K$ 混淆。为什么“随 $K$ 单调变好”可以写成严格结论：$K$ 组件模型是 $K{+}1$ 组件模型在 $w_{K+1}=0$（极限意义下）的特例——候选集合随 $K$ <strong>嵌套</strong>扩大，所以可达的最大训练似然随 $K$ 单调不降。注意这是“可达上界”的结论：EM 只保证找到局部最优，实际单次跑出的训练曲线可能抖动，但趋势不会反转。</p></div>
       <div class="control-panel">
         <div><div class="label-row"><button class="btn primary" id="selRegen" type="button">重新生成数据</button><span class="pill" id="selSeedPill">seed —</span></div>
           <div class="controls">
@@ -86,6 +86,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>为什么重要</h3><p>这不是 EM 算错了，而是<strong>无约束 MLE 目标本身允许病态解</strong>：这个参数序列没有正常的有限最大值。</p></div>
       </div>
       <div class="formula"><p>先单点，再把它接回混合目标。混合密度是各项之和，所以任意一项都能给它下界：</p><p>$$\log\mathcal N(x_i;x_i,\sigma^2)=-\frac12\log(2\pi\sigma^2)\to+\infty,$$</p><p>$$p(x_i)=\sum_{k=1}^K w_k\,\mathcal N(x_i;\mu_k,\sigma_k^2)\ \ge\ w_j\,\mathcal N(x_i;x_i,\sigma_j^2)=\frac{w_j}{\sqrt{2\pi\sigma_j^2}}.$$</p><p class="small">只要 $w_j&gt;0$ 不以更快速度消失，$\sigma_j^2\to0$ 就把 $\log p(x_i)$ 推向无穷；其余训练点仍由别的组件提供有限正密度，于是总 log-likelihood 被这一项单独推走。优化器看到的是“目标越来越好”，我们看到的是一个组件只背下了一个样本。</p></div>
+      <div class="formula"><p>多维版本：$d$ 维高斯的归一化因子由行列式控制，而行列式是特征值的乘积（特征值/特征向量的定义见第 16 讲 PCA）：</p><p>$$\mathcal N(x;\mu,\Sigma)=\frac{1}{(2\pi)^{d/2}\,|\Sigma|^{1/2}}\exp\!\left(-\tfrac12(x-\mu)^\top\Sigma^{-1}(x-\mu)\right),\qquad |\Sigma|=\prod_{r=1}^{d}\lambda_r.$$</p><p class="small">把 $\mu_j$ 压在某个 $x_i$ 上、再让任一特征值 $\lambda_{jr}\to0$，就有 $|\Sigma_j|\to0$，归一化因子爆炸——几何上椭圆在该主轴方向被压成薄片；数值上 $\Sigma_j^{-1}$ 与 $\log|\Sigma_j|$ 都开始不稳定。这与一维的 $1/\sqrt{2\pi\sigma^2}$ 是同一件事：$\sigma^2$ 就是一维时的唯一特征值。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="colT">标准差 $\sigma$（对数刻度）</label><input id="colT" type="range" min="-1.7" max="0.301" step="0.005" value="-0.301"><output id="colTOut"></output></div>
@@ -109,6 +110,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>若 $\Sigma u_r=\lambda_r u_r$，则 $(\Sigma+\nu^2I)u_r=(\lambda_r+\nu^2)u_r$：<strong>特征向量不变，每个特征值加 $\nu^2$</strong>。</p></div>
         <div class="five"><h3>为什么重要</h3><p>$\nu$ 太小塌缩风险仍在，太大则所有组件被迫很宽而欠拟合——可用验证集选 $\nu$。</p></div>
       </div>
+      <div class="formula"><p>特征值地板的完整推导（关键一步是 $Iu_r=u_r$——单位矩阵不改变任何向量）：</p><p>$$(\Sigma+\nu^2I)\,u_r=\Sigma u_r+\nu^2 I u_r=\lambda_r u_r+\nu^2 u_r=(\lambda_r+\nu^2)\,u_r.$$</p><p class="small">特征向量 $u_r$ 原封不动，每个特征值被抬高 $\nu^2$；于是最小特征值 $\lambda_{\min}\ge\nu^2$，行列式 $|\Sigma+\nu^2I|=\prod_r(\lambda_r+\nu^2)\ge\nu^{2d}$，归一化因子被封顶在 $1/((2\pi)^{d/2}\nu^{d})$——上一节的发散通道被正式关闭。</p></div>
       <div class="callout warn"><strong>一个诚实警示。</strong> $\Sigma+\nu^2I$ 是工程稳定化操作，<em>不能</em>自动等同于 Wishart 先验下的 MAP 更新。真正的 Wishart/MAP 推导会在目标里出现由先验超参数决定的 $\log|\Sigma|$ 与 $\operatorname{tr}(\Psi\Sigma^{-1})$ 项；只有明确写出先验和后验目标，才能把“加对角项”解释成某个特定 MAP。</div>
       <div class="formula"><p>除了正则化强度，还要同时选 <span class="term-ref" data-term="covstruct">协方差结构</span>（$d$ 为维度，$j$ 为组件索引）：</p><p class="small">$\sigma_j^2$ 指组件 $j$ 的方差（标量），$\Sigma_j$ 指组件 $j$ 的协方差矩阵；注意与求和号 $\sum$ 区分。</p></div>
       <div class="card-grid">
@@ -161,7 +163,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>$P(Y=c\mid x)\propto P(Y=c)\,p(x\mid Y=c)$；类内组件权重 $\pi_{k\mid c}\ge0$、$\sum_{k\in\mathcal K_c}\pi_{k\mid c}=1$，与类间先验 $P(Y=c)$ 是<strong>两层不同的权重</strong>。</p></div>
         <div class="five"><h3>为什么重要</h3><p>不能把一个 component 的编号直接当成类别标签；这正是第 22 讲“组件不等于语义”的正面用法。</p></div>
       </div>
-      <div class="formula"><p>讲义 worked example 2：$P(Y=+)=0.4$、$P(Y=-)=0.6$，正类双峰、负类单峰：</p><p>$$p(x\mid +)=\tfrac12\mathcal N(x;0,1)+\tfrac12\mathcal N(x;4,1),\qquad p(x\mid -)=\mathcal N(x;2,1).$$</p><p class="small">评分 $s_c(x)=P(Y=c)\,p(x\mid Y=c)$，后验 $P(+\mid x)=s_+/(s_++s_-)$。$s$ 这里是未归一化的类别分数，与异常检测节的 $s(x)=-\log p(x)$ 是两回事，注意上下文。</p></div>
+      <div class="formula"><p>讲义 worked example 2：$P(Y=+)=0.4$、$P(Y=-)=0.6$，正类双峰、负类单峰：</p><p>$$p(x\mid +)=\tfrac12\mathcal N(x;0,1)+\tfrac12\mathcal N(x;4,1),\qquad p(x\mid -)=\mathcal N(x;2,1).$$</p><p class="small">评分 $s_c(x)=P(Y=c)\,p(x\mid Y=c)$，后验 $P(+\mid x)=s_+/(s_++s_-)$。决策规则是 $\arg\max_c s_c(x)$；决策边界满足 $s_+(x)=s_-(x)$，即 $P(+\mid x)=0.5$——下图阴影正是满足 $s_+>s_-$ 的两段区间。$s$ 这里是未归一化的类别分数，与异常检测节的 $s(x)=-\log p(x)$ 是两回事，注意上下文。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="clsP">类别先验 $P(Y=+)$</label><input id="clsP" type="range" min="0.05" max="0.95" step="0.05" value="0.4"><output id="clsPOut"></output></div>
@@ -184,6 +186,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>$x$ 被标记为异常 $\iff s(x)\ge\tau \iff p(x)\le e^{-\tau}$；想减少误报就<strong>增大</strong> $\tau$（等价地降低密度阈值 $\delta=e^{-\tau}$）。</p></div>
         <div class="five"><h3>为什么重要</h3><p>这套解释依赖“训练数据近似代表正常分布”；否则低密度只说明“在当前模型下少见”。</p></div>
       </div>
+      <div class="formula"><p>为什么“想减少误报就增大 $\tau$”是严格结论：报警集合随阈值嵌套缩小——$\tau_1<\tau_2$ 时 $\{x:s(x)\ge\tau_2\}\subseteq\{x:s(x)\ge\tau_1\}$，所以误报率 $P_{\mathrm{FA}}(\tau)$ 是 $\tau$ 的单调减函数；代价是漏报（异常点落在集合外）随之增加。这是一对显式权衡，不是可以同时白拿的两个方向。</p><p class="small">无异常标签时，用正常验证集分数的经验分位数选 $\tau$（如下方按钮的 95% 分位数校准）：这是经验控制，不是无条件保证——它要求验证集与部署分布相近。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="anoT">阈值 $\tau$</label><input id="anoT" type="range" min="0.2" max="10" step="0.05" value="2"><output id="anoTOut"></output></div>
@@ -206,7 +209,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>无标签：$\gamma_{ij}=P(Z_i=j\mid x_i,\theta^{\mathrm{old}})$；有标签（一类别一组件）：$\gamma_{ij}=\mathbf 1\{j=y_i\}$。</p></div>
         <div class="five"><h3>为什么重要</h3><p>若语义边界穿过高密度区域（聚类假设不成立），无标签数据可能误导而非帮忙。</p></div>
       </div>
-      <div class="formula"><p>一类别多组件时，$\mathbf 1\{j=y_i\}$ 不再适用。设类别 $c$ 允许的组件集合为 $\mathcal K_c$：已知 $y_i=c$ 只能断定 $Z_i\in\mathcal K_c$，于是集合外置零、集合内按当前联合分数重新归一化：</p><p>$$\gamma_{ij}=\begin{cases}\dfrac{w_j\,\mathcal N(x_i;\mu_j,\Sigma_j)}{\sum_{\ell\in\mathcal K_c}w_\ell\,\mathcal N(x_i;\mu_\ell,\Sigma_\ell)},&j\in\mathcal K_c,\\[10pt]0,&j\notin\mathcal K_c.\end{cases}$$</p><p class="small">这就是“标签提供锚点”的准确含义：排除不可能的组件，但不一定消除类别内部的模式不确定性。随后统一 $N_j=\sum_i\gamma_{ij}$、$w_j=N_j/n$、$\mu_j=\sum_i\gamma_{ij}x_i/N_j$。</p></div>
+      <div class="formula"><p>一类别多组件时，$\mathbf 1\{j=y_i\}$ 不再适用。设类别 $c$ 允许的组件集合为 $\mathcal K_c$：已知 $y_i=c$ 只能断定 $Z_i\in\mathcal K_c$，于是集合外置零、集合内按当前联合分数重新归一化：</p><p>$$\gamma_{ij}=\begin{cases}\dfrac{w_j\,\mathcal N(x_i;\mu_j,\Sigma_j)}{\sum_{\ell\in\mathcal K_c}w_\ell\,\mathcal N(x_i;\mu_\ell,\Sigma_\ell)},&j\in\mathcal K_c,\\[10pt]0,&j\notin\mathcal K_c.\end{cases}$$</p><p class="small">推导只用条件概率定义：把后验限制到事件 $Z_i\in\mathcal K_c$ 上，$P(Z_i=j\mid x_i,\,Z_i\in\mathcal K_c)=\dfrac{P(Z_i=j\mid x_i)}{P(Z_i\in\mathcal K_c\mid x_i)}$（$j\in\mathcal K_c$）；分子分母同乘 $p(x_i)$ 就化成上面的联合分数之比。这就是“标签提供锚点”的准确含义：排除不可能的组件，但不一定消除类别内部的模式不确定性。随后统一 $N_j=\sum_i\gamma_{ij}$、$w_j=N_j/n$、$\mu_j=\sum_i\gamma_{ij}x_i/N_j$。</p></div>
       <div class="control-panel">
         <div><p class="small">讲义 §10.1 的四个点 $x=0,1,4,5$。默认两组件模型调成使无标签点的 $\gamma$ 复现讲义的 $0.8/0.2$ 与 $0.1/0.9$；每个点可在 无标签 / 标为 1 / 标为 2 之间切换，右侧统计量即时重算。</p>
           <div id="semiPick"></div>
@@ -225,7 +228,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
       <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. Worked example：三高斯混合的矩与责任度</h2></div>
       <p class="section-intro">这是贯穿全讲的基准模型：$p(x)=\frac12\mathcal N(x;0,4)+\frac13\mathcal N(x;3,1)+\frac16\mathcal N(x;-3,9)$。<span class="term-ref" data-term="responsibility">责任度</span> 在第 22 讲已建立，这里作为复核：$\gamma_{ij}=P(Z_i=j\mid x_i,\theta)$，每行加和为 1。权重检查：$\frac12+\frac13+\frac16=1$。再次提醒：括号里第三个参数是方差 $\sigma^2$，所以三个标准差是 $2,1,3$。</p>
       <div class="stat-grid" id="momStats"></div>
-      <div class="formula"><p>混合矩用“全期望”逐组件加权（$\mathbb E[X^2]$ 用 $\mathbb E[X^2\mid Z=j]=\sigma_j^2+\mu_j^2$）：</p><p>$$\mathbb E[X]=\sum_j w_j\mu_j,\qquad \mathbb E[X^2]=\sum_j w_j(\sigma_j^2+\mu_j^2),\qquad \operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb E[X])^2.$$</p><p class="small">上面三张统计卡的数字由这两条公式在页面加载时现算，不是写死的文本。</p></div>
+      <div class="formula"><p>“矩”（moment）就是 $\mathbb E[X^k]$ 这类期望：一阶矩是均值，二阶（原点）矩是 $\mathbb E[X^2]$。混合模型的矩用全期望公式逐组件加权——把 $X$ 的期望拆成“先在组件内算、再按权重混合”；组件内是单个高斯，由 $\operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb E X)^2$ 移项得 $\mathbb E[X^2\mid Z=j]=\sigma_j^2+\mu_j^2$：</p><p>$$\mathbb E[X]=\sum_j w_j\mu_j,\qquad \mathbb E[X^2]=\sum_j w_j(\sigma_j^2+\mu_j^2),\qquad \operatorname{Var}(X)=\mathbb E[X^2]-(\mathbb E[X])^2.$$</p><p class="small">上面三张统计卡的数字由这两条公式在页面加载时现算，不是写死的文本。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="gamX">查询点 $x$</label><input id="gamX" type="range" min="-8" max="9" step="0.05" value="4"><output id="gamXOut"></output></div>
