@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 5 讲 · Generalization（泛化）互动实验室 | IML 2026</title>
+<meta name="description" content="第5讲 Generalization 的互动附属页：经验风险 vs 期望风险、train/val/test 分工与数据泄漏、条件均值与噪声底线、bias-variance 分解。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+.chain.c5{grid-template-columns:repeat(5,1fr)}.btn.xs{padding:3px 9px;font-size:.74rem}.pick-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin:4px 0}.pick-row .pk-name{flex:none;min-width:52px;color:var(--muted);font:700 .74rem Menlo,Monaco,monospace}table.ktab{border-collapse:collapse;width:100%;font-size:.8rem}.ktab td,.ktab th{padding:3px 7px;border-bottom:1px solid var(--line);text-align:right}.ktab th{color:var(--muted);font-weight:700}.ktab td:first-child,.ktab th:first-child{text-align:left}.ktab tr.best td{color:var(--accent);font-weight:700}
+.mis-card{cursor:pointer}.mis-card .mis-a{display:none;margin-top:6px}.mis-card.open .mis-a{display:block}.mis-card .mis-q{color:var(--warm);font-weight:700}.hist-note{font-size:.78rem;color:var(--muted)}
+</style>
+
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 05</span><span class="top-title">Generalization · 优化得好 ≠ 学得好</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-05">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 5 讲 · 互动附属页</p>
+      <h1>Generalization（泛化）</h1>
+      <p class="lead">第 1–4 讲研究“怎样把训练目标优化好”；本讲问一个更根本的问题：训练误差已经很低，为什么模型在新数据上仍然可能很差？答案的骨架是：数据是随机抽样，经验风险只是总体期望风险的有限视图，泛化误差可以分解为偏差、方差与不可约噪声。</p>
+      <div class="course-ribbon"><span class="pill">第 1–4 讲：把训练目标优化好</span><span class="pill core">本讲：经验 vs 期望风险 · 数据分工 · bias²+var+σ²</span><span class="pill extra">第 6 讲：用 CV 选超参数、Ridge/Lasso 控制复杂度</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>训练误差低 ≠ 泛化好</h3><p>一个能把训练集背下来的模型，对第 101 套尚未成交的房可能毫无把握。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>评估本身也可能被污染</h3><p>测试集一旦参与选择就失去中立性；预处理统计量沿时间线回流就是数据泄漏。</p></div>
+        <div class="card"><span class="card-kicker">主线逻辑</span><h3>随机抽样 → 两个风险 → 三份数据 → 噪声底线 → 三项分解</h3><p>先承认数据随机，再区分手里能算的和真正关心的，最后用分解解释误差从哪来。</p></div>
+      </div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 抽样</b>数据 $D\sim P_{X,Y}^{\otimes n}$ 是随机的。</div><div class="chain-step"><b>2 · 两个风险</b><span class="term-ref" data-term="emprisk">经验风险</span> $\widehat R_D$ vs <span class="term-ref" data-term="exprisk">期望风险</span> $R$。</div><div class="chain-step"><b>3 · 分工</b>train 拟合、validation 选择、test 最终评估。</div><div class="chain-step"><b>4 · 底线</b><span class="term-ref" data-term="condmean">条件均值</span> 是最优预测，<span class="term-ref" data-term="irrednoise">不可约噪声</span> 消不掉。</div><div class="chain-step"><b>5 · 分解</b>误差 $=$ bias² $+$ variance $+$ $\sigma^2$。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 300" role="img" aria-label="从风险定义到偏差方差分解的概念地图"></svg></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先把两个最容易混的量摆到台面上：手里能算的经验风险，与真正关心的期望风险。</span></div>
+    </section>
+
+    <section id="sec-risk" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 经验风险 vs 期望风险</h2></div>
+      <p class="section-intro">比较这两个量之前，先把预测函数 $f$ 当作<strong>固定</strong>的——稍后再把“$f$ 是由随机训练集学出来的”这层随机性加回来。记号约定：带帽子的 $\widehat R_D$ 是经验量（有限求和），不带帽子的 $R$ 是总体期望。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="emprisk">经验风险</span> $\widehat R_D(f)=\frac1n\sum_{i=1}^n\ell(Y_i,f(X_i))$；<span class="term-ref" data-term="exprisk">期望风险</span> $R(f)=\mathbb E_{(X,Y)\sim P_{X,Y}}[\ell(Y,f(X))]$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>一个是“这份作业的平均分”，一个是“今后所有同类考试的平均分”。前者是后者的一张有限快照。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>$\widehat R_D$ 是训练时唯一可算的目标；$R$ 才是部署后真正关心的量；差 $R-\widehat R_D$ 叫 <span class="term-ref" data-term="gengap">泛化间隙</span>。</p></div>
+        <div class="five"><h3>怎么算</h3><p>样本来自 <span class="term-ref" data-term="iid">i.i.d.</span> 假设：同分布（每个样本与未来测试点来自同一 $P_{X,Y}$）+ 独立（一个样本不改变其他样本的抽样概率）。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>泛化间隙可正可负，但训练主动压低 $\widehat R_D$，所以学到的模型往往显得乐观。三种“最优”不要混淆：$\widehat f_D$（受数据+函数类限制）、$f_\mathcal F^\star$（只受函数类限制）、$f^\star$（理想基准）。且 $\widehat f_D=\mathcal A(D)$ 是<strong>随机函数</strong>，要研究的是 $\mathbb E_D[R(\widehat f_D)]$。</p></div>
+      </div>
+      <div class="formula"><p>讲义的数值例题：$X\in\{0,1\}$ 等概率、$Y=X$、模型 $f(x)=0$、0-1 损失。期望风险恒为</p><p>$$R(f)=\frac12\cdot 0+\frac12\cdot 1=\frac12.$$</p><p>但若训练集恰好是 $D=\{(0,0),(0,0)\}$，则 $\widehat R_D(f)=0$——训练集碰巧没抽到 $X=1$，经验风险过于乐观。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="riskDraw" type="button">抽一份训练集</button><button class="btn" id="riskRep" type="button">重复抽 500 份</button><span class="pill" id="riskSeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="riskN">训练样本量 $n$</label><input id="riskN" type="range" min="2" max="200" step="1" value="2"><output id="riskNOut"></output></div>
+          </div>
+          <p class="small">实验 A「经验风险 ≠ 期望风险」：就是上面例题的模拟版。模型 $f\equiv0$、$Y=X$，所以 $\widehat R_D=$ 样本中 $X=1$ 的比例，而 $R=1/2$ 固定。默认 $n=2$：有 $1/4$ 的概率抽成全 $0$，此时 $\widehat R_D=0$——正是讲义例题。两个按钮都真用 <code>Math.random()</code>。</p></div>
+        <div class="step-box" id="riskSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="riskViz" class="viz-svg" viewBox="0 0 940 400" role="img" aria-label="经验风险抽样分布与期望风险对照"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>既然单份数据只是有限视图，就把数据分成三份各司其职——并弄清楚测试误差的统计性质。</span></div>
+    </section>
+
+    <section id="sec-splits" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. train / validation / test 与数据泄漏</h2></div>
+      <p class="section-intro"><span class="term-ref" data-term="datasplit">三份数据的分工</span>：training set 拟合参数，validation set 选择特征/模型类/正则强度/学习率/early stopping，test set 只在流程冻结后最终评估一次。validation 已参与选择，不能再当中立评估者。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="leak">数据泄漏</span> 指验证或测试信息进入训练或选择过程，使评估偏乐观。</p></div>
+        <div class="five"><h3>白话理解</h3><p>考官只要提前看过考卷的统计特征，分数就不再能说明真实水平。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>保证 $\mathbb E[\widehat R_{\mathrm{test}}(\widehat f)\mid\widehat f]=R(\widehat f)$ 成立，测试误差才是条件无偏估计。</p></div>
+        <div class="five"><h3>怎么算</h3><p>逐步：期望线性性把平均拆成逐项期望 → 独立同分布使每项等于同一个 $R(\widehat f)$ → $m$ 个相同量平均；方差 $\sigma_\ell^2/m$。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>若测试集曾参与挑特征或调阈值，第二步独立性就不成立。总原则：<strong>任何需要从数据估计参数的步骤都属于训练流程</strong>——先标准化再划分、先特征选择再 CV、打乱时间顺序，都是泄漏。</p></div>
+      </div>
+      <div class="formula"><p>固定 $\widehat f$、测试集 $m$ 个样本独立同分布时：</p><p>$$\mathbb E\bigl[\widehat R_{\mathrm{test}}(\widehat f)\mid\widehat f\bigr]=\frac1m\sum_{j=1}^m\mathbb E\bigl[\ell(Y'_j,\widehat f(X'_j))\mid\widehat f\bigr]=\frac1m\sum_{j=1}^m R(\widehat f)=R(\widehat f),\qquad \operatorname{Var}\bigl[\widehat R_{\mathrm{test}}(\widehat f)\mid\widehat f\bigr]=\frac{\sigma_\ell^2}{m}.$$</p><p class="small">第一行用期望的线性性；第二步用“测试点与产生 $\widehat f$ 的过程独立且同分布”；第三步只是把 $m$ 个相同量平均。数据集名称不保证独立性——重要的是信息是否越过边界。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="testDraw" type="button">抽一份测试集</button><button class="btn" id="testRep" type="button">重复 500 次</button><span class="pill" id="testSeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="testR">模型真实风险 $R$</label><input id="testR" type="range" min="0.05" max="0.5" step="0.01" value="0.3"><output id="testROut"></output></div>
+            <div class="control"><label for="testM">测试集大小 $m$</label><input id="testM" type="range" min="10" max="2000" step="10" value="200"><output id="testMOut"></output></div>
+          </div>
+          <p class="small">实验 B「测试误差的波动」：把单样本损失看成伯努利变量（0-1 损失下 $\sigma_\ell^2=R(1-R)$）。重复 500 次抽测试集，画 $\widehat R_{\mathrm{test}}$ 的直方图，实测均值应接近 $R$、实测标准差应接近 $\sqrt{R(1-R)/m}$——验证 $1/m$ 收缩。全部真随机现算。</p></div>
+        <div class="step-box" id="testSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="testViz" class="viz-svg" viewBox="0 0 940 340" role="img" aria-label="测试误差的抽样分布"></svg></div>
+      <div class="source-grid"><figure><img src="assets/generalization-lab/fig0.png" alt="train/val/test 信息边界流程图" loading="lazy"><figcaption>本地化讲义原图：三份数据的信息边界——test 没有箭头返回训练或选择</figcaption></figure><figure><img src="assets/generalization-lab/fig1.png" alt="数据泄漏时间线" loading="lazy"><figcaption>本地化讲义原图：预处理统计量沿时间线向验证集回流就是泄漏</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>评估框架有了；在平方损失下，“最好的可能预测”长什么样？答案是一个条件均值。</span></div>
+    </section>
+
+    <section id="sec-bayes" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>3. 平方损失下的理想预测器与噪声底线</h2></div>
+      <p class="section-intro">固定输入 $X=x$，预测器此刻只能输出一个标量 $a$，要让 $\mathbb E[(Y-a)^2\mid X=x]$ 最小。记 <span class="term-ref" data-term="condmean">条件均值</span> $m(x)=\mathbb E[Y\mid X=x]$——推导的关键是加减 $m(x)$ 后交叉项消失。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p>条件均值是给定 $x$ 时 $Y$ 的平均；<span class="term-ref" data-term="irrednoise">不可约噪声</span> $\mathbb E_X[\operatorname{Var}(Y\mid X)]$ 是同一 $x$ 下标签自身的随机波动。</p></div>
+        <div class="five"><h3>白话理解</h3><p>同一套房也可能卖出不同价格；你能做的是猜中“平均行情”，剩下的波动谁也消不掉。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>给出无模型限制时的回归基准 $f^\star$；任何模型的风险都能写成“离 $f^\star$ 多远 + 噪声底线”。</p></div>
+        <div class="five"><h3>怎么算</h3><p>加减 $m(x)$，展开 $(a+b)^2$，交叉项因 $\mathbb E[Y-m(x)\mid X=x]=0$ 消失。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>它解释了为什么存在消不掉的误差下限：同方差加性噪声 $Y=f^\star(X)+\varepsilon$、$\operatorname{Var}(\varepsilon\mid X)=\sigma^2$ 时底线就是 $\sigma^2$。</p></div>
+      </div>
+      <div class="formula"><p>逐步展开（第一步：加减 $m(x)$ 是普通恒等式；第二步：$(a+b)^2=a^2+b^2+2ab$；第三步：交叉项因子化为 $2(m(x)-a)\,\mathbb E[Y-m(x)\mid X=x]=0$）：</p><p>$$\mathbb E[(Y-a)^2\mid X=x]=\underbrace{\mathbb E[(Y-m(x))^2\mid X=x]}_{\text{与 }a\text{ 无关}}+\bigl(m(x)-a\bigr)^2.$$</p><p>第一项与 $a$ 无关，第二项在 $a=m(x)$ 时最小，所以 $f^\star(x)=\mathbb E[Y\mid X=x]$。把逐点结论对 $X$ 平均：</p><p>$$R(f)=\mathbb E_X\bigl[(f(X)-f^\star(X))^2\bigr]+\mathbb E_X\bigl[\operatorname{Var}(Y\mid X)\bigr].$$</p><p class="small">讲义 §12 的数值例可借此复现：$f^\star(x)=2x$、$\widehat f(x)=2.5x$、$X$ 等概率取 $1,2,3$，函数误差 $\frac13(0.25+1+2.25)=\frac76$；若 $\operatorname{Var}(Y\mid X)=2$，则 $R(\widehat f)=\frac76+2=\frac{19}{6}$。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="bayM">条件均值 $m(x_0)$</label><input id="bayM" type="range" min="0" max="10" step="0.5" value="5"><output id="bayMOut"></output></div>
+          <div class="control"><label for="bayD">波动半宽 $\delta$</label><input id="bayD" type="range" min="0.5" max="4" step="0.25" value="2"><output id="bayDOut"></output></div>
+          <div class="control"><label for="bayA">当前预测 $a$</label><input id="bayA" type="range" min="0" max="10" step="0.25" value="3"><output id="bayAOut"></output></div>
+        </div><p class="small">实验 C「条件均值抛物线」：固定 $x_0$，$Y\mid x_0$ 以各半概率取 $m-\delta$ 与 $m+\delta$。抛物线 $\mathbb E[(Y-a)^2\mid x_0]=\delta^2+(m-a)^2$ 由公式现算；最低点在 $a=m$、最低高度 $\operatorname{Var}=\delta^2$。移动 $a$ 滑杆看当前损失。</p></div>
+        <div class="step-box" id="baySteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="bayViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="条件均值抛物线"></svg></div>
+      <div class="source-grid"><figure><img src="assets/generalization-lab/fig2.png" alt="条件均值抛物线" loading="lazy"><figcaption>本地化讲义原图：条件均值给出最低点，但条件方差仍然存在</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>噪声底线解释了“消不掉的部分”；模型离 $f^\star$ 的误差还能再拆成偏差与方差。</span></div>
+    </section>
+
+    <section id="sec-biasvar" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>4. Bias–Variance–不可约噪声分解</h2></div>
+      <p class="section-intro">本讲最重要的推导。先指出两种独立的随机来源：$D\sim P^n$ 使预测 $\widehat f_D(x)$ 改变，测试噪声 $\varepsilon$ 使标签 $Y$ 改变。注意区分：$\sigma^2(x)$ 是标签噪声（来自 $Y\mid x$），模型方差来自训练集 $D$ 的随机性；$\mathbb E_D$ 是对训练集抽样取期望，$\mathbb E_{X,Y}$ 是对总体取期望。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="bias">偏差</span>：平均预测 $\overline f(x)=\mathbb E_D[\widehat f_D(x)]$ 离 $f^\star(x)$ 多远；<span class="term-ref" data-term="variance">模型方差</span>：单次训练结果围绕平均预测的散布。</p></div>
+        <div class="five"><h3>白话理解</h3><p>换一份训练集就换一个模型；偏差是“平均而言瞄得多准”，方差是“每次打得有多散”。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把期望平方误差拆成可加的三项，各自对应不同的改进手段。</p></div>
+        <div class="five"><h3>怎么算</h3><p>先分离 $\varepsilon$（得 $+\sigma^2(x)$），再加减 $\overline f(x)$ 使交叉项消失（得 bias² 与 variance）。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>交叉项消失不是因为某次训练碰巧平均，而是 $\mathbb E_D[\widehat f_D(x)-\overline f(x)]=0$ 恒成立。</p></div>
+      </div>
+      <div class="formula"><p>第一步（分离测试噪声）：代入 $Y=f^\star(x)+\varepsilon$ 并展开平方，交叉项因子化为 $-2\mathbb E_D[\widehat f_D(x)-f^\star(x)]\,\mathbb E[\varepsilon\mid x]=0$（用了 $D$ 与 $\varepsilon$ 独立 + 噪声零均值）：</p><p>$$\mathbb E_{D,Y\mid x}\bigl[(\widehat f_D(x)-Y)^2\bigr]=\mathbb E_D\bigl[(\widehat f_D(x)-f^\star(x))^2\bigr]+\sigma^2(x).$$</p><p>第二步（加减平均预测，普通恒等式 $(a+b)^2$）：交叉项 $2(\overline f(x)-f^\star(x))\,\mathbb E_D[\widehat f_D(x)-\overline f(x)]=0$，于是</p><p>$$\mathbb E_{D,Y\mid x}\bigl[(\widehat f_D(x)-Y)^2\bigr]=\underbrace{(\overline f(x)-f^\star(x))^2}_{\mathrm{Bias}^2(x)}+\underbrace{\mathbb E_D\bigl[(\widehat f_D(x)-\overline f(x))^2\bigr]}_{\mathrm{Variance}(x)}+\underbrace{\sigma^2(x)}_{\text{不可约噪声}}.$$</p><p class="small">再对 $X$ 取期望得总体版：$\mathbb E_D[R(\widehat f_D)]=\mathbb E_X[\mathrm{Bias}^2]+\mathbb E_X[\mathrm{Variance}]+\mathbb E_X[\sigma^2]$。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn" id="bvLec" type="button">讲义例题（4,5,7）</button><button class="btn" id="bvQuiz" type="button">自测题 5（看解析）</button></div>
+          <div class="controls">
+            <div class="control"><label for="bvP1">预测 1</label><input id="bvP1" type="range" min="0" max="10" step="0.5" value="4"><output id="bvP1Out"></output></div>
+            <div class="control"><label for="bvP2">预测 2</label><input id="bvP2" type="range" min="0" max="10" step="0.5" value="5"><output id="bvP2Out"></output></div>
+            <div class="control"><label for="bvP3">预测 3</label><input id="bvP3" type="range" min="0" max="10" step="0.5" value="7"><output id="bvP3Out"></output></div>
+            <div class="control"><label for="bvS2">噪声方差 $\sigma^2(x_0)$</label><input id="bvS2" type="range" min="0" max="4" step="0.25" value="1"><output id="bvS2Out"></output></div>
+          </div>
+          <p class="small">实验 D「bias-variance 数值复算器」（讲义 §11）：$f^\star(x_0)=5$ 固定，同一训练方法在三份独立训练集上的预测由滑杆给出。step-box 逐步现算；数轴上蓝点是三份预测、绿竖线是平均预测 $\overline f$、红竖线是真值 $f^\star=5$。</p></div>
+        <div class="step-box" id="bvSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="bvViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="bias variance 数轴复算"></svg></div>
+      <div class="source-grid"><figure><img src="assets/generalization-lab/fig4.png" alt="固定输入处 bias、variance 与噪声堆叠" loading="lazy"><figcaption>本地化讲义原图：固定输入处 bias、variance 与噪声的堆叠</figcaption></figure><figure><img src="assets/generalization-lab/fig5.png" alt="偏差方差噪声随复杂度曲线" loading="lazy"><figcaption>本地化讲义原图：三项随模型复杂度的消长；总误差最低处是折中</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>参数比样本还多时，训练误差为零的解有无穷多个——选哪一个由优化算法的隐式偏置决定（拓展）。</span></div>
+    </section>
+
+    <section id="sec-overparam" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>5. 过参数化、最小范数解与 double descent</h2></div>
+      <p class="section-intro">当 $n&lt;d$（参数多于样本），$Xw=y$ 可能有无穷多解：若 $v\in\ker(X)$，则 $X(w_0+tv)=Xw_0=y$。训练数据无法区分这些解，但新样本可能对零空间方向敏感——它们的泛化可以完全不同。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="impbias">隐式偏置</span>：损失只要求插值，优化算法与初始化决定选哪个插值解；<span class="term-ref" data-term="minnorm">最小范数解</span> $\widehat w_{\mathrm{MN}}=X^\top(XX^\top)^{-1}y$；<span class="term-ref" data-term="ddescent">double descent</span>：跨过插值阈值后测试误差可能再次下降。</p></div>
+        <div class="five"><h3>白话理解</h3><p>“都能得满分”的答案有无穷多个；从零出发的梯度下降偏爱最普通的那个。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>解释过参数化模型为何仍能泛化；也提醒参数个数不是复杂度的唯一尺度。</p></div>
+        <div class="five"><h3>怎么算</h3><p>从零初始化、适当步长下 GD 收敛到 $\arg\min\|w\|_2^2\ \text{s.t.}\ Xw=y$；满行秩时闭式如上。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>最小范数 ≠ 真实参数，也不保证泛化最小；double descent 是经验现象示意，不要推出“训练误差越低越好”或“参数越多越差”的绝对结论。</p></div>
+      </div>
+      <div class="control-panel">
+        <div><div class="controls">
+          <div class="control"><label for="mnC">约束 $w_1+w_2=c$</label><input id="mnC" type="range" min="0.5" max="6" step="0.5" value="2"><output id="mnCOut"></output></div>
+        </div><p class="small">实验 E「最小范数插值」（讲义 §8.3）：所有满足 $w_1+w_2=c$ 的 $w$ 都是插值解。左图抛物线 $\|w\|_2^2=2(w_1-c/2)^2+c^2/2$ 现算；右图对比三个候选解的范数。默认 $c=2$ 复现最小范数解 $(1,1)$。</p></div>
+        <div class="step-box" id="mnSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="mnViz" class="viz-svg" viewBox="0 0 940 330" role="img" aria-label="最小范数插值的抛物线与候选解"></svg></div>
+      <div class="source-grid"><figure><img src="assets/generalization-lab/fig3.png" alt="double descent 示意" loading="lazy"><figcaption>本地化讲义原图：跨过插值阈值后测试误差可能再次下降（经验现象示意）</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>最后把训练/验证误差的读法整理成诊断表，并清点五条常见误区（拓展）。</span></div>
+    </section>
+
+    <section id="sec-misread" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>6. 误差曲线诊断与常见误区</h2></div>
+      <div class="card-grid">
+        <div class="card"><span class="card-kicker">两者都高且接近</span><h3>欠拟合 / 高偏差 / 优化失败</h3><p>训练与验证误差都高，常见根源是函数类表达能力不足；也可能是特征错误或标签质量差。</p></div>
+        <div class="card"><span class="card-kicker">训练低、验证明显更高</span><h3>过拟合 / 高方差 / 泄漏</h3><p>模型穿过训练样本却在样本间振荡；或者验证信息已经泄漏进训练，评估失真。</p></div>
+        <div class="card"><span class="card-kicker">两者都较低且接近</span><h3>当前划分下较稳定</h3><p>但注意：这张表是诊断线索，不是数学定理——分布漂移会让 test loss 升高，即使 validation 看起来很好。</p></div>
+      </div>
+      <h3>五条常见误区：先自答，再点开核对</h3>
+      <div class="card-grid" id="misGrid"></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲，把“泛化”的三层答案钉牢。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：训练误差只是有限视图</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 训练误差已经很低，为什么新数据上仍可能很差？——因为训练误差是有限样本上的经验风险，而泛化是同一个 $f$ 在总体分布上的期望风险；随机训练集只提供有限视图。应对：train/validation/test 各司其职、任何数据驱动的预处理放进训练流程内部；平方损失下 $f^\star(x)=\mathbb E[Y\mid X=x]$ 是天花板，$\sigma^2$ 是消不掉的底线，其余误差分解为 bias² + variance。</div>
+      <div class="closing-formulas">
+        <div class="formula"><p><strong>经验风险</strong></p><p>$$\widehat R_D(f)=\frac1n\sum_{i=1}^n\ell(Y_i,f(X_i))$$</p></div>
+        <div class="formula"><p><strong>期望风险</strong></p><p>$$R(f)=\mathbb E_{X,Y}[\ell(Y,f(X))]$$</p></div>
+        <div class="formula"><p><strong>测试误差的条件无偏性</strong></p><p>$$\mathbb E[\widehat R_{\mathrm{test}}(\widehat f)\mid\widehat f]=R(\widehat f),\quad \operatorname{Var}=\frac{\sigma_\ell^2}{m}$$</p></div>
+        <div class="formula"><p><strong>理想预测器</strong></p><p>$$f^\star(x)=\mathbb E[Y\mid X=x]$$</p></div>
+        <div class="formula"><p><strong>风险 = 函数误差 + 噪声</strong></p><p>$$R(f)=\mathbb E_X[(f-f^\star)^2]+\mathbb E_X[\operatorname{Var}(Y\mid X)]$$</p></div>
+        <div class="formula"><p><strong>三项分解</strong></p><p>$$\mathbb E_D[R(\widehat f_D)]=\mathbb E_X[\mathrm{Bias}^2]+\mathbb E_X[\mathrm{Variance}]+\mathbb E_X[\sigma^2]$$</p></div>
+      </div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能区分 $\widehat R_D$ 与 $R$，并说出 $\widehat f_D$、$f_\mathcal F^\star$、$f^\star$ 各受什么限制。</label><label><input type="checkbox">我能逐步写出 $\mathbb E[\widehat R_{\mathrm{test}}(\widehat f)\mid\widehat f]=R(\widehat f)$ 的三步推导，并指出哪一步会被泄漏破坏。</label><label><input type="checkbox">我能用加减 $m(x)$ 展开证明 $f^\star(x)=\mathbb E[Y\mid X=x]$，并解释噪声底线。</label><label><input type="checkbox">我能区分两种随机来源（$D$ 使预测变、$\varepsilon$ 使标签变），并完成 bias-variance 两步展开。</label><label><input type="checkbox">我能手算 $\overline f$、Bias²、Variance 与总误差（如 $16/3$、$1/9$、$14/9$、$8/3$）。</label><label><input type="checkbox">我能举出三个数据泄漏的例子，并说出“任何需从数据估计参数的步骤都属于训练流程”。</label></div>
+      <div class="callout"><strong>与下一讲连接。</strong> 第 6 讲在这些结论上回答两个实践问题：怎样用交叉验证选择方法，以及怎样用 Ridge/Lasso 主动控制复杂度。配套实验页：<a href="regularization-lab.html">第 6 讲互动实验室</a>。</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-05">返回原讲义第 5 讲</a>，或前往 <a href="index.html#lecture-06">第 6 讲</a> 的模型选择与正则化。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function curvePath(fn,xmin,xmax,x0,y0,w,h,ymin,ymax){let d='';for(let k=0;k<=180;k++){const x=xmin+(xmax-xmin)*k/180;const y=clamp(fn(x),ymin,ymax);d+=(k?' L':'M')+scaleX(x,xmin,xmax,x0,w).toFixed(2)+','+scaleY(y,ymin,ymax,y0,h).toFixed(2)}return d}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+function frame(svg,o){const{x0,y0,w,h,xmin,xmax,ymin,ymax}=o;line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});(o.yticks||[]).forEach(v=>{const y=scaleY(v,ymin,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,fmt(v,o.yp===undefined?2:o.yp),{anchor:'end',size:10})});(o.xticks||[]).forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});const anc=o.xticks.length>1?(i===0?'start':(i===o.xticks.length-1?'end':'middle')):'middle';svgLabel(svg,x,y0+h+17,fmt(v,o.xp===undefined?1:o.xp),{anchor:anc,size:10})})}
+function spreadLabels(items,minGap,lo,hi){const a=items.slice().sort((p,q)=>p.y-q.y);for(let i=1;i<a.length;i++)a[i].y=Math.max(a[i].y,a[i-1].y+minGap);if(a.length&&a[a.length-1].y>hi){a[a.length-1].y=hi;for(let i=a.length-2;i>=0;i--)a[i].y=Math.min(a[i].y,a[i+1].y-minGap)}if(a.length&&a[0].y<lo){const s=lo-a[0].y;a.forEach(q=>q.y+=s)}return a}
+/* histogram into a panel; returns {mean,sd} */
+function histPanel(svg,vals,o){const{x0,y0,w,h,xmin,xmax,c}=o;const nb=o.bins||25,counts=new Array(nb).fill(0);
+  vals.forEach(v=>{const b=clamp(Math.floor((v-xmin)/(xmax-xmin)*nb),0,nb-1);counts[b]++});
+  const cmax=Math.max(...counts)*1.18;
+  frame(svg,{x0,y0,w,h,xmin,xmax,ymin:0,ymax:cmax,xticks:o.xticks,xp:o.xp===undefined?2:o.xp,yticks:[0,Math.round(cmax/1.18)],yp:0});
+  counts.forEach((cn,i)=>{const bx=scaleX(xmin+(xmax-xmin)*i/nb,xmin,xmax,x0,w);svgAdd(svg,'rect',{x:bx,y:scaleY(cn,0,cmax,y0,h),width:w/nb-1.5,height:scaleY(0,0,cmax,y0,h)-scaleY(cn,0,cmax,y0,h),fill:c,opacity:.6})});
+  return cmax}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('gen-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('gen-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('gen-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('gen-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留 风险定义→数据分工→条件均值→三项分解 主线；拓展小节已隐藏。':'完整模式：额外显示过参数化/double descent 与诊断误区清点。';document.dispatchEvent(new CustomEvent('lab-mode-change'))}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');
+  const nodes=[
+    {id:'n-risk',target:'sec-risk',x:20,y:40,w:160,h:56,title:'经验 vs 期望风险',sub:'R̂ vs R',color:'var(--blue)'},
+    {id:'n-splits',target:'sec-splits',x:240,y:40,w:170,h:56,title:'train/val/test',sub:'分工与泄漏',color:'var(--accent)'},
+    {id:'n-bayes',target:'sec-bayes',x:470,y:40,w:160,h:56,title:'条件均值',sub:'噪声底线 σ²',color:'var(--warm)'},
+    {id:'n-bv',target:'sec-biasvar',x:690,y:40,w:170,h:56,title:'三项分解',sub:'bias²+var+σ²',color:'var(--danger)'},
+    {id:'n-op',target:'sec-overparam',extra:true,x:240,y:190,w:170,h:56,title:'过参数化',sub:'最小范数 / DD',color:'var(--violet)'},
+    {id:'n-mis',target:'sec-misread',extra:true,x:470,y:190,w:160,h:56,title:'诊断与误区',sub:'读误差曲线',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M180 68 H240','var(--accent)',mk,'独立性',210,56);
+  edge('M410 68 H470','var(--accent)',mk,'底线',440,56);
+  edge('M630 68 H690','var(--accent)',mk,'再分解',660,56);
+  edge('M325 96 V190','var(--violet)',mv,'n<d',325,140);
+  edge('M550 96 V190','var(--violet)',mv,'读曲线',550,140);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+
+/* ============ 实验 A：经验风险 ≠ 期望风险（讲义 §4 模拟） ============ */
+(()=>{const svg=$('#riskViz');let sample=null,reps=null;
+function drawOne(){const n=Number($('#riskN').value);let k=0;const pts=[];for(let i=0;i<n;i++){const x=Math.random()<.5?0:1;k+=x;pts.push(x)}sample={pts,k};$('#riskSeed').textContent='seed '+fmt(Math.random(),4)}
+function drawRep(){const n=Number($('#riskN').value);reps=[];for(let r=0;r<500;r++){let k=0;for(let i=0;i<n;i++)k+=Math.random()<.5?1:0;reps.push(k/n)}}
+function draw(){svgClear(svg);if(!sample)drawOne();const n=Number($('#riskN').value),k=sample.k,rhat=k/n;
+  /* top: current sample strip */
+  svgLabel(svg,90,34,'当前训练集（红=X=1 被误分类，蓝=X=0）',{anchor:'start',size:10,fill:'var(--muted)'});
+  const maxDots=Math.min(n,100);for(let i=0;i<maxDots;i++){const perRow=Math.min(maxDots,50);const cx=90+(i%perRow)*15,cy=60+Math.floor(i/perRow)*15;
+    svgAdd(svg,'circle',{cx,cy,r:5,fill:sample.pts[i]?'var(--danger)':'var(--blue)',opacity:.85})}
+  svgLabel(svg,90,130,'本次 R̂ = '+k+'/'+n+' = '+fmt(rhat,3)+'（R 恒为 0.5）',{anchor:'start',size:11,fill:'var(--ink)'});
+  /* bottom: histogram of 500 reps */
+  const y0=180,h=150,x0=90,w=760;
+  if(reps){const cmax=histPanel(svg,reps,{x0,y0,w,h,xmin:0,xmax:1,c:'var(--warm)',bins:25,xticks:[0,0.25,0.5,0.75,1],xp:2});
+    const mean=reps.reduce((a,b)=>a+b,0)/reps.length;
+    const p0=reps.filter(v=>v===0).length/reps.length;
+    line(svg,scaleX(.5,0,1,x0,w),y0,scaleX(.5,0,1,x0,w),y0+h,{stroke:'var(--accent)','stroke-width':2.4});
+    svgLabel(svg,scaleX(.5,0,1,x0,w),y0-12,'R = 0.5',{size:10,fill:'var(--accent)'});
+    const mx=scaleX(mean,0,1,x0,w);
+    line(svg,mx,y0,mx,y0+h,{stroke:'var(--danger)','stroke-width':2,'stroke-dasharray':'4 3'});
+    svgLabel(svg,clamp(mx,x0+60,x0+w-60),y0-30,'实测均值 = '+fmt(mean,3),{size:10,fill:'var(--danger)'});
+    svgLabel(svg,x0+w,y0+h+34,'R̂ 的 500 次抽样分布',{anchor:'end',size:10,fill:'var(--muted)'});
+    $('#riskSteps').innerHTML=String.raw`<p><strong>当前这一份</strong> $n=${n}$，抽到 $X=1$ 共 $${k}$ 个：$\widehat R_D(f)=${k}/${n}=${fmt(rhat,3)}$；期望风险 $R(f)=1/2=0.5$ 不变。</p><p><strong>500 份重复抽样</strong> $\widehat R_D$ 的实测均值 $=${fmt(mean,4)}$（理论 $\mathbb E_D[\widehat R_D]=R=0.5$）；$\widehat R_D=0$ 的频率 $=${fmt(p0,3)}$（理论 $(1/2)^n=${fmt(Math.pow(.5,n),4)}$）。</p><p class="small">$n$ 越小，直方图在 $0$ 处的质量越大——$n=2$ 时有 $1/4$ 概率得到 $\widehat R_D=0$，正是讲义 $D=\{(0,0),(0,0)\}$ 的极端情形。泛化间隙 $R-\widehat R_D$ 可正可负，但训练会主动压低 $\widehat R_D$。</p>`;rerender($('#riskSteps'))}
+  else{$('#riskSteps').innerHTML=String.raw`<p><strong>当前这一份</strong> $n=${n}$，抽到 $X=1$ 共 $${k}$ 个：$\widehat R_D(f)=${fmt(rhat,3)}$；$R(f)=0.5$ 不变。点「重复抽 500 份」看抽样分布。</p>`;rerender($('#riskSteps'))}}
+$('#riskDraw').addEventListener('click',()=>{drawOne();draw();toast('已抽一份新训练集')});
+$('#riskRep').addEventListener('click',()=>{drawRep();draw();toast('已重复抽样 500 次')});
+range('riskN',()=>{drawOne();drawRep();draw()},0);drawOne();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 B：测试误差的波动 ============ */
+(()=>{const svg=$('#testViz');let one=null,reps=null;
+function drawOne(){const R=Number($('#testR').value),m=Number($('#testM').value);let k=0;for(let j=0;j<m;j++)k+=Math.random()<R?1:0;one=k/m;$('#testSeed').textContent='seed '+fmt(Math.random(),4)}
+function drawRep(){const R=Number($('#testR').value),m=Number($('#testM').value);reps=[];for(let r=0;r<500;r++){let k=0;for(let j=0;j<m;j++)k+=Math.random()<R?1:0;reps.push(k/m)}}
+function draw(){svgClear(svg);if(one===null)drawOne();const R=Number($('#testR').value),m=Number($('#testM').value);
+  const sig2=R*(1-R),sd=Math.sqrt(sig2/m);
+  svgLabel(svg,90,322,`固定模型：R = ${fmt(R,2)}，测试集 m = ${m}，理论标准差 √(R(1−R)/m) = ${fmt(sd,4)}`,{anchor:'start',size:10,fill:'var(--muted)'});
+  if(reps){const lo=Math.max(0,Math.min(R-5*sd,Math.min(...reps)-.01)),hi=Math.min(1,Math.max(R+5*sd,Math.max(...reps)+.01));
+    histPanel(svg,reps,{x0:90,y0:55,w:760,h:200,xmin:lo,xmax:hi,c:'var(--blue)',bins:30,xticks:[lo,(lo+hi)/2,hi],xp:3});
+    const mean=reps.reduce((a,b)=>a+b,0)/reps.length,sdM=Math.sqrt(reps.reduce((a,b)=>a+(b-mean)**2,0)/reps.length);
+    line(svg,scaleX(R,lo,hi,90,760),55,scaleX(R,lo,hi,90,760),255,{stroke:'var(--accent)','stroke-width':2.4});
+    svgLabel(svg,scaleX(R,lo,hi,90,760),43,'R = '+fmt(R,2),{size:10,fill:'var(--accent)'});
+    const mx=scaleX(mean,lo,hi,90,760);
+    line(svg,mx,55,mx,255,{stroke:'var(--danger)','stroke-width':2,'stroke-dasharray':'4 3'});
+    svgLabel(svg,clamp(mx,150,790),43-18,'实测均值 '+fmt(mean,3),{size:10,fill:'var(--danger)'});
+    $('#testSteps').innerHTML=String.raw`<p><strong>当前一份测试集</strong> $\widehat R_{\mathrm{test}}=${fmt(one,4)}$（$m=${m}$）。</p><p><strong>500 次重复</strong> 实测均值 $=${fmt(mean,4)}$（应接近 $R=${fmt(R,2)}$）；实测标准差 $=${fmt(sdM,4)}$，理论 $\sqrt{\sigma_\ell^2/m}=\sqrt{R(1-R)/m}=${fmt(sd,4)}$（0-1 损失下单样本损失的方差是伯努利方差 $\sigma_\ell^2=R(1-R)=${fmt(sig2,3)}$）。</p><p class="small">把 $m$ 从 $10$ 拖到 $2000$：直方图以 $1/\sqrt{m}$ 的速度变窄——评估精度以方差 $1/m$ 改善。若测试集曾参与选择，"每项期望等于 $R(\widehat f)$" 这一步独立性就不再成立。</p>`;rerender($('#testSteps'))}
+  else{$('#testSteps').innerHTML=String.raw`<p><strong>当前一份测试集</strong> $\widehat R_{\mathrm{test}}=${fmt(one,4)}$（$m=${m}$，$R=${fmt(R,2)}$）。点「重复 500 次」看波动分布。</p>`;rerender($('#testSteps'))}}
+$('#testDraw').addEventListener('click',()=>{drawOne();draw();toast('已抽一份新测试集')});
+$('#testRep').addEventListener('click',()=>{drawRep();draw();toast('已重复 500 次')});
+range('testR',()=>{drawOne();drawRep();draw()},2);range('testM',()=>{drawOne();drawRep();draw()},0);drawOne();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 C：条件均值抛物线 ============ */
+(()=>{const svg=$('#bayViz');
+function draw(){svgClear(svg);const m=Number($('#bayM').value),d=Number($('#bayD').value),a=Number($('#bayA').value);
+  const L=v=>d*d+(m-v)**2,x0=80,y0=35,w=560,h=220;
+  const ymax=(Math.max(m,10-m)**2+d*d)*1.15;
+  frame(svg,{x0,y0,w,h,xmin:0,xmax:10,ymin:0,ymax,xticks:[0,2,4,6,8,10],xp:0,yticks:[0,ymax/2,ymax/1.15*.95],yp:1});
+  path(svg,curvePath(L,0,10,x0,y0,w,h,0,ymax),{stroke:'var(--blue)','stroke-width':2.8});
+  const mx=scaleX(m,0,10,x0,w),ax=scaleX(a,0,10,x0,w);
+  svgAdd(svg,'circle',{cx:mx,cy:scaleY(d*d,0,ymax,y0,h),r:6.5,fill:'var(--accent)'});
+  svgLabel(svg,x0+14,y0+16,'最低点 a=m='+fmt(m,1)+'，高度 δ²='+fmt(d*d,2),{anchor:'start',size:10,fill:'var(--accent)'});
+  line(svg,ax,y0,ax,y0+h,{stroke:'var(--danger)','stroke-dasharray':'5 4'});
+  svgAdd(svg,'circle',{cx:ax,cy:scaleY(L(a),0,ymax,y0,h),r:5.5,fill:'var(--danger)'});
+  svgLabel(svg,clamp(ax+14,x0+70,x0+w-70),clamp(scaleY(L(a),0,ymax,y0,h)-14,y0+30,y0+h-6),'L(a)='+fmt(L(a),2),{size:10,fill:'var(--danger)'});
+  /* right strip: two point masses */
+  const sx=760,sy0=35,sh=220;
+  line(svg,sx,sy0,sx,sy0+sh,{class:'svg-axis'});
+  [[m-d,'m−δ'],[m+d,'m+δ'],[m,'m']].forEach(([v,t],i)=>{const y=scaleY(v,0,10,sy0,sh);
+    if(i<2)svgAdd(svg,'circle',{cx:sx,cy:y,r:6,fill:'var(--warm)'});
+    else line(svg,sx-10,y,sx+10,y,{stroke:'var(--accent)','stroke-width':2.5});
+    svgLabel(svg,sx+16,y+3,t+'='+fmt(v,1),{anchor:'start',size:9,fill:i<2?'var(--warm)':'var(--accent)'})});
+  svgLabel(svg,sx-40,sy0-12,'Y|x₀ 的两个可能值',{anchor:'start',size:10,fill:'var(--muted)'});
+  $('#baySteps').innerHTML=String.raw`<p><strong>设定</strong> $m(x_0)=${fmt(m,1)}$，$Y\mid x_0$ 各半概率取 $${fmt(m-d,2)}$ 与 $${fmt(m+d,2)}$，所以 $\operatorname{Var}(Y\mid x_0)=\delta^2=${fmt(d*d,3)}$。</p><p><strong>展开（加减 $m$）</strong> $\mathbb E[(Y-a)^2\mid x_0]=\operatorname{Var}(Y\mid x_0)+(m-a)^2=${fmt(d*d,3)}+(${fmt(m,1)}-${fmt(a,2)})^2=${fmt(L(a),4)}$。</p><p><strong>最低点</strong> $a=m$ 时取得，最低高度 $=${fmt(d*d,3)}$——无论如何改变预测都消不掉。</p><p class="small">当前 $a=${fmt(a,2)}$：把 $a$ 拖到 $m$ 看损失降到噪声底线。交叉项消失靠的是 $\mathbb E[Y-m(x)\mid X=x]=0$。</p>`;rerender($('#baySteps'))}
+range('bayM',draw,1);range('bayD',draw,2);range('bayA',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 D：bias-variance 数值复算器（讲义 §11） ============ */
+(()=>{const svg=$('#bvViz');let quizNote='';
+function calc(){const p=[1,2,3].map(j=>Number($('#bvP'+j).value)),s2=Number($('#bvS2').value),fstar=5;
+  const fb=(p[0]+p[1]+p[2])/3,bias2=(fb-fstar)**2,varr=((p[0]-fb)**2+(p[1]-fb)**2+(p[2]-fb)**2)/3,total=bias2+varr+s2;
+  return{p,s2,fb,bias2,varr,total}}
+function draw(){svgClear(svg);const{p,s2,fb,bias2,varr,total}=calc();
+  const x0=80,y0=70,w=780,xmin=0,xmax=10;
+  line(svg,x0,y0+80,x0+w,y0+80,{class:'svg-axis'});
+  [0,2,4,6,8,10].forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);svgLabel(svg,x,y0+80+18,String(v),{anchor:i===0?'start':(i===5?'end':'middle'),size:9})});
+  const pls=spreadLabels(p.map((v,j)=>({y:scaleX(v,xmin,xmax,x0,w),v,j})),52,x0+24,x0+w-24);
+  pls.forEach(q=>{const px=scaleX(q.v,xmin,xmax,x0,w);svgAdd(svg,'circle',{cx:px,cy:y0+80,r:7,fill:'var(--blue)'});svgLabel(svg,q.y,y0+80-18,'f̂'+String(q.j+1)+'='+fmt(q.v,1),{size:9,fill:'var(--blue)'})});
+  const fx=scaleX(5,xmin,xmax,x0,w),bx=scaleX(fb,xmin,xmax,x0,w);
+  line(svg,fx,y0+10,fx,y0+150,{stroke:'var(--danger)','stroke-width':2.6});
+  svgLabel(svg,fx,y0+168,'f* = 5',{size:10,fill:'var(--danger)'});
+  line(svg,bx,y0+10,bx,y0+150,{stroke:'var(--accent)','stroke-width':2.6});
+  svgLabel(svg,clamp(bx,x0+55,x0+w-55),y0-2,'f̄ = '+fmt(fb,3),{size:10,fill:'var(--accent)'});
+  /* bias bracket */
+  const lo=Math.min(fx,bx),hi=Math.max(fx,bx);
+  if(hi-lo>30){line(svg,lo+6,y0+128,hi-6,y0+128,{stroke:'var(--warm)','stroke-width':2,'marker-end':marker(svg,'bvA','var(--warm)')});line(svg,lo+6,y0+128,hi-6,y0+128,{stroke:'var(--warm)','stroke-width':2,'marker-start':marker(svg,'bvB','var(--warm)')});svgLabel(svg,(lo+hi)/2,y0+118,'bias = '+fmt(Math.abs(fb-5),3),{size:9,fill:'var(--warm)'})}
+  /* stacked bar */
+  const sy=250,sx0=180,sw=580;
+  const parts=[['bias²',bias2,'var(--warm)'],['variance',varr,'var(--blue)'],['σ²',s2,'var(--muted)']];
+  let acc=0;line(svg,sx0,sy+24,sx0+sw,sy+24,{class:'svg-axis'});
+  parts.forEach(([nm,v,c])=>{const seg=sw*v/Math.max(total,1e-9);if(seg>0.5)svgAdd(svg,'rect',{x:sx0+acc,y:sy,width:seg,height:24,fill:c,opacity:.8});acc+=seg});
+  svgLabel(svg,sx0-12,sy+16,'三项堆叠',{anchor:'end',size:10,fill:'var(--muted)'});
+  svgLabel(svg,sx0+sw,sy+48,'总计 = '+fmt(total,4),{anchor:'end',size:11,fill:'var(--ink)'});
+  $('#bvSteps').innerHTML=String.raw`<p><strong>第 1 步：平均预测</strong> $\overline f(x_0)=\frac{${p.map(v=>fmt(v,1)).join('+')}}{3}=${fmt(fb,4)}$。</p><p><strong>第 2 步：偏差平方</strong> $\mathrm{Bias}^2=(${fmt(fb,4)}-5)^2=${fmt(bias2,4)}$。</p><p><strong>第 3 步：模型方差</strong> $\frac13\sum_j(\widehat f_j-\overline f)^2=${fmt(varr,4)}$。</p><p><strong>第 4 步：加不可约噪声</strong> $\mathrm{Bias}^2+\mathrm{Variance}+\sigma^2=${fmt(bias2,4)}+${fmt(varr,4)}+${fmt(s2,2)}=${fmt(total,4)}$。</p>${quizNote}<p class="small">讲义基准（默认 4,5,7 与 $\sigma^2=1$）：$\overline f=16/3\approx5.333$、$\mathrm{Bias}^2=1/9\approx0.111$、$\mathrm{Variance}=14/9\approx1.556$、总计 $24/9=8/3\approx2.667$——偏差很小、方差较大。</p>`;rerender($('#bvSteps'))}
+$('#bvLec').addEventListener('click',()=>{quizNote='';[['bvP1',4],['bvP2',5],['bvP3',7],['bvS2',1]].forEach(([id,v])=>{const e=$('#'+id);e.value=v;e.dispatchEvent(new Event('input'))});quizNote='';draw();toast('已恢复讲义例题数值')});
+$('#bvQuiz').addEventListener('click',()=>{quizNote=String.raw`<p><strong>自测题 5 现算</strong>（平均预测 8、真值 10、方差 3、噪声 2，结构与滑杆不同，直接按公式算）：$\mathrm{Bias}^2=(8-10)^2=4$，总计 $=4+3+2=9$。</p>`;draw();toast('已在 step-box 展示自测题 5')});
+['bvP1','bvP2','bvP3'].forEach(id=>range(id,()=>{quizNote='';draw()},1));range('bvS2',()=>{quizNote='';draw()},2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 E：最小范数插值（讲义 §8.3） ============ */
+(()=>{const svg=$('#mnViz');
+function draw(){svgClear(svg);const c=Number($('#mnC').value);
+  const N2=w1=>w1*w1+(c-w1)*(c-w1);
+  const x0=80,y0=35,w=420,h=220,wmin=-1,wmax=c+2;
+  const ymax=Math.max(N2(wmin),N2(wmax))*1.15;
+  frame(svg,{x0,y0,w,h,xmin:wmin,xmax:wmax,ymin:0,ymax,xticks:[wmin,c/2,wmax].map(v=>Math.round(v*10)/10),xp:1,yticks:[0,ymax/2,ymax/1.15*.95],yp:1});
+  path(svg,curvePath(N2,wmin,wmax,x0,y0,w,h,0,ymax),{stroke:'var(--blue)','stroke-width':2.6});
+  const mnx=scaleX(c/2,wmin,wmax,x0,w);
+  svgAdd(svg,'circle',{cx:mnx,cy:scaleY(c*c/2,0,ymax,y0,h),r:6.5,fill:'var(--accent)'});
+  svgLabel(svg,clamp(mnx,x0+90,x0+w-90),clamp(scaleY(c*c/2,0,ymax,y0,h)-16,y0+12,y0+h-6),'最小范数解 ('+fmt(c/2,2)+','+fmt(c/2,2)+')',{size:10,fill:'var(--accent)'});
+  svgLabel(svg,x0+w/2,y0+h+36,'‖w‖² = w₁² + (c−w₁)² 随 w₁ 变化',{size:10,fill:'var(--muted)'});
+  /* right: compare three interpolating solutions */
+  const sols=[{n:'(c/2, c/2)',v:c*c/2,c:'var(--accent)'},{n:'(c, 0)',v:c*c,c:'var(--warm)'},{n:'(10, 10−c)',v:100+(10-c)**2,c:'var(--danger)'}];
+  const rx0=610,rw=280,vmax=Math.max(...sols.map(s=>s.v))*1.2;
+  line(svg,rx0,y0+h,rx0+rw,y0+h,{class:'svg-axis'});
+  sols.forEach((s,i)=>{const bx=rx0+15+i*90,bh=h*s.v/vmax;
+    svgAdd(svg,'rect',{x:bx,y:y0+h-bh,width:60,height:bh,rx:5,fill:s.c,opacity:.8});
+    svgLabel(svg,bx+30,y0+h-bh-12,fmt(s.v,2),{size:9,fill:s.c});
+    svgLabel(svg,bx+30,y0+h+16,s.n,{size:9,fill:'var(--muted)'})});
+  svgLabel(svg,rx0+rw/2,y0-12,'同为插值解的 ‖w‖²',{size:10,fill:'var(--muted)'});
+  $('#mnSteps').innerHTML=String.raw`<p><strong>约束代入</strong> $w_2=c-w_1$：$\|w\|_2^2=w_1^2+(c-w_1)^2=2(w_1-${fmt(c/2,2)})^2+${fmt(c*c/2,3)}$（展开配平方）。</p><p><strong>最小范数解</strong> 在 $w_1=${fmt(c/2,2)}$ 处取得：$\widehat w_{\mathrm{MN}}=(${fmt(c/2,2)},${fmt(c/2,2)})$，$\|\cdot\|^2=${fmt(c*c/2,3)}$。</p><p><strong>其它插值解</strong> $(c,0)$ 的范数平方 $=${fmt(c*c,3)}$，$(10,${fmt(10-c,1)})$ 的为 $${fmt(100+(10-c)**2,2)}$——训练约束同样满足，但范数大得多。</p><p class="small">梯度下降从零初始化出发收敛到最小范数解（隐式偏置）；但最小范数 $\ne$ 真实参数，也不保证泛化最小。</p>`;rerender($('#mnSteps'))}
+range('mnC',draw,1);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 误区五连卡 ============ */
+(()=>{const M=[
+ ['泛化误差就是测试误差','不对。R(f) 是真实分布上的期望；R̂_test(f) 是有限测试集给出的随机估计，样本少时波动很大。'],
+ ['偏差是某一个训练模型的固定属性','不对。偏差和方差描述训练方法在重复随机训练集上的行为，定义中必须出现对 D 的期望。'],
+ ['过拟合只来自标签噪声','不对。无噪声时，模型类、样本覆盖、未观测方向和插值解的隐式偏置仍可能造成泛化误差。'],
+ ['训练样本越多，任何情况下误差都单调下降','经典固定维数、设定良好的问题中通常如此；但过参数化插值附近可能出现非单调现象（double descent）。'],
+ ['测试集可以多看几次，只要不放进梯度下降','不对。只要根据测试结果改变模型、特征、超参数或报告方式，测试集就参与了选择。']];
+const grid=$('#misGrid');M.forEach(([q,a],i)=>{const c=document.createElement('div');c.className='card mis-card';c.innerHTML=`<span class="mis-q">误区 ${i+1} · 对还是错？（点击核对）</span><p>${q}</p><p class="mis-a">${a}</p>`;c.addEventListener('click',()=>c.classList.toggle('open'));grid.appendChild(c)})})();
+
+/* glossary: grouped by first appearance */
+(()=>{const G=[
+{id:'emprisk',t:'经验风险',en:'empirical risk',f:'\\widehat R_D(f)=\\frac1n\\sum_{i=1}^n\\ell(Y_i,f(X_i))',d:'模型在已见训练样本上的平均损失（带帽子=经验量）。',s:'sec-risk',u:'训练时唯一可计算的目标。',why:'它只回答“这份作业的平均分”，不回答新样本。'},
+{id:'exprisk',t:'期望风险',en:'expected risk',f:'R(f)=\\mathbb E_{(X,Y)\\sim P_{X,Y}}[\\ell(Y,f(X))]',d:'同一固定 f 在总体分布上的平均损失。',s:'sec-risk',u:'部署后真正关心的量。',why:'泛化讨论必须对同一个 f 在新样本上提问。'},
+{id:'gengap',t:'泛化间隙',en:'generalization gap',f:'R(f)-\\widehat R_D(f)',d:'期望风险与经验风险之差，可正可负。',s:'sec-risk',u:'量化训练视图的乐观程度。',why:'训练主动压低 R̂，所以学到的模型往往偏乐观。'},
+{id:'iid',t:'独立同分布',en:'i.i.d.',f:'D\\sim P_{X,Y}^{\\otimes n}',d:'同分布 + 独立：样本来自同一总体且互不影响抽样。',s:'sec-risk',u:'用有限样本推断未来的统计前提。',why:'分布漂移时标准泛化结论不能直接套用。'},
+{id:'datasplit',t:'三份数据分工',en:'train / validation / test',f:'\\text{train 拟合, val 选择, test 终评}',d:'训练集拟合参数、验证集参与选择、测试集只在冻结后评估一次。',s:'sec-splits',u:'组织无泄漏的模型选择流程。',why:'validation 一旦参与选择就不再中立。'},
+{id:'leak',t:'数据泄漏',en:'data leakage',f:'\\text{任何需从数据估计参数的步骤都属于训练流程}',d:'验证或测试信息进入训练或选择过程，使评估偏乐观。',s:'sec-splits',u:'识别先标准化再划分、先特征选择再 CV、时间泄漏。',why:'它破坏 E[R̂_test|f̂]=R(f̂) 所需的独立性。'},
+{id:'condmean',t:'条件均值',en:'conditional mean',f:'f^\\star(x)=\\mathbb E[Y\\mid X=x]',d:'给定输入 x 时标签的平均；平方损失下的最优预测。',s:'sec-bayes',u:'给出无模型限制的回归基准。',why:'加减 m(x) 后交叉项消失是证明关键。'},
+{id:'irrednoise',t:'不可约噪声',en:'irreducible noise',f:'\\mathbb E_X[\\operatorname{Var}(Y\\mid X)]\\ (=\\sigma^2)',d:'同一 x 下标签自身的随机波动。',s:'sec-bayes',u:'给出任何模型都消不掉的误差下限。',why:'它与模型方差是两种不同的随机来源。'},
+{id:'bias',t:'偏差',en:'bias',f:'(\\overline f(x)-f^\\star(x))^2,\\ \\overline f=\\mathbb E_D[\\widehat f_D]',d:'平均模型离理想预测多远的系统性偏离。',s:'sec-biasvar',u:'诊断欠拟合。',why:'偏差描述“重复训练后平均而言”的位置，不是单个模型的属性。'},
+{id:'variance',t:'模型方差',en:'variance',f:'\\mathbb E_D[(\\widehat f_D(x)-\\overline f(x))^2]',d:'换一份训练集后单次模型围绕平均预测的散布。',s:'sec-biasvar',u:'诊断过拟合。',why:'它来自 D 的随机性，与标签噪声 σ²(x) 不同源。'},
+{id:'impbias',t:'隐式偏置',en:'implicit bias',f:'\\text{GD 从零初始化} \\to \\widehat w_{MN}',d:'损失只要求插值时，优化算法与初始化对解的额外偏好。',s:'sec-overparam',u:'解释过参数化模型为何仍能泛化。',why:'参数个数不是复杂度的唯一尺度。'},
+{id:'minnorm',t:'最小范数解',en:'minimum-norm solution',f:'\\widehat w_{MN}=X^\\top(XX^\\top)^{-1}y',d:'所有插值解中欧氏范数最小者。',s:'sec-overparam',u:'在无穷多解中给出明确选择。',why:'最小范数不等于真实参数，也不保证泛化最小。'},
+{id:'ddescent',t:'双下降',en:'double descent',f:'\\text{跨过插值阈值后测试误差再降}',d:'过参数化区域测试误差第二次下降的经验现象。',s:'sec-overparam',u:'避免“参数越多越差”的绝对化结论。',why:'示意性质：不保证任何数据与算法都出现。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
