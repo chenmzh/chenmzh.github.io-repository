@@ -74,9 +74,9 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>白话理解</h3><p>先转动一个有 $K$ 个结果的转盘，再从对应的高斯云里抽点；我们只看到点，没看到转盘结果。</p></div>
         <div class="five"><h3>干嘛用</h3><p>用多个简单高斯拼出多峰、椭圆或倾斜的密度；比 k-means 多了密度与不确定性。</p></div>
         <div class="five"><h3>怎么算</h3><p>固定一个 $x$，分别算 $w_j\mathcal N(x;\mu_j,\Sigma_j)$，然后相加。求和在取对数之前。</p></div>
-        <div class="five"><h3>为什么重要</h3><p>$\log\sum_j$ 不能拆成各项的和，导致观测 likelihood 没有直接闭式解，引出 E/M。</p></div>
+        <div class="five"><h3>为什么重要</h3><p>$\log\sum_j$ 不能拆成各项的和，导致观测 likelihood 没有直接闭式解（闭式解 = 一步代入就能算出的解析式；单个高斯的 MLE 有，混合之后对参数求导时 $\log$ 里的求和会把各组件的梯度耦合在一起，解不出来），引出 E/M。</p></div>
       </div>
-      <div class="formula"><p>把隐藏标签边缘化：</p><p>$$p(x\mid\theta)=\sum_{j=1}^K p(z=j\mid\theta)p(x\mid z=j,\theta)=\sum_{j=1}^K w_j\,\mathcal N(x;\mu_j,\Sigma_j).$$</p><p class="small">$p(x)$ 是密度，不是“第几个簇”的概率；若要问组件归属，必须再用 Bayes 得到责任度。这个区分正是第 23 讲讨论异常检测和分类时的入口。</p></div>
+      <div class="formula"><p>把隐藏标签<span class="term-ref" data-term="marginal">边缘化</span>（marginalize：对不关心的离散变量求和，把它从联合分布里消掉）。第一步用全概率公式——$Z$ 只能取 $1..K$，把这 $K$ 种可能穷举相加；第二步对每项用条件概率定义 $p(x,z)=p(z)\,p(x\mid z)$：</p><p>$$p(x\mid\theta)=\sum_{j=1}^K p(x,z=j\mid\theta)=\sum_{j=1}^K p(z=j\mid\theta)\,p(x\mid z=j,\theta)=\sum_{j=1}^K w_j\,\mathcal N(x;\mu_j,\Sigma_j).$$</p><p class="small">$p(x)$ 是密度，不是“第几个簇”的概率；若要问组件归属，必须再用 Bayes 得到责任度。这个区分正是第 23 讲讨论异常检测和分类时的入口。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="mixW">组件 1 权重 $w_1$</label><input id="mixW" type="range" min="0.1" max="0.9" step="0.05" value="0.5"><output id="mixWOut"></output></div>
@@ -117,7 +117,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>怎么算</h3><p>算每个组件的加权密度 $s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j)$，再除以所有 $s_{ik}$ 的总和。</p></div>
         <div class="five"><h3>为什么重要</h3><p>每行和为 1 是合法性的核对；它把 posterior 与 weighted MLE 连接起来，是整讲的铰链。</p></div>
       </div>
-      <div class="formula"><p>先算未归一化贡献，再归一化：</p><p>$$s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j),\qquad \gamma_{ij}=\frac{s_{ij}}{\sum_{k=1}^K s_{ik}}.$$</p><p>因此 $\sum_j\gamma_{ij}=1$。注意这里的 $\gamma$ 是概率向量，不是硬标签；特殊的逐元素乘法 $\odot$ 本讲不需要，若在向量化代码中出现，它表示同形状逐元素相乘，不是矩阵乘法；使用它是为了让每个位置独立加权，而不混合维度。</p></div>
+      <div class="formula"><p>从 Bayes 规则出发——这正是第 21 讲后验的复用：先验 $P(Z_i=j)=w_j$，类条件密度 $p(x_i\mid Z_i=j,\theta)=\mathcal N(x_i;\mu_j,\Sigma_j)$，分母证据 $p(x_i\mid\theta)$ 就是上一节的混合密度：</p><p>$$\gamma_{ij}=P(Z_i=j\mid x_i,\theta)=\frac{P(Z_i=j)\,p(x_i\mid Z_i=j,\theta)}{p(x_i\mid\theta)}=\frac{w_j\mathcal N(x_i;\mu_j,\Sigma_j)}{\sum_{k=1}^K w_k\mathcal N(x_i;\mu_k,\Sigma_k)}.$$</p><p>记未归一化贡献 $s_{ij}$，计算顺序是“先算分子、再除以行总和”：</p><p>$$s_{ij}=w_j\mathcal N(x_i;\mu_j,\Sigma_j),\qquad \gamma_{ij}=\frac{s_{ij}}{\sum_{k=1}^K s_{ik}}.$$</p><p>因此 $\sum_j\gamma_{ij}=1$。注意这里的 $\gamma$ 是概率向量，不是硬标签；特殊的逐元素乘法 $\odot$ 本讲不需要，若在向量化代码中出现，它表示同形状逐元素相乘，不是矩阵乘法；使用它是为了让每个位置独立加权，而不混合维度。</p></div>
       <div class="control-panel">
         <div><div class="controls">
           <div class="control"><label for="respX">样本值 $x_i$</label><input id="respX" type="range" min="-3" max="8" step="0.25" value="1"><output id="respXOut"></output></div>
@@ -141,12 +141,12 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="mstep">M-step</span> 在固定 $\Gamma$ 后最大化加权 complete likelihood；$N_j=\sum_i\gamma_{ij}$ 是<span class="term-ref" data-term="effective">有效样本量</span>。</p></div>
         <div class="five"><h3>白话理解</h3><p>组件 1 收到 $0.8$ 个样本、组件 2 收到 $0.2$ 个样本；允许“半个样本”参与平均。</p></div>
         <div class="five"><h3>干嘛用</h3><p>把每个组件的责任证据集中起来，得到新的比例、中心与椭圆形状。</p></div>
-        <div class="five"><h3>怎么算</h3><p>先列 $N_j$，再算加权均值，最后算围绕新均值的加权协方差；分母是 $N_j$，因为这里是 MLE。</p></div>
+        <div class="five"><h3>怎么算</h3><p>先列 $N_j$，再算加权均值，最后算围绕新均值的加权协方差。为什么长这样？对加权对数似然 $\sum_i\gamma_{ij}\log\mathcal N(x_i;\mu_j,\Sigma_j)$ 求导并令其为 $0$，解出的正是这组加权平均——与第 19 讲的有标签高斯 MLE 是同一个求导，只是每个样本的权重从 $1$ 换成 $\gamma_{ij}$；分母自然是权重总和 $N_j$ 而不是 $n$。</p></div>
         <div class="five"><h3>为什么重要</h3><p>它把“后验”落地为参数更新；更新后的参数再回到 E-step，形成闭环。</p></div>
       </div>
       <div class="formula"><p>三条更新式（$n$ 是样本总数）：</p><p>$$N_j=\sum_{i=1}^n\gamma_{ij},\qquad w_j^{\mathrm{new}}=\frac{N_j}{n},$$</p><p>$$\mu_j^{\mathrm{new}}=\frac{\sum_{i=1}^n\gamma_{ij}x_i}{N_j},\qquad \Sigma_j^{\mathrm{new}}=\frac{\sum_{i=1}^n\gamma_{ij}(x_i-\mu_j^{\mathrm{new}})(x_i-\mu_j^{\mathrm{new}})^\top}{N_j}.$$</p><p class="small">协方差中的 $\top$ 把列向量转成行向量，形成 $d\times d$ 矩阵；标量例子里它退化成平方。不要把 $N_j-1$ 的无偏估计修正混进这里：GMM 的 Gaussian MLE 分母是 $N_j$。</p></div>
       <div class="control-panel">
-        <div><div class="controls"><div class="control"><label for="mTemp">责任度温度 $\tau$</label><input id="mTemp" type="range" min="0.35" max="2.5" step="0.05" value="1"><output id="mTempOut"></output></div><div class="control"><label for="mShift">组件中心间距</label><input id="mShift" type="range" min="3" max="8" step="0.5" value="6"><output id="mShiftOut"></output></div></div><p class="small">温度越低，软分配越接近 0/1；温度越高，两个组件共同分担更多责任。图中所有数字与下方步骤由同一个 <code>draw()</code> 计算。</p></div>
+        <div><div class="controls"><div class="control"><label for="mTemp">责任度温度 $\tau$</label><input id="mTemp" type="range" min="0.35" max="2.5" step="0.05" value="1"><output id="mTempOut"></output></div><div class="control"><label for="mShift">组件中心间距</label><input id="mShift" type="range" min="3" max="8" step="0.5" value="6"><output id="mShiftOut"></output></div></div><p class="small">记号声明：这里的“责任度温度” $\tau$ 是本页为演示软硬插值加的教学旋钮——演示中把责任度公式里的 $2\sigma_j^2$ 换成 $2\sigma_j^2\tau$；它不是 EM 的标准步骤（标准 EM 相当于 $\tau=1$），与后续课程 decoding 里的 temperature 同名不同物。$\tau$ 越低软分配越接近 0/1；越高则两个组件共同分担更多责任。图中所有数字与下方步骤由同一个 <code>draw()</code> 计算。</p></div>
         <div class="step-box" id="mstepSteps"></div>
       </div>
       <div class="svg-wrap"><svg id="mstepViz" class="viz-svg" viewBox="0 0 940 460" role="img" aria-label="责任度软计数与 M-step 更新互动图"></svg></div>
@@ -174,7 +174,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
 
     <section id="sec-hard" data-mode="core">
       <div class="section-head"><h2><span class="sec-tag core">核心</span>7. Hard-EM 与 Soft-EM</h2></div>
-      <p class="section-intro">Hard-EM 把后验向量压成一个 0/1 标签：$z_i^{\mathrm{new}}=\arg\max_j\gamma_{ij}$；Soft-EM 保留完整的 $\gamma_{i1},\ldots,\gamma_{iK}$。下面改变查询点和方差，观察“软”在哪里。</p>
+      <p class="section-intro">Hard-EM 把后验向量压成一个 0/1 标签：$z_i^{\mathrm{new}}=\arg\max_j\gamma_{ij}$（$\arg\max_j$ 表示“取使后面这个量最大的那个 $j$”——返回的是下标，不是最大值本身）；Soft-EM 保留完整的 $\gamma_{i1},\ldots,\gamma_{iK}$。下面改变查询点和方差，观察“软”在哪里。</p>
       <div class="five-grid">
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="soft">Soft-EM</span> 用连续责任度；<span class="term-ref" data-term="hard">Hard-EM</span> 用最大后验的 0/1 分配。</p></div>
         <div class="five"><h3>白话理解</h3><p>模糊点不是被迫站队：Soft-EM 说“主要像 1，也有一部分像 2”。</p></div>
@@ -194,7 +194,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
         <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="kmeans">k-means</span> 最小化到最近中心的平方距离和；在上述 GMM 限制下与 Hard-EM 对应。</p></div>
         <div class="five"><h3>白话理解</h3><p>密度云变得极窄、每个组件一样重，谁的中心最近谁就负责。</p></div>
         <div class="five"><h3>干嘛用</h3><p>解释 k-means 为何快、为何没有协方差与概率密度；也解释它为何表达能力更窄。</p></div>
-        <div class="five"><h3>怎么算</h3><p>比较 $\log w_j-\tfrac12\log|\Sigma_j|-\tfrac12\|x-\mu_j\|^2_{\Sigma_j^{-1}}$；约束后只剩距离项。</p></div>
+        <div class="five"><h3>怎么算</h3><p>最大责任度 = 使 $w_j\mathcal N(x;\mu_j,\Sigma_j)$ 最大的 $j$（责任度的分母 $\sum_k s_{ik}$ 对所有 $j$ 相同，可忽略）；取 $\log$ 并展开高斯密度，得逐组件分数 $\log w_j-\tfrac12\log|\Sigma_j|-\tfrac12\|x-\mu_j\|^2_{\Sigma_j^{-1}}$，其中 $\|x-\mu\|^2_{\Sigma^{-1}}=(x-\mu)^\top\Sigma^{-1}(x-\mu)$ 是马氏距离平方。约束后前两项对所有 $j$ 相同，第三项只剩 $-\|x-\mu_j\|^2/(2\sigma^2)$。</p></div>
         <div class="five"><h3>为什么重要</h3><p>它是模型假设的结论，不是算法名称的同义词；第 23 讲会回到更一般的协方差结构。</p></div>
       </div>
       <div class="formula"><p>限制条件：</p><p>$$w_j=\frac1K,\qquad\Sigma_j=\sigma^2I.$$</p><p>此时最大责任度等价于最小 $\|x-\mu_j\|^2$；但若权重不等、方差不同或协方差非球形，就不能直接叫 k-means。</p></div>
@@ -205,7 +205,7 @@ body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"]
       <div class="section-head"><h2><span class="sec-tag extra">拓展</span>9. 协方差结构与参数复杂度</h2></div>
       <p class="section-intro">GMM 的每个组件至少有权重、均值和协方差。full 协方差能表达旋转椭圆，但参数最多；diagonal 忽略维度间相关性，换取稳定性；spherical 更省参数。</p>
       <div class="five-grid">
-        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="covariance">协方差矩阵</span> $\Sigma_j$ 描述各维波动与相关方向，必须对称半正定。</p></div>
+        <div class="five"><h3>是什么</h3><p><span class="term-ref" data-term="covariance">协方差矩阵</span> $\Sigma_j$ 描述各维波动与相关方向，必须对称半正定（所有特征值 $\ge0$；否则“密度”积不出 $1$，椭圆也没有实的轴长）。</p></div>
         <div class="five"><h3>白话理解</h3><p>它决定高斯云是圆、轴对齐椭圆，还是可以旋转的椭圆。</p></div>
         <div class="five"><h3>干嘛用</h3><p>在表达能力、样本量与数值稳定性之间做选择；不是越复杂越好。</p></div>
         <div class="five"><h3>怎么算</h3><p>$d$ 维时，spherical 每组件 1 个方差，diagonal 有 $d$ 个，full 有 $d(d+1)/2$ 个自由参数。</p></div>
@@ -306,6 +306,7 @@ $('#emStep').addEventListener('click',()=>{step();draw();toast('已完成一轮 
 {id:'latent',t:'潜变量 / 隐藏变量',en:'latent variable',f:'Z_i\\in\\{1,\\ldots,K\\}',d:'没有被直接观测、但参与生成观测数据的随机变量。',s:'sec-latent',u:'为无标签数据提供组件归属的概率对象。',why:'把未知标签保留下来，才能在 E-step 中用后验而不是武断的 0/1 标签。'},
 {id:'mixweight',t:'混合权重',en:'mixing proportion',f:'w_j=P(Z=j),\\;w_j\\ge0,\\;\\sum_jw_j=1',d:'生成故事中先抽到组件 j 的概率；它是潜变量 Z 的先验比例，不是参数的 prior，也不保证对应语义类别频率。',s:'sec-mixture',u:'控制每个高斯对总体密度的贡献大小。',why:'它把组件出现频率写进混合密度，并在 M-step 中由有效样本量更新。'},
 {id:'gmm',t:'高斯混合模型',en:'Gaussian mixture model (GMM)',f:'p(x)=\\sum_jw_j\\mathcal N(x;\\mu_j,\\Sigma_j)',d:'用多个高斯条件分布和混合权重表示一个整体密度。',s:'sec-mixture',u:'密度估计、软聚类、异常候选与生成式分类。',why:'它把复杂密度拆成组件，责任度再把整体密度反解为后验归属。'},
+{id:'marginal',t:'边缘化',en:'marginalization',f:'p(x)=\\sum_j p(x,z=j)',d:'对不关心的离散变量求和，把它从联合分布里消掉。',s:'sec-mixture',u:'从生成故事得到只含 x 的混合密度。',why:'求和发生在取对数之前，这正是 observed likelihood 难以直接优化的根源。'},
 {id:'observed',t:'观测似然',en:'observed likelihood',f:'\\ell_{obs}(\\theta)=\\sum_i\\log p(x_i\\mid\\theta)',d:'只使用实际看见的观测 X，对隐藏标签求和后的目标。',s:'sec-likelihood',u:'EM 最终要监控的真实数据目标。',why:'它与 complete likelihood 不同；混淆二者会误读 EM 的优化对象。'},
 {id:'complete',t:'完整似然',en:'complete likelihood',f:'\\ell_{complete}=\\sum_i\\log p(x_i,z_i\\mid\\theta)',d:'假设隐藏标签也已知时的联合 log-likelihood。',s:'sec-likelihood',u:'在固定责任度后组织加权 MLE。',why:'标签信息让参数更新变得可分解，但训练时标签本身并未真的观测到。'},
 {id:'estep',t:'E-step',en:'expectation step',f:'\\gamma_{ij}=P(Z_i=j\\mid x_i,\\theta)',d:'固定当前参数，计算隐藏组件标签的后验责任度。',s:'sec-responsibility',u:'为 M-step 生成每个样本对每个组件的软分配。',why:'它把 Bayes 后验变成下一步可累加的权重。'},
