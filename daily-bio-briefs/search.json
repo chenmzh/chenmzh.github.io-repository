@@ -2,6 +2,47 @@
   "updated": "2026-08-20",
   "briefs": [
     {
+      "date": "2026-08-21",
+      "title": "每日合成与发育生物学简报 - 2026-08-21",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Multiscale integration of tissue and chromatin context converts cell heterogeneity into stable intestinal patterning",
+        "Morphogen-guided neocortical organoids with anteroposterior areal identity",
+        "An ER stress-responsive RNA rheostat for programmable gene and mRNA therapies",
+        "Modality-specific neurovascular coupling via layer-segregated arteriole networks",
+        "Cell-Based Sensor for Extracellular DNA",
+        "A Centimeter-Scale, Peristaltic Human Intestinal Organoid with Integrated Neuro-Immune-Vascular Systems Recapitulates Enteritis and Orthotopic Colorectal Cancer",
+        "Tumor-tropic *E. coli* engineered as living T and NK cell engagers",
+        "Expanding the catabolic capacity of *Pseudomonas putida* to acetovanillone, 5-carboxyvanillate, and vanillyl glyoxylate for muconate production from kraft lignin-derived aromatics",
+        "Morphogenesis of a stratified cell mound at a vortex defect",
+        "Tissue mechanics sets developmental scaling of collective cell migration"
+      ],
+      "summary": "今日最清晰的主线是“把生物系统的状态和边界条件变成可调工程变量”：从短时 morphogen 输入生成有前后轴的皮层类器官，到用 ER 应激反馈自动压低治疗蛋白表达，再到把细胞外 DNA 转成基因表达输出。 发育合成生物学的尺度继续上移：新预印本同时覆盖多谱系、可蠕动的肠道类器官，以及由拓扑缺陷和集体细胞流驱动的三维细胞组织；形态不再只是终点，而被描述为力学、信号和细胞状态共同闭环的结果。 控制论与生物学方向今天更接近“机制性反馈/稳态”而非经典控制器：YAP1—FOXA1—Delta-Notch 维持再生图样，ER 应激调节转基因输出，神经活动通过分层小动脉网络调节脑血流。 合成生物学的底盘工程侧重两类能力：把木质素衍生芳香化合物导入 *Pseudomonas putida* 的代谢通路，以及把肿瘤趋向性 *E. coli* 变成局部招募 T/NK 细胞的活体免疫调节平台。 bioRxiv 是本窗口最活跃且最贴近主题的来源；medRxiv 官方日期接口没有新帖。arXiv q-bio 有流行病和生态动力学模型，但与细胞回路、组织形态发生的距离较远，放在低相关区并未列入优先阅读。",
+      "markdown": "briefs/2026-08-21.md",
+      "url": "reader.html?date=2026-08-21",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Multiscale integration of tissue and chromatin context converts cell heterogeneity into stable intestinal patterning",
+        "Morphogen-guided neocortical organoids with anteroposterior areal identity",
+        "An ER stress-responsive RNA rheostat for programmable gene and mRNA therapies",
+        "Modality-specific neurovascular coupling via layer-segregated arteriole networks",
+        "Cell-Based Sensor for Extracellular DNA",
+        "A Centimeter-Scale, Peristaltic Human Intestinal Organoid with Integrated Neuro-Immune-Vascular Systems Recapitulates Enteritis and Orthotopic Colorectal Cancer",
+        "Tumor-tropic *E. coli* engineered as living T and NK cell engagers",
+        "Expanding the catabolic capacity of *Pseudomonas putida* to acetovanillone, 5-carboxyvanillate, and vanillyl glyoxylate for muconate production from kraft lignin-derived aromatics",
+        "Morphogenesis of a stratified cell mound at a vortex defect",
+        "Tissue mechanics sets developmental scaling of collective cell migration"
+      ]
+    },
+    {
       "date": "2026-08-20",
       "title": "每日合成与发育生物学简报 - 2026-08-20",
       "topics": [
