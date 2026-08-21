@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>第 3 讲 · Optimization I 互动实验室 | IML 2026</title>
+<meta name="description" content="第3讲 Optimization I 的互动附属页：feature map、设计矩阵、容量与过拟合、梯度下降、链式法则推平方损失梯度。">
+<link rel="stylesheet" href="katex/katex.min.css">
+<style>
+:root{--paper:#f4f2ec;--surface:#fffdf8;--surface2:#ece9e0;--ink:#20231f;--muted:#667068;--line:#d6d2c4;--accent:#176653;--accent2:#0b7a6b;--warm:#b45a2b;--danger:#b23a48;--blue:#285a9e;--violet:#6c4fa1;--gold:#8a6a14;--shadow:0 10px 30px rgba(30,35,30,.1);--core-bg:#e6f3ed;--extra-bg:#f0e9fb;--code-bg:#172622;--code-ink:#e9f0ec}
+html[data-theme="dark"]{--paper:#151917;--surface:#1d231f;--surface2:#262e29;--ink:#eef1ea;--muted:#a9b4ab;--line:#3a433d;--accent:#7cc4ad;--accent2:#5fb39a;--warm:#e6a071;--danger:#e58390;--blue:#8fb8ec;--violet:#b49ae8;--gold:#d8b96a;--shadow:0 10px 30px rgba(0,0,0,.45);--core-bg:#20372e;--extra-bg:#33264b;--code-bg:#0f1613;--code-ink:#dce8e0}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--ink);background:var(--paper);font-family:"Noto Serif SC",Georgia,"Songti SC","STSong",serif;line-height:1.8;font-size:17px}a{color:var(--accent)}button,input,select{font:inherit;color:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}code{font-family:Menlo,Monaco,"Cascadia Code","Courier New",monospace;font-size:.86em}.katex{font-size:1.03em}
+#progress{position:fixed;z-index:100;top:0;left:0;width:0;height:3px;background:var(--accent);transition:width .1s linear}.topbar{position:sticky;top:0;z-index:60;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--paper) 90%,transparent);backdrop-filter:blur(10px)}.brand{display:flex;min-width:0;gap:10px;align-items:center}.kicker{font:700 .7rem Menlo,Monaco,monospace;letter-spacing:.08em;color:var(--accent)}.top-title{font-size:.95rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.actions{display:flex;gap:7px;align-items:center;flex:none}.btn,.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:700;font-size:.86rem;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease}.btn:hover,.icon-btn:hover{transform:translateY(-1px);box-shadow:var(--shadow);border-color:var(--accent)}.btn.primary,.btn.active{background:var(--accent);border-color:var(--accent);color:#f7fffb}.btn.warm{background:var(--warm);border-color:var(--warm);color:#fff}.btn.ghost{background:transparent}.icon-btn{width:38px;height:38px;padding:0}
+.layout{display:grid;grid-template-columns:238px minmax(0,1fr) 296px;max-width:1700px;margin:0 auto;align-items:start}.toc{position:sticky;top:61px;max-height:calc(100vh - 61px);overflow:auto;padding:22px 14px 42px;border-right:1px solid var(--line);background:var(--paper)}.rail-label{margin:0 0 10px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.toc a{display:block;padding:6px 8px;border-left:2px solid transparent;color:var(--muted);font-size:.78rem;line-height:1.35;text-decoration:none}.toc a:hover,.toc a.active{color:var(--accent);border-left-color:var(--accent);background:var(--surface2)}.toc a[data-mode="extra"]{color:var(--violet)}.toc a[data-mode="extra"].active{border-left-color:var(--violet)}.mode-note{margin:16px 0 0;padding:10px;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-size:.75rem;line-height:1.55}
+#main{min-width:0;padding:0 25px 90px}section{max-width:1040px;margin:0 auto 40px;scroll-margin-top:78px}.hero{padding-top:42px}.hero h1{margin:8px 0 12px;font-size:clamp(2rem,4vw,3.25rem);line-height:1.18;letter-spacing:-.03em}.hero .lead{max-width:850px;font-size:1.08rem}.eyebrow{margin:0;color:var(--accent);font:700 .72rem Menlo,Monaco,monospace;letter-spacing:.08em;text-transform:uppercase}.course-ribbon{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}.pill{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:var(--surface);font-size:.75rem}.pill.core{border-color:#8bc2ad;color:var(--accent);background:var(--core-bg)}.pill.extra{border-color:#b9a0e1;color:var(--violet);background:var(--extra-bg)}.overview-grid,.card-grid,.five-grid,.stat-grid{display:grid;gap:13px}.overview-grid{grid-template-columns:repeat(3,1fr);margin:23px 0}.card-grid{grid-template-columns:repeat(2,1fr)}.five-grid{grid-template-columns:repeat(5,1fr);margin:18px 0}.stat-grid{grid-template-columns:repeat(4,1fr)}.card,.panel,.five,.stat,.formula,.callout{border:1px solid var(--line);border-radius:11px;background:var(--surface);box-shadow:0 4px 15px rgba(30,35,30,.045)}.card,.panel,.five,.stat,.callout{padding:15px 17px}.card h3,.panel h3,.five h3,.stat h3{margin:0 0 5px;font-size:1rem}.card p,.five p,.stat p{margin:0;font-size:.9rem}.card .card-kicker{display:block;margin-bottom:4px;color:var(--muted);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.05em;text-transform:uppercase}.chain{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:25px 0 18px}.chain-step{position:relative;padding:13px 25px 13px 13px;border:1px solid var(--line);border-right:0;background:var(--surface);font-size:.86rem}.chain-step:first-child{border-radius:10px 0 0 10px}.chain-step:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}.chain-step:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;z-index:2;width:23px;height:23px;transform:translateY(-50%);display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;color:var(--accent);background:var(--surface);font-weight:700}.chain-step b{display:block;color:var(--accent);font-size:.78rem}.section-head{display:flex;gap:10px;align-items:baseline;margin-bottom:12px;border-bottom:1px solid var(--line)}h2{margin:0;padding-bottom:7px;font-size:1.55rem;line-height:1.35}h3{line-height:1.35}h4{margin:17px 0 7px}.sec-tag{display:inline-flex;align-items:center;flex:none;padding:2px 7px;border-radius:999px;font:700 .67rem Menlo,Monaco,monospace;letter-spacing:.02em;vertical-align:middle}.sec-tag.core{color:#176653;background:var(--core-bg);border:1px solid #8bc2ad}.sec-tag.extra{color:var(--violet);background:var(--extra-bg);border:1px solid #b9a0e1}.section-intro{margin-top:0;color:var(--muted)}.plain{margin:9px 0}.small{font-size:.86rem;color:var(--muted)}.formula{margin:15px 0;padding:12px 17px;border-left:4px solid var(--accent);overflow:auto;background:color-mix(in srgb,var(--surface) 80%,var(--core-bg))}.formula p{margin:4px 0}.callout{margin:15px 0;background:color-mix(in srgb,var(--surface) 75%,var(--core-bg));border-left:4px solid var(--accent)}.callout.warn{border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 80%,#f5eadb)}.five{min-height:150px}.five h3{font-size:.87rem;color:var(--accent)}.five h3::before{content:"";display:inline-block;width:7px;height:7px;margin:0 5px 2px 0;border-radius:50%;background:var(--accent)}.five p{font-size:.84rem;line-height:1.6}.control-panel{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px;align-items:start;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}.controls{display:grid;gap:10px}.control{display:grid;grid-template-columns:125px minmax(90px,1fr) 66px;gap:9px;align-items:center;font-size:.83rem}.control label{color:var(--muted)}.control input[type=range]{width:100%;accent-color:var(--accent)}.control output{padding:3px 5px;border:1px solid var(--line);border-radius:5px;color:var(--accent);background:var(--surface2);font:700 .78rem Menlo,Monaco,monospace;text-align:right}.control select{width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}.label-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}.step-box{padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface2);font-size:.86rem}.step-box p{margin:5px 0}.svg-wrap{width:100%;overflow:auto}.viz-svg{display:block;width:100%;min-width:690px;height:auto;border:1px solid var(--line);border-radius:10px;background:color-mix(in srgb,var(--surface) 94%,var(--paper))}.viz-caption{margin:7px 0 0;color:var(--muted);font-size:.78rem}.svg-grid{stroke:var(--line);stroke-width:1;opacity:.65}.svg-axis{stroke:var(--ink);stroke-width:1.2}.svg-edge{fill:none;stroke-width:2.4}.svg-label text,.svg-label{font-family:Menlo,Monaco,"Courier New",monospace}.svg-label rect{fill:var(--surface);stroke:var(--line);stroke-width:.8;opacity:.96}.svg-label text{pointer-events:none}.source-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.source-grid figure{margin:0;padding:8px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}.source-grid img{display:block;width:100%;height:160px;object-fit:contain;background:#fff}.source-grid figcaption{margin-top:5px;color:var(--muted);font-size:.75rem}.next-bridge{display:flex;gap:10px;align-items:baseline;margin:22px 0 0;padding:10px 13px;border-left:3px solid var(--warm);border-radius:0 8px 8px 0;background:color-mix(in srgb,var(--surface) 85%,#f0dfd0);font-size:.88rem}.next-bridge .nb-label{flex:none;color:var(--warm);font:700 .72rem Menlo,Monaco,monospace}.mode-extra{display:block}.checklist{display:grid;gap:8px;margin:13px 0}.checklist label{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border:1px solid var(--line);border-radius:7px;background:var(--surface);font-size:.89rem}.checklist input{margin-top:6px;accent-color:var(--accent)}.closing-formulas{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.closing-formulas .formula{margin:0}.gloss-rail{position:sticky;top:61px;max-height:calc(100vh - 80px);overflow-y:auto;padding:22px 14px 42px;border-left:1px solid var(--line);background:var(--paper)}.gloss-group{margin:0 0 17px}.gloss-group h3{margin:0 0 6px;color:var(--accent);font:700 .68rem Menlo,Monaco,monospace;letter-spacing:.04em}.gloss-term{display:block;width:100%;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-left:2px solid transparent;border-radius:6px;color:var(--ink);background:transparent;text-align:left}.gloss-term:hover,.gloss-term.active{border-color:var(--line);border-left-color:var(--warm);background:color-mix(in srgb,var(--surface) 90%,var(--warm))}.gloss-term .gt{font-size:.8rem;font-weight:700}.gloss-term .ge{display:block;color:var(--muted);font: .65rem Menlo,Monaco,monospace}.gloss-term .gd{display:block;margin-top:2px;color:var(--muted);font-size:.72rem;line-height:1.4}.term-ref{display:inline;padding:0 2px;border:0;border-bottom:1.5px dotted var(--accent);color:var(--accent);background:transparent;font:inherit;font-weight:700;cursor:help}.term-ref:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}.term-pop{position:fixed;z-index:90;display:none;max-width:390px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);box-shadow:var(--shadow)}.term-pop.show{display:block}.term-pop h3{margin:0 0 2px;font-size:1rem}.term-pop .en{color:var(--muted);font: .7rem Menlo,Monaco,monospace}.term-pop p{margin:6px 0;font-size:.82rem;line-height:1.55}.term-pop .loc{color:var(--muted)}.toast{position:fixed;z-index:95;right:20px;bottom:20px;display:none;padding:9px 13px;border:1px solid var(--line);border-radius:8px;color:var(--ink);background:var(--surface);box-shadow:var(--shadow);font-size:.82rem}.toast.show{display:block}
+@media(max-width:1240px){.layout{grid-template-columns:220px minmax(0,1fr)}.gloss-rail{display:none}}
+@media(max-width:820px){.topbar{padding:8px 11px}.top-title{display:none}.actions{gap:4px}.btn{padding:7px 9px;font-size:.78rem}.layout{display:block}.toc{display:none}#main{padding:0 14px 70px}.hero{padding-top:27px}.overview-grid,.card-grid,.stat-grid,.closing-formulas{grid-template-columns:1fr}.five-grid{grid-template-columns:1fr 1fr}.chain{grid-template-columns:1fr 1fr}.chain-step{border-right:1px solid var(--line);border-radius:0!important}.chain-step:nth-child(1){border-radius:10px 0 0 0!important}.chain-step:nth-child(2){border-radius:0 10px 0 0!important}.chain-step:nth-child(3){border-radius:0 0 0 10px!important}.chain-step:nth-child(4){border-radius:0 0 10px 0!important}.chain-step:not(:last-child)::after{right:8px;top:auto;bottom:-12px}.control-panel{grid-template-columns:1fr}.source-grid{grid-template-columns:1fr}.source-grid img{height:190px}}
+@media(max-width:520px){body{font-size:16px}.five-grid{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-wrap:wrap}.control{grid-template-columns:105px minmax(70px,1fr) 60px}.viz-svg{min-width:620px}}
+@media print{.topbar,.toc,.gloss-rail,#progress,.toast,.actions{display:none!important}.layout{display:block}#main{padding:0}.card,.panel,.five,.formula{box-shadow:none}}
+body[data-mode="core"] .mode-extra{display:none!important}body[data-mode="core"] .concept-node[data-extra="true"]{opacity:.38}body[data-mode="full"] .concept-node[data-extra="true"]{opacity:1}
+.chain.c5{grid-template-columns:repeat(5,1fr)}.btn.xs{padding:3px 9px;font-size:.74rem}.pick-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:.8rem;margin:4px 0}.pick-row .pk-name{flex:none;min-width:52px;color:var(--muted);font:700 .74rem Menlo,Monaco,monospace}table.ktab{border-collapse:collapse;width:100%;font-size:.8rem}.ktab td,.ktab th{padding:3px 7px;border-bottom:1px solid var(--line);text-align:right}.ktab th{color:var(--muted);font-weight:700}.ktab td:first-child,.ktab th:first-child{text-align:left}.ktab tr.best td{color:var(--accent);font-weight:700}
+.mis-card{cursor:pointer}.mis-card .mis-a{display:none;margin-top:6px}.mis-card.open .mis-a{display:block}.mis-card .mis-q{color:var(--warm);font-weight:700}.hist-note{font-size:.78rem;color:var(--muted)}
+</style>
+</head>
+<body data-mode="core">
+<div id="progress"></div>
+<header class="topbar">
+  <div class="brand"><span class="kicker">IML · LECTURE 03</span><span class="top-title">Optimization I · 先变换，再线性；再沿负梯度走下去</span></div>
+  <div class="actions">
+    <a class="btn ghost" href="index.html#lecture-03">← 返回原讲义</a>
+    <button class="btn active" id="modeCore" type="button" data-mode="core" aria-pressed="true">核心主线</button>
+    <button class="btn" id="modeFull" type="button" data-mode="full" aria-pressed="false">完整课程</button>
+    <button class="icon-btn" id="themeButton" type="button" aria-label="切换明暗主题">◐</button>
+  </div>
+</header>
+<div class="layout">
+  <aside class="toc" aria-label="本页目录"><p class="rail-label">ON THIS LAB</p><nav id="toc"></nav><p class="mode-note" id="modeNote"></p></aside>
+  <main id="main">
+    <section id="overview" data-mode="core" class="hero">
+      <p class="eyebrow">第 3 讲 · 互动附属页</p>
+      <h1>Optimization I</h1>
+      <p class="lead">第 2 讲给出线性回归与闭式解 $\mathbf w^\star=(X^\top X)^{-1}X^\top\mathbf y$；本讲解决它留下的两个缺口：直线拟合不了的曲线怎么办（<span class="term-ref" data-term="featmap">feature map</span> + <span class="term-ref" data-term="designmat">设计矩阵</span>），闭式解太贵或不存在怎么办（<span class="term-ref" data-term="gd">梯度下降</span> + <span class="term-ref" data-term="chainrule">链式法则</span>）。第 4 讲将接着问：GD 何时收敛、多快——答案藏在 Hessian 的特征值里。</p>
+      <div class="course-ribbon"><span class="pill">第 2 讲：线性回归 + 闭式解 w*=(XᵀX)⁻¹Xᵀy</span><span class="pill core">本讲：φ(x) → Φ → 梯度下降</span><span class="pill extra">第 4 讲：收敛条件与速度（特征值）</span></div>
+      <div class="overview-grid">
+        <div class="card"><span class="card-kicker">今天讲什么</span><h3>两条主线：表达与优化</h3><p>前半讲“先变换，再线性”：用 $\boldsymbol\phi(\mathbf x)$ 把弯的关系摊平成参数的线性组合；后半讲“局部信息迭代”：闭式解不够时，用 $\mathbf w\leftarrow\mathbf w-\eta\nabla L$ 一步步走下山。</p></div>
+        <div class="card"><span class="card-kicker">为什么重要</span><h3>几乎所有机器学习模型都是这两步</h3><p>固定特征 + 平方损失是最小可复现范式；logistic 回归、神经网络只是换掉损失或让特征也可学，优化接口不变。</p></div>
+        <div class="card"><span class="card-kicker">记号红线</span><h3>½ 约定 · 两种向量 · 两类下标</h3><p>本讲与第 4 讲一致使用 $L=\frac12(y-\hat y)^2$（样本损失带 $\frac12$）；$\boldsymbol\phi(\mathbf x)$ 是<strong>特征向量</strong>、$\mathbf w$ 是<strong>权重向量</strong>，后文还会学到表示本身；下标 $i$ 指样本、$j$ 指特征坐标。</p></div>
+      </div>
+      <div class="chain c5" aria-label="本讲主线五步"><div class="chain-step"><b>1 · 问题</b>直线弯不了：$f=w_0+w_1x$ 抓不住弯曲趋势。</div><div class="chain-step"><b>2 · 变换</b>feature map：$x\mapsto\boldsymbol\phi(x)=[1,x,x^2]^\top$。</div><div class="chain-step"><b>3 · 堆叠</b>设计矩阵 $\boldsymbol\Phi$：一次 $\boldsymbol\Phi\mathbf w$ 预测所有样本。</div><div class="chain-step"><b>4 · 迭代</b>闭式解不够时：$\mathbf w\leftarrow\mathbf w-\eta\nabla L$。</div><div class="chain-step"><b>5 · 求导</b>链式法则：$\nabla L=\frac1n\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y)$。</div></div>
+      <div class="panel"><h3>概念地图：点击节点跳到对应小节</h3><p class="small">实线是核心路径；紫色节点属于拓展。箭头从方块边界出发，在另一方块边界结束，避免穿过节点。</p><div class="svg-wrap"><svg id="conceptMap" class="viz-svg" viewBox="0 0 960 300" role="img" aria-label="从曲线问题到梯度下降的概念地图"></svg></div></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>先看一条直线在哪里失败，以及课件给出的关键转向：对输入非线性，对参数保持线性。</span></div>
+    </section>
+    <section id="sec-curve" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>1. 一条直线拟合不了的曲线</h2></div>
+      <p class="section-intro">继续房价例子：只看面积 $x$ 时，带截距的线性模型 $f(x)=w_0+w_1x$ 假设面积每增加一平方米，预测价格总增加相同的 $w_1$。但现实的边际价值会弯曲。课件的关键方法不是抛弃线性回归，而是改变输入的表示：<strong>模型可以对原始输入非线性，同时对待学习的参数保持线性</strong>——这句话是本讲前半的核心。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>模型 $f(\mathbf x)=\mathbf w^\top\boldsymbol\phi(\mathbf x)=\sum_jw_j\phi_j(\mathbf x)$ 中，参数 $w_j$ 只以一次幂、线性组合的方式出现——称模型<strong><span class="term-ref" data-term="linparam">对参数线性</span></strong>，无论 $\phi_j$ 本身多弯。</p></div>
+        <div class="five"><h3>白话理解</h3><p>弯的是“坐标”，不是“权重”：$x^2$ 只是提前算好的新尺子，$w_j$ 仍然是每把尺子的放大倍数。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>让第 2 讲的全套工具（正规方程、闭式解、平方损失几何）原样搬到曲线问题上。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>检查每个 $w_j$ 是否只乘在一个“不含其他 $w$ 的量”上：$w_0+w_1x+w_2x^2$ 通过；$\sin(wx)$、$1/(1+e^{-wx})$ 不通过。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>对参数线性 ⇒ 损失对 $\mathbf w$ 是二次型 ⇒ 闭式解存在。第 2 讲 $X$ 是原始特征；本讲把它升级成 $\boldsymbol\Phi$；神经网络则连 $\boldsymbol\phi$ 也一起学（见拓展节自测题）。</p></div>
+      </div>
+      <div class="formula"><p>从 $x$ 看它是抛物线，从 $\mathbf w$ 看它仍是线性组合——两种读法同时成立：</p><p>$$f(x)=w_0+w_1x+w_2x^2=\mathbf w^\top\boldsymbol\phi(x),\qquad \boldsymbol\phi(x)=\begin{bmatrix}1&x&x^2\end{bmatrix}^\top.$$</p><p>等式左边强调“曲线”，右边强调“参数线性”；训练要学的只是三个权重，而不是 $x^2$ 这条变换规则——规则由我们预先指定。</p></div>
+      <div class="source-grid"><figure><img src="assets/optimization1-lab/fig0.png" alt="曲线可以对参数线性：phi(x)=[1,x,x²,x³] 的基函数" loading="lazy"><figcaption>本地化讲义原图：曲线模型仍可对系数线性；右为 $\phi(x)=[1,x,x^2,x^3]^\top$ 的基函数族</figcaption></figure></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="fmRand" type="button">随机重新生成 9 个样本</button><span class="pill" id="fmSeed">seed —</span></div>
+          <div class="controls">
+            <div class="control"><label for="fmDeg">多项式次数 $d$</label><input id="fmDeg" type="range" min="1" max="5" step="1" value="1"><output id="fmDegOut"></output></div>
+          </div>
+          <p class="small">实验 A「特征映射游乐场」：信号是类 $\sqrt{x}$ 的弯曲曲线加小噪声（真 <code>Math.random()</code>）。用 <span class="term-ref" data-term="polybasis">多项式基函数</span> $\phi(x)=[1,x,\dots,x^d]^\top$ 现算最小二乘拟合（正规方程 + 高斯消元），画拟合曲线并给出训练 MSE 现算值。拖 $d$：$d=1$ 欠拟合、$d=3$ 刚好、$d=5$ 开始在点间抖动。</p></div>
+        <div class="step-box" id="fmSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="fmViz" class="viz-svg" viewBox="0 0 940 360" role="img" aria-label="不同次数的多项式拟合"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>“加一个 $x^2$”为什么不算作弊？把这条变换正式定义成 feature map。</span></div>
+    </section>
+
+    <section id="sec-featuremap" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>2. Feature map：先变换，再线性</h2></div>
+      <p class="section-intro">设原始输入 $\mathbf x\in\mathbb R^d$。<span class="term-ref" data-term="featmap">特征映射</span>是一个预先指定的函数 $\boldsymbol\phi:\mathbb R^d\to\mathbb R^p$，把输入变成 $p$ 维<strong><span class="term-ref" data-term="featvec">特征向量</span></strong>。三个维度别混：$d$ 是原始输入维数，$p$ 是特征数（也是参数维数），$n$ 是样本数。再预告一次：$\boldsymbol\phi(\mathbf x)$ 是特征向量，$\mathbf w$ 是权重向量——后文两者会频繁同框。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>固定 $\boldsymbol\phi$ 后的函数类 $\mathcal F_{\boldsymbol\phi}=\{f_{\mathbf w}:f_{\mathbf w}(\mathbf x)=\sum_{j=1}^pw_j\phi_j(\mathbf x)=\mathbf w^\top\boldsymbol\phi(\mathbf x),\ \mathbf w\in\mathbb R^p\}$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>给同一个输入换一组“描述坐标”：面积 $x$ 之外再添 $x^2$，弯的关系在新坐标下可以被直线/超平面表达。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把非线性问题翻译回线性问题：原空间需要曲线或两个阈值的关系，特征空间里可能一条直线就够。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>两步分开：先查表式地算 $\boldsymbol\phi(\mathbf x)$（如 $\boldsymbol\phi(2)=[1,2,4]^\top$），再做内积 $\mathbf w^\top\boldsymbol\phi(\mathbf x)$ 得标量预测。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>本讲固定 $\boldsymbol\phi$ 只学 $\mathbf w$；能否“变容易”取决于新特征是否表达了数据真正需要的结构。每个样本都映射后堆起来，就是下一节的设计矩阵。</p></div>
+      </div>
+      <div class="formula"><p>例：$x=2$、$\mathbf w=(1,-1,\tfrac12)^\top$ 时（逐步：先映射，再内积）：</p><p>$$\boldsymbol\phi(2)=\begin{bmatrix}1\\2\\4\end{bmatrix},\qquad f_{\mathbf w}(2)=\mathbf w^\top\boldsymbol\phi(2)=1\cdot1+(-1)\cdot2+\tfrac12\cdot4=1.$$</p><p>“线性”要分清对象：$f$ 对原始输入 $x$ 一般非线性；对特征向量 $\boldsymbol\phi(x)$ 线性；对参数 $\mathbf w$ 也线性。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+            <div class="control"><label for="pmThr">$\varphi$ 空间水平线 $x^2=t$</label><input id="pmThr" type="range" min="0.02" max="1.5" step="0.01" value="0.42"><output id="pmThrOut"></output></div>
+          </div>
+          <p class="small">实验 B「$\varphi$ 空间线性化」：红点聚在数轴两端、蓝点夹在中间——输入空间里一个阈值分不开（需要 $x&gt;-\sqrt t$ <strong>且</strong> $x&lt;\sqrt t$ 两个）。映到 $(x,x^2)$ 平面后，一条水平线 $x^2=t$ 就能分开。拖 $t$，误分数与输入空间的对应双阈值都现算。</p></div>
+        <div class="step-box" id="pmSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="pmViz" class="viz-svg" viewBox="0 0 940 340" role="img" aria-label="输入空间两个阈值 vs 特征空间一条直线"></svg></div>
+      <div class="source-grid"><figure><img src="assets/optimization1-lab/fig1.png" alt="输入空间需要两个阈值，特征空间线性可分" loading="lazy"><figcaption>本地化讲义原图：输入空间需两个阈值，映到 $\boldsymbol\phi$ 空间后线性可分</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>一个样本一个特征向量；把 $n$ 个样本的转置堆成矩阵，预测就只剩一次矩阵乘法。</span></div>
+    </section>
+    <section id="sec-design" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>3. 设计矩阵：一次矩阵乘预测所有样本</h2></div>
+      <p class="section-intro">约定下标：$i$ 编号样本（$1..n$），$j$ 编号特征坐标（$1..p$）。把第 $i$ 个样本的特征向量转置后作为第 $i$ 行，堆出<strong><span class="term-ref" data-term="designmat">设计矩阵</span></strong> $\boldsymbol\Phi\in\mathbb R^{n\times p}$，$\Phi_{ij}=\phi_j(\mathbf x_i)$。于是一次 $\boldsymbol\Phi\mathbf w$ 同时给出全部 $n$ 个预测。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>$\boldsymbol\Phi$ 的第 $i$ 行是 $\boldsymbol\phi(\mathbf x_i)^\top$；$\boldsymbol\Phi\mathbf w\in\mathbb R^n$ 的第 $i$ 个分量是 $\mathbf w^\top\boldsymbol\phi(\mathbf x_i)$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>一张“样本 × 特征”的表：每行是一个样本的新坐标，矩阵乘相当于对每行做同一个加权求和。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>把 $n$ 个内积压缩成一次矩阵乘；平方损失随之写成 $\frac{1}{2n}\|\mathbf y-\boldsymbol\Phi\mathbf w\|_2^2$。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>逐行点乘：$\hat y_i=\sum_j\Phi_{ij}w_j$。维度自检：$(n\times p)(p\times1)=(n\times1)$；$\mathbf w\boldsymbol\Phi$ 通常维度不匹配——矩阵乘法不可随意交换。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>闭式解第 2 讲的 $X$ 直接换成 $\boldsymbol\Phi$：<span class="term-ref" data-term="closedform">闭式解</span> $\widehat{\mathbf w}=(\boldsymbol\Phi^\top\boldsymbol\Phi)^{-1}\boldsymbol\Phi^\top\mathbf y$ 原样成立——这是“先变换，再线性”的回报。</p></div>
+      </div>
+      <div class="formula"><p>例 5.1 精确拟合 $y=x^2$：$x\in\{-1,0,1\}$、二次特征 $\boldsymbol\phi(x)=[1,x,x^2]^\top$，则</p><p>$$\boldsymbol\Phi=\begin{bmatrix}1&-1&1\\1&0&0\\1&1&1\end{bmatrix},\quad \mathbf y=\begin{bmatrix}1\\0\\1\end{bmatrix},\quad \mathbf w=\begin{bmatrix}0\\0\\1\end{bmatrix}\ \Rightarrow\ \boldsymbol\Phi\mathbf w=\begin{bmatrix}1\\0\\1\end{bmatrix}=\mathbf y.$$</p><p>训练误差为零，对应 $f(x)=x^2$——曲线是弯的，训练仍然只在求线性参数 $\mathbf w$。下面的复算器把这张表逐行重算给你看。</p></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn" id="dmEx51" type="button">例 5.1（x∈{−1,0,1}, y=x²）</button><button class="btn" id="dmEx52" type="button">练习 5.2（x∈{0,1,2}）</button></div>
+          <div class="controls">
+            <div class="control"><label for="dmW0">$w_0$</label><input id="dmW0" type="range" min="-2" max="3" step="0.25" value="0"><output id="dmW0Out"></output></div>
+            <div class="control"><label for="dmW1">$w_1$</label><input id="dmW1" type="range" min="-2" max="3" step="0.25" value="0"><output id="dmW1Out"></output></div>
+            <div class="control"><label for="dmW2">$w_2$</label><input id="dmW2" type="range" min="-2" max="3" step="0.25" value="1"><output id="dmW2Out"></output></div>
+          </div>
+          <p class="small">实验 C「设计矩阵复算器」：step-box 逐步展示 $\boldsymbol\Phi$ 每行怎么填、$\boldsymbol\Phi\mathbf w$ 逐行点乘与残差。例 5.1 默认 $\mathbf w=(0,0,1)$ 精确命中 $\mathbf y=(1,0,1)$；练习 5.2 把滑杆调到 $(1,-1,2)$，预测应命中 $(1,2,7)$，对应 $f(x)=1-x+2x^2$。左图 $\boldsymbol\Phi$ 热力图，右图预测 vs 目标逐样本对比。</p></div>
+        <div class="step-box" id="dmSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="dmViz" class="viz-svg" viewBox="0 0 940 300" role="img" aria-label="设计矩阵热力图与预测对比"></svg></div>
+      <div class="source-grid"><figure><img src="assets/optimization1-lab/fig2.png" alt="设计矩阵热力图与一次矩阵乘预测所有行" loading="lazy"><figcaption>本地化讲义原图：设计矩阵热力图；一次 $\boldsymbol\Phi\mathbf w$ 预测所有行</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>$\boldsymbol\phi$ 可以无限加长——$x^3,x^4,\dots$ 都免费吗？先看训练误差和留出验证误差怎么分道扬镳。</span></div>
+    </section>
+
+    <section id="sec-capacity" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>4. 特征越多，模型一定越好吗</h2></div>
+      <p class="section-intro">多项式特征可一路加长到 $\boldsymbol\phi(x)=[1,x,\dots,x^{20}]^\top$。函数类随次数 $m$ 扩大，所以<strong>最小训练损失不会增加</strong>——但这条单调性只约束训练集。高阶曲线会在训练点之间剧烈摆动，把噪声当规律：<strong><span class="term-ref" data-term="overfit">过拟合</span></strong>。代价还有：$p$ 增大更贵、各列尺度差异大使 $\boldsymbol\Phi^\top\boldsymbol\Phi$ 病态、特征相关时闭式解不唯一或数值不稳。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>欠拟合：函数类太小，连主要结构都表达不了；过拟合：函数类过大，训练误差降而<strong><span class="term-ref" data-term="valerr">验证误差</span></strong>（留出数据上的误差）回升。</p></div>
+        <div class="five"><h3>白话理解</h3><p>$d=1$ 是僵硬的直尺，$d=11$ 是见弯就拐的软铁丝；$d=3$ 刚好抓住弯曲又不追每个点。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>用“训练误差降、验证误差先降后升”的岔口选择次数 $d^\star$。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>对每个 $d$ 现算最小二乘，分别在训练集与留出集上算 MSE，扫描 $d=1..9$ 画两条曲线。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>这是第 5 讲（泛化：训练好 ≠ 泛化好）与第 6 讲（正则化：给 $\mathbf w$ 加约束）的入口；列尺度病态还将在第 4 讲以条件数回归。</p></div>
+      </div>
+      <div class="source-grid"><figure><img src="assets/optimization1-lab/fig3.png" alt="欠拟合 degree1、平衡 degree3、过拟合 degree11" loading="lazy"><figcaption>本地化讲义原图：欠拟合（$d=1$）→ 平衡（$d=3$）→ 过拟合（$d=11$）</figcaption></figure></div>
+      <div class="control-panel">
+        <div><div class="label-row"><button class="btn primary" id="cpRand" type="button">随机重采样（训练 12 + 验证 10）</button><span class="pill" id="cpSeed">seed —</span></div>
+          <p class="small">实验 D「次数扫描」：同一信号重新采样训练/留出两组点，对 $d=1..9$ 现算训练 MSE 与验证 MSE（对数轴，刻度抽稀），标出验证误差最小的 $d^\star$。说明文字随数据动态生成。</p></div>
+        <div class="step-box" id="cpSteps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="cpViz" class="viz-svg" viewBox="0 0 940 360" role="img" aria-label="训练与验证误差随次数变化"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>换个问题：就算特征固定、闭式解存在，为什么还需要迭代优化？</span></div>
+    </section>
+    <section id="sec-gd1d" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>5. 为什么闭式解不够：一维下坡理解梯度下降</h2></div>
+      <p class="section-intro">即使固定特征的平方损失有闭式解，仍需要迭代优化：$p$ 大时形成并求解 $p\times p$ 正规方程昂贵且可能数值不稳；logistic、hinge 等损失没有闭式解；神经网络对参数本身非线性，无法把 $X$ 换成 $\boldsymbol\Phi$ 了事。<strong><span class="term-ref" data-term="gd">梯度下降</span></strong>提供通用接口：只要能算（或近似）$\nabla L$，就能迭代降损。方向由局部导数给出，步长由<strong><span class="term-ref" data-term="lr">学习率</span></strong> $\eta$ 决定——方向正确还不够，步长也必须合适。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>一维可微损失上，更新 $w_{t+1}=w_t-\eta L'(w_t)$；多维推广 $\mathbf w_{t+1}=\mathbf w_t-\eta\nabla L(\mathbf w_t)$。</p></div>
+        <div class="five"><h3>白话理解</h3><p>导数 $L'(w_t)$ 不是“损失有多大”，而是“$w$ 增加一点，损失大约变多少”：$L(w_t+\Delta w)\approx L(w_t)+L'(w_t)\Delta w$。正导数往左走，负导数往右走。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>只问局部“哪边下坡”，不一次写出最优参数；每一步选方向与长度两个东西。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>迭代直到停止：$\|\nabla L(\mathbf w_t)\|_2\le\varepsilon$，或 $\|\mathbf w_{t+1}-\mathbf w_t\|_2\le\varepsilon$，或 $|L(\mathbf w_{t+1})-L(\mathbf w_t)|\le\varepsilon$；并设最大迭代数 $T$ 兜底。梯度小只说明接近<strong><span class="term-ref" data-term="statpt">驻点</span></strong>，不自动等于全局最优。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>多维时 $-\nabla L$ 是欧氏单位球上的最陡下降方向（Cauchy–Schwarz：$\nabla L^\top\mathbf v\ge-\|\nabla L\|_2$，等号在 $\mathbf v=-\nabla L/\|\nabla L\|_2$）。$\eta$ 多大算“太大”？第 4 讲用特征值给出上界。</p></div>
+      </div>
+      <div class="formula"><p>例 1 的逐步手算（$L(w)=w^2-4w+5=(w-2)^2+1$，$L'(w)=2w-4$，$w_0=0$，$\eta=\tfrac14$）：</p><p>$$w_1=0-\tfrac14(-4)=1,\qquad w_2=1-\tfrac14(-2)=\tfrac32,$$</p><p>逐步靠近 $w^\star=2$。而 $\eta=1$ 时乘子 $1-2\eta=-1$：参数在最优点两侧等幅横跳，恰好不收敛也不发散；$\eta&gt;1$ 则放大误差、直接发散。</p></div>
+      <div class="control-panel">
+        <div><div class="controls">
+            <div class="control"><label for="gd1Eta">学习率 $\eta$</label><input id="gd1Eta" type="range" min="0.05" max="1.5" step="0.01" value="0.25"><output id="gd1EtaOut"></output></div>
+          </div>
+          <p class="small">实验 E「GD 例 1 复算器」：$L(w)=w^2-4w+5$、$w_0=0$。step-box 逐步代入现算 $w_1,w_2$ 与乘子 $m=1-2\eta$；左图画抛物线与迭代点，右图画 $L(w_t)$ 随迭代变化。拖 $\eta$ 依次看：$0&lt;\eta&lt;\frac12$ 单调靠近；$\eta=\frac12$ 一步到位；$\frac12&lt;\eta&lt;1$ 翻号收缩；$\eta=1$ 等幅横跳；$\eta&gt;1$ 发散。</p></div>
+        <div class="step-box" id="gd1Steps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="gd1Viz" class="viz-svg" viewBox="0 0 940 360" role="img" aria-label="一维梯度下降轨迹与损失曲线"></svg></div>
+      <div class="source-grid"><figure><img src="assets/optimization1-lab/fig4.png" alt="GD 等高线轨迹与目标随迭代下降" loading="lazy"><figcaption>本地化讲义原图：GD 沿负梯度逐步降低目标；方向正确还不够，步长也必须足够小</figcaption></figure></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>更新式里的 $\nabla L$ 从哪来？用链式法则把平方损失的梯度亲手推一遍。</span></div>
+    </section>
+
+    <section id="sec-chain" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>6. 链式法则：平方损失梯度亲手推</h2></div>
+      <p class="section-intro">这是本讲最值得亲手推的计算。<strong><span class="term-ref" data-term="chainrule">链式法则</span></strong>把“参数扰动 → 预测变化 → 损失变化”拆成可相乘的局部导数。约定提醒：样本损失带 $\frac12$，$\ell_i(\mathbf w)=\frac12(y_i-\mathbf w^\top\boldsymbol\phi_i)^2$；若不带 $\frac12$，梯度多一个因子 $2$，常数可吸收进 $\eta$。</p>
+      <div class="five-grid">
+        <div class="five"><h3>是什么（严谨定义）</h3><p>记<strong><span class="term-ref" data-term="residual">残差</span></strong> $r_i(\mathbf w)=y_i-\mathbf w^\top\boldsymbol\phi_i$；外层 $\frac{\mathrm d}{\mathrm dr_i}\frac12r_i^2=r_i$，内层 $\nabla_{\mathbf w}r_i=-\boldsymbol\phi_i$，相乘即梯度。</p></div>
+        <div class="five"><h3>白话理解</h3><p>每个样本沿自己的特征向量“推”一次参数：误差决定推力方向与大小，特征坐标决定推力分配到哪些 $w_j$。</p></div>
+        <div class="five"><h3>干嘛用</h3><p>给出 GD 每一步的方向；同时把“$\nabla L=0$”重新接回正规方程。</p></div>
+        <div class="five"><h3>怎么算 / 怎么用</h3><p>逐分量读：$\partial\ell_i/\partial w_j=(\mathbf w^\top\boldsymbol\phi_i-y_i)\phi_{ij}$；$\phi_{ij}=0$ 的样本不直接推动 $w_j$；预测偏高且 $\phi_{ij}&gt;0$ 时分量为正，GD 会减小 $w_j$。</p></div>
+        <div class="five"><h3>为什么重要 + 前后连接</h3><p>把 $n$ 个样本梯度平均，正是矩阵写法 $\frac1n\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y)$；令其为零就是正规方程——闭式解在一次性解零梯度方程，GD 在每步用局部信息逼近同一条件。反向传播就是这个想法在深层计算图上的复用。</p></div>
+      </div>
+      <div class="formula"><p>逐步推导（单样本；每步注明所用规则）。第一步，外层平方求导：$\frac{\mathrm d}{\mathrm dr_i}\frac12r_i^2=r_i$。第二步，内层残差求梯度：$\nabla_{\mathbf w}r_i=-\boldsymbol\phi_i$。第三步，链式法则相乘：</p><p>$$\nabla_{\mathbf w}\ell_i=r_i\,\nabla_{\mathbf w}r_i=-(y_i-\mathbf w^\top\boldsymbol\phi_i)\boldsymbol\phi_i=(\mathbf w^\top\boldsymbol\phi_i-y_i)\boldsymbol\phi_i.$$</p><p>第四步，平均到全部样本并写成矩阵形（令误差向量 $\mathbf e=\boldsymbol\Phi\mathbf w-\mathbf y$，注意 $\boldsymbol\Phi^\top$ 的第 $i$ 列正是 $\boldsymbol\phi_i$）：</p><p>$$\nabla L(\mathbf w)=\frac1n\sum_{i=1}^n(\mathbf w^\top\boldsymbol\phi_i-y_i)\boldsymbol\phi_i=\frac1n\boldsymbol\Phi^\top\mathbf e=\frac1n\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y).$$</p><p>令梯度为零整理得 $\boldsymbol\Phi^\top\boldsymbol\Phi\widehat{\mathbf w}=\boldsymbol\Phi^\top\mathbf y$——正规方程再次出现。</p></div>
+      <div class="svg-wrap"><svg id="chainViz" class="viz-svg" viewBox="0 0 940 210" role="img" aria-label="链式法则责任分配流程图"></svg></div>
+      <p class="small">上图把原讲义 fig5 重画为 SVG：箭头从节点边界到边界；每条边下方标该局部的链式因子（$\frac12$ 约定下 $\partial L/\partial\hat y=\hat y-y$；若损失不带 $\frac12$ 则为 $2(\hat y-y)$）。沿边把因子相乘：$\nabla_{\mathbf w}L=(\hat y-y)\,\mathbf x$。</p>
+      <div class="control-panel">
+        <div><div class="controls">
+            <div class="control"><label for="gd2Eta">学习率 $\eta$</label><input id="gd2Eta" type="range" min="0.05" max="0.9" step="0.01" value="0.25"><output id="gd2EtaOut"></output></div>
+          </div>
+          <p class="small">实验 F「GD 例 2 复算器」：单样本 $x=1,y=2$，$\boldsymbol\phi=[1,1]^\top$，$\mathbf w_0=(0,0)$，默认 $\eta=\frac14$：$\nabla L=-2[1,1]^\top$、$\mathbf w_1=(\frac12,\frac12)$、$\mathbf w_2=(\frac34,\frac34)$、新预测 $\frac32$。左图在 $(w_0,w_1)$ 平面画 $L=\frac12(2-w_0-w_1)^2$ 的等高线与现算轨迹——注意最优解不唯一：$w_0+w_1=2$ 整条线。</p></div>
+        <div class="step-box" id="gd2Steps"></div>
+      </div>
+      <div class="svg-wrap"><svg id="gd2Viz" class="viz-svg" viewBox="0 0 940 380" role="img" aria-label="二维参数空间等高线与两步 GD 轨迹"></svg></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>闭式解与 GD 各什么时候用？一张对比表加六条误区清点。</span></div>
+    </section>
+    <section id="sec-compare" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>7. 闭式解 vs 梯度下降，与六条误区</h2></div>
+      <p class="section-intro">对固定特征平方损失，两条路通向同一个最优条件 $\nabla L=0$：闭式解一次性求解，GD 迭代逼近。按 $n$ 样本、$p$ 特征记账：</p>
+      <table class="ktab">
+        <tr><th>方法</th><th>一次求解 / 每步成本</th><th>优点</th><th>局限</th><th>何时用</th></tr>
+        <tr><td>闭式解 $\widehat{\mathbf w}=(\boldsymbol\Phi^\top\boldsymbol\Phi)^{-1}\boldsymbol\Phi^\top\mathbf y$</td><td>$O(np^2+p^3)$</td><td>理论清楚；不用迭代、不用选 $\eta$</td><td>大规模昂贵；只对特殊结构存在；可能数值不稳</td><td>$p$ 小、平方损失、要精确解</td></tr>
+        <tr><td>梯度下降 $\mathbf w\leftarrow\mathbf w-\frac{\eta}{n}\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y)$</td><td>每步 $O(np)$</td><td>通用；可扩展；不显式求逆</td><td>要选 $\eta$ 与停止条件；只有迭代近似</td><td>$n,p$ 大、无闭式解、损失可导即可</td></tr>
+      </table>
+      <h3>六条常见误区：先自答，再点开核对</h3>
+      <div class="card-grid" id="misGrid"></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>拓展节：从讲义自测题选三道，点“显示答案”展开推导。</span></div>
+    </section>
+
+    <section id="sec-extra" data-mode="extra" class="mode-extra">
+      <div class="section-head"><h2><span class="sec-tag extra">拓展</span>8. 自测题选讲</h2></div>
+      <p class="section-intro">选自讲义 §17/§18。先自己作答，再点卡片展开参考推导——答案里的每一步都对应本讲某节的现算实验。</p>
+      <div class="card-grid" id="quizGrid"></div>
+      <div class="next-bridge"><span class="nb-label">下一步 →</span><span>收束本讲：核心问题的答案、关键公式与自查清单。</span></div>
+    </section>
+
+    <section id="closing" data-mode="core">
+      <div class="section-head"><h2><span class="sec-tag core">核心</span>收束：先变换再线性，再沿负梯度走下去</h2></div>
+      <div class="callout"><strong>核心问题 → 答案。</strong> 直线拟合不了的曲线怎么办？——用 feature map 换坐标：模型对 $x$ 非线性、对 $\mathbf w$ 仍线性，第 2 讲闭式解把 $X$ 换成 $\boldsymbol\Phi$ 照用；但特征越多训练误差越低 ≠ 越好，验证误差先降后升。闭式解太贵或不存在怎么办？——梯度下降：每步用链式法则现算 $\nabla L$，沿负梯度走 $\eta$ 步长；$\eta$ 过大振荡甚至发散，停止条件加最大迭代数兜底。</div>
+      <div class="closing-formulas">
+        <div class="formula"><p><strong>特征化模型</strong></p><p>$$f(\mathbf x)=\mathbf w^\top\boldsymbol\phi(\mathbf x)$$</p></div>
+        <div class="formula"><p><strong>设计矩阵预测</strong></p><p>$$\hat{\mathbf y}=\boldsymbol\Phi\mathbf w,\quad \Phi_{ij}=\phi_j(\mathbf x_i)$$</p></div>
+        <div class="formula"><p><strong>闭式解</strong></p><p>$$\widehat{\mathbf w}=(\boldsymbol\Phi^\top\boldsymbol\Phi)^{-1}\boldsymbol\Phi^\top\mathbf y$$</p></div>
+        <div class="formula"><p><strong>梯度下降</strong></p><p>$$\mathbf w_{t+1}=\mathbf w_t-\eta\nabla L(\mathbf w_t)$$</p></div>
+        <div class="formula"><p><strong>样本损失（½ 约定）</strong></p><p>$$\ell_i(\mathbf w)=\tfrac12\bigl(y_i-\mathbf w^\top\boldsymbol\phi_i\bigr)^2$$</p></div>
+        <div class="formula"><p><strong>平均损失梯度</strong></p><p>$$\nabla L=\tfrac1n\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y)$$</p></div>
+      </div>
+      <h3>自查清单</h3><div class="checklist"><label><input type="checkbox">我能解释“对 $x$ 非线性、对 $\mathbf w$ 线性”，并举一个通过、一个不通过判定的模型。</label><label><input type="checkbox">给定 $\boldsymbol\phi$ 与数据，我能逐行写出 $\boldsymbol\Phi$ 并手算 $\boldsymbol\Phi\mathbf w$（例 5.1 / 练习 5.2 不看书重做）。</label><label><input type="checkbox">我能说明为什么训练误差随 $d$ 不增，而验证误差先降后升。</label><label><input type="checkbox">我能用链式法则从 $\ell_i=\frac12r_i^2$ 推出 $\nabla\ell_i=(\mathbf w^\top\boldsymbol\phi_i-y_i)\boldsymbol\phi_i$，再汇总成 $\frac1n\boldsymbol\Phi^\top(\boldsymbol\Phi\mathbf w-\mathbf y)$。</label><label><input type="checkbox">我能复算 GD 例 1（$w_1=1,w_2=\frac32$）与例 2（$\mathbf w_1=(\frac12,\frac12)$），并说出 $\eta=1$ 时发生什么。</label></div>
+      <div class="callout"><strong>与下一讲连接。</strong> 本讲留下的问题是：同样的梯度下降，为什么在有些数据上很快、在另一些上沿狭长谷底缓慢振荡？第 4 讲用 Hessian 与<strong>特征值</strong>回答学习率上界、收敛速度与条件数。配套实验页：<a href="optimization2-lab.html">第 4 讲互动实验室</a>。</div>
+      <div class="next-bridge"><span class="nb-label">回到课程 →</span><span><a href="index.html#lecture-03">返回原讲义第 3 讲</a>，或前往 <a href="index.html#lecture-04">第 4 讲</a> 的收敛分析。</span></div>
+    </section>
+  </main>
+  <aside class="gloss-rail" id="glossRail" aria-label="随文术语侧栏"></aside>
+</div>
+<div class="term-pop" id="termPop" role="dialog" aria-live="polite"></div><div class="toast" id="toast"></div>
+<script src="katex/katex.min.js"></script><script src="katex/auto-render.min.js"></script>
+<script>
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const fmt=(x,p=3)=>{if(!Number.isFinite(x))return '—';const a=Math.abs(x);if(a>0&&(a>=1e6||a<1e-3))return x.toExponential(2);return Number(x.toFixed(p)).toLocaleString('en-US',{maximumFractionDigits:p});};
+const mathOpts={delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],ignoredTags:['script','style','textarea','pre','code','option','select','input'],throwOnError:false};
+function renderMath(root=document){if(window.renderMathInElement)window.renderMathInElement(root,mathOpts)}
+function storeGet(k){try{return localStorage.getItem(k)}catch(_){return null}}function storeSet(k,v){try{localStorage.setItem(k,v)}catch(_){}}
+function svgAdd(parent,tag,attrs={},text){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));if(text!==undefined)el.textContent=text;parent.appendChild(el);return el}
+function svgClear(svg){while(svg.firstChild)svg.removeChild(svg.firstChild)}
+function marker(svg,id,color){const defs=svgAdd(svg,'defs');const m=svgAdd(defs,'marker',{id,viewBox:'0 0 10 10',refX:8.5,refY:5,markerWidth:6.5,markerHeight:6.5,orient:'auto'});svgAdd(m,'path',{d:'M0,0 L10,5 L0,10 z',fill:color});return 'url(#'+id+')'}
+function svgLabel(parent,x,y,text,o={}){const opt=Object.assign({anchor:'middle',size:12,weight:600,fill:'var(--ink)',bg:'var(--surface)'},o);const g=svgAdd(parent,'g',{class:'svg-label'});const t=svgAdd(g,'text',{x,y,'text-anchor':opt.anchor,'font-size':opt.size,'font-weight':opt.weight,fill:opt.fill},text);let b={x:x-text.length*opt.size*.32,y:y-opt.size*.75,width:text.length*opt.size*.64,height:opt.size};try{b=t.getBBox()}catch(_){}const r=svgAdd(g,'rect',{x:b.x-5,y:b.y-3,width:Math.max(8,b.width+10),height:b.height+6,rx:6,fill:opt.bg});g.insertBefore(r,t);return g}
+function line(svg,x1,y1,x2,y2,attrs={}){return svgAdd(svg,'line',Object.assign({x1,y1,x2,y2},attrs))}
+function path(svg,d,attrs={}){return svgAdd(svg,'path',Object.assign({d,fill:'none'},attrs))}
+function scaleX(x,a,b,x0,w){return x0+(x-a)/(b-a)*w}function scaleY(y,a,b,y0,h){return y0+h-(y-a)/(b-a)*h}
+function curvePath(fn,xmin,xmax,x0,y0,w,h,ymin,ymax){let d='';for(let k=0;k<=180;k++){const x=xmin+(xmax-xmin)*k/180;const y=clamp(fn(x),ymin,ymax);d+=(k?' L':'M')+scaleX(x,xmin,xmax,x0,w).toFixed(2)+','+scaleY(y,ymin,ymax,y0,h).toFixed(2)}return d}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.classList.remove('show'),1800)}
+function range(id,cb,p=2){const el=$('#'+id),out=$('#'+id+'Out');const update=()=>{const v=Number(el.value);if(out)out.textContent=fmt(v,p);cb(v)};el.addEventListener('input',update);update();return el}
+function rerender(root){renderMath(root)}
+function frame(svg,o){const{x0,y0,w,h,xmin,xmax,ymin,ymax}=o;line(svg,x0,y0+h,x0+w,y0+h,{class:'svg-axis'});line(svg,x0,y0,x0,y0+h,{class:'svg-axis'});(o.yticks||[]).forEach(v=>{const y=scaleY(v,ymin,ymax,y0,h);line(svg,x0,y,x0+w,y,{class:'svg-grid'});svgLabel(svg,x0-10,y+3.5,fmt(v,o.yp===undefined?2:o.yp),{anchor:'end',size:10})});(o.xticks||[]).forEach((v,i)=>{const x=scaleX(v,xmin,xmax,x0,w);line(svg,x,y0,x,y0+h,{class:'svg-grid'});const anc=o.xticks.length>1?(i===0?'start':(i===o.xticks.length-1?'end':'middle')):'middle';svgLabel(svg,x,y0+h+17,fmt(v,o.xp===undefined?1:o.xp),{anchor:anc,size:10})})}
+function spreadLabels(items,minGap,lo,hi){const a=items.slice().sort((p,q)=>p.y-q.y);for(let i=1;i<a.length;i++)a[i].y=Math.max(a[i].y,a[i-1].y+minGap);if(a.length&&a[a.length-1].y>hi){a[a.length-1].y=hi;for(let i=a.length-2;i>=0;i--)a[i].y=Math.min(a[i].y,a[i+1].y-minGap)}if(a.length&&a[0].y<lo){const s=lo-a[0].y;a.forEach(q=>q.y+=s)}return a}
+/* 最小二乘：解 (AᵀA+λI)w=Aᵀy，高斯消元 + 部分主元 */
+function lstsq(X,y,ridge){const n=X.length,p=X[0].length;const M=Array.from({length:p},(_,j)=>Array.from({length:p},(_,k)=>X.reduce((s,row)=>s+row[j]*row[k],0)+(j===k?(ridge||0):0)));const b=Array.from({length:p},(_,j)=>X.reduce((s,row,i)=>s+row[j]*y[i],0));
+  for(let c=0;c<p;c++){let mx=c;for(let r=c+1;r<p;r++)if(Math.abs(M[r][c])>Math.abs(M[mx][c]))mx=r;const tv=M[c];M[c]=M[mx];M[mx]=tv;const tb=b[c];b[c]=b[mx];b[mx]=tb;
+    const pv=M[c][c]||1e-12;for(let r=0;r<p;r++){if(r===c)continue;const f=M[r][c]/pv;for(let k=c;k<p;k++)M[r][k]-=f*M[c][k];b[r]-=f*b[c]}}
+  return b.map((v,i)=>v/(M[i][i]||1e-12))}
+function polyFeat(x,d){return Array.from({length:d+1},(_,j)=>Math.pow(x,j))}
+function mse(X,y,w){return X.reduce((s,row,i)=>{const pr=row.reduce((a,v,j)=>a+v*w[j],0);return s+(pr-y[i])**2},0)/X.length}
+
+/* theme and shared navigation */
+(()=>{const saved=storeGet('opt1-theme');if(saved==='dark'||saved==='light')document.documentElement.dataset.theme=saved;$('#themeButton').addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;storeSet('opt1-theme',next);$$('svg').forEach(s=>s.dispatchEvent(new Event('themechange')))});const mode=storeGet('opt1-mode')==='full'?'full':'core';window.labMode=mode;document.body.dataset.mode=mode;$('#modeCore').addEventListener('click',()=>setMode('core'));$('#modeFull').addEventListener('click',()=>setMode('full'));function setMode(next){window.labMode=next;document.body.dataset.mode=next;storeSet('opt1-mode',next);$$('[data-mode]').forEach(b=>{if(b.matches('button')){const on=b.dataset.mode===next;b.classList.toggle('active',on);b.setAttribute('aria-pressed',String(on))}});$$('#toc a,#glossRail .gloss-group').forEach(el=>{const sec=el.dataset.section?$('#'+el.dataset.section):$('#'+(el.getAttribute('href')||'').slice(1));if(sec)el.style.display=next==='core'&&sec.dataset.mode==='extra'?'none':''});$$('#conceptMap .concept-node').forEach(n=>{const target=$('#'+n.dataset.target);n.style.opacity=target&&next==='core'&&target.dataset.mode==='extra'?'.38':'1'});$('#modeNote').textContent=next==='core'?'核心模式：保留 曲线→feature map→设计矩阵→容量→GD→链式法则 主线；拓展小节已隐藏。':'完整模式：额外显示自测题选讲。';document.dispatchEvent(new CustomEvent('lab-mode-change'))}window.setMode=setMode;setMode(mode)})();
+
+/* toc, section tags and scroll state */
+(()=>{const sections=$$('#main>section');const toc=$('#toc');sections.forEach((sec,i)=>{const h=sec.querySelector('h2,h1');const a=document.createElement('a');a.href='#'+sec.id;a.dataset.section=sec.id;a.dataset.mode=sec.dataset.mode;a.textContent=i===0?'概览':h.textContent.replace(/^核心|^拓展/,'').trim();a.addEventListener('click',e=>{e.preventDefault();sec.scrollIntoView({behavior:'smooth',block:'start'})});toc.appendChild(a);if(h&&!h.querySelector('.sec-tag')){const tag=document.createElement('span');tag.className='sec-tag '+(sec.dataset.mode==='core'?'core':'extra');tag.textContent=sec.dataset.mode==='core'?'核心':'拓展';h.insertBefore(tag,h.firstChild)}});const obs=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){$$('#toc a').forEach(a=>a.classList.toggle('active',a.dataset.section===e.target.id));$$('#glossRail .gloss-term').forEach(b=>b.classList.toggle('active',b.dataset.section===e.target.id));}})},{rootMargin:'-90px 0px -58% 0px',threshold:0});sections.forEach(s=>obs.observe(s));window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('#progress').style.width=(max>0?scrollY/max*100:0)+'%'});document.addEventListener('lab-mode-change',()=>{$$('#toc a').forEach(a=>{const sec=$('#'+a.dataset.section);a.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''})})})();
+
+/* concept map */
+(()=>{const svg=$('#conceptMap');const mk=marker(svg,'conceptArrow','var(--accent)'),mv=marker(svg,'conceptViolet','var(--violet)');
+  const nodes=[
+    {id:'n-curve',target:'sec-curve',x:20,y:40,w:170,h:56,title:'曲线问题',sub:'直线弯不了',color:'var(--warm)'},
+    {id:'n-fm',target:'sec-featuremap',x:250,y:40,w:170,h:56,title:'feature map',sub:'x↦φ(x)',color:'var(--accent)'},
+    {id:'n-dm',target:'sec-design',x:480,y:40,w:170,h:56,title:'设计矩阵 Φ',sub:'Φw 一次预测',color:'var(--blue)'},
+    {id:'n-cap',target:'sec-capacity',x:710,y:40,w:170,h:56,title:'容量与过拟合',sub:'验证误差先降后升',color:'var(--danger)'},
+    {id:'n-gd',target:'sec-gd1d',x:20,y:190,w:170,h:56,title:'梯度下降',sub:'w←w−η∇L',color:'var(--accent)'},
+    {id:'n-chain',target:'sec-chain',x:250,y:190,w:170,h:56,title:'链式法则',sub:'∇L=Φᵀ(Φw−y)/n',color:'var(--accent)'},
+    {id:'n-cmp',target:'sec-compare',x:480,y:190,w:170,h:56,title:'闭式解 vs GD',sub:'+ 六条误区',color:'var(--gold)'},
+    {id:'n-quiz',target:'sec-extra',extra:true,x:710,y:190,w:170,h:56,title:'自测题选讲',sub:'拓展',color:'var(--violet)'}];
+  const edge=(d,c,m,label,x,y)=>{path(svg,d,{class:'svg-edge',stroke:c,'marker-end':m});if(label)svgLabel(svg,x,y,label,{size:10,fill:c})};
+  edge('M190 68 H250','var(--accent)',mk,'先变换',220,56);
+  edge('M420 68 H480','var(--accent)',mk,'堆成行',450,56);
+  edge('M650 68 H710','var(--accent)',mk,'p 增大',680,56);
+  edge('M565 96 L105 190','var(--accent)',mk,'闭式解不够',335,138);
+  edge('M190 218 H250','var(--accent)',mk,'∇L 从哪来',220,206);
+  edge('M420 218 H480','var(--accent)',mk,'η 与成本',450,206);
+  edge('M650 218 H710','var(--violet)',mv,'自测',680,206);
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{class:'concept-node','data-target':n.target,'data-extra':n.extra?'true':'false',transform:`translate(${n.x} ${n.y})`,tabindex:'0',role:'button'});svgAdd(g,'rect',{width:n.w,height:n.h,rx:11,fill:`color-mix(in srgb,${n.color} 8%,var(--surface))`,stroke:n.color,'stroke-width':1.8});svgAdd(g,'text',{x:n.w/2,y:n.h/2-3,'text-anchor':'middle','font-size':13,'font-weight':700,fill:'var(--ink)'},n.title);svgAdd(g,'text',{x:n.w/2,y:n.h/2+17,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.sub);const go=()=>{if(n.extra&&window.labMode==='core'){window.setMode('full');setTimeout(()=>$('#'+n.target).scrollIntoView({behavior:'smooth'}),60)}else $('#'+n.target).scrollIntoView({behavior:'smooth'})};g.addEventListener('click',go);g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')go()})});})();
+/* ============ 实验 A：特征映射游乐场（sec-curve） ============ */
+(()=>{const svg=$('#fmViz');const sig=x=>0.6+1.8*Math.sqrt(x/2);let XS=[],YS=[];
+function gen(){XS=[];YS=[];for(let i=0;i<9;i++){const x=clamp(0.08+i*(1.84/8)+(Math.random()*2-1)*0.06,0.02,1.98);XS.push(x);YS.push(sig(x)+(Math.random()*2-1)*0.14)}const pairs=XS.map((x,i)=>[x,YS[i]]).sort((a,b)=>a[0]-b[0]);XS=pairs.map(p=>p[0]);YS=pairs.map(p=>p[1])}
+function draw(){svgClear(svg);const d=Number($('#fmDeg').value);const X=XS.map(x=>polyFeat(x,d));const w=lstsq(X,YS,1e-8);const m=mse(X,YS,w);
+  const x0=70,y0=26,W=820,H=280,xmin=0,xmax=2,ymin=0,ymax=2.8;
+  frame(svg,{x0,y0,w:W,h:H,xmin,xmax,ymin,ymax,xticks:[0,0.5,1,1.5,2],xp:1,yticks:[0,1,2],yp:0});
+  path(svg,curvePath(sig,xmin,xmax,x0,y0,W,H,ymin,ymax),{stroke:'var(--muted)','stroke-width':1.6,'stroke-dasharray':'6 5'});
+  path(svg,curvePath(x=>polyFeat(x,d).reduce((a,v,j)=>a+v*w[j],0),xmin,xmax,x0,y0,W,H,ymin,ymax),{stroke:'var(--accent)','stroke-width':2.6});
+  XS.forEach((x,i)=>svgAdd(svg,'circle',{cx:scaleX(x,xmin,xmax,x0,W),cy:scaleY(YS[i],ymin,ymax,y0,H),r:4.5,fill:'var(--warm)',stroke:'var(--surface)','stroke-width':1.2}));
+  svgLabel(svg,x0+92,y0+16,'真实信号（虚线）',{anchor:'middle',size:11,fill:'var(--muted)'});
+  svgLabel(svg,x0+W-120,y0+16,'d='+d+' 最小二乘拟合',{anchor:'middle',size:11,fill:'var(--accent)'});
+  svgLabel(svg,x0+W-120,y0+40,'训练 MSE='+fmt(m,4),{anchor:'middle',size:11,fill:'var(--warm)'});
+  const regime=d===1?'欠拟合：直线抓不住弯曲趋势，MSE 偏大':d===2?'二次：仍偏僵，弯曲只抓到一半':d===3?'三次：抓住主要弯曲又不过度追点，MSE 大幅下降':'更高阶：训练 MSE 继续降，但曲线开始在样本点之间摆动——过拟合苗头（下一节系统看）';
+  $('#fmSteps').innerHTML=String.raw`<p><strong>逐步：</strong>① 9 个样本各自算特征 $\phi(x)=[1,x,\dots,x^{${d}}]^\top$，堆成 $\Phi\in\mathbb R^{9\times ${d+1}}$；② 解正规方程 $(\Phi^\top\Phi+10^{-8}I)\mathbf w=\Phi^\top\mathbf y$（高斯消元，$10^{-8}$ 仅为数值稳定）；③ 训练 MSE $=\frac1n\sum_i(\hat y_i-y_i)^2$，注意它是 $2L$（$\frac12$ 约定下 $L=\frac{1}{2n}\sum r_i^2$）。</p><p><strong>本次现算：</strong>MSE = ${fmt(m,4)}；系数 w = (${w.map(v=>fmt(v,3)).join(', ')})。</p><p><strong>读图：</strong>${regime}。</p>`;
+  rerender($('#fmSteps'))}
+$('#fmRand').addEventListener('click',()=>{gen();$('#fmSeed').textContent='seed '+fmt(Math.random(),4);draw();toast('已重新生成 9 个样本')});
+gen();range('fmDeg',draw,0);svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 B：φ 空间线性化（sec-featuremap） ============ */
+(()=>{const svg=$('#pmViz');const BLU=[-0.5,-0.28,-0.1,0.08,0.3,0.52],RED=[-1.15,-0.95,-0.78,0.75,0.92,1.12];
+function draw(){svgClear(svg);const t=Number($('#pmThr').value),rt=Math.sqrt(t);
+  /* 左：输入空间数轴 */
+  const lx0=60,ly0=60,lW=380,lH=180,xmin=-1.5,xmax=1.5;
+  frame(svg,{x0:lx0,y0:ly0,w:lW,h:lH,xmin,xmax,ymin:0,ymax:1,xticks:[-1,0,1],xp:1,yticks:[]});
+  const ay=scaleY(0.45,0,1,ly0,lH);
+  line(svg,lx0,ay,lx0+lW,ay,{class:'svg-axis'});
+  [-1,1].forEach(s=>{const bx=scaleX(s*rt,xmin,xmax,lx0,lW);line(svg,bx,ly0+14,bx,ly0+lH-14,{stroke:'var(--accent)','stroke-width':1.6,'stroke-dasharray':'5 4'})});
+  BLU.forEach(x=>svgAdd(svg,'circle',{cx:scaleX(x,xmin,xmax,lx0,lW),cy:ay,r:6,fill:'var(--blue)',stroke:'var(--surface)','stroke-width':1.4}));
+  RED.forEach(x=>svgAdd(svg,'circle',{cx:scaleX(x,xmin,xmax,lx0,lW),cy:ay,r:6,fill:'var(--danger)',stroke:'var(--surface)','stroke-width':1.4}));
+  svgLabel(svg,lx0+lW/2,ly0-14,'输入空间：一个阈值分不开（需要 ±√t 两个）',{size:11});
+  svgLabel(svg,scaleX(-rt,xmin,xmax,lx0,lW)-6,ly0+lH+46,'−√t='+fmt(-rt,2),{anchor:'end',size:10,fill:'var(--accent)'});
+  svgLabel(svg,scaleX(rt,xmin,xmax,lx0,lW)+6,ly0+lH+46,'+√t='+fmt(rt,2),{anchor:'start',size:10,fill:'var(--accent)'});
+  /* 右：(x,x²) 平面 */
+  const rx0=530,rW=360;
+  frame(svg,{x0:rx0,y0:ly0,w:rW,h:lH,xmin,xmax,ymin:0,ymax:2,xticks:[-1,0,1],xp:1,yticks:[0,1,2],yp:0});
+  const ty=scaleY(t,0,2,ly0,lH);
+  line(svg,rx0,ty,rx0+rW,ty,{stroke:'var(--accent)','stroke-width':2.2});
+  BLU.forEach(x=>svgAdd(svg,'circle',{cx:scaleX(x,xmin,xmax,rx0,rW),cy:scaleY(x*x,0,2,ly0,lH),r:6,fill:'var(--blue)',stroke:'var(--surface)','stroke-width':1.4}));
+  RED.forEach(x=>svgAdd(svg,'circle',{cx:scaleX(x,xmin,xmax,rx0,rW),cy:scaleY(x*x,0,2,ly0,lH),r:6,fill:'var(--danger)',stroke:'var(--surface)','stroke-width':1.4}));
+  svgLabel(svg,rx0+rW/2,ly0-14,'φ 空间 (x, x²)：一条水平线就够',{size:11});
+  svgLabel(svg,rx0+rW-6,ty-12,'x²=t='+fmt(t,2),{anchor:'end',size:10,fill:'var(--accent)'});
+  /* 误分：规则 蓝 ⟺ x²<t */
+  const err=BLU.filter(x=>x*x>=t).length+RED.filter(x=>x*x<t).length;
+  const maxBlu=Math.max(...BLU.map(x=>x*x)),minRed=Math.min(...RED.map(x=>x*x));
+  const verdict=err===0?'完全分开：t∈('+fmt(maxBlu,4)+', '+fmt(minRed,4)+') 内任取都零误分':'误分 '+err+' 个点——'+(t<=maxBlu?'线太低，最高的蓝点（x²='+fmt(maxBlu,4)+'）被划到红侧':'线太高，最低的红点（x²='+fmt(minRed,4)+'）被划到蓝侧');
+  $('#pmSteps').innerHTML=String.raw`<p><strong>逐步：</strong>① 每个样本算 $\varphi(x)=(x,x^2)$；② 判定规则「$x^2&lt;t$ 判蓝」；③ 蓝点最大 $x^2=${fmt(maxBlu,4)}$，红点最小 $x^2=${fmt(minRed,4)}$。</p><p><strong>当前：</strong>$t=${fmt(t,2)}$，对应输入空间双阈值 $x=\pm\sqrt t=\pm${fmt(rt,3)}$；误分数 = ${err}/12。${verdict}。</p><p><strong>读图：</strong>输入空间里蓝段被两簇红点夹住，单一阈值 $x&gt;c$ 必然误分一侧；平方后两端红点都飞到高处，水平线一刀切开——这就是「原空间需要曲线/多阈值的关系，特征空间里一条直线表达」。</p>`;
+  rerender($('#pmSteps'))}
+range('pmThr',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 C：设计矩阵复算器（sec-design） ============ */
+(()=>{const svg=$('#dmViz');let XS=[-1,0,1],YS=[1,0,1],name='例 5.1';
+function W(){return [Number($('#dmW0').value),Number($('#dmW1').value),Number($('#dmW2').value)]}
+function draw(){svgClear(svg);const w=W();const Phi=XS.map(x=>[1,x,x*x]);const pred=Phi.map(r=>r[0]*w[0]+r[1]*w[1]+r[2]*w[2]);const res=YS.map((y,i)=>y-pred[i]);const m=res.reduce((s,r)=>s+r*r,0)/YS.length;
+  /* 左：Φ 热力图 */
+  const hx0=96,hy0=64,cs=46;
+  svgLabel(svg,hx0+cs*1.5,hy0-42,'设计矩阵 Φ（行=样本 i，列=特征 j）',{size:11});
+  ['1','x','x²'].forEach((c,j)=>svgLabel(svg,hx0+cs*(j+0.5),hy0-8,c,{size:11,fill:'var(--muted)'}));
+  Phi.forEach((row,i)=>{svgLabel(svg,hx0-24,hy0+cs*(i+0.5)+4,'x='+fmt(XS[i],0),{anchor:'middle',size:10,fill:'var(--muted)'});
+    row.forEach((v,j)=>{const a=clamp(Math.abs(v)/4,0,1);svgAdd(svg,'rect',{x:hx0+cs*j,y:hy0+cs*i,width:cs-4,height:cs-4,rx:7,fill:`color-mix(in srgb,var(--blue) ${Math.round(8+a*52)}%,var(--surface))`,stroke:'var(--line)'});svgLabel(svg,hx0+cs*(j+0.5)-2,hy0+cs*(i+0.5)+4,fmt(v,0),{size:12,bg:'transparent'})})});
+  /* 右：预测 vs 目标分组柱状 */
+  const bx0=470,by0=60,bW=400,bH=170;
+  const all=[...pred,...YS];let lo=Math.min(0,...all),hi=Math.max(1,...all)*1.22;if(hi-lo<1)hi=lo+1.22;
+  frame(svg,{x0:bx0,y0:by0,w:bW,h:bH,xmin:0,xmax:3,ymin:lo,ymax:hi,xticks:[],yticks:[lo,(lo+hi)/2,hi].map(v=>Math.round(v*2)/2),yp:1});
+  [0.5,1.5,2.5].forEach((v,i)=>svgLabel(svg,scaleX(v,0,3,bx0,bW),by0+bH+20,'样本 '+(i+1)+'（x='+fmt(XS[i],0)+'）',{size:9,fill:'var(--muted)'}));
+  pred.forEach((p,i)=>{const cx=scaleX(i+0.5,0,3,bx0,bW),bw=26;
+    const yv=scaleY(YS[i],lo,hi,by0,bH),pv=scaleY(p,lo,hi,by0,bH),base=scaleY(0,lo,hi,by0,bH);
+    svgAdd(svg,'rect',{x:cx-bw-3,y:Math.min(yv,base),width:bw,height:Math.max(2,Math.abs(base-yv)),rx:3,fill:'var(--blue)'});
+    svgAdd(svg,'rect',{x:cx+3,y:Math.min(pv,base),width:bw,height:Math.max(2,Math.abs(base-pv)),rx:3,fill:'var(--warm)'});
+    svgLabel(svg,cx-bw/2-3,Math.min(yv,base)-8,fmt(YS[i],2),{size:9,fill:'var(--blue)'});
+    svgLabel(svg,cx+bw/2+3,Math.min(pv,base)-26,fmt(p,2),{size:9,fill:'var(--warm)'})});
+  svgLabel(svg,bx0+66,by0-14,'目标 y（蓝）',{size:10,fill:'var(--blue)'});
+  svgLabel(svg,bx0+bW-66,by0-14,'预测 ŷ（橙）',{size:10,fill:'var(--warm)'});
+  /* step-box：逐行点乘 */
+  const rows=Phi.map((r,i)=>String.raw`$\phi(x_${i+1})=[1,${XS[i]},${XS[i]*XS[i]}]$，`+'ŷ'+(i+1)+' = '+fmt(w[0],2)+'·1 + '+fmt(w[1],2)+'·('+fmt(XS[i],0)+') + '+fmt(w[2],2)+'·('+fmt(XS[i]*XS[i],0)+') = '+fmt(pred[i],2)+'，残差 r'+(i+1)+' = '+fmt(YS[i],0)+' − '+fmt(pred[i],2)+' = '+fmt(res[i],2)).join('<br>');
+  const exact=res.every(r=>Math.abs(r)<1e-9);
+  $('#dmSteps').innerHTML=String.raw`<p><strong>${name} · 逐步：</strong>① 填行（$i$ 是样本、$j$ 是特征坐标）：<br>${rows}</p><p><strong>矩阵写法：</strong>Φw = (${pred.map(v=>fmt(v,2)).join(', ')})，目标 y = (${YS.map(v=>fmt(v,0)).join(', ')})，MSE = ${fmt(m,4)}。${exact?'残差全零——精确拟合，对应 f(x) = '+fmt(w[0],2)+' + '+fmt(w[1],2)+'x + '+fmt(w[2],2)+'x²。':'还有残差——拖三个 w 滑杆，把预测逐样本压到目标上（例 5.1 答案 (0,0,1)，练习 5.2 答案 (1,−1,2)）。'}</p>`;
+  rerender($('#dmSteps'))}
+function preset(xs,ys,wv,nm){XS=xs;YS=ys;name=nm;['dmW0','dmW1','dmW2'].forEach((id,j)=>{const e=$('#'+id);e.value=String(wv[j]);e.dispatchEvent(new Event('input'))});toast(nm+'：w=('+wv.join(', ')+')')}
+$('#dmEx51').addEventListener('click',()=>preset([-1,0,1],[1,0,1],[0,0,1],'例 5.1'));
+$('#dmEx52').addEventListener('click',()=>preset([0,1,2],[1,2,7],[1,-1,2],'练习 5.2'));
+range('dmW0',draw,2);range('dmW1',draw,2);range('dmW2',draw,2);draw();svg.addEventListener('themechange',draw)})();
+/* ============ 实验 D：次数扫描（sec-capacity） ============ */
+(()=>{const svg=$('#cpViz');const sig=x=>0.6+1.8*Math.sqrt(x/2);let TR=[],VA=[];
+function gen(){TR=[];VA=[];for(let i=0;i<12;i++){const x=Math.random()*2;TR.push([x,sig(x)+(Math.random()*2-1)*0.15])}for(let i=0;i<10;i++){const x=Math.random()*2;VA.push([x,sig(x)+(Math.random()*2-1)*0.15])}}
+function draw(){svgClear(svg);const DEG=[1,2,3,4,5,6,7,8,9];const trM=[],vaM=[];
+  DEG.forEach(d=>{const X=TR.map(p=>polyFeat(p[0],d));const w=lstsq(X,TR.map(p=>p[1]),1e-6);trM.push(mse(X,TR.map(p=>p[1]),w));vaM.push(mse(VA.map(p=>polyFeat(p[0],d)),VA.map(p=>p[1]),w))});
+  const ltr=trM.map(v=>Math.log10(Math.max(v,1e-12))),lva=vaM.map(v=>Math.log10(Math.max(v,1e-12)));
+  let lo=Math.floor(Math.min(...ltr,...lva)),hi=Math.ceil(Math.max(...ltr,...lva));if(hi-lo<2)hi=lo+2;
+  const dstar=DEG[lva.indexOf(Math.min(...lva))];
+  const x0=70,y0=30,W=760,H=270,xmin=1,xmax=9;
+  /* 对数轴刻度抽稀：最多 6 条 */
+  let ticks=[];for(let v=lo;v<=hi;v++)ticks.push(v);while(ticks.length>6)ticks=ticks.filter((_,i)=>i%2===0);
+  frame(svg,{x0,y0,w:W,h:H,xmin,xmax,ymin:lo,ymax:hi,xticks:[1,3,5,7,9],xp:0,yticks:[]});
+  ticks.forEach(v=>{const gy=scaleY(v,lo,hi,y0,H);line(svg,x0,gy,x0+W,gy,{class:'svg-grid'});svgLabel(svg,x0-10,gy+3.5,'1e'+v,{anchor:'end',size:9})});
+  const dx=scaleX(dstar,xmin,xmax,x0,W);
+  line(svg,dx,y0,dx,y0+H,{stroke:'var(--violet)','stroke-width':1.4,'stroke-dasharray':'5 4'});
+  const mk=(vals,c)=>{let d='';vals.forEach((v,i)=>{d+=(i?' L':'M')+scaleX(DEG[i],xmin,xmax,x0,W).toFixed(1)+','+scaleY(v,lo,hi,y0,H).toFixed(1)});path(svg,d,{stroke:c,'stroke-width':2.4});vals.forEach((v,i)=>svgAdd(svg,'circle',{cx:scaleX(DEG[i],xmin,xmax,x0,W),cy:scaleY(v,lo,hi,y0,H),r:3,fill:c}))};
+  mk(ltr,'var(--accent)');mk(lva,'var(--warm)');
+  const ends=spreadLabels([{y:scaleY(ltr[8],lo,hi,y0,H),t:'训练 MSE（绿）',c:'var(--accent)'},{y:scaleY(lva[8],lo,hi,y0,H),t:'验证 MSE（橙）',c:'var(--warm)'}],18,y0+12,y0+H-6);
+  ends.forEach(e=>svgLabel(svg,x0+W+10,e.y,e.t,{anchor:'start',size:10,fill:e.c}));
+  svgLabel(svg,dx,y0-10,'d*='+dstar+'（验证最小）',{size:10,fill:'var(--violet)'});
+  svgLabel(svg,x0+W/2,y0+H+40,'多项式次数 d（纵轴为 log10 MSE）',{size:10,fill:'var(--muted)'});
+  const rows=DEG.map((d,i)=>'d='+d+'：训练 '+fmt(trM[i],4)+' / 验证 '+fmt(vaM[i],4)).join('；');
+  $('#cpSteps').innerHTML=String.raw`<p><strong>逐步：</strong>① 固定一次采样：训练 $n=12$、留出验证 $10$ 点，同一信号加独立噪声；② 对每个 $d$ 解正规方程（岭项 $10^{-6}$ 稳数值）；③ 分别在训练集与验证集上现算 MSE $=\frac1n\sum(\hat y-y)^2$。</p><p><strong>本次现算（log10 轴）：</strong>${rows}。</p><p><strong>读图：</strong>训练 MSE 随 $d$ 单调不增（函数类扩大，$d=9$ 时 $10$ 个参数逼近 $12$ 个点）；验证 MSE 在 $d^*=${dstar}$ 处最小后回升——这就是欠拟合到过拟合的岔口，也是第 5 讲泛化与第 6 讲正则化的入口。</p>`;
+  rerender($('#cpSteps'))}
+$('#cpRand').addEventListener('click',()=>{gen();$('#cpSeed').textContent='seed '+fmt(Math.random(),4);draw();toast('已重新采样训练/验证集')});
+gen();draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 E：GD 例 1 复算器（sec-gd1d） ============ */
+(()=>{const svg=$('#gd1Viz');const L=w=>w*w-4*w+5,dL=w=>2*w-4;
+function draw(){svgClear(svg);const eta=Number($('#gd1Eta').value);const m=1-2*eta;
+  const ws=[0];for(let t=0;t<11;t++)ws.push(ws[t]-eta*dL(ws[t]));
+  const losses=ws.map(L);
+  /* 左：抛物线 + 迭代点 */
+  const x0=64,y0=30,W=400,H=250,xmin=-1.5,xmax=5.5,ymin=0,ymax=16;
+  frame(svg,{x0,y0,w:W,h:H,xmin,xmax,ymin,ymax,xticks:[-1,0,2,4,5],xp:0,yticks:[0,4,8,12,16],yp:0});
+  path(svg,curvePath(L,xmin,xmax,x0,y0,W,H,ymin,ymax),{stroke:'var(--blue)','stroke-width':2.2});
+  ws.forEach((w,t)=>{const cw=clamp(w,xmin,xmax);if(t>0)line(svg,scaleX(clamp(ws[t-1],xmin,xmax),xmin,xmax,x0,W),scaleY(clamp(L(ws[t-1]),ymin,ymax),ymin,ymax,y0,H),scaleX(cw,xmin,xmax,x0,W),scaleY(clamp(L(w),ymin,ymax),ymin,ymax,y0,H),{stroke:'var(--warm)','stroke-width':1.4});svgAdd(svg,'circle',{cx:scaleX(cw,xmin,xmax,x0,W),cy:scaleY(clamp(L(w),ymin,ymax),ymin,ymax,y0,H),r:t<3?5:3,fill:t===0?'var(--ink)':'var(--warm)',stroke:'var(--surface)','stroke-width':1.2})});
+  const w2x=scaleX(2,xmin,xmax,x0,W);line(svg,w2x,y0,w2x,y0+H,{stroke:'var(--accent)','stroke-width':1.2,'stroke-dasharray':'4 4'});
+  svgLabel(svg,w2x,y0-10,'w*=2',{size:10,fill:'var(--accent)'});
+  svgLabel(svg,scaleX(clamp(ws[0],xmin,xmax),xmin,xmax,x0,W),scaleY(L(ws[0]),ymin,ymax,y0,H)-16,'w₀=0',{size:10});
+  if(Math.abs(ws[1])<1e9){const lab=spreadLabels([{y:scaleY(clamp(L(ws[1]),ymin,ymax),ymin,ymax,y0,H),t:'w₁='+fmt(ws[1],2)},{y:scaleY(clamp(L(ws[2]),ymin,ymax),ymin,ymax,y0,H),t:'w₂='+fmt(ws[2],2)}],16,y0+10,y0+H-4);
+    lab.forEach((e,i)=>{const wx=scaleX(clamp(ws[i+1],xmin,xmax),xmin,xmax,x0,W);svgLabel(svg,clamp(wx+16,x0+30,x0+W-24),e.y,e.t,{anchor:'start',size:10,fill:'var(--warm)'})})}
+  /* 右：L(w_t) 随迭代 */
+  const r0=560,rW=330,cap=16;
+  frame(svg,{x0:r0,y0,w:rW,h:H,xmin:0,xmax:11,ymin:0,ymax:cap,xticks:[0,3,6,9],xp:0,yticks:[0,4,8,12,16],yp:0});
+  let d='';losses.forEach((v,t)=>{d+=(t?' L':'M')+scaleX(t,0,11,r0,rW).toFixed(1)+','+scaleY(clamp(v,0,cap),0,cap,y0,H).toFixed(1)});
+  path(svg,d,{stroke:'var(--accent)','stroke-width':2});
+  losses.forEach((v,t)=>{const cl=v>cap;const at=cl?{x:scaleX(t,0,11,r0,rW)-3.5,y:y0+2,width:7,height:7}:{cx:scaleX(t,0,11,r0,rW),cy:scaleY(v,0,cap,y0,H),r:3.5};at.fill=cl?'var(--danger)':'var(--accent)';svgAdd(svg,cl?'rect':'circle',at)});
+  svgLabel(svg,r0+rW/2,y0-10,'L(wₜ) 随迭代（顶部方块=超出量程）',{size:10});
+  svgLabel(svg,r0+rW/2,y0+H+40,'迭代步 t',{size:10,fill:'var(--muted)'});
+  /* step-box */
+  const g0=dL(ws[0]),g1=dL(ws[1]);
+  let regime;
+  if(eta<0.5)regime='0<m<1：误差不翻号地单调收缩，稳定但较慢';
+  else if(Math.abs(eta-0.5)<1e-9)regime='m=0：误差一步清零，恰好一步到达 w*=2';
+  else if(eta<1)regime='−1<m<0：每步翻号但幅度收缩——越过最低点再回来，仍收敛';
+  else if(Math.abs(eta-1)<1e-9)regime='m=−1：在 w=0 与 w=4 之间等幅横跳，恰好不收敛也不发散（讲义 §8.2 同款现象）';
+  else regime='|m|>1：误差每步放大 '+fmt(Math.abs(m),2)+' 倍——发散（右图方块表示损失超出量程）';
+  $('#gd1Steps').innerHTML=String.raw`<p><strong>逐步（$L(w)=w^2-4w+5$，$L'(w)=2w-4$，$w_0=0$）：</strong>每步把当前 $w$ 代入导数再更新。本例是二次函数，误差严格按乘子 $m=1-2\eta$ 演化：$w_{t+1}-2=(1-2\eta)(w_t-2)$。</p><p><strong>第 1 步：</strong>$L'(w_0)=2\cdot 0-4=${g0}$；$w_1=w_0-\eta L'(w_0)=0-${fmt(eta,2)}\cdot(${g0})=${fmt(ws[1],4)}$。</p><p><strong>第 2 步：</strong>$L'(w_1)=${fmt(g1,4)}$；$w_2=${fmt(ws[1],4)}-${fmt(eta,2)}\cdot(${fmt(g1,4)})=${fmt(ws[2],4)}$。</p><p><strong>本次现算：</strong>η=${fmt(eta,2)}，乘子 m=1−2η=${fmt(m,3)}；w0=0 → w1=${fmt(ws[1],4)} → w2=${fmt(ws[2],4)}（目标 w*=2）。<strong>形态：</strong>${regime}。</p>`;
+  rerender($('#gd1Steps'))}
+range('gd1Eta',draw,2);draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 链式法则流程图（fig5 重画，sec-chain） ============ */
+(()=>{const svg=$('#chainViz');
+function draw(){svgClear(svg);const mk=marker(svg,'chArrow','var(--accent)');
+  const nodes=[{x:60,t:'w',s:'参数'},{x:320,t:'z = w·x',s:'中间变量'},{x:580,t:'ŷ = z',s:'预测'},{x:820,t:'L = ½(ŷ−y)²',s:'损失'}];
+  const nw=150,nh=64,cy=70;
+  nodes.forEach((n,i)=>{if(i<3){const x1=n.x+nw/2,x2=nodes[i+1].x-nw/2;line(svg,x1,cy,x2,cy,{stroke:'var(--accent)','stroke-width':2,'marker-end':mk})}});
+  const fl=['∂z/∂w = x','∂ŷ/∂z = 1','∂L/∂ŷ = (ŷ−y)'];
+  fl.forEach((f,i)=>{const xm=(nodes[i].x+nodes[i+1].x)/2;svgLabel(svg,xm,cy+30,f,{size:11,fill:'var(--accent)'});svgLabel(svg,xm,cy-26,'因子 '+(i+1),{size:9,fill:'var(--muted)',bg:'transparent'})});
+  nodes.forEach(n=>{const g=svgAdd(svg,'g',{});svgAdd(g,'rect',{x:n.x-nw/2,y:cy-nh/2,width:nw,height:nh,rx:11,fill:'color-mix(in srgb,var(--accent) 8%,var(--surface))',stroke:'var(--accent)','stroke-width':1.8});svgAdd(g,'text',{x:n.x,y:cy-4,'text-anchor':'middle','font-size':14,'font-weight':700,fill:'var(--ink)'},n.t);svgAdd(g,'text',{x:n.x,y:cy+18,'text-anchor':'middle','font-size':10,fill:'var(--muted)'},n.s)});
+  svgLabel(svg,470,176,'反向相乘：∂L/∂w = (∂L/∂ŷ)·(∂ŷ/∂z)·(∂z/∂w) = (ŷ−y)·1·x = (ŷ−y)x',{size:11,fill:'var(--ink)'});
+}
+draw();svg.addEventListener('themechange',draw)})();
+
+/* ============ 实验 F：GD 例 2 复算器（sec-chain） ============ */
+(()=>{const svg=$('#gd2Viz');
+function draw(){svgClear(svg);const eta=Number($('#gd2Eta').value);
+  const g=w=>{const s=w[0]+w[1]-2;return [s,s]}; /* (wᵀφ−y)φ, φ=[1,1] */
+  const W0=[0,0],W1=[W0[0]-eta*g(W0)[0],W0[1]-eta*g(W0)[1]],W2=[W1[0]-eta*g(W1)[0],W1[1]-eta*g(W1)[1]];
+  const pred2=W2[0]+W2[1];
+  /* 等高线：L=½(2−w0−w1)² → 直线 w0+w1=c */
+  const x0=80,y0=30,W=620,H=300,xmin=-0.6,xmax=2.6,ymin=-0.6,ymax=2.6;
+  frame(svg,{x0,y0,w:W,h:H,xmin,xmax,ymin,ymax,xticks:[0,1,2],xp:0,yticks:[0,1,2],yp:0});
+  [0.5,1,1.5,2.5,3,3.5].forEach(c=>{const pts=[[Math.max(xmin,c-ymax),Math.min(ymax,c-xmin)],[Math.min(xmax,c-ymin),Math.max(ymin,c-xmax)]];line(svg,scaleX(pts[0][0],xmin,xmax,x0,W),scaleY(pts[0][1],ymin,ymax,y0,H),scaleX(pts[1][0],xmin,xmax,x0,W),scaleY(pts[1][1],ymin,ymax,y0,H),{class:'svg-grid','stroke-width':1.2})});
+  /* 最优线 w0+w1=2 */
+  line(svg,scaleX(Math.max(xmin,2-ymax),xmin,xmax,x0,W),scaleY(Math.min(ymax,2-xmin),ymin,ymax,y0,H),scaleX(Math.min(xmax,2-ymin),xmin,xmax,x0,W),scaleY(Math.max(ymin,2-xmax),ymin,ymax,y0,H),{stroke:'var(--accent)','stroke-width':2.6});
+  svgLabel(svg,scaleX(2.45,xmin,xmax,x0,W),scaleY(2-2.45,ymin,ymax,y0,H)-14,'w₀+w₁=2：最优解不唯一（整条线）',{anchor:'end',size:10,fill:'var(--accent)'});
+  const mk=marker(svg,'gd2Arrow','var(--warm)');
+  const pts=[W0,W1,W2];
+  for(let i=0;i<2;i++){line(svg,scaleX(pts[i][0],xmin,xmax,x0,W),scaleY(pts[i][1],ymin,ymax,y0,H),scaleX(pts[i+1][0],xmin,xmax,x0,W),scaleY(pts[i+1][1],ymin,ymax,y0,H),{stroke:'var(--warm)','stroke-width':2.2,'marker-end':mk})}
+  const labs=spreadLabels([{y:scaleY(W0[1],ymin,ymax,y0,H),t:'w₀=(0, 0)',p:W0},{y:scaleY(W1[1],ymin,ymax,y0,H),t:'w₁=('+fmt(W1[0],2)+', '+fmt(W1[1],2)+')',p:W1},{y:scaleY(W2[1],ymin,ymax,y0,H),t:'w₂=('+fmt(W2[0],2)+', '+fmt(W2[1],2)+')',p:W2}],20,y0+12,y0+H-8);
+  pts.forEach((p,i)=>svgAdd(svg,'circle',{cx:scaleX(clamp(p[0],xmin,xmax),xmin,xmax,x0,W),cy:scaleY(clamp(p[1],ymin,ymax),ymin,ymax,y0,H),r:5,fill:i===0?'var(--ink)':'var(--warm)',stroke:'var(--surface)','stroke-width':1.4}));
+  labs.forEach(e=>svgLabel(svg,clamp(scaleX(e.p[0],xmin,xmax,x0,W)+18,x0+70,x0+W-60),e.y,e.t,{anchor:'start',size:10,fill:'var(--warm)'}));
+  svgLabel(svg,x0+W/2,y0+H+40,'w₀（纵轴 w₁；等高线是 L=½(2−w₀−w₁)² 的等值线）',{size:10,fill:'var(--muted)'});
+  /* step-box */
+  const g0=g(W0),g1v=g(W1);
+  $('#gd2Steps').innerHTML=String.raw`<p><strong>设定：</strong>单样本 $x=1,y=2$，$\boldsymbol\phi(1)=[1,1]^\top$，$L(\mathbf w)=\frac12(2-\mathbf w^\top[1,1]^\top)^2$，故 $\nabla L=(w_0+w_1-2)[1,1]^\top$；$\mathbf w_0=(0,0)^\top$，$\eta=${fmt(eta,2)}$。</p><p><strong>第 1 步：</strong>预测 $=0$，$\nabla L(\mathbf w_0)=(${fmt(g0[0],2)}, ${fmt(g0[1],2)})$；$\mathbf w_1=\mathbf w_0-\eta\nabla L=(${fmt(W1[0],4)}, ${fmt(W1[1],4)})$，预测 $=${fmt(W1[0]+W1[1],4)}$。</p><p><strong>第 2 步：</strong>$\nabla L(\mathbf w_1)=(${fmt(g1v[0],4)}, ${fmt(g1v[1],4)})$；$\mathbf w_2=(${fmt(W2[0],4)}, ${fmt(W2[1],4)})$，新预测 $\hat y=w_0+w_1=${fmt(pred2,4)}$（目标 $2$）。</p><p><strong>读图：</strong>$\eta=1/4$ 时依次命中 $\mathbf w_1=(1/2,1/2)$、$\mathbf w_2=(3/4,3/4)$、预测 $3/2$。等高线是平行直线——单样本下 $w_0+w_1=2$ 上所有参数损失同为零，最优解不唯一，GD 落点受初始化影响；梯度恒与等高线垂直，所以轨迹沿法线方向直逼最近的最优解。</p>`;
+  rerender($('#gd2Steps'))}
+range('gd2Eta',draw,2);draw();svg.addEventListener('themechange',draw)})();
+/* misconceptions: six cards */
+(()=>{const M=[
+ ['非线性回归一定对参数非线性','不对。f(x)=w₀+w₁x+w₂x² 对 x 非线性，但对 w 线性——参数只以一次幂线性组合出现。弯的是坐标 φ(x)，不是权重；所以最小二乘与闭式解照用。'],
+ ['增加特征一定提升测试表现','不对。函数类扩大 ⇒ 最小训练损失不增，但这条单调性只约束训练集；验证/测试误差可能回升（实验 D 的岔口）。训练拟合和泛化不是同一个目标。'],
+ ['梯度就是下降方向','不对。∇L 是局部上升最快方向；−∇L 才是欧氏单位球上的最陡下降方向（Cauchy–Schwarz 取等条件）。更新式里的负号不能丢。'],
+ ['梯度下降总会找到全局最小','不对。一般函数上它可能停在局部最小、鞍点或其他驻点；学习率过大还会振荡或发散（实验 E 的 η≥1）。梯度小 ≠ 全局最优。'],
+ ['公式里的乘法可以随意交换','不对。标量可以交换，矩阵乘法一般不行：Φw 有定义，wΦ 通常维度都不匹配。内积明确写成 wᵀφ(x) 能减少歧义。'],
+ ['特征映射 φ 也是从数据里学出来的','不对。本讲 φ 预先固定（如 [1,x,x²]ᵀ），只学 w；神经网络才把表示本身也变成可学习对象——这正是 §15 课程连接里固定特征方法与神经网络的分界。']];
+const grid=$('#misGrid');M.forEach(([q,a],i)=>{const c=document.createElement('div');c.className='card mis-card';c.innerHTML=`<span class="mis-q">误区 ${i+1} · 对还是错？（点击核对）</span><p>${q}</p><p class="mis-a">${a}</p>`;c.addEventListener('click',()=>c.classList.toggle('open'));grid.appendChild(c)})})();
+
+/* quiz: three self-test cards with revealable answers */
+(()=>{const Q=[
+ ['Φ、w 与 Φw 的维度分别是什么？',String.raw`$n$ 个样本、$p$ 个特征：$\boldsymbol\Phi\in\mathbb R^{n\times p}$（第 $i$ 行是 $\boldsymbol\phi(\mathbf x_i)^\top$），$\mathbf w\in\mathbb R^p$，$\boldsymbol\Phi\mathbf w\in\mathbb R^n$。维度自检：$(n\times p)(p\times 1)=(n\times1)$——回到实验 C 拖拖滑杆再看这张表。`],
+ ['从 ℓᵢ=½(yᵢ−wᵀφᵢ)² 推导样本梯度',String.raw`令 $r_i=y_i-\mathbf w^\top\boldsymbol\phi_i$。外层：$\frac{\mathrm d}{\mathrm dr_i}\frac12r_i^2=r_i$；内层：$\nabla_{\mathbf w}r_i=-\boldsymbol\phi_i$；链式法则相乘：$\nabla\ell_i=r_i(-\boldsymbol\phi_i)=(\mathbf w^\top\boldsymbol\phi_i-y_i)\boldsymbol\phi_i$——正是实验 F step-box 里每步代入的公式。`],
+ ['固定特征方法与神经网络学习特征的关键区别？',String.raw`固定特征方法预先指定 $\boldsymbol\phi$、只学 $\mathbf w$（本讲全部内容）；神经网络通常同时学习特征表示与最终参数——$\boldsymbol\phi$ 本身也含可训练参数，因此对参数不再线性，也没有闭式解，只能靠梯度下降家族迭代。`]];
+const grid=$('#quizGrid');Q.forEach(([q,a],i)=>{const c=document.createElement('div');c.className='card mis-card quiz-card';c.innerHTML=`<span class="mis-q">自测 ${i+1} · 先作答，再点击显示答案</span><p>${q}</p><p class="mis-a">${a}</p>`;c.addEventListener('click',()=>c.classList.toggle('open'));grid.appendChild(c)})})();
+
+/* glossary: grouped by first appearance */
+(()=>{const G=[
+{id:'linparam',t:'对参数线性',en:'linear in parameters',f:'f(\\mathbf x)=\\mathbf w^\\top\\boldsymbol\\phi(\\mathbf x)',d:'参数只以一次幂、线性组合的方式进入模型；对输入可以多弯都行。',s:'sec-curve',u:'判定能否沿用线性回归工具。',why:'对参数线性 ⇒ 损失是二次型 ⇒ 闭式解存在。'},
+{id:'polybasis',t:'多项式基函数',en:'polynomial basis',f:'\\boldsymbol\\phi(x)=[1,x,\\dots,x^d]^\\top',d:'把一维输入换成各次幂组成的一族坐标。',s:'sec-curve',u:'实验 A/D 的特征构造。',why:'次数 d 控制函数类大小：欠拟合与过拟合的旋钮。'},
+{id:'featmap',t:'特征映射',en:'feature map',f:'\\boldsymbol\\phi:\\mathbb R^d\\to\\mathbb R^p',d:'预先指定的输入变换，把原始输入变成 p 维特征向量。',s:'sec-featuremap',u:'把非线性关系翻译回线性模型。',why:'原空间需曲线/多阈值的关系，特征空间可能一条直线就够。'},
+{id:'featvec',t:'特征向量（对比权重向量）',en:'feature vector vs weight vector',f:'\\boldsymbol\\phi(\\mathbf x)\\ \\text{vs}\\ \\mathbf w',d:'φ(x) 由输入算出、不含可学参数；w 从数据中学。',s:'sec-featuremap',u:'读 f=wᵀφ(x) 时分清两个向量。',why:'神经网络会让特征向量本身也可学——两者界限在那里消失。'},
+{id:'designmat',t:'设计矩阵',en:'design matrix',f:'\\Phi_{ij}=\\phi_j(\\mathbf x_i)',d:'第 i 行为第 i 个样本特征向量转置的 n×p 矩阵。',s:'sec-design',u:'一次 Φw 预测所有样本。',why:'把 n 个内积压缩成一次矩阵乘，闭式解与梯度都靠它写紧。'},
+{id:'closedform',t:'闭式解',en:'closed-form solution',f:'\\widehat{\\mathbf w}=(\\boldsymbol\\Phi^\\top\\boldsymbol\\Phi)^{-1}\\boldsymbol\\Phi^\\top\\mathbf y',d:'令梯度为零一次性解出的最优参数。',s:'sec-design',u:'小 p、平方损失时的精确解。',why:'大 p 昂贵、非平方损失不存在——这是 GD 登场的理由。'},
+{id:'overfit',t:'过拟合',en:'overfitting',f:'L_{train}\\downarrow\\ \\text{但}\\ L_{val}\\uparrow',d:'模型把训练噪声当规律，训练误差降而验证误差升。',s:'sec-capacity',u:'实验 D 扫描 d 找验证误差最小的 d*。',why:'它是第 5 讲泛化与第 6 讲正则化要处理的核心现象。'},
+{id:'valerr',t:'验证误差',en:'validation error',f:'\\tfrac1{m}\\sum_{i\\in val}(\\hat y_i-y_i)^2',d:'在不参与训练的留出数据上算的误差。',s:'sec-capacity',u:'模型选择（选 d）的依据。',why:'训练误差单调不增，只有验证误差暴露过拟合。'},
+{id:'gd',t:'梯度下降',en:'gradient descent',f:'\\mathbf w_{t+1}=\\mathbf w_t-\\eta\\nabla L(\\mathbf w_t)',d:'每步用当前梯度（局部一阶信息）沿负梯度走 η 步长的迭代优化。',s:'sec-gd1d',u:'只要能算 ∇L 就能降损，损失无闭式解时也适用。',why:'几乎所有机器学习模型的训练接口；第 4 讲分析它何时收敛多快。'},
+{id:'lr',t:'学习率',en:'learning rate / step size',f:'\\Delta w_t=-\\eta L^{\\prime}(w_t)',d:'沿负梯度方向走的步长系数。',s:'sec-gd1d',u:'太小收敛慢；太大振荡甚至发散（实验 E）。',why:'方向正确不等于一步走完仍下降；第 4 讲给出上界 2/λmax。'},
+{id:'statpt',t:'驻点',en:'stationary point',f:'\\nabla L(\\mathbf w)=0',d:'梯度为零的点：可能是极小、极大、鞍点或平坦点。',s:'sec-gd1d',u:'停止条件 ∥∇L∥≤ε 检测的就是它。',why:'驻点不自动是全局最优；何时是，第 4 讲用凸性回答。'},
+{id:'chainrule',t:'链式法则',en:'chain rule',f:'\\nabla_{\\mathbf w}\\ell_i=(\\mathbf w^\\top\\boldsymbol\\phi_i-y_i)\\boldsymbol\\phi_i',d:'复合函数求导：沿计算图把局部导数相乘。',s:'sec-chain',u:'推出平方损失梯度；反向传播的原型。',why:'「误差 × 特征」的结构解释了每个样本如何推动每个参数。'},
+{id:'residual',t:'残差',en:'residual',f:'r_i=y_i-\\mathbf w^\\top\\boldsymbol\\phi_i',d:'目标与预测之差；平方损失对它取平方。',s:'sec-chain',u:'决定该样本对参数推力的方向与大小。',why:'残差向量 e=Φw−y 把样本梯度汇总成矩阵形 Φᵀe。'},
+{id:'replearn',t:'表示学习',en:'representation learning',f:'\\boldsymbol\\phi\\ \\text{本身含可学参数}',d:'不预先固定特征，而让特征表示也从数据中学。',s:'sec-extra',u:'自测题 3 的对照概念。',why:'这是固定特征方法与神经网络的分界；也是闭式解失效的场景。'}
+];
+const rail=$('#glossRail');G.forEach(g=>{let group=rail.querySelector(`[data-section="${g.s}"]`);if(!group){group=document.createElement('div');group.className='gloss-group';group.dataset.section=g.s;const h=document.createElement('h3');h.textContent=$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||g.s;group.appendChild(h);rail.appendChild(group)}const b=document.createElement('button');b.type='button';b.className='gloss-term';b.dataset.term=g.id;b.dataset.section=g.s;b.innerHTML=`<span class="gt">${g.t}</span><span class="ge">${g.en}</span><span class="gd">${g.d}</span>`;b.addEventListener('click',()=>{const ref=$(`.term-ref[data-term="${g.id}"]`);if(ref)ref.scrollIntoView({behavior:'smooth',block:'center'});open(g.id,ref)});group.appendChild(b)});
+function open(id,anchor){const g=G.find(x=>x.id===id),pop=$('#termPop');if(!g)return;pop.innerHTML=String.raw`<h3>${g.t}</h3><div class="en">${g.en}</div><p><strong>公式：</strong> $${g.f}$</p><p><strong>白话：</strong>${g.d}</p><p class="loc"><strong>位置：</strong>第 ${$('#'+g.s)?.querySelector('h2')?.textContent.replace(/^核心|^拓展/,'').trim()||'本讲'}。<br><strong>用处：</strong>${g.u}<br><strong>为什么重要：</strong>${g.why}</p>`;rerender(pop);pop.classList.add('show');const r=anchor?.getBoundingClientRect();const x=r?clamp(r.left,10,innerWidth-pop.offsetWidth-10):innerWidth/2-pop.offsetWidth/2;const y=r?clamp(r.bottom+8,10,innerHeight-pop.offsetHeight-10):80;pop.style.left=x+'px';pop.style.top=y+'px'}document.addEventListener('click',e=>{const ref=e.target.closest('.term-ref');if(ref){e.stopPropagation();open(ref.dataset.term,ref);return}if(!e.target.closest('#termPop'))$('#termPop').classList.remove('show')});document.addEventListener('lab-mode-change',()=>$$('.gloss-group').forEach(g=>{const sec=$('#'+g.dataset.section);g.style.display=window.labMode==='core'&&sec.dataset.mode==='extra'?'none':''}));
+})();
+
+renderMath();
+</script>
+</body>
+</html>
