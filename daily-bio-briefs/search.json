@@ -1,6 +1,39 @@
 {
-  "updated": "2026-08-20",
+  "updated": "2026-08-22",
   "briefs": [
+    {
+      "date": "2026-08-22",
+      "title": "每日合成与发育生物学简报 - 2026-08-22",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Acoustic cell patterning reveals geometry- and substrate-dependent vasculogenesis and human embryo model development",
+        "Combining in vitro and in silico approaches to model neural tube patterning and isthmic organizer formation",
+        "Relating biomarkers and phenotypes using dynamical trap spaces",
+        "Access to all stereoisomers of chiral alcohols with multiple stereocentres enabled by machine learning-empowered protein engineering",
+        "A versatile cGAMP reporter reveals principles of cGAS activation by DNA damage and chromosome instability",
+        "The physics of sculpting a living creature"
+      ],
+      "summary": "空间图案化、基底力学与形态发生正在成为可设计的发育初始条件。 体外神经管建模把几何、短暂信号与不可逆状态转换连接起来。 dynamical trap spaces 将生物标志物与承诺表型的状态空间区域联系起来。 蛋白质工程与工程化报告系统扩展了合成生物学的可观测性和可编程性。",
+      "markdown": "briefs/2026-08-22.md",
+      "url": "reader.html?date=2026-08-22",
+      "tags": [
+        "synthetic biology",
+        "developmental synthetic biology",
+        "cybernetics and biology"
+      ],
+      "items": [
+        "Acoustic cell patterning reveals geometry- and substrate-dependent vasculogenesis and human embryo model development",
+        "Combining in vitro and in silico approaches to model neural tube patterning and isthmic organizer formation",
+        "Relating biomarkers and phenotypes using dynamical trap spaces",
+        "Access to all stereoisomers of chiral alcohols with multiple stereocentres enabled by machine learning-empowered protein engineering",
+        "A versatile cGAMP reporter reveals principles of cGAS activation by DNA damage and chromosome instability",
+        "The physics of sculpting a living creature"
+      ]
+    },
     {
       "date": "2026-08-21",
       "title": "每日合成与发育生物学简报 - 2026-08-21",
