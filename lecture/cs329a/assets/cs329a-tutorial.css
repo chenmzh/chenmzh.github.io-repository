@@ -70,6 +70,7 @@
   transform: translateY(-160%);
 }
 .cs329a-skip:focus { transform: translateY(0); }
+.cs329a-workspace:focus { outline: none; }
 .cs329a-app {
   display: grid;
   grid-template-columns: 258px minmax(0, 1fr) 232px;
@@ -270,7 +271,8 @@
 .cs329a-hero h1 { margin-bottom: 12px; }
 .cs329a-notice,
 .cs329a-source-note,
-.cs329a-teaching-note {
+.cs329a-teaching-note,
+.cs329a-noscript {
   margin: 18px 0;
   padding: 12px 15px;
   border-left: 4px solid var(--cs-warm);

@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./assets/cs329a-tutorial.css">
 </head>
 <body class="cs329a-tutorial">
-  <a class="cs329a-skip" href="#reader-scroll">跳转到正文</a>
+  <a class="cs329a-skip" href="#main-content">跳转到正文</a>
   <div class="cs329a-app">
     <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 教程导航">
       <header class="cs329a-brand">
@@ -43,9 +43,9 @@
       <div class="cs329a-side-note" role="note">本教程为个人学习整理与概念可视化，非 Stanford 官方页面，无官方隶属或授权。所有 demo 均使用本地确定性合成教学数据。</div>
     </aside>
     <button class="cs329a-scrim" type="button" aria-label="关闭导航" data-close-sidebar></button>
-    <main class="cs329a-workspace">
+    <main id="main-content" class="cs329a-workspace" tabindex="-1">
       <header class="cs329a-toolbar">
-        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="sidebar">☰</button>
         <div class="cs329a-toolbar-title">CS329A / 02 · 工具、规划与记忆</div>
         <div style="position:relative;width:100%;max-width:320px;">
           <label for="search-input" class="cs329a-sr-only">搜索本页内容</label>
@@ -66,6 +66,7 @@
             <h1>工具、规划与记忆 <em>Systems, Planning &amp; Memory.</em></h1>
             <p class="cs329a-lead">真实的 Agent 系统不仅需要基础模型推理，还必须构建与外部环境对接的执行底座：可执行工具沙箱、非线性规划与回溯拓扑，以及支持动态生命周期管理的记忆系统。</p>
             <div class="cs329a-notice"><strong>个人学习教程声明：</strong>本页面为个人根据公开课程大纲与学术论文整理的交互式学习教程，非 Stanford University 官方网站，与 Stanford 无官方隶属、认可或授权关系。本页不包含未公开讲义或受限作业内容。</div>
+            <noscript><p class="cs329a-noscript">JavaScript 已关闭：交互控件不可用；下方的概念说明、静态表格与公开来源仍可直接阅读。</p></noscript>
             <div class="cs329a-grid cs329a-grid-3">
               <div class="cs329a-card">
                 <span class="cs329a-card-kicker">PILLAR 01</span>
@@ -87,7 +88,7 @@
 
           <section id="tools" class="content-section" data-search="tools code feedback react loop sandbox 工具 代码反馈 异常捕获">
             <h2>工具调用与代码反馈：ReAct 到沙箱闭环</h2>
-            <p>在复杂工程任务（如 SWE-bench 软件缺陷修复）中，模型单次生成完美代码的概率随问题复杂度指数下降。<strong>ReAct 模式</strong>（Yao et al., 2022）将思维链（Thought）、动作（Action）与观察（Observation）交织交替，使环境执行结果成为推理上下文的动态组成部分：</p>
+            <p>在复杂工程任务（如 SWE-bench 软件缺陷修复）中，如果把每个动作近似为独立成功概率为 <var>p</var> 的步骤，那么连续完成 <var>T</var> 步的概率会呈 <var>p</var><sup>T</sup> 形式衰减；真实系统还会受到任务分布、重试与恢复机制影响。<strong>ReAct 模式</strong>（Yao et al., 2022）将思维链（Thought）、动作（Action）与观察（Observation）交织交替，使环境执行结果成为推理上下文的动态组成部分：</p>
             <ol class="cs329a-steps">
               <li><strong>Action 触发：</strong>智能体输出结构化调用（如运行测试脚本 <code>pytest tests/test_date.py</code>）。</li>
               <li><strong>Sandbox 执行：</strong>隔离沙箱运行代码并截获标准输出、标准错误与异常回溯（Traceback）。</li>
@@ -138,7 +139,7 @@
 
           <section id="planning" class="content-section" data-search="planning dags tree of thoughts search lookahead 规划 树搜索 回溯">
             <h2>规划拓扑与搜索：跳出自回归的贪心陷阱</h2>
-            <p>标准的大模型自回归生成在本质上是一种<strong>贪心滚动（Greedy Rollout）</strong>：每一步选择当前最合理的局部动作。然而，在具有非单调逻辑或死锁风险的任务中（如复杂迷宫、代码重构、工具链依赖调度），贪心策略极易陷入局部最优或死胡同。</p>
+            <p>标准的大模型自回归生成是<strong>单路径、左到右的条件生成</strong>；只有在采用 greedy decoding 时，才会表现为每一步选择当前分数最高的局部动作。对于具有非单调逻辑或死锁风险的任务（如复杂迷宫、代码重构、工具链依赖调度），单路径策略可能陷入局部最优或死胡同。</p>
             <div class="cs329a-grid cs329a-grid-2">
               <div class="cs329a-card">
                 <span class="cs329a-card-kicker">GREEDY ROLLOUT</span>
@@ -244,7 +245,7 @@
 
           <section id="memory" class="content-section" data-search="memory systems context retrieval staleness 记忆机制 向量检索 陈旧性污染">
             <h2>记忆机制与检索污染：从长期上下文到遗忘管理</h2>
-            <p>随着任务跨度延伸，将所有历史交互全部塞进 Prompt 会迅速耗尽上下文窗口并引起<strong>记忆污染（Context Contamination）</strong>。类似操作系统中的分页与缓存架构（MemGPT, Packer et al., 2023; Park et al., 2023），先进的 Agent 采用分层记忆架构：</p>
+            <p>随着任务跨度延伸，将所有历史交互全部塞进 Prompt 会迅速耗尽上下文窗口并引起<strong>记忆污染（Context Contamination）</strong>。MemGPT 用操作系统作类比来讨论工作上下文与长期存储的分层；Generative Agents 则展示了经验记忆、反思与检索评分的组合。它们共同启发了如下教学化的分层记忆架构：</p>
             <div class="cs329a-grid cs329a-grid-2">
               <div class="cs329a-card">
                 <span class="cs329a-card-kicker">WORKING MEMORY</span>
@@ -353,7 +354,7 @@
                 <br>论文链接：<a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer">arXiv:2210.03629</a>
               </li>
               <li>
-                <strong>Yao et al. (2023):</strong> <em>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</em>. 论证了树搜索与前瞻回溯在 24点游戏与创意写作等非单调任务中的显著优势。
+                <strong>Yao et al. (2023):</strong> <em>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</em>. 在 24 点游戏与创意写作等实验任务中研究了树搜索、前瞻评估与回溯的作用；这里的结论不外推到所有任务。
                 <br>论文链接：<a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener noreferrer">arXiv:2305.10601</a>
               </li>
               <li>

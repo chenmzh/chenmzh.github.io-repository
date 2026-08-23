@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="./assets/cs329a-tutorial.css">
 </head>
 <body class="cs329a-tutorial">
-  <a class="cs329a-skip" href="#reader-scroll">跳转到正文</a>
+  <a class="cs329a-skip" href="#main-content">跳转到正文</a>
   <div class="cs329a-app">
     <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 教程导航">
       <header class="cs329a-brand">
@@ -42,9 +42,9 @@
       <div class="cs329a-side-note" role="note">本教程为个人学习整理与概念可视化，非 Stanford 官方页面，无官方隶属或授权。所有 demo 均使用本地确定性合成教学数据。</div>
     </aside>
     <button class="cs329a-scrim" type="button" aria-label="关闭导航" data-close-sidebar></button>
-    <main class="cs329a-workspace">
+    <main id="main-content" class="cs329a-workspace" tabindex="-1">
       <header class="cs329a-toolbar">
-        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="sidebar">☰</button>
         <div class="cs329a-toolbar-title">CS329A / 01 · 闭环、扩展与验证</div>
         <div style="position:relative;width:100%;max-width:320px;">
           <label for="search-input" class="cs329a-sr-only">搜索本页内容</label>
@@ -65,6 +65,7 @@
             <h1>闭环、扩展与验证 <em>Agent Loop &amp; Scaling.</em></h1>
             <p class="cs329a-lead">从单轮文本补全到具备自我改进能力的智能体，核心转变在于建立“生成—执行—验证—修正”的闭环，并在推理时（Test-time）按需分配计算预算与验证强度。</p>
             <div class="cs329a-notice"><strong>个人学习教程声明：</strong>本页面为个人根据公开课程大纲与学术论文整理的交互式学习教程，非 Stanford University 官方网站，与 Stanford 无官方隶属、认可或授权关系。本页不包含未公开讲义或受限作业内容。</div>
+            <noscript><p class="cs329a-noscript">JavaScript 已关闭：交互控件不可用；下方的概念说明、静态表格与公开来源仍可直接阅读。</p></noscript>
             <div class="cs329a-pill-row">
               <span class="cs329a-pill">Agent Loop 闭环状态机</span>
               <span class="cs329a-pill">Test-Time Compute Scaling</span>
@@ -257,12 +258,12 @@
               <div class="cs329a-card">
                 <span class="cs329a-card-kicker">OUTCOME REWARD MODEL (ORM)</span>
                 <h3>结果级验证 (ORM)</h3>
-                <p>仅对最终生成的答案或输出进行二元判定（Pass/Fail）。实现简单且无标注歧义，但无法指出中间具体哪一步出错，容易产生“推理步骤错误但蒙对最终答案”的伪正例（False Positive）。</p>
+                <p>仅对最终生成的答案或输出进行二元判定（Pass/Fail）。输出标签相对直接，但无法指出中间具体哪一步出错，因而可能产生“推理步骤错误但蒙对最终答案”的伪正例（False Positive）。</p>
               </div>
               <div class="cs329a-card">
                 <span class="cs329a-card-kicker">PROCESS REWARD MODEL (PRM)</span>
                 <h3>过程级验证 (PRM)</h3>
-                <p>对推导过程中的每一个中间步骤单独给出信用分配与打分（Lightman et al., 2023）。能够精准实现步骤级剪枝与回溯，但训练数据构建成本更高且容易对特定推导风格产生偏见。</p>
+                <p>对推导过程中的每一个中间步骤单独给出信用分配与打分（Lightman et al., 2023）。可以为步骤级剪枝与回溯提供更细反馈，但训练数据构建成本更高，也可能对特定推导风格产生偏见。</p>
               </div>
             </div>
           </section>
@@ -354,7 +355,7 @@
                 <br>论文链接：<a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener noreferrer">arXiv:2408.03314</a>
               </li>
               <li>
-                <strong>Lightman et al. (2023):</strong> <em>Let's Verify Step by Step</em>. 提出了 PRM800K 数据集并论证了过程级验证模型（PRM）在多步数学推导中相比结果级验证模型（ORM）能显著减少伪正例与搜索幻觉。
+                <strong>Lightman et al. (2023):</strong> <em>Let's Verify Step by Step</em>. 提出了 PRM800K 数据集，并在论文所报告的多步数学推导实验中比较了过程级验证模型（PRM）与结果级验证模型（ORM）的行为；这里的结论不外推到所有任务。
                 <br>论文链接：<a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener noreferrer">arXiv:2305.20050</a>
               </li>
               <li>
@@ -468,7 +469,8 @@
       const pointActive = $('#point-active');
 
       const kMap = { 1: 100, 2: 210, 4: 320, 8: 430 };
-      const yMap = (success) => 240 - ((success - 30) / 70) * 190;
+      // Static axis mapping: 90% -> y=30, 75% -> y=80, 60% -> y=130, 45% -> y=180.
+       const yMap = (success) => 330 - ((10 / 3) * success);
 
       const updateScaling = () => {
         const k = parseInt(selectK ? selectK.value : '4', 10);

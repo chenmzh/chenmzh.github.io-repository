@@ -37,6 +37,7 @@ window.CS329A_DATA = Object.freeze({
   ]),
   horizon: Object.freeze([
     Object.freeze({ steps: 1, error: 0.05, checkpoint: false, survival: 95, cost: 1.0 }),
+    Object.freeze({ steps: 1, error: 0.05, checkpoint: true, survival: 95, cost: 1.2 }),
     Object.freeze({ steps: 3, error: 0.05, checkpoint: false, survival: 86, cost: 3.0 }),
     Object.freeze({ steps: 6, error: 0.05, checkpoint: false, survival: 74, cost: 6.0 }),
     Object.freeze({ steps: 10, error: 0.05, checkpoint: false, survival: 60, cost: 10.0 }),
