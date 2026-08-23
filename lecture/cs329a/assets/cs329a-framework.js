@@ -5,6 +5,7 @@
   const sidebar = document.getElementById('sidebar');
   const menu = document.getElementById('menu-button');
   const scrim = document.getElementById('sidebar-scrim');
+  const drawerName = body.dataset.drawerName || '参考框架';
   const mobileQuery = window.matchMedia('(max-width: 780px)');
   let drawerOpen = false;
   let returnFocus = menu;
@@ -24,7 +25,7 @@
     drawerOpen = false;
     body.classList.remove('cs329a-drawer-open');
     menu?.setAttribute('aria-expanded', 'false');
-    menu?.setAttribute('aria-label', '打开参考框架导航');
+    menu?.setAttribute('aria-label', `打开${drawerName}导航`);
     updateDrawerA11y();
     if (restore && returnFocus) returnFocus.focus();
   };
@@ -33,7 +34,7 @@
     drawerOpen = true;
     body.classList.add('cs329a-drawer-open');
     menu?.setAttribute('aria-expanded', 'true');
-    menu?.setAttribute('aria-label', '关闭参考框架导航');
+    menu?.setAttribute('aria-label', `关闭${drawerName}导航`);
     updateDrawerA11y();
     sidebar?.querySelector('a[href]')?.focus();
   };

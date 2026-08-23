@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CS329A 公开阅读图谱：每篇论文与课程关系、中心思想、主要方法、证据和适用边界。">
+  <meta name="color-scheme" content="light dark">
+  <title>CS329A · Public Reading Atlas</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./assets/cs329a-reader.css">
+</head>
+<body class="cs329a-reader" data-drawer-name="公开阅读">
+  <a class="cs329a-skip" href="#framework-main">跳转到正文</a>
+  <div class="cs329a-reader-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 公开阅读导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-source-link" href="./">← 返回 20 讲阅读器</a>
+        <p class="cs329a-brand-code">CS329A · PUBLIC READING ATLAS</p>
+        <h1>每篇阅读<br>都讲清楚</h1>
+        <div class="cs329a-brand-meta">34 official readings + 5 supplements<br>公开来源 · 个人解释层</div>
+      </header>
+      <div class="cs329a-nav-label">Official readings</div>
+      <nav class="cs329a-source-nav" aria-label="官方课程阅读">
+        <a class="cs329a-source-link" href="#readings-s02">02 · Test-time scaling</a>
+        <a class="cs329a-source-link" href="#readings-s03">03 · Verification</a>
+        <a class="cs329a-source-link" href="#readings-s04">04 · Tools / feedback</a>
+        <a class="cs329a-source-link" href="#readings-s05">05 · Planning</a>
+        <a class="cs329a-source-link" href="#readings-s06">06 · Train-time / RL</a>
+        <a class="cs329a-source-link" href="#readings-s07">07 · Open-ended evolution</a>
+        <a class="cs329a-source-link" href="#readings-s08">08 · Search / research</a>
+        <a class="cs329a-source-link" href="#readings-s13">13 · Software engineering</a>
+        <a class="cs329a-source-link" href="#readings-s14">14 · Memory</a>
+        <a class="cs329a-source-link" href="#readings-s17">17 · Long-horizon evaluation</a>
+      </nav>
+      <div class="cs329a-nav-label">Supplementary</div>
+      <nav class="cs329a-source-nav" aria-label="补充阅读">
+        <a class="cs329a-source-link" href="#supplementary">ToT · SWE-bench · Generative Agents</a>
+        <a class="cs329a-source-link" href="#supplementary-robotics">SayCan · PaLM-E</a>
+      </nav>
+      <div class="cs329a-nav-label">Sources</div>
+      <nav class="cs329a-source-nav" aria-label="公开来源">
+        <a class="cs329a-source-link" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course schedule ↗</a>
+        <a class="cs329a-source-link" href="https://export.arxiv.org/" target="_blank" rel="noopener noreferrer">arXiv metadata / abstracts ↗</a>
+      </nav>
+      <div class="cs329a-side-note" role="note">这是个人学习整理，不是 Stanford 官方网站。每张卡依据论文公开摘要、论文页面或技术报告整理；“主要发现”保留原文任务、模型、预算和指标边界，不把摘要外的结论写成事实。</div>
+    </aside>
+    <button class="cs329a-scrim" id="sidebar-scrim" type="button" aria-label="关闭公开阅读导航"></button>
+    <main class="cs329a-workspace" id="framework-main" tabindex="-1">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开公开阅读导航" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <div class="cs329a-toolbar-title">CS329A / Public reading atlas</div>
+        <div aria-hidden="true"></div>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon cs329a-font-down" id="font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon" id="font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon" id="theme-button" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon" id="print-button" type="button" aria-label="打印公开阅读图谱">⌘P</button>
+        </div>
+      </header>
+      <div class="cs329a-reader-scroll" id="reader-scroll">
+        <noscript><p class="cs329a-noscript">JavaScript 已关闭：全部阅读卡、原文链接和目录仍可阅读；移动端导航会以内嵌方式显示。</p></noscript>
+        <article aria-labelledby="readings-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">PUBLIC READING ATLAS · 34 OFFICIAL + 5 SUPPLEMENTARY</div>
+            <h1 id="readings-title">公开阅读图谱：<em>每篇论文如何连接到 Self-Improving Agent？</em></h1>
+            <p class="cs329a-lead">这里不是论文摘要的简单翻译，而是把每篇公开阅读放回 CS329A 的问题链：系统在哪里获得反馈？反馈怎样改变搜索、工具、训练或记忆？什么证据能证明改进真的发生？每张卡都固定回答四件事：<strong>与本课程的关系、中心思想、主要方法、主要发现与边界</strong>。</p>
+            <div class="cs329a-notice"><strong>来源与边界：</strong>官方阅读清单以 <a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Stanford CS329A 公开课程页 ↗</a> 为准。官方指定阅读标为“官方课程阅读”；ToT、SWE-bench、Generative Agents、SayCan、PaLM-E 是为了补足概念链而加入的“补充阅读”，不冒充课程指定材料。论文原文和摘要可能随版本更新，请以外部链接中的版本为准。</div>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">34 篇官方公开 reading</span><span class="cs329a-badge supplementary">5 篇补充 reading</span><span class="cs329a-badge">按 session 组织</span></div>
+
+            <h2 id="readings-s02">Session 02 · Test-time Compute Scaling</h2>
+            <p class="cs329a-reader-note">本组从“多生成几个候选”开始，逐步进入组合式推理时架构、难度自适应预算和 scaling law 的解释。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2407-21787"><h3>Large Language Monkeys: Scaling Inference Compute with Repeated Sampling</h3><span class="cs329a-paper-meta official">Brown et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 inference-time compute 变成可控制的候选预算，是 S02 “coverage—selector—cost” 三元关系的起点。</dd><dt>中心思想</dt><dd>重复采样能让“至少有一个正确候选”的覆盖率持续上升；但覆盖率上升不等于最终答案一定选得对。</dd><dt>主要方法</dt><dd>对同一问题反复采样，统计 coverage 随样本数的曲线，并比较自动验证、majority vote 和 reward model 等选择器。</dd><dt>主要发现与边界</dt><dd>论文报告多任务上的近似 log-linear / power-law 关系，并在 SWE-bench Lite 的特定模型与预算设置中展示增益；没有可靠 verifier 的任务上选择器会较早平台化。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2409-15254"><h3>Archon: An Architecture Search Framework for Inference-Time Techniques</h3><span class="cs329a-paper-meta official">Saad-Falcon et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2409.15254" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>S02 不只问“采样几次”，还问“采样、修订、验证和模型组合怎样排成系统”；Archon 是这个组合搜索问题的直接例子。</dd><dt>中心思想</dt><dd>推理时技巧的价值依赖模型、任务和彼此的交互，不能只凭单个技巧的排行榜决定架构。</dd><dt>主要方法</dt><dd>将模型和 inference-time modules 组成模块化搜索空间，在给定计算预算下自动搜索配置，并用目标 benchmark 的准确率—token 预算 Pareto 前沿评价。</dd><dt>主要发现与边界</dt><dd>论文在 instruction-following、reasoning、coding 设置中报告对基线的改进；搜索空间、预算和目标 benchmark 是结论的一部分，不能概括成所有任务都应采用同一组合。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2408-03314"><h3>Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</h3><span class="cs329a-paper-meta official">Snell et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S02 的预算问题形式化：固定 FLOPs 时，预算应投到更大的模型，还是投到搜索、过程验证和自适应修订？</dd><dt>中心思想</dt><dd>最优 test-time scaling 取决于题目难度和基础模型的成功概率，不存在脱离任务分布的单一最优策略。</dd><dt>主要方法</dt><dd>比较基于 dense process verifier 的搜索与测试时自适应改变响应分布的方法，再按 prompt 难度分配计算预算。</dd><dt>主要发现与边界</dt><dd>摘要报告 compute-optimal 策略相对 best-of-N 的效率提升和 FLOPs-matched 对比；这些结果依赖所用模型、验证器、任务难度划分和预算，不等于参数规模永远不重要。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2502-17578"><h3>How Do Large Language Monkeys Get Their Power (Laws)?</h3><span class="cs329a-paper-meta official">Brown et al. · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2502.17578" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它帮助 S02 解释为什么总体曲线看起来像 power law，并把“单题成功率”与“跨题平均”区分开。</dd><dt>中心思想</dt><dd>每道题的失败率可以随尝试次数近似指数下降；如果题目之间的单次成功率呈重尾分布，聚合后却会呈现幂律外观。</dd><dt>主要方法</dt><dd>先用独立尝试的数学推导提出表面矛盾，再用每题成功率分布和经验 scaling 数据检验重尾解释，并据此预测聚合曲线指数。</dd><dt>主要发现与边界</dt><dd>这是对聚合 scaling law 的分布解释，不是对任何模型和任务的普遍定律；独立采样、题目分布和“任一次成功即算成功”的评价定义都很关键。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s03">Session 03 · Robust Verification</h2>
+            <p class="cs329a-reader-note">验证器是把“生成了很多东西”变成“敢交付一个东西”的接口。本组从 outcome verifier 走向 process reward 和弱验证器组合。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2506-18203"><h3>Shrinking the Generation-Verification Gap with Weak Verifiers</h3><span class="cs329a-paper-meta official">Weaver · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2506.18203" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>S03 的核心难题是 verifier 不完美；Weaver 直接研究如何把多个弱 judge 组合成更接近 oracle 的选择信号。</dd><dt>中心思想</dt><dd>弱验证器并非只能简单投票；利用它们准确率差异和输出统计，组合后的信号可以比单个 judge 更有用。</dd><dt>主要方法</dt><dd>用 weak supervision 估计各验证器可靠性，先归一化和过滤不一致输出，再做加权集成，并训练轻量 cross-encoder 近似组合分数。</dd><dt>主要发现与边界</dt><dd>摘要报告在多任务 repeated sampling 选择中优于 Pass@1 的结果；ensemble 仍受验证器相关错误、校准数据和 generator—verifier mismatch 限制。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2110-14168"><h3>Training Verifiers to Solve Math Word Problems</h3><span class="cs329a-paper-meta official">Cobbe et al. · 2021 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它提供 S03 最基础的生成—筛选范式：生成器负责提出多个解，verifier 负责在候选之间判断。</dd><dt>中心思想</dt><dd>在数学文字题上，训练一个专门判断解答正确性的模型，可以把多次生成转化为更高的最终准确率。</dd><dt>主要方法</dt><dd>构建 GSM8K 数据集，训练 verifier 评估候选 completion，测试时生成多个答案并选择 verifier 排名最高者；同时和直接微调比较。</dd><dt>主要发现与边界</dt><dd>论文报告 verification 能提升 GSM8K，并显示随数据增加的扩展性；任务是小学数学文字题，verifier 学到的判据不能直接外推到开放式 agent 轨迹。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2305-20050"><h3>Let's Verify Step by Step</h3><span class="cs329a-paper-meta official">Lightman et al. · 2023 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S03 从“最终答案对不对”推进到“中间过程哪一步出了问题”，对应 ORM 与 PRM 的选择。</dd><dt>中心思想</dt><dd>过程监督在该 MATH 实验中比只看最终结果的 outcome supervision 更有效，但过程标签成本也更高。</dd><dt>主要方法</dt><dd>比较 outcome-supervised 和 process-supervised reward model，使用主动学习提高标注效率，并发布 PRM800K 步级反馈数据。</dd><dt>主要发现与边界</dt><dd>摘要报告代表性 MATH 测试子集 78% 的结果；结论依赖数学任务、标签质量和过程定义，不能把“过程监督”当成所有领域必然更优。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2312-08935"><h3>Math-Shepherd: Verify and Reinforce LLMs Step-by-step without Human Annotations</h3><span class="cs329a-paper-meta official">Wang et al. · 2023 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2312.08935" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它回答 S03 的下一步问题：如果人工逐步标注太贵，能否从答案级信号构造过程级训练信号？</dd><dt>中心思想</dt><dd>自动构造的过程奖励模型既可用于候选重排，也可作为 PPO 的逐步奖励，减少对人工过程标注的依赖。</dd><dt>主要方法</dt><dd>从解题轨迹和最终答案构造 process-wise supervision，训练 Math-Shepherd；分别用于 verification reranking 和 step-by-step PPO。</dd><dt>主要发现与边界</dt><dd>摘要报告 Mistral-7B 在 GSM8K/MATH 上的提升；伪标签会把生成器的偏差写入 verifier，仍需独立检查和跨任务验证。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s04">Session 04 · Learning from Feedback with Tools / Code</h2>
+            <p class="cs329a-reader-note">这里的“反馈”不再只是一个分数，而是来自 API、执行器、测试和原则的可行动观察。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2210-03629"><h3>ReAct: Synergizing Reasoning and Acting in Language Models</h3><span class="cs329a-paper-meta official">Yao et al. · 2022 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>ReAct 是 S04 的接口原型：让 agent 在思考、行动、观察之间循环，而不是只生成一段没有环境反馈的文本。</dd><dt>中心思想</dt><dd>推理轨迹帮助规划、追踪和处理异常；外部动作提供事实或环境反馈，两者交错能减少单一路径的幻觉累积。</dd><dt>主要方法</dt><dd>用 few-shot prompting 让模型交替生成 reasoning trace 与 task-specific action，调用 Wikipedia、ALFWorld、WebShop 等环境，再把观察放回上下文。</dd><dt>主要发现与边界</dt><dd>摘要报告在 HotpotQA、FEVER、ALFWorld、WebShop 相对基线的改进；工具 API 的覆盖、延迟和错误处理决定了闭环是否真的可靠。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2410-02089"><h3>RLEF: Grounding Code LLMs in Execution Feedback with Reinforcement Learning</h3><span class="cs329a-paper-meta official">2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2410.02089" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S04 的“运行测试—修订代码”从 prompt 技巧推进到训练时能力：模型需要学会利用执行反馈，而不是只会独立采样。</dd><dt>中心思想</dt><dd>多步代码 agent 的价值在于把编译、测试和运行结果转成下一步策略更新。</dd><dt>主要方法</dt><dd>在代码生成环境中用端到端 reinforcement learning 训练模型读取 execution feedback，并比较多步迭代和独立候选采样。</dd><dt>主要发现与边界</dt><dd>论文摘要报告 competitive programming 上小模型和大模型的结果及样本数下降；这不是对所有代码仓库的保证，反馈可观测性和奖励设计仍是瓶颈。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2212-08073"><h3>Constitutional AI: Harmlessness from AI Feedback</h3><span class="cs329a-paper-meta official">Bai et al. · 2022 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它展示一种不同来源的反馈：用原则约束模型自我批评与修订，再用 AI preference 训练反馈模型，是 S01/S04 反馈闭环的对照。</dd><dt>中心思想</dt><dd>在较少人工 harmful-output 标签的情况下，规则、批评、修订和偏好学习可以组成可迭代的监督链。</dd><dt>主要方法</dt><dd>先采样回答并生成 self-critique / revision，再做 supervised fine-tuning；随后用 RLAIF 构造 AI preference 数据，训练 preference model 并进行 RL。</dd><dt>主要发现与边界</dt><dd>摘要报告 harmless 且不回避问题的助手效果；原则列表和 AI judge 本身决定了偏好方向，不能把它当作通用事实验证器。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s05">Session 05 · Multi-step Reasoning / Planning</h2>
+            <p class="cs329a-reader-note">本组比较递归分解、树搜索、并行执行和自适应 branching：规划不是画一棵树，而是要有依赖、反馈和停止标准。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2504-04736"><h3>SWiRL: Synthetic Data Generation &amp; Multi-Step RL for Reasoning &amp; Tool Use</h3><span class="cs329a-paper-meta official">Goldie et al. · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2504.04736" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S05 的多步轨迹接到 S06 的 train-time scaling：如何把一次次行动拆成可学习的子轨迹？</dd><dt>中心思想</dt><dd>针对多步 reasoning 与 tool use，逐步生成、筛选并学习 sub-trajectory，比把整条轨迹当作单步结果更有训练接口。</dd><dt>主要方法</dt><dd>生成合成多步数据，将轨迹按动作拆成多个子轨迹，做 synthetic filtering，再用 RL 优化这些 step-wise 样本。</dd><dt>主要发现与边界</dt><dd>摘要报告 GSM8K、HotPotQA、CofCA、MuSiQue、BeerQA 上的相对提升和跨任务泛化；合成数据筛选器若不可靠，会放大错误轨迹。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2310-04406"><h3>Language Agent Tree Search Unifies Reasoning Acting and Planning in Language Models</h3><span class="cs329a-paper-meta official">Zhou et al. · 2023 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2310.04406" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>LATS 是 S05 的完整闭环：树搜索负责探索，环境反馈负责检验，LM value 与 reflection 负责评估和改写。</dd><dt>中心思想</dt><dd>把 reasoning、acting、planning 统一为带外部反馈的 Monte Carlo Tree Search，而不是单条左到右轨迹。</dd><dt>主要方法</dt><dd>在语言模型生成的候选行动上运行 MCTS，用 LM-powered value function、self-reflection 和环境反馈选择扩展、回溯与执行路径。</dd><dt>主要发现与边界</dt><dd>论文在编程、交互问答、网页导航和数学上报告结果；树搜索成本、value 偏差和环境可重置性会决定能否复现。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2506-05745"><h3>SPRINT: Enabling Interleaved Planning and Parallelized Execution in Reasoning Models</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2506.05745" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它回答“长推理为什么慢”：S05 的计划不仅要正确，还要识别互不依赖的子任务并行执行。</dd><dt>中心思想</dt><dd>通过后训练让 reasoning model 在长链中交错规划和并行执行，从而减少 sequential tokens，而不只是一味增加推理长度。</dd><dt>主要方法</dt><dd>把自然语言轨迹重组为长程规划与 parallel execution rounds，用少量整理后的数据微调模型，并在推理时识别可并行子任务。</dd><dt>主要发现与边界</dt><dd>摘要报告长输出任务最多 39% 的 sequential-token 减少和 OOD 迁移；只有真正独立、可并行且合并安全的子任务才能获得收益。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2311-05772"><h3>ADaPT: As-Needed Decomposition and Planning with Language Models</h3><span class="cs329a-paper-meta official">Prasad et al. · 2023/24 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2311.05772" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把“先把任务拆到底”改成 S05 的条件化规划：只有当执行器无法完成子任务时，才增加分解深度。</dd><dt>中心思想</dt><dd>规划粒度应该随任务复杂度和 executor 能力变化，固定的 plan-and-execute 或固定一步一步执行都可能失配。</dd><dt>主要方法</dt><dd>递归地按需 decomposition；先尝试执行当前子任务，失败或能力不足时再展开更细的子任务，直到可执行。</dd><dt>主要发现与边界</dt><dd>摘要报告 ALFWorld、WebShop 和 TextCraft 相对基线的提升；“无法执行”的判定若不可靠，递归可能过深或过早停止。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2503-04412"><h3>Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2503.04412" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S02 的 repeated sampling 与 S05 的 tree search 接起来：预算应该扩大候选宽度，还是深入修订已有分支？</dd><dt>中心思想</dt><dd>用外部反馈动态决定“go wider”探索新候选还是“go deeper”改进旧候选，两种 scaling 互补。</dd><dt>主要方法</dt><dd>Adaptive Branching Monte Carlo Tree Search（AB-MCTS）在节点层根据反馈选择扩展宽度或深度，并与 repeated sampling、标准 MCTS 对比。</dd><dt>主要发现与边界</dt><dd>摘要报告在 coding 与 engineering 任务上优于对照；效果依赖可用的外部反馈和前沿模型，不能把自评估当成可靠 oracle。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s06">Session 06 · Train-time Scaling / Scaling RL</h2>
+            <p class="cs329a-reader-note">S06 关注哪些轨迹值得写回模型：自举、数据筛选、奖励和 RL 系统都要用 held-out 结果检查是否真的学会。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2203-14465"><h3>STaR: Bootstrapping Reasoning With Reasoning</h3><span class="cs329a-paper-meta official">Zelikman et al. · 2022 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2203.14465" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>STaR 是“成功轨迹如何变成训练数据”的经典自举例子，连接 S05 的搜索与 S06 的 train-time update。</dd><dt>中心思想</dt><dd>模型可以先生成 rationale；答错时在给定正确答案的条件下重试 rationale，再用最终正确的推理轨迹反复微调。</dd><dt>主要方法</dt><dd>少量 rationale 示例 + 大量无 rationale 数据，循环执行生成、正确答案条件下重采样、筛选正确轨迹和 fine-tuning。</dd><dt>主要发现与边界</dt><dd>论文报告多任务提升及与更大模型微调相当的结果；正确答案并不保证 rationale 因果有效，训练数据过滤和任务分布是关键。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2402-03300"><h3>DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</h3><span class="cs329a-paper-meta official">Shao et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S06 拆成两个可审计变量：训练数据如何选择，以及 RL 优化如何在资源受限下改善数学推理。</dd><dt>中心思想</dt><dd>开放网页数据的筛选与整理，加上面向数学奖励的 RL，可以让较小开源模型获得更强的数学能力。</dd><dt>主要方法</dt><dd>继续预训练数学相关 token，加入自然语言和代码数据；使用 Group Relative Policy Optimization（GRPO）优化推理能力。</dd><dt>主要发现与边界</dt><dd>摘要报告 DeepSeekMath 7B 在 MATH 的单样本和 self-consistency 结果；这是数学 benchmark、特定数据管线和模型规模下的结论，不等于一般 agent 能力。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2503-14476"><h3>DAPO: An Open-Source LLM Reinforcement Learning System at Scale</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2503.14476" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>DAPO 让 S06 从算法名词进入可复现系统：clip、采样、数据、训练框架和工程吞吐共同决定 RL 是否能扩展。</dd><dt>中心思想</dt><dd>将关键训练细节公开，并用 decoupled clipping、dynamic sampling 等设计改善大规模 reasoning RL 的稳定性和效率。</dd><dt>主要方法</dt><dd>提出 DAPO 算法组件，开源训练代码、数据处理流程和基于 verl 的系统，围绕长输出、采样和 policy optimization 做工程化设计。</dd><dt>主要发现与边界</dt><dd>摘要报告 Qwen2.5-32B base 在 AIME 2024 的结果；训练基础设施、奖励定义和数据过滤仍是复现条件，不应只引用最终分数。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s07">Session 07 · Open-ended Evolution of Self-improving Agents</h2>
+            <p class="cs329a-reader-note">S07 把改进对象从“答案”扩大到“Agent 本身”：候选架构、代码和研究假设形成 archive，并由自动评测决定哪些变体留下。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2505-22954"><h3>Darwin Gödel Machine: Open-Ended Evolution of Self-Improving Agents</h3><span class="cs329a-paper-meta official">DGM · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2505.22954" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它是 S07 “系统自我修改”最直接的公开实例，也把 S06 的训练闭环改成代码级、架构级的演化闭环。</dd><dt>中心思想</dt><dd>不要求证明每次修改必然有益，而是让候选 agent 通过受控代码修改和 benchmark 验证，在 archive 中积累多样的改进路径。</dd><dt>主要方法</dt><dd>从 archive 采样一个 agent，用基础模型生成有趣的代码变体，沙箱运行编码任务评测，再把通过的变体加入不断扩展的树状 archive。</dd><dt>主要发现与边界</dt><dd>摘要报告 SWE-bench、Polyglot 上从基线到改进的结果，并强调 sandbox / human oversight；benchmark 代理指标、修改权限和安全护栏决定结论范围。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2408-06292"><h3>The AI Scientist: Towards Fully Automated Open-Ended Scientific Discovery</h3><span class="cs329a-paper-meta official">Lu et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2408.06292" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把“自我改进”投射到科研流程：提出假设、写代码、跑实验、写论文和审稿都成为可循环的 agent 环节。</dd><dt>中心思想</dt><dd>如果实验与评价都能自动化，Agent 可以在一个受限研究领域中批量探索并迭代想法。</dd><dt>主要方法</dt><dd>生成研究 idea，生成和执行代码，画图、撰写论文，再用 simulated reviewer 评分；在三个机器学习子领域验证流程。</dd><dt>主要发现与边界</dt><dd>摘要报告每篇论文成本和自动审稿结果；“新颖性”与审稿器本身仍是系统内评价，不能等同于真实科学共同体的复核。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-alphaevolve"><h3>AlphaEvolve: A Gemini-powered coding agent for designing advanced algorithms</h3><span class="cs329a-paper-meta official">Google DeepMind · 2025 · 官方课程阅读 / 技术报告</span><p><a href="https://storage.googleapis.com/deepmind-media/DeepMind.com/Blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/AlphaEvolve.pdf" target="_blank" rel="noopener noreferrer">阅读公开技术报告 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S07 的 archive + evaluator 落到算法设计：Agent 不只修自己的 prompt，而是搜索能被执行器验证的程序与算法变体。</dd><dt>中心思想</dt><dd>让语言模型提出代码变异，用自动化评测保留有效候选，形成面向算法目标的进化搜索。</dd><dt>主要方法</dt><dd>以 Gemini 系列模型生成候选程序和修改建议，运行任务特定的正确性/性能 evaluator，围绕有效候选进行多轮演化。</dd><dt>主要发现与边界</dt><dd>这是公开技术报告而非本页复现实验；它最适合说明“可执行评价器让开放式搜索可控”，具体工程结果应以报告列出的任务和指标为准。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s08">Session 08 · Self-improvement with Search &amp; Deep Research Agents</h2>
+            <p class="cs329a-reader-note">S08 将搜索对象从候选答案扩展到程序、文档和证据：搜索只有在可验证、可引用、可停止时才是研究系统。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2203-07814"><h3>Competition-Level Code Generation with AlphaCode</h3><span class="cs329a-paper-meta official">Li et al. · 2022 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>AlphaCode 是 S08 的程序搜索模板：模型产生大量候选，执行行为提供硬过滤，再把可交付集合压缩。</dd><dt>中心思想</dt><dd>复杂代码题不能只靠一次生成；干净数据、可高效采样的模型和程序行为过滤共同构成能力。</dd><dt>主要方法</dt><dd>训练大规模 transformer，针对竞赛题大量采样程序，用编译/测试行为过滤并缩小候选提交集合。</dd><dt>主要发现与边界</dt><dd>摘要报告 Codeforces 模拟竞赛排名；竞赛题有明确测试 oracle，真实软件工程的需求理解、回归和维护成本不同。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-alphacode2"><h3>AlphaCode 2 Technical Report</h3><span class="cs329a-paper-meta official">Google DeepMind · 2025 · 官方课程阅读 / 技术报告</span><p><a href="https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf" target="_blank" rel="noopener noreferrer">阅读公开技术报告 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它延续 S08 的“代码生成不是单次 completion”，适合和 AlphaCode 对照系统规模、候选搜索与程序验证的演化。</dd><dt>中心思想</dt><dd>将代码模型放在完整的生成—执行—筛选系统中，通过大量候选和可执行反馈寻找可提交程序。</dd><dt>主要方法</dt><dd>报告级系统由代码生成模型、候选采样、编译/测试过滤与候选选择组成；具体工程配置以公开报告正文为准。</dd><dt>主要发现与边界</dt><dd>这是技术报告而非本文重新复述的独立 benchmark；不要把报告中的竞赛表现外推到通用 agent 或真实仓库维护。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2501-05366"><h3>Search-o1: Agentic Search-Enhanced Large Reasoning Models</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2501.05366" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>Search-o1 直接连接 S08 的 evidence graph：长链推理遇到知识缺口时，Agent 应主动检索，而不是继续凭内部记忆猜测。</dd><dt>中心思想</dt><dd>把 agentic retrieval 和“文档内推理”接入 reasoning loop，在把证据注入推理链前先压缩和分析文档。</dd><dt>主要方法</dt><dd>检测不确定知识点，动态检索外部资料，用 Reason-in-Documents 模块分析冗长文档，再把整理后的信息返回 reasoning process。</dd><dt>主要发现与边界</dt><dd>摘要报告科学、数学、代码和开放问答实验；检索覆盖、文档质量、引用正确性和模型是否真正使用证据仍需独立审计。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s13">Session 13 · Agentic Frameworks for Software Engineering</h2>
+            <p class="cs329a-reader-note">S13 把通用 agent loop 放进真实代码库、测试和性能环境；成功标准从“像不像正确答案”变成“补丁是否可复现地改变系统”。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2501-14723"><h3>CodeMonkeys: Scaling Test-Time Compute for Software Engineering</h3><span class="cs329a-paper-meta official">Ehrlich et al. · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2501.14723" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S02 的 test-time scaling 具体化为代码 agent：串行增加编辑—测试轮数，并行增加候选轨迹，再用测试选择。</dd><dt>中心思想</dt><dd>真实 issue 的解决可以通过“多条会运行测试的编辑轨迹 + 选择器”扩展，而不只是换更大的模型。</dd><dt>主要方法</dt><dd>模型迭代编辑代码并生成/运行测试，采样多条 multi-turn trajectories，用模型测试投票和专门选择轨迹挑选候选补丁。</dd><dt>主要发现与边界</dt><dd>摘要报告 SWE-bench Verified 的分数和约 2300 美元预算下的结果；成本、仓库可读权限、测试质量和 benchmark 污染必须一并报告。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2502-10517"><h3>KernelBench: Can LLMs Write Efficient GPU Kernels?</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2502.10517" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>KernelBench 是 S13 的可执行反馈环境：补丁必须同时满足 functional correctness 和性能门槛。</dd><dt>中心思想</dt><dd>“代码能跑”不等于“工程上更好”；GPU kernel agent 需要在正确性、速度和阈值之间优化。</dd><dt>主要方法</dt><dd>用 250 个 PyTorch workload 评测生成 kernel，定义 fast_p 指标，结合执行与 profiling feedback 迭代修订。</dd><dt>主要发现与边界</dt><dd>摘要指出前沿 reasoning model 仍在多数案例达不到 PyTorch baseline，并随 speedup 阈值提高而更难；硬件、编译器和阈值会影响结果。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2410-15625"><h3>Improving Parallel Program Performance with LLM Optimizers via Agent-System Interfaces</h3><span class="cs329a-paper-meta official">Wei et al. · 2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2410.15625" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它说明 S13 的工具接口不能只返回一个分数：系统要把低层执行结果翻译成 Agent 能利用的反馈。</dd><dt>中心思想</dt><dd>将并行程序 mapper 优化变成结构化搜索问题，丰富反馈比单一 scalar performance 更利于少步找到好方案。</dd><dt>主要方法</dt><dd>用 DSL 定义可搜索的 mapper 空间，用 Agent-System Interface 隔离复杂系统细节，再由 AutoGuide 把执行输出转成行动反馈。</dd><dt>主要发现与边界</dt><dd>摘要报告相对 OpenTuner 的迭代效率和九个 benchmark 上的 speedup；结果针对 HPC mapper，不能直接外推到一般代码修复。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s14">Session 14 · Augmenting Agents with Memory</h2>
+            <p class="cs329a-reader-note">记忆不是把更多文本塞进 context：它涉及写入、压缩、检索、过期、缓存成本和来源可信度。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2506-06266"><h3>Cartridges: Lightweight and general-purpose long context representations via self-study</h3><span class="cs329a-paper-meta official">Eyuboglu et al. · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2506.06266" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>Cartridges 把 S14 的长期记忆连接到 serving systems：记忆的表示和加载成本会直接影响 agent 可用性。</dd><dt>中心思想</dt><dd>为每个语料库离线训练一个较小的 KV cache 表示，查询时复用它，试图以更低内存成本接近完整 ICL。</dd><dt>主要方法</dt><dd>生成关于语料库的合成对话，用 context-distillation / self-study 训练 Cartridge，推理时加载并组合 corpus-specific KV cache。</dd><dt>主要发现与边界</dt><dd>摘要报告在若干长上下文 benchmark 上的内存、吞吐和有效上下文收益；训练成本、语料库变化、隐私和错误记忆残留必须单独评估。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2310-08560"><h3>MemGPT: Towards LLMs as Operating Systems</h3><span class="cs329a-paper-meta official">Packer et al. · 2023 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>MemGPT 给 S14 提供“工作记忆—长期记忆—换入换出”的系统类比，说明 context window 是资源管理问题。</dd><dt>中心思想</dt><dd>用 virtual context management 在有限快速上下文和更大慢速存储之间移动信息，并通过 interrupt 管理控制流。</dd><dt>主要方法</dt><dd>分层 memory tiers、显式函数调用/分页式数据移动和中断式控制；在长文档分析、多 session 对话中测试记忆能力。</dd><dt>主要发现与边界</dt><dd>摘要报告能处理超过底层 context window 的文档并保持多 session 记忆；OS 是设计类比，检索错误、过期、污染和隐私删除仍需实际系统审计。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2405-16444"><h3>CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</h3><span class="cs329a-paper-meta official">2024 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2405.16444" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S14 的“记忆读取”落到 RAG serving：多个知识块的缓存怎样融合，既省 prefill 又不丢跨块注意力。</dd><dt>中心思想</dt><dd>非前缀文本的 KV cache 不能直接拼接；只重算一小部分 token 并把检索和 cache 读取流水线化，可以保留质量并降低延迟。</dd><dt>主要方法</dt><dd>选择性重计算每个复用 KV cache 的 token，融合多个 retrieved chunks，并将 cache retrieval 与 recomputation pipeline overlap。</dd><dt>主要发现与边界</dt><dd>摘要报告 TTFT 和吞吐相对 full recompute 的提升；结果依赖 RAG workload、硬件、模型和缓存命中/更新策略。</dd></dl></div>
+            </div>
+
+            <h2 id="readings-s17">Session 17 · Agentic Evaluations &amp; Long-Horizon Tasks</h2>
+            <p class="cs329a-reader-note">长程评测把单步准确率拆成轨迹可靠性、恢复、成本、人工时间和真实交付质量；三个 reading 分别覆盖能力时间尺度、工作任务和研究综合。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2503-14499"><h3>Measuring AI Ability to Complete Long Software Tasks</h3><span class="cs329a-paper-meta official">METR · 2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener noreferrer">阅读论文 ↗</a> · <a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank" rel="noopener noreferrer">阅读公开说明 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>METR 给 S17 一个长任务能力的测量框架；本页另用合成数据讲 p^T、checkpoint 和恢复，不能说 METR 直接评测 checkpoint。</dd><dt>中心思想</dt><dd>用 AI 以 50% 成功率能完成的、由人类专家完成所需时间来定义 task-completion time horizon。</dd><dt>主要方法</dt><dd>测量人类专家在 RE-Bench、HCAST 和新增短任务上的用时，再估计模型在任务上的成功率和对应的 50% 时间尺度。</dd><dt>主要发现与边界</dt><dd>摘要报告特定时期 frontier model 约 50 分钟的 horizon 及历史趋势；任务外部有效性、模型版本、工具权限和“成功”定义必须保留。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2510-04374"><h3>GDPVal: Evaluating AI Model Performance on Real-World Economically Valuable Tasks</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2510.04374" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>GDPVal 将 S17 的“任务完成”从软件 benchmark 推向真实职业交付物，要求同时看质量、时间、成本和人工监督。</dd><dt>中心思想</dt><dd>覆盖真实经济活动的任务集，比短问答更接近评估模型能否完成有价值的工作。</dd><dt>主要方法</dt><dd>按美国 BLS work activities 构造覆盖 44 个职业、9 个行业的任务，由有经验从业者生成/评价交付物，并开放 gold subset 和 grading service。</dd><dt>主要发现与边界</dt><dd>摘要讨论 frontier model 与专家质量、reasoning effort、context、scaffolding 的关系；职业任务覆盖和人工评分仍不是整个社会工作或自主性风险的完整代理。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2508-20033"><h3>DeepScholar-Bench: A Live Benchmark and Automated Evaluation for Generative Research Synthesis</h3><span class="cs329a-paper-meta official">2025 · 官方课程阅读</span><p><a href="https://arxiv.org/abs/2508.20033" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它把 S08 的 research agent 放进 S17 的可重复评测：不仅检查找没找到资料，还检查综合质量、检索质量和可核验性。</dd><dt>中心思想</dt><dd>用来自近期 arXiv 论文的 live query 和 related-work 任务，评价长篇、有引用的研究综合，而不是短答案 QA。</dd><dt>主要方法</dt><dd>构造 live benchmark 和自动评测，分别测 knowledge synthesis、retrieval quality、verifiability，并提供参考 pipeline。</dd><dt>主要发现与边界</dt><dd>摘要报告现有系统在几何平均指标上仍远未饱和；live web 会带来版本、可重复性和引用时间点问题，自动指标也不是专家审稿的替代品。</dd></dl></div>
+            </div>
+
+            <h2 id="supplementary">Supplementary · 为概念链补充的公开阅读</h2>
+            <p class="cs329a-reader-note">以下不是 Stanford CS329A 公开 schedule 中标为 reading 的条目；它们用于连接课程主题，但应和官方 reading 分开引用。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-2305-10601"><h3>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</h3><span class="cs329a-paper-meta supplementary">Yao et al. · 2023 · 补充阅读，对应 S05</span><p><a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>ToT 是 S05 讲分支、评估、回溯时的经典补充，用来对比 LATS 的环境反馈和 MCTS 化版本。</dd><dt>中心思想</dt><dd>把思考单元从 token 级左到右链扩展为可探索、可评估、可回溯的“thought”树。</dd><dt>主要方法</dt><dd>生成多个 coherent thoughts，用语言模型自评估或外部评分选择扩展、剪枝和回溯路径。</dd><dt>主要发现与边界</dt><dd>摘要报告 Game of 24、Creative Writing、Mini Crosswords 的特定任务结果；任务设计和自评估质量决定收益，不能外推为通用推理定律。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2310-06770"><h3>SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</h3><span class="cs329a-paper-meta supplementary">Jimenez et al. · 2023 · 补充阅读，对应 S13</span><p><a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>SWE-bench 为 S13 提供真实仓库 issue、跨文件修改和测试验收的评测语境，也解释为什么代码 agent 不能只看 pass@1。</dd><dt>中心思想</dt><dd>把“修复真实 GitHub issue”作为比短代码生成更接近软件工程的能力测试。</dd><dt>主要方法</dt><dd>从 12 个 Python 仓库和真实 issue / pull request 构造 2,294 个任务，让模型在完整代码库中编辑并用测试判定。</dd><dt>主要发现与边界</dt><dd>初始结果显示顶级模型也只解决很少的任务；仓库版本、测试缺口、patch acceptance 和数据污染会显著影响分数。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2304-03442"><h3>Generative Agents: Interactive Simulacra of Human Behavior</h3><span class="cs329a-paper-meta supplementary">Park et al. · 2023 · 补充阅读，对应 S14</span><p><a href="https://arxiv.org/abs/2304.03442" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>它和 MemGPT 形成 S14 的互补：MemGPT 更关注 context 资源管理，Generative Agents 更关注经验、反思和社会行为生成。</dd><dt>中心思想</dt><dd>将观察记录为自然语言记忆，随时间合成为高层 reflection，再动态检索以支持计划和行动。</dd><dt>主要方法</dt><dd>memory stream + retrieval scoring + reflection + planning，部署在包含 25 个 agent 的交互式 sandbox 中，并做组件消融。</dd><dt>主要发现与边界</dt><dd>摘要报告特定小镇模拟中的 believable / emergent behavior 和观察、计划、反思的消融；逼真模拟不等于真实人类建模或可靠长期记忆。</dd></dl></div>
+            </div>
+
+            <h2 id="supplementary-robotics">Supplementary · Multimodal Robotics</h2>
+            <p class="cs329a-reader-note">官方公开 schedule 将 S19 标为 Multimodal Robotics 主题；以下两篇是公开的补充原文，用来拆开“技能可行性”和“感知接入语言模型”两条路线。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper" id="reading-saycan"><h3>Do As I Can, Not As I Say: Grounding Language in Robotic Affordances</h3><span class="cs329a-paper-meta supplementary">Ichter et al. · 2023 · SayCan · 补充阅读，对应 S19</span><p><a href="https://proceedings.mlr.press/v205/ichter23a.html" target="_blank" rel="noopener noreferrer">阅读 PMLR 原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>SayCan 让 S19 看到高层语言计划和机器人真实可行性之间的接口：语言模型会提出技能，但环境要决定技能能不能做。</dd><dt>中心思想</dt><dd>用语言模型的任务价值/相关性与低层 affordance/value 结合，选择既符合目标又能在当前状态执行的技能。</dd><dt>主要方法</dt><dd>把机器人技能作为候选 actions，用语言模型估计对任务的价值，用 affordance function 估计当前可执行性，再组合排序。</dd><dt>主要发现与边界</dt><dd>论文评估真实/模拟机器人任务中的技能选择；affordance 估计、感知误差和动作失败仍可能使“语言上合理”不等于物理上安全。</dd></dl></div>
+              <div class="cs329a-paper" id="reading-2303-03378"><h3>PaLM-E: An Embodied Multimodal Language Model</h3><span class="cs329a-paper-meta supplementary">Driess et al. · 2023 · 补充阅读，对应 S19</span><p><a href="https://arxiv.org/abs/2303.03378" target="_blank" rel="noopener noreferrer">阅读原文与摘要 ↗</a></p><dl class="cs329a-reading-facts"><dt>与课程关系</dt><dd>PaLM-E 补上 S19 的另一半：不是把语言计划映射到技能，而是把连续传感器、视觉和文本共同接入具身语言模型。</dd><dt>中心思想</dt><dd>将真实世界的连续 observation 编码成可与文本交错的多模态输入，并端到端训练具身任务与通用语言能力。</dd><dt>主要方法</dt><dd>交错 visual、continuous state estimation、text encodings，和预训练语言模型联合训练，用于机器人规划、VQA、captioning 等任务。</dd><dt>主要发现与边界</dt><dd>摘要报告多 embodiment、多任务和 positive transfer；大模型规模、传感器分布、机器人平台和训练数据决定可迁移范围，不能与 SayCan 说成同一架构。</dd></dl></div>
+            </div>
+
+            <h2 id="reading-route">如何使用这张图？</h2>
+            <p>如果你刚开始，按 <a href="./index.html#session-02">S02</a> → <a href="./index.html#session-03">S03</a> → <a href="./index.html#session-04">S04</a> → <a href="./index.html#session-05">S05</a> 先建立“候选—反馈—验证—搜索”主线；之后用 <a href="./index.html#session-06">S06</a> 和 <a href="./index.html#session-07">S07</a> 看反馈如何写回训练或系统自身，再用 <a href="./index.html#session-13">S13</a>、<a href="./index.html#session-14">S14</a>、<a href="./index.html#session-17">S17</a> 检查真实工程、记忆和长程评测边界。</p>
+            <p class="cs329a-reader-note"><strong>读论文的最小笔记格式：</strong>先写任务和成功定义，再写方法的反馈接口；最后分别记录结果适用的模型/数据/预算，以及一个会让结论失效的反例。不要只记一个 headline score。</p>
+            <p><a class="cs329a-deep-link" href="./">回到 20 讲 reader ↗</a> · <a class="cs329a-deep-link" href="./framework.html">打开实践框架 ↗</a></p>
+          </div>
+        </article>
+      </div>
+    </main>
+    <aside class="cs329a-section-rail" aria-label="本页章节目录">
+      <div class="cs329a-rail-title">READING ATLAS</div>
+      <nav class="cs329a-rail-nav">
+        <a href="#readings-s02">S02 · Scaling</a>
+        <a href="#readings-s03">S03 · Verification</a>
+        <a href="#readings-s04">S04 · Feedback</a>
+        <a href="#readings-s05">S05 · Planning</a>
+        <a href="#readings-s06">S06 · RL</a>
+        <a href="#readings-s07">S07 · Evolution</a>
+        <a href="#readings-s08">S08 · Research</a>
+        <a href="#readings-s13">S13 · SWE agents</a>
+        <a href="#readings-s14">S14 · Memory</a>
+        <a href="#readings-s17">S17 · Evaluation</a>
+        <a href="#supplementary">Supplementary</a>
+        <a href="#supplementary-robotics">Robotics</a>
+      </nav>
+      <p class="cs329a-rail-meta">每张卡都给出关系、中心思想、方法和边界。外链是公开原文；本站正文不依赖外部运行时。</p>
+    </aside>
+  </div>
+  <script src="./assets/cs329a-framework.js"></script>
+</body>
+</html>
