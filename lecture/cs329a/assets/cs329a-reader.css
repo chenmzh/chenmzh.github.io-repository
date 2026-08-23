@@ -43,7 +43,7 @@ a { color: var(--accent); }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid color-mix(in srgb, var(--accent) 42%, transparent); outline-offset: 2px; }
 .cs329a-skip { position: fixed; z-index: 100; top: 10px; left: 10px; padding: 8px 12px; color: #fff !important; background: var(--accent); border-radius: 5px; font: 700 .78rem/1.3 ui-monospace, Menlo, monospace; text-decoration: none; transform: translateY(-160%); }
 .cs329a-skip:focus { transform: translateY(0); }
-.cs329a-reader-app { display: grid; grid-template-columns: 264px minmax(0, 1fr) 244px; min-height: 100vh; }
+.cs329a-reader-app { display: grid; grid-template-columns: 264px minmax(0, 1fr) 244px; height: 100vh; min-height: 0; }
 .cs329a-sidebar { min-width: 0; overflow-y: auto; color: var(--sidebar-ink); background: var(--sidebar); border-right: 1px solid #354841; }
 .cs329a-brand { padding: 21px 18px 16px; border-bottom: 1px solid #42544d; }
 .cs329a-brand-code, .cs329a-nav-label, .cs329a-brand-meta, .cs329a-nav-number, .cs329a-toolbar-title, .cs329a-kicker, .cs329a-paper-meta, .cs329a-pager-meta { font-family: ui-monospace, Menlo, Monaco, "Courier New", monospace; }
@@ -64,7 +64,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .cs329a-source-link:hover { background: rgba(255,255,255,.08); }
 .cs329a-side-note { margin: 17px 18px; padding: 10px 11px; border: 1px solid #52665d; color: #f0c99f; font-size: .71rem; line-height: 1.5; }
 .cs329a-scrim { display: none; }
-.cs329a-workspace { display: grid; grid-template-rows: 58px minmax(0, 1fr) 50px; min-width: 0; min-height: 100vh; background: var(--surface); }
+.cs329a-workspace { display: grid; grid-template-rows: 58px minmax(0, 1fr) 50px; height: 100vh; min-width: 0; min-height: 0; background: var(--surface); }
 .cs329a-toolbar { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(190px, 370px) auto; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--line); background: var(--surface); }
 .cs329a-toolbar-title { min-width: 0; overflow: hidden; font-size: .78rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .cs329a-menu { display: none; }
@@ -150,12 +150,12 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .cs329a-section-rail { display: none; }
 }
 @media (max-width: 780px) {
-  .cs329a-reader-app { display: block; min-height: 100vh; }
+  .cs329a-reader-app { display: block; height: 100vh; min-height: 0; }
   .cs329a-sidebar { position: fixed; z-index: 70; inset: 0 auto 0 0; width: min(310px, 88vw); transform: translateX(-102%); transition: transform 180ms ease; box-shadow: 16px 0 40px rgba(0,0,0,.28); }
   body.cs329a-drawer-open .cs329a-sidebar { transform: translateX(0); }
   .cs329a-scrim { position: fixed; z-index: 65; inset: 0; display: none; border: 0; background: rgba(0,0,0,.42); }
   body.cs329a-drawer-open .cs329a-scrim { display: block; }
-  .cs329a-workspace { min-height: 100vh; }
+  .cs329a-workspace { height: 100vh; min-height: 0; }
   .cs329a-toolbar { grid-template-columns: auto minmax(0, 1fr) auto; gap: 7px; padding: 8px 9px; }
   .cs329a-menu { display: inline-grid; }
   .cs329a-toolbar-title { display: none; }
@@ -172,7 +172,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 }
 @media print {
   body.cs329a-reader, body.cs329a-reader.cs329a-enhanced { overflow: visible; background: #fff; }
-  .cs329a-reader-app { display: block; min-height: auto; }
+  .cs329a-reader-app { display: block; height: auto; min-height: auto; }
   .cs329a-sidebar, .cs329a-toolbar, .cs329a-section-rail, .cs329a-pager, .cs329a-scrim, .cs329a-search-results { display: none !important; }
   .cs329a-reader-scroll { display: block; height: auto; overflow: visible; }
   .cs329a-content { width: 100%; padding: 0; color: #111; background: #fff; }
