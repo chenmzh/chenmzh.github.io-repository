@@ -38,6 +38,7 @@
     const details = target?.closest('details');
     if (details) details.open = true;
   };
+  const readerPosition = target => Math.max(0, target.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop - 18);
   const decodeHash = encoded => {
     try { return decodeURIComponent(encoded); } catch (_) { return encoded; }
   };
@@ -117,7 +118,7 @@
         if (target) {
           revealTarget(target);
           history.pushState(null, '', `#${heading.id}`);
-          reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'smooth' });
+          reader.scrollTo({ top: readerPosition(target), behavior: 'smooth' });
           focusTarget(target);
           markToc(heading.id);
         }
@@ -138,16 +139,21 @@
     buildToc(active);
     text(toolbarTitle, `CS329A / ${numberOf(active)} · ${titleOf(active)}`);
     document.title = `${numberOf(active)} · ${titleOf(active)} · CS329A`;
-    reader.scrollTop = 0;
     const candidate = headingId ? document.getElementById(headingId) : null;
     const target = candidate && candidate.closest('.session-view') === active ? candidate : null;
     if (writeHash) history.pushState(null, '', `#${target ? headingId : active.id}`);
-    if (target) {
-      revealTarget(target);
-      reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'auto' });
-      markToc(target.id);
-      if (focusHeading) focusTarget(target);
-    }
+    const positionActive = () => {
+      const activePosition = active.getBoundingClientRect().top - reader.getBoundingClientRect().top + reader.scrollTop;
+      const showCourseGuide = active === views[0] && !writeHash && !headingId && !location.hash;
+      reader.scrollTop = showCourseGuide ? 0 : Math.max(0, activePosition);
+      if (target) {
+        revealTarget(target);
+        reader.scrollTo({ top: readerPosition(target), behavior: 'auto' });
+        markToc(target.id);
+        if (focusHeading) focusTarget(target);
+      }
+    };
+    window.requestAnimationFrame(() => window.requestAnimationFrame(positionActive));
   };
 
   const activateFromHash = () => {

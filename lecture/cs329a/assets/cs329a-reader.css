@@ -88,6 +88,15 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .cs329a-pending { border-left-color: var(--danger); }
 .cs329a-exercise { border-left-color: #6e63a6; }
 .cs329a-notice strong, .cs329a-provenance strong, .cs329a-pending strong, .cs329a-exercise strong { color: var(--ink); }
+.cs329a-term-guide { margin: 0 0 26px; padding: 14px 16px 16px; border: 1px solid var(--line); border-radius: 8px; background: color-mix(in srgb, var(--surface-2) 55%, transparent); }
+.cs329a-term-guide > summary { color: var(--accent); cursor: pointer; font-weight: 700; overflow-wrap: anywhere; }
+.cs329a-term-guide > summary::marker { color: var(--warm); }
+.cs329a-term-intro { margin: 7px 0 12px; color: var(--muted); font-size: .82em; }
+.cs329a-term-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; margin: 0; }
+.cs329a-term-grid div { min-width: 0; padding-top: 7px; border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent); font-size: .8em; line-height: 1.5; }
+.cs329a-term-grid dt { color: var(--accent); font-weight: 700; overflow-wrap: anywhere; }
+.cs329a-term-grid dd { margin: 2px 0 0; color: var(--ink); overflow-wrap: anywhere; }
+.cs329a-term-grid dfn { font-style: normal; }
 .cs329a-session-meta { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 22px; }
 .cs329a-badge { display: inline-flex; align-items: center; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font: 700 .65em/1.3 ui-monospace, Menlo, monospace; }
 .cs329a-badge.official { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 55%, var(--line)); background: var(--accent-soft); }
@@ -179,6 +188,7 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
   .cs329a-pager-meta { display: none; }
   .cs329a-reading-facts { grid-template-columns: 1fr; gap: 3px; }
   .cs329a-reading-facts dt { margin-top: 7px; }
+  .cs329a-term-grid { grid-template-columns: 1fr; }
 }
 @media print {
   body.cs329a-reader, body.cs329a-reader.cs329a-enhanced { overflow: visible; background: #fff; }
