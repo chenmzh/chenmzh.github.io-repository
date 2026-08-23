@@ -47,6 +47,7 @@
       <nav class="cs329a-source-nav" aria-label="公开来源">
         <a class="cs329a-source-link" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
         <a class="cs329a-source-link" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+        <a class="cs329a-source-link" href="./framework.html">Practical framework ↗</a>
       </nav>
       <div class="cs329a-side-note" role="note">这是个人学习整理，不是 Stanford 官方网站，也不代表官方隶属、认可或授权。论文只做标题与摘要级导读；不转载讲义全文、论文全文或作业答案。</div>
     </aside>
@@ -89,7 +90,7 @@
             <h2 id="s01-practice">小练习：辨认反馈类型</h2>
             <h3 id="s01-practice-check">把一个失败案例写成接口</h3>
             <p class="cs329a-question"><strong>问题：</strong>“代码没通过测试”是结果反馈；“第 4 个断言在时区后缀上失败”是诊断反馈。你会把哪一种直接放进下一轮 prompt？还需要保存哪些上下文，才能避免 Agent 重复同一错误？</p>
-            <p class="cs329a-reader-note">下一讲：用重复采样和验证器把推理时计算预算显式化。</p>
+            <p class="cs329a-reader-note">下一讲：用重复采样和验证器把推理时计算预算显式化。想按决策问题继续，可以打开<a href="./framework.html#framework-overview">参考方法框架 ↗</a>。</p>
           </div>
         </article>
 
@@ -196,7 +197,7 @@
             <p>若只保留最终答案，训练信号告诉模型“结果是什么”，却没有告诉它如何抵达。自生成 rationale 可以提供路径，但必须由正确性检查、人工抽样或独立 verifier 过滤。</p>
             <h3 id="s06-collapse">反馈质量决定上限</h3>
             <p>高质量反馈让模型逐步覆盖更难样本；噪声反馈会让模型学习验证器的漏洞。一个安全实验应同时记录训练集分数、held-out 分数、数据去重和失败类型。</p>
-            <a class="cs329a-deep-link" href="./foundations.html#scaling">进入交互深挖：验证器与推理时预算 ↗</a>
+            <a class="cs329a-deep-link" href="./framework.html#module-05">参考方法框架：验证轨迹训练门 ↗</a>
             <h2 id="s06-reading">公开阅读：自举和开放模型训练</h2>
             <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s06-paper-star">STaR</h3><span class="cs329a-paper-meta official">官方课程阅读 · rationale bootstrapping</span><p><a href="https://arxiv.org/abs/2203.14465" target="_blank" rel="noopener noreferrer">Zelikman et al., 2022 ↗</a>。用模型生成的推理过程进行自举；重点阅读它如何筛选可学习样本。</p></div><div class="cs329a-paper"><h3 id="s06-paper-math">DeepSeekMath</h3><span class="cs329a-paper-meta official">官方课程阅读 · 数学推理训练</span><p><a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener noreferrer">Shao et al., 2024 ↗</a>。用于讨论数据、训练和推理时策略如何共同影响数学能力；不把单一模型结果当成普遍规律。</p></div></div>
             <h2 id="s06-practice">小练习：设计一个 held-out 规则</h2>
@@ -218,7 +219,7 @@
             <p>生成器产生候选，评估器给出任务分数，档案库保存可复用的多样解，调度器决定下一批实验。将这四者分开，才能回答“是搜索变聪明了，还是评估器变宽松了”。</p>
             <h3 id="s07-novelty">新颖性不是成功</h3>
             <p>新颖性奖励可能鼓励格式变化、无关行为或资源浪费。实践中要把 novelty 当作辅助指标，并用独立任务、预算上限和人工抽查守住边界。</p>
-            <a class="cs329a-deep-link" href="./foundations.html#loop-demo">进入交互深挖：Agent 闭环状态转移 ↗</a>
+            <a class="cs329a-deep-link" href="./framework.html#part-map">参考方法框架：开放式演化与 9→20 映射 ↗</a>
             <h2 id="s07-reading">公开材料：以官方主题为主</h2>
             <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s07-paper-course">Open-ended evolution 主题</h3><span class="cs329a-paper-meta official">官方课程来源 · 课程页公开日程</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页的 session 07 条目 ↗</a>公开了主题和课程位置；本页不把未公开讲义或嘉宾材料补写成事实。</p></div><div class="cs329a-paper"><h3 id="s07-paper-note">阅读方法：把系统拆成测量表</h3><span class="cs329a-paper-meta supplementary">个人讲解 · 非官方 reading</span><p>阅读任何演化系统时，分别记录 candidate generator、evaluator、archive 和 compute budget；这是一套分析框架，不是一篇官方指定论文。</p></div></div>
             <h2 id="s07-practice">小练习：找出奖励投机</h2>
@@ -240,7 +241,7 @@
             <p>AlphaCode 类系统把自然语言目标转成许多程序候选，再用测试、过滤和排序缩小集合。研究 Agent 也可以这样看：查询是动作，文档是观察，引用一致性是验证器。</p>
             <h3 id="s08-evidence">引用不是装饰</h3>
             <p>一条引用至少要回答三个问题：它支持哪一句话？是原始证据还是二手转述？在时间、模型和任务范围上是否可比？无法回答时，应该降低断言强度。</p>
-            <a class="cs329a-deep-link" href="./systems.html#planning-demo">进入交互深挖：搜索分支与剪枝 ↗</a>
+            <a class="cs329a-deep-link" href="./framework.html#module-06">参考方法框架：证据缺口驱动的研究 ↗</a>
             <h2 id="s08-reading">公开阅读：从代码生成到搜索系统</h2>
             <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s08-paper-alphacode">Competition-Level Code Generation with AlphaCode</h3><span class="cs329a-paper-meta official">官方课程阅读 · 候选程序搜索</span><p><a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener noreferrer">Li et al., 2022 ↗</a>。阅读重点是采样、过滤、聚类和测试，而不是复制其工程规模。</p></div><div class="cs329a-paper"><h3 id="s08-paper-alphacode2">AlphaCode 2 Technical Report</h3><span class="cs329a-paper-meta official">官方课程阅读 · 公开技术报告</span><p><a href="https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf" target="_blank" rel="noopener noreferrer">Google DeepMind technical report ↗</a>。作为公开系统报告阅读，仍需区分报告内容与本页的个人归纳。</p></div></div>
             <h2 id="s08-practice">小练习：做一个证据卡片</h2>
@@ -349,7 +350,7 @@
             <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">working · episodic · semantic</span></div>
             <h2 id="s14-question">本讲要回答：记忆如何影响下一次决策？</h2>
             <p>当前上下文是 working memory，长期存储可以保存事件、事实和用户偏好。检索通常在相关性之外考虑时间、新鲜度、重要性和 token 预算；如果没有过期策略，旧 API 或错误偏好会污染新任务。</p>
-            <h2 id="s14-explain">讲解：四个记忆接口</h2>
+            <h2 id="s14-explain">讲解：写入、检索与遗忘接口</h2>
             <h3 id="s14-write">写入与压缩</h3><p>不要保存每个 token；保存可复用的事件、证据和失败原因，并保留来源与时间。压缩摘要若丢失限定条件，就会把猜测变成事实。</p>
             <h3 id="s14-retrieve">检索与陈旧性</h3><p>Top-K 只是预算，不是质量保证。检索结果进入 prompt 前要过滤 stale、冲突和低置信度条目，并允许 Agent 表示“没有可靠记忆”。</p>
             <a class="cs329a-deep-link" href="./systems.html#memory-demo">进入交互深挖：Top-K 和记忆污染过滤 ↗</a>
@@ -384,7 +385,7 @@
             <p class="cs329a-lead">本讲保留官方课程中的嘉宾位置，但不虚构讲者材料。用一个“系统账本”理解任何规模化 Agent 方案，是安全的准备方式。</p>
             <div class="cs329a-session-meta"><span class="cs329a-badge pending">公开材料待补</span><span class="cs329a-badge">guest lecture</span><span class="cs329a-badge official">官方日程事实</span></div>
             <h2 id="s16-position">可确认的课程位置</h2><h3 id="s16-fact">不替嘉宾发言</h3><p>官方页面公开 session 顺序，但未在本页使用未经核实的演讲摘要。资料边界比填满空白更重要。</p>
-            <h2 id="s16-ledger">系统账本：四种资源</h2>
+            <h2 id="s16-ledger">系统账本：三种资源</h2>
             <div class="cs329a-concept-grid"><div class="cs329a-concept-card"><strong>Data</strong><span>来源、覆盖、质量和去重。</span></div><div class="cs329a-concept-card"><strong>Compute</strong><span>训练、推理、搜索和存储成本。</span></div><div class="cs329a-concept-card"><strong>Feedback</strong><span>谁判定成功，判定是否可靠。</span></div></div>
             <h3 id="s16-systems">系统而非单点指标</h3><p>当论文声称能力提升时，检查是否同时改变了数据、模型、工具、提示和评测；否则无法判断增益来源。</p>
             <h2 id="s16-pending">材料状态</h2><h3 id="s16-pending-list">待补清单</h3><p class="cs329a-pending">具体 lecture title、reading 和公开幻灯片待课程页面提供。可先复习第 2、6、13、17 讲的预算、训练、代码和评测框架。</p>
@@ -453,13 +454,13 @@
             <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">synthesis · open questions</span></div>
             <h2 id="s20-synthesis">20 讲如何连成一条主线？</h2>
             <div class="cs329a-flow"><div class="cs329a-flow-step"><strong>improve</strong><span>训练和推理时预算</span></div><div class="cs329a-flow-step"><strong>ground</strong><span>工具、代码和记忆</span></div><div class="cs329a-flow-step"><strong>plan</strong><span>分支、搜索和恢复</span></div><div class="cs329a-flow-step"><strong>measure</strong><span>长程与真实环境</span></div></div>
-            <h2 id="s20-explain">讲解：五个值得继续追问的问题</h2>
+            <h2 id="s20-explain">讲解：四个值得继续追问的问题</h2>
             <h3 id="s20-question-feedback">反馈会不会被优化坏？</h3><p>当 Agent 能主动寻找高分路径时，验证器就成为攻击面。未来系统需要独立、动态、多视角的评测。</p>
             <h3 id="s20-question-memory">记忆如何保持可撤销？</h3><p>可靠记忆必须带来源、时间和冲突处理；否则长期运行只会积累不可审计的隐性状态。</p>
             <h3 id="s20-question-horizon">能力如何跨过长时程？</h3><p>单步进步不会自动变成长程可靠性；checkpoint、子目标和恢复策略应成为一等评测对象。</p>
             <h3 id="s20-question-world">模拟器和真实世界如何互相校验？</h3><p>代码环境便宜但可能过于干净，机器人环境昂贵但有物理噪声；跨环境泛化需要明确的失效报告。</p>
-            <h2 id="s20-reading">公开课程来源与三篇深挖教程</h2>
-            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s20-paper-course">Stanford CS329A 官方页面</h3><span class="cs329a-paper-meta official">课程事实来源</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Self-Improving AI Agents ↗</a>。核对官方 session 顺序、reading 和活动状态；本阅读器是个人解释层。</p></div><div class="cs329a-paper"><h3 id="s20-paper-deepdives">Supplementary personal tutorials</h3><span class="cs329a-paper-meta supplementary">本站深挖页面 · 非官方</span><p>想看交互式图表和更长的解释，可以继续阅读：<a href="./foundations.html">闭环、扩展与验证 ↗</a>、<a href="./systems.html">工具、规划与记忆 ↗</a>、<a href="./evaluation.html">长程评估与机器人 ↗</a>。它们是三篇专题，不是课程只有三节。</p></div></div>
+            <h2 id="s20-reading">公开课程来源、三篇深挖与参考框架</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s20-paper-course">Stanford CS329A 官方页面</h3><span class="cs329a-paper-meta official">课程事实来源</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Self-Improving AI Agents ↗</a>。核对官方 session 顺序、reading 和活动状态；本阅读器是个人解释层。</p></div><div class="cs329a-paper"><h3 id="s20-paper-deepdives">Supplementary personal tutorials</h3><span class="cs329a-paper-meta supplementary">本站深挖页面 · 非官方</span><p>想看交互式图表和更长的解释，可以继续阅读：<a href="./foundations.html">闭环、扩展与验证 ↗</a>、<a href="./systems.html">工具、规划与记忆 ↗</a>、<a href="./evaluation.html">长程评估与机器人 ↗</a>。它们是三篇专题，不是课程只有三节。</p></div><div class="cs329a-paper"><h3 id="s20-paper-framework">Practical framework · 7 modules</h3><span class="cs329a-paper-meta supplementary">社区参考 · 原创导航</span><p>把 9-part 导读映射到 20 个 session，并按最小闭环、验证审计、依赖可逆性、证据缺口和生产评测组织实践门。</p><p><a href="./framework.html#framework-overview">打开参考方法框架 ↗</a> · <a href="https://github.com/yusenthebot/stanford-ai-agent-skill" target="_blank" rel="noopener noreferrer">查看参考仓库 ↗</a></p></div></div>
             <h2 id="s20-practice">结课练习：写一份 Agent 设计审查</h2>
             <h3 id="s20-practice-check">从主张到证据</h3><p class="cs329a-question">选择一个真实任务，写出：状态、动作、反馈、记忆、搜索预算、验证器、长程指标、失败恢复和公开来源。任何一个空白都应该成为下一步研究问题，而不是一句“模型会自己改进”。</p>
             <p class="cs329a-reader-note">阅读完毕。可以用左侧导航回到任意 session，也可以在搜索框输入 paper、memory、verification、robotics 等关键词。</p>

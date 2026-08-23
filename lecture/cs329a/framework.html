@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="CS329A 的参考方法框架：把公开九讲导读映射到 20 个 session，并整理七个 Agent 设计与审计模块。">
+  <meta name="color-scheme" content="light dark">
+  <title>CS329A · Practical Framework</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./assets/cs329a-reader.css">
+</head>
+<body class="cs329a-reader">
+  <a class="cs329a-skip" href="#framework-main">跳转到正文</a>
+  <div class="cs329a-reader-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 参考框架导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-source-link" href="./">← 返回 20 讲阅读器</a>
+        <p class="cs329a-brand-code">CS329A · PRACTICAL FRAMEWORK</p>
+        <h1>从课程到<br>可审计系统</h1>
+        <div class="cs329a-brand-meta">9-part guide × 7 modules<br>参考方法 · 非官方页面</div>
+      </header>
+      <div class="cs329a-nav-label">Framework</div>
+      <nav class="cs329a-source-nav" aria-label="参考框架目录">
+        <a class="cs329a-source-link" href="#framework-overview">Overview</a>
+        <a class="cs329a-source-link" href="#part-map">9 → 20 mapping</a>
+        <a class="cs329a-source-link" href="#module-01">7 practice modules</a>
+        <a class="cs329a-source-link" href="#glossary">Working glossary</a>
+        <a class="cs329a-source-link" href="#evidence-boundary">Evidence boundary</a>
+        <a class="cs329a-source-link" href="#route">Recommended route</a>
+      </nav>
+      <div class="cs329a-nav-label">Course reader</div>
+      <nav class="cs329a-source-nav" aria-label="返回课程讲次">
+        <a class="cs329a-source-link" href="./index.html#session-01">01 · Course overview</a>
+        <a class="cs329a-source-link" href="./index.html#session-03">03 · Verification</a>
+        <a class="cs329a-source-link" href="./index.html#session-05">05 · Planning</a>
+        <a class="cs329a-source-link" href="./index.html#session-08">08 · Deep research</a>
+        <a class="cs329a-source-link" href="./index.html#session-17">17 · Evaluation</a>
+        <a class="cs329a-source-link" href="./index.html#session-20">20 · Future research</a>
+      </nav>
+      <div class="cs329a-nav-label">References</div>
+      <nav class="cs329a-source-nav" aria-label="参考仓库来源">
+        <a class="cs329a-source-link" href="https://github.com/yusenthebot/stanford-ai-agent-skill" target="_blank" rel="noopener noreferrer">Reference repository ↗</a>
+        <a class="cs329a-source-link" href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/course/LECTURE_GUIDE.zh-CN.md" target="_blank" rel="noopener noreferrer">9-part lecture guide ↗</a>
+        <a class="cs329a-source-link" href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/course/GLOSSARY.zh-CN.md" target="_blank" rel="noopener noreferrer">Glossary ↗</a>
+      </nav>
+      <div class="cs329a-side-note" role="note">这是参考框架，不是 Stanford 官方课程结构。它借鉴公开社区仓库的模块索引，正文为本站原创短摘要；论文、视频和外部仓库只保留链接与归属。</div>
+    </aside>
+    <button class="cs329a-scrim" id="sidebar-scrim" type="button" aria-label="关闭参考框架导航"></button>
+    <main class="cs329a-workspace" id="framework-main" tabindex="-1">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开参考框架导航" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <div class="cs329a-toolbar-title">CS329A / Practical framework</div>
+        <div aria-hidden="true"></div>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon" id="font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon" id="font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon" id="theme-button" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon" id="print-button" type="button" aria-label="打印参考框架">⌘P</button>
+        </div>
+      </header>
+      <div class="cs329a-reader-scroll" id="reader-scroll">
+        <noscript><p class="cs329a-noscript">JavaScript 已关闭：正文、映射表和外部来源仍可阅读；移动端抽屉、主题与字号按钮不可用。</p></noscript>
+        <article aria-labelledby="framework-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">REFERENCE LAYER · COMMUNITY DISTILLATION · NOT OFFICIAL</div>
+            <h1 id="framework-title">从 20 讲到 <em>7 个实践门</em></h1>
+            <p class="cs329a-lead">这是一层加在 CS329A 20-session reader 之上的方法框架：用一个公开社区仓库的九讲导读、术语表和七个 skill module，帮助读者把“理解概念”推进到“审查一个真实 Agent”。它不是第 21 讲，也不改变 Stanford 官方课程的 session 顺序。</p>
+            <div class="cs329a-notice"><strong>来源声明：</strong>参考仓库 <a href="https://github.com/yusenthebot/stanford-ai-agent-skill" target="_blank" rel="noopener noreferrer">yusenthebot/stanford-ai-agent-skill ↗</a> 是非官方社区学习资料，仓库声明采用 MIT License；它不代表 Stanford University、课程团队或讲者的隶属、认可或授权。本页不复制其 DIGEST、视频、字幕或模块长文，只提供原创导航和外链。</div>
+            <div class="cs329a-session-meta"><span class="cs329a-badge supplementary">社区参考框架</span><span class="cs329a-badge">9-part → 20 sessions</span><span class="cs329a-badge">7 audit modules</span></div>
+
+            <h2 id="framework-overview">为什么需要这一层？</h2>
+            <p>20 讲 reader 按官方公开 schedule 展开；参考仓库则按决策问题重新聚合。两种目录解决不同问题：前者回答“课程什么时候讲什么”，后者回答“我现在要决定什么、应该检查哪些证据”。它们的交集是一个闭环：目标先变成规格，Agent 受约束行动，环境返回 observation，验证器选择或拒绝，轨迹进入搜索/训练，最后用真实任务和资源成本审计。</p>
+            <div class="cs329a-flow" aria-label="可审计 Agent 闭环"><div class="cs329a-flow-step"><strong>goal</strong><span>写出完成条件与权限</span></div><div class="cs329a-flow-step"><strong>state</strong><span>保存环境和依赖状态</span></div><div class="cs329a-flow-step"><strong>action</strong><span>只选当前允许动作</span></div><div class="cs329a-flow-step"><strong>verify</strong><span>用外部证据停止或升级</span></div></div>
+            <h3 id="framework-reading-rule">使用规则：先问决策，不按名词堆资料</h3>
+            <p>如果你要决定“是不是 Agent”，先看最小闭环；要决定“采样预算放哪”，先看 coverage 与 selected accuracy；要决定“judge 能不能信”，先审计验证信号；要决定“能否上线”，最后才看生产就绪度。一个问题最多加载一个主模块和一个真正相关的第二模块，避免把七个 checklist 一次性塞进上下文。</p>
+            <a class="cs329a-deep-link" href="./index.html#session-01">回到 Session 01：Agent loop 基础 ↗</a>
+
+            <h2 id="part-map">9-part guide → 20-session reader</h2>
+            <p class="cs329a-reader-note">以下是学习路线映射，不是官方新增分类。<strong>直接</strong>表示当前 reader 有同名主题；<strong>邻近</strong>表示共享机制；<strong>未覆盖</strong>表示参考仓库的实践视角没有强行填入 guest/midterm 内容。</p>
+            <table aria-label="九讲参考导读到二十个课程讲次的映射"><thead><tr><th>参考 Part</th><th>它解决的核心问题</th><th>20-session 落点</th><th>映射关系</th></tr></thead><tbody>
+              <tr><th scope="row">01 · Overview</th><td>目标、状态、动作、观察和停止</td><td><a href="./index.html#session-01">S01</a> · <a href="./index.html#session-04">S04</a> · <a href="./index.html#session-13">S13</a></td><td>直接 + 邻近</td></tr>
+              <tr><th scope="row">02 · Test-time scaling</th><td>coverage、预算与交付选择</td><td><a href="./index.html#session-02">S02</a> · <a href="./index.html#session-03">S03</a></td><td>直接</td></tr>
+              <tr><th scope="row">03 · Verification</th><td>结果、过程与 judge 审计</td><td><a href="./index.html#session-03">S03</a> · <a href="./index.html#session-17">S17</a></td><td>直接 + 邻近</td></tr>
+              <tr><th scope="row">04 · Planning</th><td>依赖、可逆性、并行和回滚</td><td><a href="./index.html#session-05">S05</a> · <a href="./index.html#session-13">S13</a> · <a href="./index.html#session-19">S19</a></td><td>直接 + 邻近</td></tr>
+              <tr><th scope="row">05 · Train-time scaling</th><td>哪些轨迹可以写回 SFT/RL</td><td><a href="./index.html#session-06">S06</a> · <a href="./index.html#session-07">S07</a></td><td>直接 + 邻近</td></tr>
+              <tr><th scope="row">06 · Deep research</th><td>知识缺口、证据图和引用审计</td><td><a href="./index.html#session-08">S08</a> · <a href="./index.html#session-17">S17</a></td><td>直接 + 邻近</td></tr>
+              <tr><th scope="row">07 · Production evaluation</th><td>可靠性、价值、尾部风险和资源</td><td><a href="./index.html#session-17">S17</a> · <a href="./index.html#session-19">S19</a> · <a href="./index.html#session-20">S20</a></td><td>直接 + 综合</td></tr>
+              <tr><th scope="row">Guest / midterm</th><td>具体讲题、项目和 reading</td><td><a href="./index.html#session-09">S09</a>–<a href="./index.html#session-12">S12</a> · <a href="./index.html#session-15">S15</a>–<a href="./index.html#session-16">S16</a> · <a href="./index.html#session-18">S18</a></td><td>未覆盖，保留待补</td></tr>
+            </tbody></table>
+            <p class="cs329a-reader-note">参考入口：<a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/course/LECTURE_GUIDE.zh-CN.md" target="_blank" rel="noopener noreferrer">九讲导读 ↗</a> · <a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/course/DIGEST.zh-CN.md" target="_blank" rel="noopener noreferrer">中文蒸馏 ↗</a>。时间戳和完整课程语境请回到原仓库与 Stanford Online 原始入口。</p>
+
+            <h2 id="modules">七个实践模块：每个模块是一扇准入门</h2>
+            <p>模块不是七个必须全部加载的 prompt，而是七个不同决策的检查门。下面的短文是本站原创导航；点击标题进入参考仓库的原始模块，阅读时仍要结合项目自身的风险和领域专家。</p>
+            <div class="cs329a-paper-list">
+              <div class="cs329a-paper"><h3 id="module-01">01 · 最小 Agent 闭环</h3><span class="cs329a-paper-meta supplementary">关联 S01 / S04 / S13</span><p>先写 goal、state、action、observation、verifier 和 stop condition，再决定是否需要更复杂的自主循环。它能拦住“只是把多个 prompt 串起来就叫 Agent”的误判。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/01-agent-minimum-loop.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-01">回到 S01 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-02">02 · 验证约束下的推理预算</h3><span class="cs329a-paper-meta supplementary">关联 S02 / S03</span><p>同时测候选覆盖率与最终 selected accuracy；采样、顺序修订、搜索和验证的预算只有穿过可靠选择器才会变成交付质量。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/02-verification-constrained-inference-budget.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-02">回到 S02 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-03">03 · 验证信号与 Judge 审计</h3><span class="cs329a-paper-meta supplementary">关联 S03 / S17</span><p>先区分 outcome、process 和 meta-verification，再检查误报、漏报、覆盖盲区与相关错误。多个同源 judge 的一致不自动等于独立证据。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/03-verification-signal-and-judge-audit.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-03">回到 S03 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-04">04 · 依赖、可逆性与执行控制</h3><span class="cs329a-paper-meta supplementary">关联 S05 / S13 / S19</span><p>不是所有任务都能并行，也不是所有失败都能回滚。只读检查、草稿和沙箱实验可以探索；付款、发信、删数据等不可逆动作必须有最新状态、验证和审批。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/04-dependency-reversibility-execution-control.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-05">回到 S05 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-05">05 · 可验证轨迹训练门</h3><span class="cs329a-paper-meta supplementary">关联 S06 / S07</span><p>一次成功轨迹不能直接成为训练标签；先检查是否可发现、是否被可信验证、是否包含要学习的过程，再观察写回后的 held-out 与奖励投机。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/05-verified-trajectory-training-gate.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-06">回到 S06 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-06">06 · 证据缺口驱动的研究</h3><span class="cs329a-paper-meta supplementary">关联 S08 / S17</span><p>先列出 claim 缺什么，再检索、在文档内抽取、压缩回上下文并审计引用。找到网页、抽到事实、正确综合和引用支持是四个不同指标。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/06-evidence-gap-research.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-08">回到 S08 ↗</a></p></div>
+              <div class="cs329a-paper"><h3 id="module-07">07 · Agent 生产就绪度评测</h3><span class="cs329a-paper-meta supplementary">关联 S17 / S19 / S20</span><p>部署权限不能由平均 benchmark 单独决定；还要看任务时长、可靠性、尾部伤害、证据质量、专家价值、延迟、成本和能耗。</p><p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/skill/references/07-agent-production-readiness-eval.md" target="_blank" rel="noopener noreferrer">阅读原始模块 ↗</a> · <a href="./index.html#session-17">回到 S17 ↗</a></p></div>
+            </div>
+
+            <h2 id="glossary">工作术语：读论文时先对齐定义</h2>
+            <div class="cs329a-concept-grid"><div class="cs329a-concept-card"><strong>Coverage / pass@k</strong><span>k 个候选里出现正确答案的潜在能力，不是最终交付准确率。</span></div><div class="cs329a-concept-card"><strong>Generation–verification gap</strong><span>正确候选出现了，但选择器没找出来。</span></div><div class="cs329a-concept-card"><strong>ORM / PRM</strong><span>结果奖励与过程奖励的对象、成本和盲区不同。</span></div><div class="cs329a-concept-card"><strong>Meta-verification</strong><span>审计 judge 指出的缺陷是否存在、评分是否由证据推出。</span></div><div class="cs329a-concept-card"><strong>Time horizon</strong><span>指定成功率下能完成多长任务的能力边界，不是生产 SLA。</span></div><div class="cs329a-concept-card"><strong>Evidence graph</strong><span>把 claim、source、支持强度和冲突关系显式保存。</span></div></div>
+            <p class="cs329a-reader-note">完整术语表：<a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/course/GLOSSARY.zh-CN.md" target="_blank" rel="noopener noreferrer">GLOSSARY.zh-CN.md ↗</a>。本站卡片只保留与 20 讲导航直接相关的定义。</p>
+
+            <h2 id="evidence-boundary">证据边界：哪些结论不能直接外推？</h2>
+            <h3 id="boundary-source">来源层级</h3><p>课程事实优先回到 Stanford 官方页面和 Stanford Online 原始视频；论文细节回到论文原文；本页和参考仓库的中文解释只是综合层。外部网页、工具输出和模型轨迹都应被视为不可信输入，行动前要结构化验证。</p>
+            <h3 id="boundary-generalize">不能从数学/代码 benchmark 推出通用自主学习</h3><p>可快速验证的数学、代码、检索和定理证明任务适合搜索与执行反馈，但不能直接证明同样方法在政策、创作、谈判或科学实验中具有同等收益。</p>
+            <h3 id="boundary-authorization">不能用单一指标授权部署</h3><p><code>pass@k</code> 上升、多个同源 judge 一致、50% time horizon 变长或平均 benchmark 提升，都不能单独授权训练回写、提权或不可逆外部动作。必须加上证据、尾部风险、成本、权限和人工责任。</p>
+            <p class="cs329a-pending"><strong>版本提醒：</strong>课程与模型论文会更新；参考仓库的模块是稳定方法的社区归纳，不替代当前产品能力、法规、隐私和领域安全评审。</p>
+            <p><a href="https://github.com/yusenthebot/stanford-ai-agent-skill/blob/main/methodology/EVIDENCE_AND_LIMITS.zh-CN.md" target="_blank" rel="noopener noreferrer">查看参考仓库的证据与边界说明 ↗</a></p>
+
+            <h2 id="route">推荐使用顺序</h2>
+            <h3 id="route-first">第一次学习</h3><p><a href="./index.html#session-01">S01</a> → <a href="#module-03">模块 03</a> → <a href="./index.html#session-02">S02</a> → <a href="./index.html#session-05">S05</a> → <a href="./index.html#session-08">S08</a> → <a href="./index.html#session-17">S17</a>。先让闭环看见错误，再给它更多计算和更大权限。</p>
+            <h3 id="route-build">正在开发 Agent</h3><p>先做模块 01 的最小状态机；遇到采样预算读模块 02，遇到 judge 信任读模块 03，遇到副作用和回滚读模块 04。不要因为“更自主”听起来更强，就跳过 stop condition。</p>
+            <h3 id="route-research">做 Deep Research 或 post-training</h3><p>Deep Research 重点看模块 06 和 S08；SFT/RL 重点看模块 05 和 S06；准备上线时最后读模块 07，并回到 S17 检查长时程而非只看平均分。</p>
+            <div class="cs329a-exercise"><strong>一页式自检：</strong>写出你的 Agent 的 goal、state、action、observation、verifier、stop condition、预算、依赖、回滚、证据表和生产阈值。任何一个字段为空，结论应是“补证据/降级/人工审批”，而不是“完成”。</div>
+
+            <h2 id="attribution">归属与继续阅读</h2>
+            <p>参考项目：<a href="https://github.com/yusenthebot/stanford-ai-agent-skill" target="_blank" rel="noopener noreferrer">Stanford AI Agent Skill ↗</a>（社区项目，MIT License，第三方归属以其仓库为准）。课程事实：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Stanford CS329A 官方课程页 ↗</a>。本站三篇交互专题：<a href="./foundations.html">Foundations ↗</a>、<a href="./systems.html">Systems ↗</a>、<a href="./evaluation.html">Evaluation ↗</a>。</p>
+            <p class="cs329a-reader-note">回到 <a href="./">CS329A 20 讲阅读器 ↗</a>，用左侧 session 导航继续学习。此页没有下载、嵌入或复制参考仓库的长篇正文。</p>
+          </div>
+        </article>
+      </div>
+      <footer class="cs329a-pager"><a href="./#session-01">← 返回 20 讲 reader</a><span class="cs329a-pager-meta">REFERENCE / 7 MODULES</span><a href="./#session-20">S20 · Future research →</a></footer>
+    </main>
+    <aside class="cs329a-section-rail" aria-label="参考框架目录">
+      <h2>On this framework</h2>
+      <nav aria-label="参考框架小节">
+        <a class="cs329a-toc" href="#framework-overview">Overview</a>
+        <a class="cs329a-toc" href="#part-map">9 → 20 mapping</a>
+        <a class="cs329a-toc" href="#modules">7 practice modules</a>
+        <a class="cs329a-toc" data-level="3" href="#module-01">01 · Minimum loop</a>
+        <a class="cs329a-toc" data-level="3" href="#module-03">03 · Judge audit</a>
+        <a class="cs329a-toc" data-level="3" href="#module-04">04 · Reversibility</a>
+        <a class="cs329a-toc" href="#glossary">Glossary</a>
+        <a class="cs329a-toc" href="#evidence-boundary">Evidence boundary</a>
+        <a class="cs329a-toc" href="#route">Recommended route</a>
+      </nav>
+      <hr class="cs329a-rail-rule">
+      <p class="cs329a-rail-meta">本页是参考层，不是官方 session。右侧链接按“来源—映射—模块—边界”组织。</p>
+    </aside>
+  </div>
+  <script src="./assets/cs329a-framework.js"></script>
+</body>
+</html>
