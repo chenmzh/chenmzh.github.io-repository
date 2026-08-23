@@ -227,17 +227,24 @@
               <div class="signal-card"><dt>Course</dt><dd>CS329A</dd><small>Graduate seminar</small></div>
               <div class="signal-card"><dt>Units</dt><dd>3</dd><small>以课程目录为准</small></div>
               <div class="signal-card"><dt>Sessions</dt><dd>20 listed</dd><small>Autumn 2025 公开日程</small></div>
-              <div class="signal-card"><dt>Status</dt><dd>Scaffold</dd><small>个人笔记待补充</small></div>
+              <div class="signal-card"><dt>Status</dt><dd>Tutorial</dd><small>3 interactive lessons</small></div>
             </dl>
             <h2>课程简介</h2>
             <p>官方课程介绍将重点放在 LLM 的自我改进方法、验证器与测试时计算扩展，以及搜索、工具、检索、记忆和多模态交互；后半部分延伸到多步推理与规划、agent workflow 的评测和编排，并讨论 coding agents、科研助手与机器人等应用场景。这里把这些方向做成一个可继续填充的阅读工作台。</p>
             <p class="source-line">事实来源：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页面</a> 与 <a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin 课程条目</a>。</p>
           </section>
 
-          <section id="map" class="content-section" data-search="learning path course map test time compute verification tools retrieval planning evaluation orchestration">
+          <section id="map" class="content-section" data-search="learning path course map tutorial visualization test time compute verification tools retrieval planning evaluation orchestration">
             <h2>学习路线：从改进信号到可验证的 agent</h2>
             <p class="section-note">下面是根据公开课程简介与日程做的主题归纳，不是官方讲义目录；具体课次和阅读材料请回到官方页面核对。</p>
-            <div class="map-grid">
+            <h3>可视化教程主线</h3>
+             <p>按“先理解闭环，再接入系统，最后评估是否真的变好”的顺序阅读。每页都使用本地确定性模拟，不需要 API，也不把教学数字冒充论文结果。</p>
+             <div class="course-actions" aria-label="CS329A 可视化教程入口">
+               <a href="./foundations.html">01 · 闭环、扩展与验证 ↗</a>
+               <a href="./systems.html">02 · 工具、规划与记忆 ↗</a>
+               <a href="./evaluation.html">03 · 长程评估与机器人 ↗</a>
+             </div>
+             <div class="map-grid">
               <article class="map-card"><span class="map-index">TRACK 01</span><h3>Inference-time scaling</h3><p>先观察推理时增加计算、重复采样或搜索如何改变结果质量与成本。</p></article>
               <article class="map-card"><span class="map-index">TRACK 02</span><h3>Verification &amp; feedback</h3><p>把 verifier、工具执行结果或环境反馈变成可利用的改进信号。</p></article>
               <article class="map-card"><span class="map-index">TRACK 03</span><h3>Search, tools &amp; memory</h3><p>研究 agent 如何调用工具、检索信息、保存上下文，并在多步任务中持续工作。</p></article>
