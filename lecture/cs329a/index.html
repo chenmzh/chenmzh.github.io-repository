@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Stanford CS329A Self Improving AI Agents 的公开课程索引与学习笔记入口">
+  <meta name="color-scheme" content="light dark">
+  <title>CS329A · Self-Improving AI Agents</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper:#f1efe8;
+      --surface:#fffdf7;
+      --surface-2:#e9e7df;
+      --ink:#20231f;
+      --muted:#6c7068;
+      --line:#c8c5ba;
+      --accent:#176653;
+      --accent-soft:#dcece5;
+      --warm:#a45e25;
+      --sidebar:#20312c;
+      --sidebar-ink:#f0efe8;
+      --sidebar-muted:#aebdb6;
+      --code:#172622;
+      --reader-size:17px;
+    }
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --paper:#171b19;
+      --surface:#202522;
+      --surface-2:#292f2b;
+      --ink:#edf0e9;
+      --muted:#aeb6ae;
+      --line:#424943;
+      --accent:#71b69f;
+      --accent-soft:#29483e;
+      --warm:#e2a36d;
+      --sidebar:#111815;
+      --sidebar-ink:#f0f2ed;
+      --sidebar-muted:#93a69d;
+      --code:#0f1613;
+    }
+    * { box-sizing:border-box; }
+    html, body { min-height:100%; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; overflow:hidden; color:var(--ink); background:var(--paper); font-family:Georgia,"Songti SC","STSong",serif; line-height:1.72; }
+    button, input { font:inherit; }
+    button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent); outline-offset:2px; }
+    a { color:var(--accent); }
+    .app-shell { display:grid; grid-template-columns:260px minmax(0,1fr) 244px; height:100vh; min-width:0; }
+    .sidebar { min-width:0; overflow-y:auto; color:var(--sidebar-ink); background:var(--sidebar); border-right:1px solid #354841; }
+    .brand { padding:19px 18px 17px; border-bottom:1px solid #42544d; }
+    .back-link { display:inline-block; margin-bottom:15px; color:var(--sidebar-muted); font:700 .7rem/1.3 Menlo,Monaco,"Courier New",monospace; text-decoration:none; }
+    .back-link:hover { color:var(--sidebar-ink); }
+    .brand-code, .nav-label, .brand-meta, .nav-number, .status, .toolbar-title { font-family:Menlo,Monaco,"Courier New",monospace; }
+    .brand-code { margin:0 0 5px; color:#8fc4b2; font-size:.7rem; font-weight:700; letter-spacing:.04em; }
+    .brand h1 { margin:0; font-size:1.17rem; line-height:1.28; }
+    .brand-meta { margin-top:9px; color:var(--sidebar-muted); font-size:.68rem; line-height:1.45; }
+    .nav-label { margin:17px 18px 7px; color:var(--sidebar-muted); font-size:.67rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+    .nav-item { display:grid; grid-template-columns:34px minmax(0,1fr); gap:7px; align-items:center; width:100%; min-width:0; min-height:40px; padding:6px 14px 6px 15px; border:0; border-left:3px solid transparent; color:var(--sidebar-ink); background:transparent; cursor:pointer; text-align:left; text-decoration:none; }
+    .nav-item:hover, .nav-item[aria-current="page"] { background:rgba(255,255,255,.07); }
+    .nav-item[aria-current="page"] { border-left-color:#e2a36d; background:rgba(255,255,255,.1); }
+    .nav-number { color:#91b5a8; font-size:.7rem; }
+    .nav-title { min-width:0; overflow:hidden; font-size:.82rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+    .nav-external { display:block; min-height:39px; padding:8px 18px; color:var(--sidebar-ink); font-size:.8rem; text-decoration:none; }
+    .nav-external:hover { background:rgba(255,255,255,.07); }
+    .nav-note { margin:18px; padding:10px 11px; border:1px solid #52665d; color:#f0c99f; font-size:.73rem; line-height:1.5; }
+    .workspace { display:grid; grid-template-rows:58px minmax(0,1fr) 50px; min-width:0; min-height:0; background:var(--surface); }
+    .toolbar { display:grid; grid-template-columns:minmax(170px,1fr) minmax(190px,360px) auto; gap:10px; align-items:center; padding:8px 14px; border-bottom:1px solid var(--line); background:var(--surface); }
+    .toolbar-title { min-width:0; overflow:hidden; font-size:.79rem; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
+    .menu-button { display:none; }
+    .search-input { width:100%; height:38px; padding:7px 11px; border:1px solid var(--line); border-radius:4px; color:var(--ink); background:var(--surface); font-size:.84rem; }
+    .tool-actions { display:flex; gap:5px; }
+    .icon-button { display:inline-grid; place-items:center; min-width:36px; height:36px; padding:0 7px; border:1px solid var(--line); border-radius:4px; color:var(--ink); background:var(--surface); cursor:pointer; font-family:Menlo,Monaco,"Courier New",monospace; font-size:.76rem; font-weight:700; }
+    .icon-button:hover { background:var(--surface-2); }
+    .reader-scroll { min-width:0; min-height:0; overflow:auto; scroll-behavior:smooth; background:var(--surface); }
+    .lecture-view { width:min(860px,calc(100% - 48px)); margin:0 auto; padding:42px 0 80px; font-size:var(--reader-size); }
+    .lecture-kicker { margin-bottom:8px; color:var(--accent); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.72rem; font-weight:700; letter-spacing:.06em; }
+    .lecture-content h1 { margin:0 0 17px; font-size:2.25em; line-height:1.12; letter-spacing:-.025em; }
+    .lecture-content h1 em { color:var(--accent); font-style:normal; }
+    .lecture-content h2 { margin:2.4em 0 .8em; padding-top:.6em; border-top:1px solid var(--line); font-size:1.48em; line-height:1.25; scroll-margin-top:16px; }
+    .lecture-content h3 { margin:1.6em 0 .55em; color:var(--accent); font-size:1.08em; line-height:1.3; }
+    .lecture-content p { margin:.75em 0; }
+    .lead { max-width:760px; color:var(--muted); font-size:1.08em; }
+    .notice { margin:23px 0 28px; padding:13px 16px; border-left:4px solid var(--warm); color:var(--muted); background:var(--surface-2); font-size:.87em; }
+    .notice strong { color:var(--ink); }
+    .course-actions { display:flex; flex-wrap:wrap; gap:9px; margin:20px 0 27px; }
+    .course-actions a { display:inline-flex; align-items:center; gap:5px; padding:8px 12px; border:1px solid var(--line); border-radius:5px; color:var(--accent); background:var(--surface); font-size:.8em; font-weight:700; text-decoration:none; }
+    .course-actions a:hover { background:var(--accent-soft); }
+    .signal-grid, .map-grid, .assessment-grid, .resource-grid { display:grid; gap:11px; }
+    .signal-grid { grid-template-columns:repeat(4,1fr); margin:24px 0 30px; }
+    .signal-card, .map-card, .assessment-card, .resource-card { min-width:0; padding:13px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); }
+    .signal-card dt { color:var(--muted); font:700 .64em/1.3 Menlo,Monaco,"Courier New",monospace; letter-spacing:.05em; text-transform:uppercase; }
+    .signal-card dd { margin:4px 0 0; font-size:1.02em; font-weight:700; }
+    .signal-card small { display:block; margin-top:3px; color:var(--muted); font-size:.72em; line-height:1.35; }
+    .map-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .map-card { background:var(--surface); }
+    .map-card .map-index { color:var(--warm); font:700 .68em/1.3 Menlo,Monaco,"Courier New",monospace; }
+    .map-card h3 { margin:.3em 0 .25em; font-size:1em; }
+    .map-card p { margin:.25em 0 0; color:var(--muted); font-size:.82em; line-height:1.5; }
+    .source-line { color:var(--muted); font-size:.8em; }
+    .source-line a { font-weight:700; }
+    .table-wrap { overflow-x:auto; margin:16px 0; border:1px solid var(--line); }
+    table { width:100%; min-width:650px; border-collapse:collapse; font-size:.8em; }
+    th, td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { color:var(--muted); background:var(--surface-2); font:700 .7em/1.3 Menlo,Monaco,"Courier New",monospace; letter-spacing:.04em; text-transform:uppercase; }
+    tr:last-child td { border-bottom:0; }
+    .session { width:48px; color:var(--warm); font-family:Menlo,Monaco,"Courier New",monospace; font-weight:700; }
+    .session-type { color:var(--muted); font-size:.82em; }
+    .deadline-row td { color:var(--warm); background:color-mix(in srgb,var(--warm) 7%,transparent); }
+    .assessment-grid { grid-template-columns:repeat(4,minmax(0,1fr)); margin:18px 0; }
+    .assessment-card strong { display:block; font-size:.95em; }
+    .assessment-card span { display:block; margin-top:3px; color:var(--muted); font-size:.75em; line-height:1.4; }
+    .status { display:inline-block; padding:2px 6px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:.62em; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
+    .status.todo { color:var(--warm); border-color:color-mix(in srgb,var(--warm) 52%,var(--line)); }
+    .notebook-list { display:grid; gap:8px; margin:16px 0; padding:0; list-style:none; }
+    .notebook-list li { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:10px 12px; border:1px solid var(--line); background:var(--surface); }
+    .notebook-list li span:first-child { min-width:0; }
+    .resource-grid { grid-template-columns:repeat(3,minmax(0,1fr)); margin:16px 0; }
+    .resource-card { color:var(--muted); font-size:.82em; }
+    .resource-card a { display:block; margin-bottom:3px; color:var(--accent); font-weight:700; }
+    .resource-card p { margin:.25em 0 0; line-height:1.45; }
+    blockquote { margin:1.2em 0; padding:.3em 1.1em; border-left:3px solid var(--warm); color:var(--muted); background:var(--surface-2); }
+    code { padding:.12em .28em; border:1px solid var(--line); border-radius:3px; background:var(--surface-2); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.84em; }
+    .section-note { margin-top:-.3em; color:var(--muted); font-size:.82em; }
+    .search-empty { display:none; margin:16px 0; padding:12px; color:var(--muted); border:1px dashed var(--line); font-size:.84em; }
+    .search-empty.visible { display:block; }
+    .pager { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:6px 14px; border-top:1px solid var(--line); background:var(--surface-2); }
+    .pager a { color:var(--accent); font-size:.8em; font-weight:700; text-decoration:none; }
+    .pager a:last-child { justify-self:end; text-align:right; }
+    .page-count { color:var(--muted); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.69rem; }
+    .section-rail { min-width:0; overflow-y:auto; padding:19px 14px 24px; border-left:1px solid var(--line); background:var(--paper); }
+    .section-rail h2 { margin:0 0 10px; color:var(--muted); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.68rem; text-transform:uppercase; }
+    .toc-button { display:block; width:100%; padding:5px 6px; border:0; border-left:2px solid transparent; color:var(--muted); background:transparent; cursor:pointer; font-size:.76rem; line-height:1.35; text-align:left; text-decoration:none; }
+    .toc-button:hover, .toc-button.active { color:var(--accent); }
+    .toc-button.active { border-left-color:var(--accent); font-weight:700; }
+    .rail-rule { margin:18px 6px; border:0; border-top:1px solid var(--line); }
+    .rail-meta { padding:0 6px; color:var(--muted); font-size:.72em; line-height:1.55; }
+    .sidebar-scrim { display:none; }
+    @media (max-width:1120px) {
+      .app-shell { grid-template-columns:238px minmax(0,1fr); }
+      .section-rail { display:none; }
+      .toolbar { grid-template-columns:minmax(140px,1fr) minmax(180px,340px) auto; }
+    }
+    @media (max-width:760px) {
+      .app-shell { display:block; height:100vh; }
+      .workspace { height:100vh; }
+      .sidebar { position:fixed; z-index:70; inset:0 auto 0 0; width:min(300px,86vw); transform:translateX(-102%); transition:transform 180ms ease; box-shadow:16px 0 40px rgba(0,0,0,.28); }
+      body.sidebar-open .sidebar { transform:translateX(0); }
+      .sidebar-scrim { position:fixed; z-index:65; inset:0; display:none; border:0; background:rgba(0,0,0,.42); }
+      body.sidebar-open .sidebar-scrim { display:block; }
+      .toolbar { grid-template-columns:auto minmax(0,1fr) auto; gap:7px; padding:8px 9px; }
+      .menu-button { display:inline-grid; }
+      .toolbar-title { display:none; }
+      .tool-actions .font-down { display:none; }
+      .lecture-view { width:min(calc(100% - 30px),860px); padding-top:27px; }
+      .lecture-content h1 { font-size:1.8em; }
+      .signal-grid { grid-template-columns:repeat(2,1fr); }
+      .map-grid, .resource-grid { grid-template-columns:1fr; }
+      .assessment-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .pager { grid-template-columns:1fr 1fr; padding-inline:9px; }
+      .page-count { display:none; }
+    }
+    @media print {
+      body { overflow:visible; background:#fff; }
+      .app-shell { display:block; height:auto; }
+      .sidebar, .toolbar, .pager, .section-rail, .sidebar-scrim { display:none!important; }
+      .workspace, .reader-scroll { display:block; height:auto; overflow:visible; }
+      .lecture-view { width:100%; padding:0; color:#111; background:#fff; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar" aria-label="CS329A 课程导航">
+      <header class="brand">
+        <a class="back-link" href="../">← Lecture Archive</a>
+        <p class="brand-code">CS329A · OPEN NOTES</p>
+        <h1>Self-Improving<br>AI Agents</h1>
+        <div class="brand-meta">公开课程索引 · Autumn 2025<br>个人整理页，不代表官方页面</div>
+      </header>
+      <div class="nav-label">Course map</div>
+      <nav aria-label="页面章节">
+        <a class="nav-item" href="#overview" data-section="overview" aria-current="page"><span class="nav-number">00</span><span class="nav-title">Overview</span></a>
+        <a class="nav-item" href="#map" data-section="map" aria-current="false"><span class="nav-number">01</span><span class="nav-title">Learning path</span></a>
+        <a class="nav-item" href="#schedule" data-section="schedule" aria-current="false"><span class="nav-number">02</span><span class="nav-title">Schedule</span></a>
+        <a class="nav-item" href="#project" data-section="project" aria-current="false"><span class="nav-number">03</span><span class="nav-title">Research project</span></a>
+        <a class="nav-item" href="#notebook" data-section="notebook" aria-current="false"><span class="nav-number">04</span><span class="nav-title">Reading notebook</span></a>
+        <a class="nav-item" href="#resources" data-section="resources" aria-current="false"><span class="nav-number">05</span><span class="nav-title">Resources</span></a>
+      </nav>
+      <div class="nav-label">Official sources</div>
+      <nav aria-label="官方资料">
+        <a class="nav-external" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
+        <a class="nav-external" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+      </nav>
+      <div class="nav-note" role="note">本页只做公开课程信息的导航与学习记录入口；讲义、论文和作业请以原课程页面及其授权为准。</div>
+    </aside>
+    <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="关闭课程导航"></button>
+    <main class="workspace">
+      <header class="toolbar">
+        <button class="icon-button menu-button" id="menu-button" type="button" aria-label="打开课程导航">☰</button>
+        <div class="toolbar-title">CS329A / Self-Improving AI Agents</div>
+        <div class="search-wrap">
+          <label for="search-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">搜索课程页</label>
+          <input class="search-input" id="search-input" type="search" placeholder="搜索本页内容" autocomplete="off">
+        </div>
+        <div class="tool-actions">
+          <button class="icon-button font-down" id="font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="icon-button" id="font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="icon-button" id="theme-button" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="icon-button" id="print-button" type="button" aria-label="打印当前课程页">⌘P</button>
+        </div>
+      </header>
+      <div class="reader-scroll" id="reader-scroll">
+        <article class="lecture-view lecture-content">
+          <section id="overview" class="content-section" data-search="overview self improving ai agents stanford cs329a">
+            <div class="lecture-kicker">STANFORD CS329A · AUTUMN 2025 · COURSE INDEX</div>
+            <h1>Self-Improving <em>AI Agents.</em></h1>
+            <p class="lead">这是第二门课程的公开索引页：围绕能够通过与自身和环境交互持续改进的 AI agent，整理课程主题、公开日程、研究项目入口与后续笔记位置。</p>
+            <div class="notice"><strong>页面声明：</strong>这是个人学习整理页，不是 Stanford University 官方网站，也不代表 Stanford 的隶属或授权。课程名称与公开课程信息归原课程及相关权利人所有；本页不转载受限讲义、论文全文或作业答案。</div>
+            <div class="course-actions">
+              <a href="../">← 返回课程目录</a>
+              <a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">查看官方课程页 ↗</a>
+              <a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">查看课程目录 ↗</a>
+            </div>
+            <dl class="signal-grid" aria-label="课程概况">
+              <div class="signal-card"><dt>Course</dt><dd>CS329A</dd><small>Graduate seminar</small></div>
+              <div class="signal-card"><dt>Units</dt><dd>3</dd><small>以课程目录为准</small></div>
+              <div class="signal-card"><dt>Sessions</dt><dd>20 listed</dd><small>Autumn 2025 公开日程</small></div>
+              <div class="signal-card"><dt>Status</dt><dd>Scaffold</dd><small>个人笔记待补充</small></div>
+            </dl>
+            <h2>课程简介</h2>
+            <p>官方课程介绍将重点放在 LLM 的自我改进方法、验证器与测试时计算扩展，以及搜索、工具、检索、记忆和多模态交互；后半部分延伸到多步推理与规划、agent workflow 的评测和编排，并讨论 coding agents、科研助手与机器人等应用场景。这里把这些方向做成一个可继续填充的阅读工作台。</p>
+            <p class="source-line">事实来源：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页面</a> 与 <a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin 课程条目</a>。</p>
+          </section>
+
+          <section id="map" class="content-section" data-search="learning path course map test time compute verification tools retrieval planning evaluation orchestration">
+            <h2>学习路线：从改进信号到可验证的 agent</h2>
+            <p class="section-note">下面是根据公开课程简介与日程做的主题归纳，不是官方讲义目录；具体课次和阅读材料请回到官方页面核对。</p>
+            <div class="map-grid">
+              <article class="map-card"><span class="map-index">TRACK 01</span><h3>Inference-time scaling</h3><p>先观察推理时增加计算、重复采样或搜索如何改变结果质量与成本。</p></article>
+              <article class="map-card"><span class="map-index">TRACK 02</span><h3>Verification &amp; feedback</h3><p>把 verifier、工具执行结果或环境反馈变成可利用的改进信号。</p></article>
+              <article class="map-card"><span class="map-index">TRACK 03</span><h3>Search, tools &amp; memory</h3><p>研究 agent 如何调用工具、检索信息、保存上下文，并在多步任务中持续工作。</p></article>
+              <article class="map-card"><span class="map-index">TRACK 04</span><h3>Planning &amp; orchestration</h3><p>把分解、规划、执行与重试组织成 workflow，同时明确边界条件与失败模式。</p></article>
+              <article class="map-card"><span class="map-index">TRACK 05</span><h3>Evaluation &amp; applications</h3><p>用长时程任务、真实工具链和应用场景检查 agent 是否可靠，而不只看单步 benchmark。</p></article>
+              <article class="map-card"><span class="map-index">TRACK 06</span><h3>Research practice</h3><p>从论文讨论走向可复现实验、项目提案、中期交流和最终研究展示。</p></article>
+            </div>
+            <h3>建议的阅读方法</h3>
+            <blockquote>不要把“能生成答案”直接等同于“能完成任务”。每次阅读都记录：改进信号是什么、agent 如何获得反馈、评价指标是否覆盖长程失败。</blockquote>
+          </section>
+
+          <section id="schedule" class="content-section" data-search="schedule autumn 2025 lecture session date topic reading">
+            <h2>公开日程：Autumn 2025</h2>
+            <p class="section-note">以下为官方课程页公开的课次标题的精简索引。日期、嘉宾和阅读条目可能随课程更新，请以<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方页面</a>为准。</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Date</th><th>Topic</th><th>Type</th></tr></thead>
+                <tbody id="schedule-body">
+                  <tr data-search="1 sep 22 course overview"><td class="session">01</td><td>Sep 22</td><td>Course Overview</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="2 sep 26 test time compute scaling"><td class="session">02</td><td>Sep 26</td><td>Test-time Compute Scaling</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="3 sep 29 robust verification"><td class="session">03</td><td>Sep 29</td><td>Robust Verification</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="4 oct 3 feedback tools code"><td class="session">04</td><td>Oct 03</td><td>Learning from Feedback with Tools / Code</td><td class="session-type">Lecture · HW 1</td></tr>
+                  <tr data-search="5 oct 6 multi step reasoning planning"><td class="session">05</td><td>Oct 06</td><td>Multi-step Reasoning / Planning</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="6 oct 10 train time scaling reinforcement learning"><td class="session">06</td><td>Oct 10</td><td>Train-time Scaling / Scaling RL</td><td class="session-type">Lecture · Proposal</td></tr>
+                  <tr data-search="7 oct 13 open ended evolution self improving agents"><td class="session">07</td><td>Oct 13</td><td>Open-ended Evolution of Self-Improving Agents</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="8 oct 17 search deep research agents"><td class="session">08</td><td>Oct 17</td><td>Self-improvement with Search &amp; Deep Research Agents</td><td class="session-type">Lecture · HW 2</td></tr>
+                  <tr data-search="9 oct 20 guest lecture melvin johnson google deepmind"><td class="session">09</td><td>Oct 20</td><td>Guest Lecture · Melvin Johnson</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="10 oct 24 midterm presentations"><td class="session">10</td><td>Oct 24</td><td>Midterm Presentations</td><td class="session-type">Presentation</td></tr>
+                  <tr data-search="11 oct 27 midterm presentations"><td class="session">11</td><td>Oct 27</td><td>Midterm Presentations</td><td class="session-type">Presentation</td></tr>
+                  <tr data-search="12 oct 31 midterm presentations"><td class="session">12</td><td>Oct 31</td><td>Midterm Presentations</td><td class="session-type">Presentation · HW 3</td></tr>
+                  <tr data-search="13 nov 3 agentic frameworks software engineering"><td class="session">13</td><td>Nov 03</td><td>Agentic Frameworks for Software Engineering</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="14 nov 7 augmenting agents memory junchen jiang"><td class="session">14</td><td>Nov 07</td><td>Augmenting Agents with Memory · Junchen Jiang</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="15 nov 10 guest lecture denny zhou"><td class="session">15</td><td>Nov 10</td><td>Guest Lecture · Denny Zhou</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="16 nov 14 guest lecture thang luong"><td class="session">16</td><td>Nov 14</td><td>Guest Lecture · Thang Luong</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="17 nov 17 agentic evaluations long horizon tasks"><td class="session">17</td><td>Nov 17</td><td>Agentic Evaluations &amp; Long-Horizon Tasks</td><td class="session-type">Lecture</td></tr>
+                  <tr data-search="18 nov 21 guest lecture misha laskin reflection ai"><td class="session">18</td><td>Nov 21</td><td>Guest Lecture · Misha Laskin</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="nov 24 holiday"><td class="session">—</td><td>Nov 24</td><td>Holiday</td><td class="session-type">No class</td></tr>
+                  <tr data-search="nov 28 holiday"><td class="session">—</td><td>Nov 28</td><td>Holiday</td><td class="session-type">No class</td></tr>
+                  <tr data-search="19 dec 1 guest lecture danny driess multimodal robotics"><td class="session">19</td><td>Dec 01</td><td>Guest Lecture · Danny Driess / Multimodal Agents in Robotics</td><td class="session-type">Guest lecture</td></tr>
+                  <tr data-search="20 dec 5 future research areas"><td class="session">20</td><td>Dec 05</td><td>Future Research Areas</td><td class="session-type">Lecture</td></tr>
+                  <tr class="deadline-row" data-search="deadline dec 10 final project due"><td class="session">—</td><td>Dec 10</td><td>Final Project Due</td><td class="session-type">Deadline</td></tr>
+                  <tr class="deadline-row" data-search="dec 12 final project poster presentation"><td class="session">—</td><td>Dec 12</td><td>Final Project Poster Presentation</td><td class="session-type">Presentation</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="search-empty" id="search-empty">没有匹配的课次。可以尝试搜索 <code>verification</code>、<code>memory</code> 或日期。</div>
+          </section>
+
+          <section id="project" class="content-section" data-search="research project homework grading assessment proposal midterm final poster">
+            <h2>研究项目与课程要求</h2>
+            <p>官方课程页将研究项目放在课程核心位置：学生围绕 agent workflow 相关问题开展原创项目，并经历 proposal、中期展示与最终项目展示。下面只保留公开要求的导航信息，不复制作业题面或评分细则之外的受限材料。</p>
+            <div class="assessment-grid" aria-label="公开评估构成">
+              <div class="assessment-card"><strong>Homework 1</strong><span>15% · 基础 self-improvement 直觉</span></div>
+              <div class="assessment-card"><strong>Homework 2</strong><span>15% · 推理、搜索或工具使用</span></div>
+              <div class="assessment-card"><strong>Homework 3</strong><span>20% · 课程后半段主题</span></div>
+              <div class="assessment-card"><strong>Project proposal</strong><span>2.5% · 研究问题与计划</span></div>
+              <div class="assessment-card"><strong>Midterm</strong><span>10% · presentation + report</span></div>
+              <div class="assessment-card"><strong>Final project</strong><span>35% · 最终研究成果</span></div>
+              <div class="assessment-card"><strong>Poster</strong><span>2.5% · 结果交流</span></div>
+            </div>
+            <p class="section-note">上述比例来自公开课程页面的 Autumn 2025 版本，仅作学习计划参考；选课、迟交、审计和评分政策以官方页面最新版本为准。</p>
+            <h3>个人项目工作台（待补）</h3>
+            <p>此处预留后续内容：问题定义、agent 环境、反馈信号、评测协议、失败案例和复现实验。等你提供自己的项目方向或允许整理的资料后，再逐项填入。</p>
+          </section>
+
+          <section id="notebook" class="content-section" data-search="reading notebook notes paper reading pending placeholder">
+            <h2>Reading notebook：个人笔记队列</h2>
+            <p>当前只建立目录，不转载论文全文或官方讲义。每个条目后续可以加入自己的摘要、公式、实验结果和开放问题。</p>
+            <ul class="notebook-list">
+              <li><span><b>01</b> · Test-time compute &amp; verification</span><span class="status todo">待补充</span></li>
+              <li><span><b>02</b> · Tool / code feedback and learning</span><span class="status todo">待补充</span></li>
+              <li><span><b>03</b> · Search, planning and deep research agents</span><span class="status todo">待补充</span></li>
+              <li><span><b>04</b> · Memory, orchestration and software agents</span><span class="status todo">待补充</span></li>
+              <li><span><b>05</b> · Long-horizon evaluation and robotics</span><span class="status todo">待补充</span></li>
+            </ul>
+            <div class="notice"><strong>补充入口：</strong>如果你希望把这一页继续做成完整课程，请提供目标学期、语言偏好，以及你拥有或获准整理的讲义、论文清单、作业或实验材料。没有来源的部分会继续保持“待补充”，不凭空补写。</div>
+          </section>
+
+          <section id="resources" class="content-section" data-search="resources official course bulletin github sources copyright">
+            <h2>Resources &amp; attribution</h2>
+            <div class="resource-grid">
+              <article class="resource-card"><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a><p>课程概览、公开日程、阅读条目、项目与政策。</p></article>
+              <article class="resource-card"><a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a><p>课程名称、目录描述、学分和先修信息。</p></article>
+              <article class="resource-card"><a href="https://github.com/stanford-cs329a" target="_blank" rel="noopener noreferrer">Course GitHub organization ↗</a><p>公开代码或资料是否存在，以组织页及各项目许可为准。</p></article>
+            </div>
+            <p>本页的定位是 <em>curated learning index</em>：用相对链接挂在现有 Lecture Archive 下，保留原课程入口，并把外部课程资料交还给官方来源。Stanford 名称仅用于准确标识课程，不使用 Stanford 标识，也不声称官方隶属。</p>
+            <p class="source-line">最后整理：Autumn 2025 公开课程页 · 页面内容会在获得新材料后更新。</p>
+          </section>
+        </article>
+      </div>
+      <footer class="pager"><a href="../">← 课程目录</a><span class="page-count">CS329A · PUBLIC INDEX</span><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页 ↗</a></footer>
+    </main>
+    <aside class="section-rail" aria-label="本页目录">
+      <h2>On this page</h2>
+      <a class="toc-button active" href="#overview" data-section="overview">Overview</a>
+      <a class="toc-button" href="#map" data-section="map">Learning path</a>
+      <a class="toc-button" href="#schedule" data-section="schedule">Schedule</a>
+      <a class="toc-button" href="#project" data-section="project">Research project</a>
+      <a class="toc-button" href="#notebook" data-section="notebook">Reading notebook</a>
+      <a class="toc-button" href="#resources" data-section="resources">Resources</a>
+      <hr class="rail-rule">
+      <p class="rail-meta">本页沿用 IML 阅读器的三栏结构与移动端抽屉导航。内容不足的部分明确标记为待补充。</p>
+    </aside>
+  </div>
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const body = document.body;
+      const reader = document.getElementById('reader-scroll');
+      const sidebar = document.getElementById('sidebar');
+      const scrim = document.getElementById('sidebar-scrim');
+      const menu = document.getElementById('menu-button');
+      const search = document.getElementById('search-input');
+      const empty = document.getElementById('search-empty');
+      const sections = [...document.querySelectorAll('.content-section')];
+      const navLinks = [...document.querySelectorAll('[data-section]')];
+      const scheduleRows = [...document.querySelectorAll('#schedule-body tr')];
+      const closeSidebar = () => body.classList.remove('sidebar-open');
+      const setActive = (id) => navLinks.forEach(link => {
+        const active = link.dataset.section === id;
+        link.classList.toggle('active', active);
+        if (link.classList.contains('nav-item')) link.setAttribute('aria-current', active ? 'page' : 'false');
+      });
+      menu.addEventListener('click', () => body.classList.toggle('sidebar-open'));
+      scrim.addEventListener('click', closeSidebar);
+      navLinks.forEach(link => link.addEventListener('click', closeSidebar));
+      document.getElementById('print-button').addEventListener('click', () => window.print());
+      const savedTheme = (() => { try { return localStorage.getItem('cs329a-theme'); } catch (_) { return null; } })();
+      if (savedTheme === 'dark') root.dataset.theme = 'dark';
+      document.getElementById('theme-button').addEventListener('click', () => {
+        const dark = root.dataset.theme !== 'dark';
+        if (dark) root.dataset.theme = 'dark'; else delete root.dataset.theme;
+        try { localStorage.setItem('cs329a-theme', dark ? 'dark' : 'light'); } catch (_) {}
+      });
+      const setSize = (delta) => {
+        const current = parseFloat(getComputedStyle(root).getPropertyValue('--reader-size')) || 17;
+        root.style.setProperty('--reader-size', `${Math.max(14, Math.min(21, current + delta))}px`);
+      };
+      document.getElementById('font-down').addEventListener('click', () => setSize(-1));
+      document.getElementById('font-up').addEventListener('click', () => setSize(1));
+      const filter = () => {
+        const query = search.value.trim().toLowerCase();
+        let visibleRows = 0;
+        scheduleRows.forEach(row => {
+          const visible = !query || row.dataset.search.includes(query);
+          row.hidden = !visible;
+          if (visible) visibleRows += 1;
+        });
+        empty.classList.toggle('visible', Boolean(query) && visibleRows === 0);
+        sections.forEach(section => {
+          if (section.id === 'schedule') return;
+          const matches = !query || section.dataset.search.includes(query) || section.textContent.toLowerCase().includes(query);
+          section.hidden = !matches;
+        });
+      };
+      search.addEventListener('input', filter);
+      const observer = new IntersectionObserver(entries => {
+        const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (visible[0]) setActive(visible[0].target.id);
+      }, { root: reader, rootMargin: '-12% 0px -65% 0px', threshold: [0.05, 0.25, 0.6] });
+      sections.forEach(section => observer.observe(section));
+    })();
+  </script>
+</body>
+</html>
