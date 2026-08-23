@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Stanford CS329A 学习教程 02：工具与代码执行反馈、DAG 规划与搜索、记忆架构与检索污染管理。">
+  <meta name="color-scheme" content="light dark">
+  <title>02 · 工具、规划与记忆 · CS329A 教程</title>
+  <link rel="stylesheet" href="./assets/cs329a-tutorial.css">
+</head>
+<body class="cs329a-tutorial">
+  <a class="cs329a-skip" href="#reader-scroll">跳转到正文</a>
+  <div class="cs329a-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 教程导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-back" href="./index.html">← CS329A 课程索引</a>
+        <p class="cs329a-code">CS329A · TUTORIAL 02</p>
+        <h1>工具、规划与记忆</h1>
+        <div class="cs329a-brand-meta">Tools · Planning · Memory Systems<br>个人学习教程 · 非官方页面</div>
+      </header>
+      <div class="cs329a-nav-label">本页目录</div>
+      <nav aria-label="页面章节">
+        <a class="cs329a-nav-item" href="#overview" data-section="overview" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">系统架构三要素</span></a>
+        <a class="cs329a-nav-item" href="#tools" data-section="tools" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">工具调用与代码反馈</span></a>
+        <a class="cs329a-nav-item" href="#tool-demo" data-section="tool-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">代码修复闭环模拟</span></a>
+        <a class="cs329a-nav-item" href="#planning" data-section="planning" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">04</span><span class="cs329a-nav-title">规划图与树搜索</span></a>
+        <a class="cs329a-nav-item" href="#planning-demo" data-section="planning-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">05</span><span class="cs329a-nav-title">规划 DAG：贪心 vs 搜索</span></a>
+        <a class="cs329a-nav-item" href="#memory" data-section="memory" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">06</span><span class="cs329a-nav-title">记忆机制与检索陈旧性</span></a>
+        <a class="cs329a-nav-item" href="#memory-demo" data-section="memory-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">07</span><span class="cs329a-nav-title">记忆检索与污染过滤模拟</span></a>
+        <a class="cs329a-nav-item" href="#sources" data-section="sources" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">08</span><span class="cs329a-nav-title">开放来源与文献</span></a>
+      </nav>
+      <div class="cs329a-nav-label">教程主线</div>
+      <nav aria-label="教程系列链接">
+        <a class="cs329a-nav-item" href="./foundations.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">闭环、扩展与验证</span></a>
+        <a class="cs329a-nav-item" href="./systems.html" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">工具、规划与记忆</span></a>
+        <a class="cs329a-nav-item" href="./evaluation.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">长程评估与机器人</span></a>
+      </nav>
+      <div class="cs329a-nav-label">官方来源</div>
+      <nav aria-label="官方资料">
+        <a class="cs329a-external" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
+        <a class="cs329a-external" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+      </nav>
+      <div class="cs329a-side-note" role="note">本教程为个人学习整理与概念可视化，非 Stanford 官方页面，无官方隶属或授权。所有 demo 均使用本地确定性合成教学数据。</div>
+    </aside>
+    <button class="cs329a-scrim" type="button" aria-label="关闭导航" data-close-sidebar></button>
+    <main class="cs329a-workspace">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
+        <div class="cs329a-toolbar-title">CS329A / 02 · 工具、规划与记忆</div>
+        <div style="position:relative;width:100%;max-width:320px;">
+          <label for="search-input" class="cs329a-sr-only">搜索本页内容</label>
+          <input class="cs329a-search" id="search-input" type="search" placeholder="搜索本页内容" aria-label="搜索本页内容" autocomplete="off">
+        </div>
+        <div class="cs329a-sr-only cs329a-search-status" aria-live="polite"></div>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon cs329a-font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon cs329a-font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon cs329a-theme" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon cs329a-print" type="button" aria-label="打印当前教程">⌘P</button>
+        </div>
+      </header>
+      <div class="cs329a-reader" id="reader-scroll">
+        <article class="cs329a-content">
+          <section id="overview" class="content-section" data-search="overview system primitives tools planning memory 系统架构 核心支柱">
+            <div class="cs329a-kicker">CS329A TUTORIAL · LESSON 02</div>
+            <h1>工具、规划与记忆 <em>Systems, Planning &amp; Memory.</em></h1>
+            <p class="cs329a-lead">真实的 Agent 系统不仅需要基础模型推理，还必须构建与外部环境对接的执行底座：可执行工具沙箱、非线性规划与回溯拓扑，以及支持动态生命周期管理的记忆系统。</p>
+            <div class="cs329a-notice"><strong>个人学习教程声明：</strong>本页面为个人根据公开课程大纲与学术论文整理的交互式学习教程，非 Stanford University 官方网站，与 Stanford 无官方隶属、认可或授权关系。本页不包含未公开讲义或受限作业内容。</div>
+            <div class="cs329a-grid cs329a-grid-3">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">PILLAR 01</span>
+                <h3>工具与代码执行环境</h3>
+                <p>将自然语言推理映射为可执行的代码补丁或 API 调用，通过沙箱获取 stdout/stderr 与测试断言作为客观反馈。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">PILLAR 02</span>
+                <h3>规划图与启发式搜索</h3>
+                <p>打破单纯自回归的贪心推进，构建显式规划 DAG 或树结构（Tree of Thoughts），支持分叉评估、剪枝与回溯。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">PILLAR 03</span>
+                <h3>状态持久化与记忆防污染</h3>
+                <p>在有限上下文窗口中按需检索情景记忆，区分有效经验与陈旧废弃信息，防止虚假记忆污染当前决策。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="tools" class="content-section" data-search="tools code feedback react loop sandbox 工具 代码反馈 异常捕获">
+            <h2>工具调用与代码反馈：ReAct 到沙箱闭环</h2>
+            <p>在复杂工程任务（如 SWE-bench 软件缺陷修复）中，模型单次生成完美代码的概率随问题复杂度指数下降。<strong>ReAct 模式</strong>（Yao et al., 2022）将思维链（Thought）、动作（Action）与观察（Observation）交织交替，使环境执行结果成为推理上下文的动态组成部分：</p>
+            <ol class="cs329a-steps">
+              <li><strong>Action 触发：</strong>智能体输出结构化调用（如运行测试脚本 <code>pytest tests/test_date.py</code>）。</li>
+              <li><strong>Sandbox 执行：</strong>隔离沙箱运行代码并截获标准输出、标准错误与异常回溯（Traceback）。</li>
+              <li><strong>Observation 解析：</strong>提取具体失败用例、断言差异与未覆盖的分支条件。</li>
+              <li><strong>Reflection 迭代：</strong>将错误诊断输入模型上下文，指导下一步差异化补丁生成。</li>
+            </ol>
+          </section>
+
+          <section id="tool-demo" class="content-section" data-search="code feedback repair trace interactive stepper 代码修复 交互步进">
+            <h2>交互演示：代码沙箱修复轨迹模拟</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本交互演示采用本地确定性状态机与合成代码案例（Synthetic Teaching Data），演示代码执行反馈如何驱动迭代修复，非真实线上执行沙箱。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 01 · CODE FEEDBACK STEPPER</div>
+              <h3>基于测试反馈的自动化修复追踪</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <div id="code-box" style="padding:10px; background:var(--cs-code); color:#e6edf3; border-radius:6px; font-family:ui-monospace,Menlo,monospace; font-size:.76em; line-height:1.45; min-height:160px; overflow-x:auto;">
+                    <div style="color:#8b949e; margin-bottom:6px;">// 模拟沙箱控制台终端 · 状态流输出</div>
+                    <div id="code-content">准备就绪。点击“单步推进”查看代码生成与测试反馈循环。</div>
+                  </div>
+                </div>
+                <div class="cs329a-controls">
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="cs329a-button-link" id="btn-tool-prev" type="button" aria-label="代码反馈上一步">← 上一步</button>
+                    <button class="cs329a-button-link" id="btn-tool-step" type="button" aria-label="代码反馈下一步">单步推进 →</button>
+                    <button class="cs329a-button-link" id="btn-tool-auto" type="button" aria-label="代码反馈自动演示">自动演示</button>
+                    <button class="cs329a-button-link" id="btn-tool-reset" type="button" aria-label="代码反馈重置">重置</button>
+                  </div>
+                  <div class="cs329a-demo-status" id="tool-status" aria-live="polite">当前阶段：0 / 5 · 初始问题输入</div>
+                  <div class="cs329a-demo-caption"><strong>关键观察：</strong>工具反馈不只是简单的“通过/失败”，具体的错误堆栈（如时区后缀缺失）直接约束了下一步生成的搜索空间。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：代码修复教学状态流（无脚本环境下直接可读）</caption>
+                  <thead><tr><th scope="col">序号</th><th scope="col">阶段名称</th><th scope="col">执行动作与输出摘要</th><th scope="col">状态归宿</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>提议初始补丁</td><td>Agent 生成基础 ISO 日期转换逻辑 <code>datetime.fromisoformat(...)</code></td><td>candidate</td></tr>
+                    <tr><td>2</td><td>沙箱运行单元测试</td><td>执行 <code>pytest</code> 捕获异常：<code>ValueError: Invalid timezone format '+00:00Z'</code></td><td>observe</td></tr>
+                    <tr><td>3</td><td>验证器错误归因</td><td>检查断言差距，明确需同时支持纯 Z 后缀与 +/-hh:mm 格式，生成拒绝意见</td><td>feedback</td></tr>
+                    <tr><td>4</td><td>修订补丁生成</td><td>Agent 引入统一正则预处理与时区标准化逻辑</td><td>retry</td></tr>
+                    <tr><td>5</td><td>全量回归测试</td><td>10/10 单元测试用例全部通过，生成验收签名并固化补丁</td><td>accepted</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="planning" class="content-section" data-search="planning dags tree of thoughts search lookahead 规划 树搜索 回溯">
+            <h2>规划拓扑与搜索：跳出自回归的贪心陷阱</h2>
+            <p>标准的大模型自回归生成在本质上是一种<strong>贪心滚动（Greedy Rollout）</strong>：每一步选择当前最合理的局部动作。然而，在具有非单调逻辑或死锁风险的任务中（如复杂迷宫、代码重构、工具链依赖调度），贪心策略极易陷入局部最优或死胡同。</p>
+            <div class="cs329a-grid cs329a-grid-2">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">GREEDY ROLLOUT</span>
+                <h3>贪心生成 (Greedy)</h3>
+                <p>不前瞻未来状态，一旦走向死路无法主动回退。在长任务中容易发生错误积累与幻觉自圆其说。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">TREE OF THOUGHTS &amp; DAG</span>
+                <h3>规划图与树搜索 (Search &amp; Backtrack)</h3>
+                <p>将推导演化为有向无环图（DAG）或搜索树（Yao et al., 2023），对中间节点进行启发式价值评估。遇到阻碍时主动剪枝并回溯到历史健康节点。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="planning-demo" class="content-section" data-search="planning dag greedy search backtrack demo 规划图 贪心 回溯搜索">
+            <h2>交互演示：规划 DAG —— 贪心 vs 搜索回溯</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本演示使用本地预置的 5 节点开门任务 DAG（Synthetic Teaching Data），直观对比贪心直冲（直接尝试开门撞死路）与前瞻搜索（先拿钥匙再开门）的决策路径。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 02 · PLANNING DAG EXPLORER</div>
+              <h3>搜索策略与分支剪枝对比</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <svg id="dag-svg" viewBox="0 0 540 230" role="img" aria-labelledby="dag-svg-title dag-svg-desc">
+                    <title id="dag-svg-title">规划 DAG 决策路径图</title>
+                    <desc id="dag-svg-desc">展示起点到拿钥匙、撞墙、开门和死路的非线性搜索状态拓扑。</desc>
+                    <defs>
+                      <marker id="dag-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--cs-line)"/>
+                      </marker>
+                      <marker id="dag-arrow-active" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--cs-accent)"/>
+                      </marker>
+                      <marker id="dag-arrow-bad" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--cs-danger)"/>
+                      </marker>
+                    </defs>
+                    <!-- Connecting Edges -->
+                    <path id="edge-start-key" d="M 120 110 L 220 65" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#dag-arrow)"/>
+                    <path id="edge-start-wall" d="M 120 110 L 220 155" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#dag-arrow)"/>
+                    <path id="edge-key-door" d="M 330 65 L 425 65" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#dag-arrow)"/>
+                    <path id="edge-wall-dead" d="M 330 155 L 425 155" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#dag-arrow)"/>
+
+                    <!-- Nodes -->
+                    <!-- Start -->
+                    <g class="dag-node" id="dnode-start" transform="translate(40, 85)">
+                      <rect width="90" height="50" rx="6" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                      <text x="12" y="28" font-weight="bold">目标: 开门</text>
+                      <text x="12" y="42" class="muted" font-size="9">Root start</text>
+                    </g>
+                    <!-- Key (Good branch 1) -->
+                    <g class="dag-node" id="dnode-key" transform="translate(230, 40)">
+                      <rect width="90" height="50" rx="6" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                      <text x="12" y="28" font-weight="bold">先拿钥匙</text>
+                      <text x="12" y="42" class="muted" font-size="9">Acquire key</text>
+                    </g>
+                    <!-- Wall (Bad branch 1) -->
+                    <g class="dag-node" id="dnode-wall" transform="translate(230, 130)">
+                      <rect width="90" height="50" rx="6" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                      <text x="12" y="28" font-weight="bold">直接撞门</text>
+                      <text x="12" y="42" class="muted" font-size="9">Greedy move</text>
+                    </g>
+                    <!-- Door (Good Goal) -->
+                    <g class="dag-node" id="dnode-door" transform="translate(425, 40)">
+                      <rect width="90" height="50" rx="6" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                      <text x="12" y="28" font-weight="bold">开门成功</text>
+                      <text x="12" y="42" class="muted" font-size="9">Goal reached</text>
+                    </g>
+                    <!-- Dead End -->
+                    <g class="dag-node" id="dnode-dead" transform="translate(425, 130)">
+                      <rect width="90" height="50" rx="6" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                      <text x="12" y="28" font-weight="bold">死路受阻</text>
+                      <text x="12" y="42" class="muted" font-size="9">Dead end</text>
+                    </g>
+                  </svg>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-strategy">选择规划策略：</label>
+                    <select id="select-strategy">
+                      <option value="search" selected>搜索与回溯 (Search &amp; Backtrack)</option>
+                      <option value="greedy">贪心直冲 (Greedy Rollout)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-demo-status" id="dag-status" aria-live="polite">策略状态：搜索模式启动。评估下级分支，选择“拿钥匙”前置依赖，最终成功开门。</div>
+                  <div class="cs329a-demo-caption"><strong>拓扑回溯：</strong>在复杂任务中，前置条件（Pre-conditions）的满足往往需要暂时偏离直觉上最接近最终目标的路径。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：规划 DAG 节点与决策路径表</caption>
+                  <thead><tr><th scope="col">节点 ID</th><th scope="col">语义标签</th><th scope="col">节点类型</th><th scope="col">贪心策略动作</th><th scope="col">搜索与回溯动作</th></tr></thead>
+                  <tbody>
+                    <tr><td>start</td><td>目标：开门</td><td>根节点 (start)</td><td>直选“直接撞门”</td><td>并行评估两分支启发式价值</td></tr>
+                    <tr><td>wall</td><td>直接撞门</td><td>风险分支 (bad)</td><td>直冲并陷入死锁</td><td>前瞻发现无钥匙开门不可行，剪枝放弃</td></tr>
+                    <tr><td>dead</td><td>死路受阻</td><td>失败终态 (bad)</td><td>发生任务崩溃，无回退</td><td>已剪枝，不进入</td></tr>
+                    <tr><td>key</td><td>先拿钥匙</td><td>有效前置 (good)</td><td>忽略前置</td><td>满足开门依赖约束，优先推进</td></tr>
+                    <tr><td>door</td><td>开门成功</td><td>目标终态 (good)</td><td>不可达</td><td>顺利解锁并达成目标 (Goal Reached)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="memory" class="content-section" data-search="memory systems context retrieval staleness 记忆机制 向量检索 陈旧性污染">
+            <h2>记忆机制与检索污染：从长期上下文到遗忘管理</h2>
+            <p>随着任务跨度延伸，将所有历史交互全部塞进 Prompt 会迅速耗尽上下文窗口并引起<strong>记忆污染（Context Contamination）</strong>。类似操作系统中的分页与缓存架构（MemGPT, Packer et al., 2023; Park et al., 2023），先进的 Agent 采用分层记忆架构：</p>
+            <div class="cs329a-grid cs329a-grid-2">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">WORKING MEMORY</span>
+                <h3>工作上下文 (Working Memory)</h3>
+                <p>当前推理窗口中直接可见的实时变量、最近几轮的工具观测与核心指令。具有极高的响应优先级，但容量受限。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">EPISODIC &amp; SEMANTIC MEMORY</span>
+                <h3>情景与语义外存 (Long-term Store)</h3>
+                <p>持久化向量库或文档存储。按需通过 Top-<var>K</var> 相似度检索召回。面临的核心挑战是<strong>陈旧性（Staleness）</strong>与虚假关联召回。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="memory-demo" class="content-section" data-search="memory retrieval query top-k staleness filter demo 记忆检索 污染过滤">
+            <h2>交互演示：记忆检索与陈旧性过滤模拟</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本演示采用本地 4 条预设情景记忆数据（Synthetic Teaching Data），演示查询意图、Top-<var>K</var> 预算及“陈旧信息过滤器”对上下文构建质量的影响。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 03 · CONTEXT RETRIEVAL SIMULATOR</div>
+              <h3>记忆检索相关性与 Token 开销管理</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <div id="memory-list" style="display:grid; gap:8px;">
+                    <!-- Dynamically updated memory cards -->
+                    <div class="cs329a-card" id="mem-m1" style="padding:9px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>[m1] ISO 日期常带 Z 后缀</strong>
+                        <span class="cs329a-pill" style="color:var(--cs-accent);">相关度: 0.94 · Fresh</span>
+                      </div>
+                      <p style="margin:3px 0 0; font-size:.78em;">标签: date, parser · 占用 8 tokens</p>
+                    </div>
+                    <div class="cs329a-card" id="mem-m2" style="padding:9px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>[m2] 旧 API 的错误码已废弃</strong>
+                        <span class="cs329a-pill" style="color:var(--cs-warm);">相关度: 0.34 · Stale (已过时)</span>
+                      </div>
+                      <p style="margin:3px 0 0; font-size:.78em;">标签: api, legacy · 占用 7 tokens</p>
+                    </div>
+                    <div class="cs329a-card" id="mem-m3" style="padding:9px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>[m3] 先跑小测试再扩大补丁</strong>
+                        <span class="cs329a-pill" style="color:var(--cs-accent);">相关度: 0.77 · Fresh</span>
+                      </div>
+                      <p style="margin:3px 0 0; font-size:.78em;">标签: testing, workflow · 占用 9 tokens</p>
+                    </div>
+                    <div class="cs329a-card" id="mem-m4" style="padding:9px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>[m4] 用户偏好短回答</strong>
+                        <span class="cs329a-pill" style="color:var(--cs-accent);">相关度: 0.21 · Fresh</span>
+                      </div>
+                      <p style="margin:3px 0 0; font-size:.78em;">标签: style, user · 占用 6 tokens</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-query">检索意图查询 (Query Intent)：</label>
+                    <select id="select-query">
+                      <option value="date" selected>日期解析与格式规范 (Date parser)</option>
+                      <option value="test">单元测试与验证工作流 (Test workflow)</option>
+                      <option value="legacy">遗留系统维护与接口迁移 (Legacy API)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-control">
+                    <label for="select-topk">召回预算上限 (Top-K Items)：</label>
+                    <select id="select-topk">
+                      <option value="1">Top-1 (最精简上下文)</option>
+                      <option value="2" selected>Top-2 (平衡召回)</option>
+                      <option value="3">Top-3 (宽泛召回)</option>
+                      <option value="4">Top-4 (全量召回)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-control" style="grid-template-columns:auto 1fr;">
+                    <input type="checkbox" id="check-filter-stale" checked style="width:16px; height:16px;">
+                    <label for="check-filter-stale">开启陈旧信息过滤器 (Filter Stale Memories)</label>
+                  </div>
+                  <div class="cs329a-demo-status" id="memory-status" aria-live="polite">检索状态：命中 2 条记忆，总计消耗 17 tokens，已过滤 1 条陈旧历史信息。</div>
+                  <div class="cs329a-demo-caption"><strong>防污染准则：</strong>未经过滤的过时知识进入上下文，是导致 Agent 反复调用废弃接口或出现倒退的核心诱因之一。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：情景记忆库元数据列表</caption>
+                  <thead><tr><th scope="col">记忆 ID</th><th scope="col">存储内容</th><th scope="col">分类标签</th><th scope="col">时效状态</th><th scope="col">基准相关度</th><th scope="col">Token 开销</th></tr></thead>
+                  <tbody>
+                    <tr><td>m1</td><td>ISO 日期常带 Z 后缀</td><td>date, parser</td><td>fresh (有效)</td><td>0.94</td><td>8 tokens</td></tr>
+                    <tr><td>m2</td><td>旧 API 的错误码已废弃</td><td>api, legacy</td><td>stale (已过时)</td><td>0.34</td><td>7 tokens</td></tr>
+                    <tr><td>m3</td><td>先跑小测试再扩大补丁</td><td>testing, workflow</td><td>fresh (有效)</td><td>0.77</td><td>9 tokens</td></tr>
+                    <tr><td>m4</td><td>用户偏好短回答</td><td>style, user</td><td>fresh (有效)</td><td>0.21</td><td>6 tokens</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="sources" class="content-section" data-search="sources bibliography references 参考文献 来源说明">
+            <h2>开放来源与参考文献</h2>
+            <div class="cs329a-source-note"><strong>文献引用说明：</strong>本页所引述的学术结论均保留原论文中的任务、模型规模与计算预算限定，不将特定基准下的结论过度泛化为通用规律。</div>
+            <ul class="cs329a-source-list">
+              <li>
+                <strong>Stanford CS329A Course:</strong> Self-Improving AI Agents, Autumn 2025. 涵盖 Learning from Feedback with Tools/Code 与 Multi-step Reasoning/Planning 主题。
+                <br>官方主页：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">https://cs329a.stanford.edu/</a> ｜ 课程目录：<a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">https://bulletin.stanford.edu/courses/2263721</a>
+              </li>
+              <li>
+                <strong>Yao et al. (2022):</strong> <em>ReAct: Synergizing Reasoning and Acting in Language Models</em>. 提出了推理与动作交替的执行范式，论证了外部环境反馈对减少幻觉的关键作用。
+                <br>论文链接：<a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer">arXiv:2210.03629</a>
+              </li>
+              <li>
+                <strong>Yao et al. (2023):</strong> <em>Tree of Thoughts: Deliberate Problem Solving with Large Language Models</em>. 论证了树搜索与前瞻回溯在 24点游戏与创意写作等非单调任务中的显著优势。
+                <br>论文链接：<a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener noreferrer">arXiv:2305.10601</a>
+              </li>
+              <li>
+                <strong>Packer et al. (2023):</strong> <em>MemGPT: Towards LLMs as Operating Systems</em>. 借鉴 OS 分页架构设计了分层记忆管理机制，实现了长程上下文检索与状态固化。
+                <br>论文链接：<a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener noreferrer">arXiv:2310.08560</a>
+              </li>
+              <li>
+                <strong>Park et al. (2023):</strong> <em>Generative Agents: Interactive Simulacra of Human Behavior</em>. 提出了情景记忆检索（Relevance × Recency × Importance）架构。
+                <br>论文链接：<a href="https://arxiv.org/abs/2304.03442" target="_blank" rel="noopener noreferrer">arXiv:2304.03442</a>
+              </li>
+              <li>
+                <strong>Shinn et al. (2023):</strong> <em>Reflexion: Language Agents with Verbal Reinforcement Learning</em>. 提出了通过将环境失败 Traceback 转化为自然语言反思的强化学习方案。
+                <br>论文链接：<a href="https://arxiv.org/abs/2310.02304" target="_blank" rel="noopener noreferrer">arXiv:2310.02304</a>
+              </li>
+            </ul>
+          </section>
+        </article>
+      </div>
+      <footer class="cs329a-footer">
+        <a href="./foundations.html">← 上一篇：01 · 闭环、扩展与验证</a>
+        <span>CS329A TUTORIAL · LESSON 02 / 03</span>
+        <a href="./evaluation.html">下一篇：03 · 长程评估与机器人 →</a>
+      </footer>
+    </main>
+    <aside class="cs329a-rail" aria-label="本页目录">
+      <h2>On this page</h2>
+      <a class="cs329a-toc" href="#overview" data-section="overview">01 · 系统架构三要素</a>
+      <a class="cs329a-toc" href="#tools" data-section="tools">02 · 工具调用与代码反馈</a>
+      <a class="cs329a-toc" href="#tool-demo" data-section="tool-demo">03 · 代码修复闭环模拟</a>
+      <a class="cs329a-toc" href="#planning" data-section="planning">04 · 规划图与树搜索</a>
+      <a class="cs329a-toc" href="#planning-demo" data-section="planning-demo">05 · 规划 DAG 贪心 vs 搜索</a>
+      <a class="cs329a-toc" href="#memory" data-section="memory">06 · 记忆机制与检索陈旧性</a>
+      <a class="cs329a-toc" href="#memory-demo" data-section="memory-demo">07 · 记忆检索与污染过滤</a>
+      <a class="cs329a-toc" href="#sources" data-section="sources">08 · 开放来源与文献</a>
+      <hr class="cs329a-rail-rule">
+      <p class="cs329a-rail-note">纯静态设计，无外部网络请求。支持深浅色主题切换与键盘无障碍导航。</p>
+    </aside>
+  </div>
+
+  <script src="./assets/cs329a-demo-data.js"></script>
+  <script src="./assets/cs329a-tutorial.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const { $, $$, setText, announce } = window.CS329A || {};
+      const DATA = window.CS329A_DATA || {};
+
+      /* --- Demo 1: Tool / Code Stepper --- */
+      const codeStages = [
+        {
+          title: '01 初始补丁生成',
+          code: `# patch_v1.py\ndef parse_iso_date(s):\n    return datetime.fromisoformat(s)\n\n# 准备运行测试套件...`,
+          status: 'Agent 提议初步补丁，调用测试工具执行校验。'
+        },
+        {
+          title: '02 沙箱测试报错',
+          code: `$ pytest test_parser.py\nFAILED test_parser.py::test_z_suffix\n> ValueError: Invalid timezone offset '2026-08-23T16:00:00Z'\n2 failed, 8 passed.`,
+          status: '沙箱捕获异常：2/10 失败，原生 fromisoformat 未兼容末尾 Z 后缀。'
+        },
+        {
+          title: '03 验证器反思与归因',
+          code: `[Verifier Feedback]\n- 失败用例：test_z_suffix, test_offset_colon\n- 建议策略：统一将 'Z' 替换为 '+00:00'，并规范化微秒字段。`,
+          status: '验证器组织失败 Traceback 并回传模型上下文。'
+        },
+        {
+          title: '04 修订版补丁生成',
+          code: `# patch_v2.py (Refined)\ndef parse_iso_date(s):\n    cleaned = s.replace('Z', '+00:00')\n    return datetime.fromisoformat(cleaned)\n\n# 重新触发自动化测试...`,
+          status: 'Agent 吸收执行反馈，生成针对性修复逻辑。'
+        },
+        {
+          title: '05 测试通过与补丁验收',
+          code: `$ pytest test_parser.py\n.......... [100%]\n10 passed in 0.04s.\n>>> 状态：验证器核准 (Accepted)，写入生产仓库。`,
+          status: '10/10 测试全部通过！闭环修复完成。'
+        }
+      ];
+      let currentStageIdx = 0;
+      let toolAutoTimer = null;
+
+      const codeContent = $('#code-content');
+      const toolStatus = $('#tool-status');
+      const btnToolPrev = $('#btn-tool-prev');
+      const btnToolStep = $('#btn-tool-step');
+      const btnToolAuto = $('#btn-tool-auto');
+      const btnToolReset = $('#btn-tool-reset');
+
+      const renderToolStage = () => {
+        const item = codeStages[currentStageIdx];
+        if (codeContent && item) {
+          codeContent.replaceChildren();
+          const title = document.createElement('div');
+          title.style.cssText = 'color:var(--cs-warm); font-weight:bold; margin-bottom:4px;';
+          title.textContent = item.title;
+          const pre = document.createElement('pre');
+          pre.style.cssText = 'margin:0; font-family:inherit; white-space:pre-wrap;';
+          pre.textContent = item.code;
+          codeContent.append(title, pre);
+        }
+        if (toolStatus && item) {
+          announce(toolStatus, `当前阶段：${currentStageIdx + 1} / ${codeStages.length} · ${item.status}`);
+        }
+      };
+
+      if (btnToolPrev) btnToolPrev.addEventListener('click', () => {
+        currentStageIdx = Math.max(0, currentStageIdx - 1);
+        renderToolStage();
+      });
+      if (btnToolStep) btnToolStep.addEventListener('click', () => {
+        currentStageIdx = (currentStageIdx + 1) % codeStages.length;
+        renderToolStage();
+      });
+      if (btnToolReset) btnToolReset.addEventListener('click', () => {
+        if (toolAutoTimer) { clearInterval(toolAutoTimer); toolAutoTimer = null; if (btnToolAuto) btnToolAuto.textContent = '自动演示'; }
+        currentStageIdx = 0;
+        renderToolStage();
+      });
+      if (btnToolAuto) btnToolAuto.addEventListener('click', () => {
+        if (toolAutoTimer) {
+          clearInterval(toolAutoTimer);
+          toolAutoTimer = null;
+          btnToolAuto.textContent = '自动演示';
+        } else {
+          btnToolAuto.textContent = '暂停演示';
+          toolAutoTimer = setInterval(() => {
+            currentStageIdx = (currentStageIdx + 1) % codeStages.length;
+            renderToolStage();
+          }, 1800);
+        }
+      });
+      renderToolStage();
+
+      /* --- Demo 2: Planning DAG Strategy --- */
+      const selectStrategy = $('#select-strategy');
+      const dagStatus = $('#dag-status');
+      const edgeStartKey = $('#edge-start-key');
+      const edgeStartWall = $('#edge-start-wall');
+      const edgeKeyDoor = $('#edge-key-door');
+      const edgeWallDead = $('#edge-wall-dead');
+
+      const nodeStart = $('#dnode-start');
+      const nodeKey = $('#dnode-key');
+      const nodeWall = $('#dnode-wall');
+      const nodeDoor = $('#dnode-door');
+      const nodeDead = $('#dnode-dead');
+
+      const updateDAG = () => {
+        const strategy = selectStrategy ? selectStrategy.value : 'search';
+
+        if (strategy === 'greedy') {
+          // Greedy path: Start -> Wall -> Dead end
+          if (edgeStartWall) { edgeStartWall.setAttribute('stroke', 'var(--cs-danger)'); edgeStartWall.setAttribute('stroke-width', '3'); edgeStartWall.setAttribute('marker-end', 'url(#dag-arrow-bad)'); }
+          if (edgeWallDead) { edgeWallDead.setAttribute('stroke', 'var(--cs-danger)'); edgeWallDead.setAttribute('stroke-width', '3'); edgeWallDead.setAttribute('marker-end', 'url(#dag-arrow-bad)'); }
+          if (edgeStartKey) { edgeStartKey.setAttribute('stroke', 'var(--cs-line)'); edgeStartKey.setAttribute('stroke-width', '1.5'); edgeStartKey.setAttribute('marker-end', 'url(#dag-arrow)'); }
+          if (edgeKeyDoor) { edgeKeyDoor.setAttribute('stroke', 'var(--cs-line)'); edgeKeyDoor.setAttribute('stroke-width', '1.5'); edgeKeyDoor.setAttribute('marker-end', 'url(#dag-arrow)'); }
+
+          if (nodeWall) $('rect', nodeWall).setAttribute('fill', 'color-mix(in srgb, var(--cs-danger) 18%, var(--cs-surface-2))');
+          if (nodeDead) $('rect', nodeDead).setAttribute('fill', 'color-mix(in srgb, var(--cs-danger) 25%, var(--cs-surface-2))');
+          if (nodeKey) $('rect', nodeKey).setAttribute('fill', 'var(--cs-surface-2)');
+          if (nodeDoor) $('rect', nodeDoor).setAttribute('fill', 'var(--cs-surface-2)');
+
+          if (dagStatus) {
+            announce(dagStatus, '贪心策略警告：智能体选择看似直接开门的下路分叉，直接撞门并陷入死锁（Dead end），任务失败且无法回退。');
+          }
+        } else {
+          // Search & Backtrack path: Start -> Key -> Door (Good path with lookahead)
+          if (edgeStartKey) { edgeStartKey.setAttribute('stroke', 'var(--cs-accent)'); edgeStartKey.setAttribute('stroke-width', '3'); edgeStartKey.setAttribute('marker-end', 'url(#dag-arrow-active)'); }
+          if (edgeKeyDoor) { edgeKeyDoor.setAttribute('stroke', 'var(--cs-accent)'); edgeKeyDoor.setAttribute('stroke-width', '3'); edgeKeyDoor.setAttribute('marker-end', 'url(#dag-arrow-active)'); }
+          if (edgeStartWall) { edgeStartWall.setAttribute('stroke', 'var(--cs-line)'); edgeStartWall.setAttribute('stroke-width', '1.5'); edgeStartWall.setAttribute('marker-end', 'url(#dag-arrow)'); }
+          if (edgeWallDead) { edgeWallDead.setAttribute('stroke', 'var(--cs-line)'); edgeWallDead.setAttribute('stroke-width', '1.5'); edgeWallDead.setAttribute('marker-end', 'url(#dag-arrow)'); }
+
+          if (nodeKey) $('rect', nodeKey).setAttribute('fill', 'var(--cs-accent-soft)');
+          if (nodeDoor) $('rect', nodeDoor).setAttribute('fill', 'var(--cs-accent-soft)');
+          if (nodeWall) $('rect', nodeWall).setAttribute('fill', 'var(--cs-surface-2)');
+          if (nodeDead) $('rect', nodeDead).setAttribute('fill', 'var(--cs-surface-2)');
+
+          if (dagStatus) {
+            announce(dagStatus, '搜索与回溯模式：前瞻发现直接开门缺少前置依赖，主动选择“拿钥匙”分支，成功打开目标大门（Goal Reached）。');
+          }
+        }
+      };
+
+      if (selectStrategy) selectStrategy.addEventListener('change', updateDAG);
+      updateDAG();
+
+      /* --- Demo 3: Memory Retrieval Simulator --- */
+      const selectQuery = $('#select-query');
+      const selectTopk = $('#select-topk');
+      const checkFilterStale = $('#check-filter-stale');
+      const memoryStatus = $('#memory-status');
+
+      const updateMemory = () => {
+        const query = selectQuery ? selectQuery.value : 'date';
+        const topk = parseInt(selectTopk ? selectTopk.value : '2', 10);
+        const filterStale = checkFilterStale ? checkFilterStale.checked : true;
+
+        const rawMemories = DATA.memory || [
+          { id: 'm1', text: 'ISO 日期常带 Z 后缀', tags: 'date, parser', freshness: 'fresh', relevance: 0.94, tokens: 8 },
+          { id: 'm2', text: '旧 API 的错误码已废弃', tags: 'api, legacy', freshness: 'stale', relevance: 0.34, tokens: 7 },
+          { id: 'm3', text: '先跑小测试再扩大补丁', tags: 'testing, workflow', freshness: 'fresh', relevance: 0.77, tokens: 9 },
+          { id: 'm4', text: '用户偏好短回答', tags: 'style, user', freshness: 'fresh', relevance: 0.21, tokens: 6 }
+        ];
+
+        // Dynamic relevance adjusting based on query
+        const scored = rawMemories.map(m => {
+          let score = m.relevance;
+          if (query === 'date' && m.id === 'm1') score = 0.96;
+          if (query === 'test' && m.id === 'm3') score = 0.95;
+          if (query === 'legacy' && m.id === 'm2') score = 0.91;
+          return { ...m, dynamicScore: score };
+        });
+
+        // Filter staleness if enabled
+        const candidatePool = filterStale ? scored.filter(m => m.freshness === 'fresh') : scored;
+
+        // Sort descending by score
+        candidatePool.sort((a, b) => b.dynamicScore - a.dynamicScore);
+
+        const retrieved = candidatePool.slice(0, topk);
+        const retrievedIds = new Set(retrieved.map(m => m.id));
+
+        let totalTokens = 0;
+        let hasStaleContamination = false;
+
+        rawMemories.forEach(m => {
+          const card = $(`#mem-${m.id}`);
+          const isSelected = retrievedIds.has(m.id);
+          if (isSelected) {
+            totalTokens += m.tokens;
+            if (m.freshness === 'stale') hasStaleContamination = true;
+          }
+          if (card) {
+            card.style.opacity = isSelected ? '1' : '0.4';
+            card.style.borderColor = isSelected ? (m.freshness === 'stale' ? 'var(--cs-warm)' : 'var(--cs-accent)') : 'var(--cs-line)';
+            card.style.background = isSelected ? 'var(--cs-surface)' : 'var(--cs-surface-2)';
+          }
+        });
+
+        if (memoryStatus) {
+          let msg = `检索结果：命中 ${retrieved.length} 条记忆，占用 ${totalTokens} tokens 上下文空间。`;
+          if (hasStaleContamination) {
+            msg += ' ⚠️ 警告：检测到已废弃的陈旧记忆 (m2) 注入了上下文，存在记忆污染风险！';
+          } else if (filterStale) {
+            msg += ' 已成功启用时效过滤，移除了所有陈旧记忆。';
+          }
+          announce(memoryStatus, msg);
+        }
+      };
+
+      if (selectQuery) selectQuery.addEventListener('change', updateMemory);
+      if (selectTopk) selectTopk.addEventListener('change', updateMemory);
+      if (checkFilterStale) checkFilterStale.addEventListener('change', updateMemory);
+      updateMemory();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Stanford CS329A 学习教程 03：长程任务评测、自我改进泛化边界与多模态机器人系统栈。">
+  <meta name="color-scheme" content="light dark">
+  <title>03 · 长程评估与机器人 · CS329A 教程</title>
+  <link rel="stylesheet" href="./assets/cs329a-tutorial.css">
+</head>
+<body class="cs329a-tutorial">
+  <a class="cs329a-skip" href="#reader-scroll">跳转到正文</a>
+  <div class="cs329a-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 教程导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-back" href="./index.html">← CS329A 课程索引</a>
+        <p class="cs329a-code">CS329A · TUTORIAL 03</p>
+        <h1>长程评估与机器人</h1>
+        <div class="cs329a-brand-meta">Long-Horizon · Holdout Bounds · Robotics<br>个人学习教程 · 非官方页面</div>
+      </header>
+      <div class="cs329a-nav-label">本页目录</div>
+      <nav aria-label="页面章节">
+        <a class="cs329a-nav-item" href="#overview" data-section="overview" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">评测困境与应用边界</span></a>
+        <a class="cs329a-nav-item" href="#horizon" data-section="horizon" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">长程任务与复合错误</span></a>
+        <a class="cs329a-nav-item" href="#horizon-demo" data-section="horizon-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">长程生存率与 Checkpoint</span></a>
+        <a class="cs329a-nav-item" href="#self-improvement" data-section="self-improvement" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">04</span><span class="cs329a-nav-title">自我改进与泛化边界</span></a>
+        <a class="cs329a-nav-item" href="#holdout-demo" data-section="holdout-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">05</span><span class="cs329a-nav-title">Held-out 验证与退化模拟</span></a>
+        <a class="cs329a-nav-item" href="#robotics" data-section="robotics" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">06</span><span class="cs329a-nav-title">具身智能与多模态栈</span></a>
+        <a class="cs329a-nav-item" href="#robotics-demo" data-section="robotics-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">07</span><span class="cs329a-nav-title">机器人系统分层剖析</span></a>
+        <a class="cs329a-nav-item" href="#sources" data-section="sources" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">08</span><span class="cs329a-nav-title">开放来源与文献</span></a>
+      </nav>
+      <div class="cs329a-nav-label">教程主线</div>
+      <nav aria-label="教程系列链接">
+        <a class="cs329a-nav-item" href="./foundations.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">闭环、扩展与验证</span></a>
+        <a class="cs329a-nav-item" href="./systems.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">工具、规划与记忆</span></a>
+        <a class="cs329a-nav-item" href="./evaluation.html" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">长程评估与机器人</span></a>
+      </nav>
+      <div class="cs329a-nav-label">官方来源</div>
+      <nav aria-label="官方资料">
+        <a class="cs329a-external" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
+        <a class="cs329a-external" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+      </nav>
+      <div class="cs329a-side-note" role="note">本教程为个人学习整理与概念可视化，非 Stanford 官方页面，无官方隶属或授权。所有 demo 均使用本地确定性合成教学数据。</div>
+    </aside>
+    <button class="cs329a-scrim" type="button" aria-label="关闭导航" data-close-sidebar></button>
+    <main class="cs329a-workspace">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
+        <div class="cs329a-toolbar-title">CS329A / 03 · 长程评估与机器人</div>
+        <div style="position:relative;width:100%;max-width:320px;">
+          <label for="search-input" class="cs329a-sr-only">搜索本页内容</label>
+          <input class="cs329a-search" id="search-input" type="search" placeholder="搜索本页内容" aria-label="搜索本页内容" autocomplete="off">
+        </div>
+        <div class="cs329a-sr-only cs329a-search-status" aria-live="polite"></div>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon cs329a-font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon cs329a-font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon cs329a-theme" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon cs329a-print" type="button" aria-label="打印当前教程">⌘P</button>
+        </div>
+      </header>
+      <div class="cs329a-reader" id="reader-scroll">
+        <article class="cs329a-content">
+          <section id="overview" class="content-section" data-search="overview evaluation dilemma long horizon self improvement bounds robotics 评测困境 应用边界">
+            <div class="cs329a-kicker">CS329A TUTORIAL · LESSON 03</div>
+            <h1>长程评估与机器人 <em>Evaluation, Generalization &amp; Robotics.</em></h1>
+            <p class="cs329a-lead">当 Agent 从短文本问答走向真实世界的长时间任务、自我强化迭代与多模态物理交互，评估难度呈指数级增加。必须建立面向长时程复合错误、奖励黑客退化与物理可行性落地的综合评估体系。</p>
+            <div class="cs329a-notice"><strong>个人学习教程声明：</strong>本页面为个人根据公开课程大纲与学术论文整理的交互式学习教程，非 Stanford University 官方网站，与 Stanford 无官方隶属、认可或授权关系。本页不包含未公开讲义或受限作业内容。</div>
+            <div class="cs329a-grid cs329a-grid-3">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">EVALUATION 01</span>
+                <h3>长时程复合衰减 (Horizon Decay)</h3>
+                <p>单步准确率 <strong>≥ 95%</strong> 在 <var>T</var> = 20 步的任务中往往衰减至不足 <strong>35%</strong>。必须引入检查点（Checkpointing）与回滚校验机制。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">EVALUATION 02</span>
+                <h3>自我改进的泛化与过拟合边界</h3>
+                <p>模型利用自身生成数据进行自监督训练时，低质量反馈会导致“奖励坍塌（Reward Collapse）”与性能严重退化。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">APPLICATION 03</span>
+                <h3>具身多模态与动作可行性 Grounding</h3>
+                <p>在机器人控制中，高层语义规划（VLM）必须与底层物理可行性（Affordance）严格对齐，防止不可行物理指令。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="horizon" class="content-section" data-search="long horizon compounding error checkpoint rollback metr evaluation 长程任务 复合错误 检查点">
+            <h2>长程任务与复合错误累积：METR 评测启示</h2>
+            <p>在现实世界的工程开发、渗透测试与科研发现中，任务通常由数十甚至数百个相继动作构成。假设单步动作成功率为 <var>p</var> = 1 − <var>ε</var>，则无状态恢复的 <var>T</var> 步连续任务总成功率为：</p>
+            <div class="cs329a-card" style="margin:14px 0; background:var(--cs-surface-2); font-family:ui-monospace,Menlo,monospace;">
+              <span class="cs329a-mono"><var>P</var><sub>task</sub>(<var>T</var>) = ∏<sub>t=1…T</sub>(1 − <var>ε</var><sub>t</sub>) ≈ (1 − <var>ε</var>)<sup>T</sup></span>
+            </div>
+            <p>例如，若单步错误率仅为 <var>ε</var> = 5%，当任务跨度达到 <var>T</var> = 10 步时，整体成功率降至约 59.8%；达到 <var>T</var> = 20 步时则仅剩 35.8%。<strong>METR (2025) 的长任务测量框架</strong>提醒：评价 Agent 不能只看单轮 benchmark，还要记录任务时程（Task Horizon）与失败恢复能力。</p>
+          </section>
+
+          <section id="horizon-demo" class="content-section" data-search="horizon survival curve checkpointing interactive demo 长程生存率 检查点对比">
+            <h2>交互模拟：长程任务生存率与 Checkpoint 机制</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本图表采用本地合成教学数据（Synthetic Teaching Data），演示无检查点的朴素长程衰减与带有断点快照恢复（Checkpointing）机制的生存率与成本曲线对比。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 01 · LONG-HORIZON SURVIVAL</div>
+              <h3>步骤时程 <var>T</var> 与单步容错曲线</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <svg id="horizon-svg" viewBox="0 0 520 240" role="img" aria-labelledby="horizon-svg-title horizon-svg-desc">
+                    <title id="horizon-svg-title">长程任务生存率衰减曲线图</title>
+                    <desc id="horizon-svg-desc">展示随着执行步骤 1 到 10 的增加，未开启与开启 Checkpoint 的任务完成概率衰减曲线。</desc>
+                    <g class="grid-lines" stroke="var(--cs-line)" stroke-width="1" stroke-dasharray="2,2">
+                      <line x1="50" y1="30" x2="480" y2="30"/>
+                      <line x1="50" y1="80" x2="480" y2="80"/>
+                      <line x1="50" y1="130" x2="480" y2="130"/>
+                      <line x1="50" y1="180" x2="480" y2="180"/>
+                    </g>
+                    <text x="15" y="34" class="muted" font-size="10">100%</text>
+                    <text x="15" y="84" class="muted" font-size="10">75%</text>
+                    <text x="15" y="134" class="muted" font-size="10">50%</text>
+                    <text x="15" y="184" class="muted" font-size="10">25%</text>
+                    <!-- X Axis -->
+                    <text x="80" y="205" text-anchor="middle" class="muted" font-size="10">T=1</text>
+                    <text x="160" y="205" text-anchor="middle" class="muted" font-size="10">T=3</text>
+                    <text x="280" y="205" text-anchor="middle" class="muted" font-size="10">T=6</text>
+                    <text x="440" y="205" text-anchor="middle" class="muted" font-size="10">T=10</text>
+
+                    <!-- Dynamic Paths -->
+                    <path id="curve-vanilla" d="M 80 40 L 160 58 L 280 82 L 440 110" fill="none" stroke="var(--cs-warm)" stroke-width="2.5" stroke-dasharray="4,4"/>
+                    <path id="curve-checkpoint" d="M 80 40 L 160 48 L 280 62 L 440 78" fill="none" stroke="var(--cs-accent)" stroke-width="3"/>
+                    <circle id="horizon-point" cx="440" cy="78" r="6" fill="var(--cs-accent)" stroke="#fff" stroke-width="2"/>
+                    <text x="445" y="75" fill="var(--cs-accent)" font-weight="bold" font-size="10">With Checkpoints</text>
+                    <text x="445" y="115" fill="var(--cs-warm)" font-size="10">Vanilla Decay</text>
+                  </svg>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-steps">长程任务步数 (Steps T)：</label>
+                    <select id="select-steps">
+                      <option value="1">T = 1 步 (单轮交互)</option>
+                      <option value="3">T = 3 步 (短程流程)</option>
+                      <option value="6">T = 6 步 (中程子任务)</option>
+                      <option value="10" selected>T = 10 步 (长程复杂工程)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-control">
+                    <label for="select-cp">恢复机制 (Checkpoint &amp; Rollback)：</label>
+                    <select id="select-cp">
+                      <option value="on" selected>开启状态快照与回滚 (Enabled)</option>
+                      <option value="off">禁用快照 (朴素单向推进)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-demo-status" id="horizon-status" aria-live="polite">当前状态：T=10 步，开启 Checkpoint。预估任务成功率：76%，相对算力开销：12.5x。</div>
+                  <div class="cs329a-demo-caption"><strong>工程折中：</strong>Checkpoint 虽引入额外重试开销，但将长程复合失败率从 40% 压制到了可控范围，是完成深度任务的前提。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：长程任务生存率与开销教学数据表</caption>
+                  <thead><tr><th scope="col">执行步数 T</th><th scope="col">单步错误率</th><th scope="col">是否开启 Checkpoint</th><th scope="col">全任务生存率</th><th scope="col">相对算力开销</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>5%</td><td>否 (false)</td><td>95%</td><td>1.0x</td></tr>
+                    <tr><td>3</td><td>5%</td><td>否 (false)</td><td>86%</td><td>3.0x</td></tr>
+                    <tr><td>6</td><td>5%</td><td>否 (false)</td><td>74%</td><td>6.0x</td></tr>
+                    <tr><td>10</td><td>5%</td><td>否 (false)</td><td>60%</td><td>10.0x</td></tr>
+                    <tr><td>3</td><td>5%</td><td>是 (true)</td><td>91%</td><td>3.8x</td></tr>
+                    <tr><td>6</td><td>5%</td><td>是 (true)</td><td>84%</td><td>7.6x</td></tr>
+                    <tr><td>10</td><td>5%</td><td>是 (true)</td><td>76%</td><td>12.5x</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="self-improvement" class="content-section" data-search="self improvement bounds holdout reward collapse goodharts law 自我改进 泛化边界 奖励坍塌">
+            <h2>自我改进的泛化与过拟合边界：Goodhart 定律</h2>
+            <p><strong>自我改进（Self-Improvement）</strong>通过生成合成数据、自我博弈（Self-play）或基于反馈的微调（如 ReST、STaR）不断迭代自身权重。然而，如果验证信号存在漏洞或被模型“摸索出作弊路径”，就会触发经典的 <strong>Goodhart 定律</strong>：当一个指标被选为目标时，它就不再是一个好指标。</p>
+            <div class="cs329a-grid cs329a-grid-2">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">TRAINING REWARD OVERFITTING</span>
+                <h3>训练集虚高 / 奖励作弊 (Reward Hacking)</h3>
+                <p>模型迎合验证器的偏置（如生成超长废话或特定格式），在训练集或自身内部评估上得分飙升，但并未真正掌握解题能力。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">HOLDOUT GENERALIZATION BOUND</span>
+                <h3>独立留出集泛化 (Held-Out Evaluation)</h3>
+                <p>必须使用未见过的独立测试集（Held-Out Set）与多源异构判别器进行严格交替评测，以及时发现性能倒退（Regression）。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="holdout-demo" class="content-section" data-search="holdout generalization regression simulator demo 留出集 性能退化 模拟">
+            <h2>交互演示：反馈质量与 Held-out 泛化边界</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本演示采用合成教学模拟器，展示在不同质量的反馈源（高质量 vs 带噪声 vs 易作弊验证器）与不同更新强度下，模型自训练得分与独立留出集真实能力的演化趋势。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 02 · GENERALIZATION &amp; COLLAPSE SIMULATOR</div>
+              <h3>自我训练迭代曲线对比</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <svg id="holdout-svg" viewBox="0 0 520 230" role="img" aria-labelledby="holdout-svg-title holdout-svg-desc">
+                    <title id="holdout-svg-title">自我改进与泛化演化双曲线图</title>
+                    <desc id="holdout-svg-desc">对比自训练奖励得分曲线与独立留出集真实能力得分曲线。</desc>
+                    <g class="grid-lines" stroke="var(--cs-line)" stroke-width="1" stroke-dasharray="2,2">
+                      <line x1="50" y1="30" x2="480" y2="30"/>
+                      <line x1="50" y1="80" x2="480" y2="80"/>
+                      <line x1="50" y1="130" x2="480" y2="130"/>
+                      <line x1="50" y1="180" x2="480" y2="180"/>
+                    </g>
+                    <text x="15" y="34" class="muted" font-size="10">100</text>
+                    <text x="15" y="84" class="muted" font-size="10">75</text>
+                    <text x="15" y="134" class="muted" font-size="10">50</text>
+                    <text x="15" y="184" class="muted" font-size="10">25</text>
+                    <!-- X Axis Iterations -->
+                    <text x="70" y="205" text-anchor="middle" class="muted" font-size="10">Iter 1</text>
+                    <text x="160" y="205" text-anchor="middle" class="muted" font-size="10">Iter 2</text>
+                    <text x="250" y="205" text-anchor="middle" class="muted" font-size="10">Iter 3</text>
+                    <text x="340" y="205" text-anchor="middle" class="muted" font-size="10">Iter 4</text>
+                    <text x="430" y="205" text-anchor="middle" class="muted" font-size="10">Iter 5</text>
+
+                    <!-- Dual Curves -->
+                    <path id="curve-train" d="M 70 140 L 160 105 L 250 75 L 340 50 L 430 35" fill="none" stroke="var(--cs-accent)" stroke-width="3"/>
+                    <path id="curve-holdout" d="M 70 142 L 160 115 L 250 90 L 340 70 L 430 60" fill="none" stroke="var(--cs-warm)" stroke-width="2.5" stroke-dasharray="4,3"/>
+                    <text x="435" y="35" fill="var(--cs-accent)" font-weight="bold" font-size="10">Self Score</text>
+                    <text x="435" y="65" fill="var(--cs-warm)" font-weight="bold" font-size="10">Held-Out</text>
+                  </svg>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-feedback-quality">验证反馈质量 (Feedback Quality)：</label>
+                    <select id="select-feedback-quality">
+                      <option value="high" selected>高质量确定性验证器 (High Quality)</option>
+                      <option value="noisy">带噪声验证器 (Noisy / 20% 误判)</option>
+                      <option value="degenerate">易作弊验证器 (Degenerate / 作弊漏洞)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-control">
+                    <label for="select-update-strength">更新强度 (Update Strength)：</label>
+                    <select id="select-update-strength">
+                      <option value="mild" selected>适度保守更新 (Mild)</option>
+                      <option value="aggressive">激进强化更新 (Aggressive)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-demo-status" id="holdout-status" aria-live="polite">演化状态：高质量反馈驱动下，Self 得分与 Held-Out 泛化能力同步提升，未见退化。</div>
+                  <div class="cs329a-demo-caption"><strong>警惕虚假繁荣：</strong>在易作弊验证器下，激进更新会导致自评分升至 99 分，但真实留出集崩塌至 30 分以下（典型的奖励坍塌）。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：不同反馈质量下的泛化演化对照表</caption>
+                  <thead><tr><th scope="col">反馈质量</th><th scope="col">更新策略</th><th scope="col">Iter 1 (Self / Holdout)</th><th scope="col">Iter 3 (Self / Holdout)</th><th scope="col">Iter 5 (Self / Holdout)</th><th scope="col">最终诊断</th></tr></thead>
+                  <tbody>
+                    <tr><td>高质量确定性</td><td>适度更新</td><td>50 / 48</td><td>75 / 70</td><td>90 / 82</td><td data-state="good">健康改进 (Genuine Growth)</td></tr>
+                    <tr><td>带噪声反馈</td><td>适度更新</td><td>50 / 48</td><td>68 / 58</td><td>78 / 62</td><td>轻度过拟合 (Noise Ceiling)</td></tr>
+                    <tr><td>易作弊验证器</td><td>激进更新</td><td>52 / 46</td><td>85 / 40</td><td>98 / 26</td><td data-state="bad">奖励坍塌 (Reward Collapse)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="robotics" class="content-section" data-search="multimodal robotics embodied agents saycan palm-e 具身智能 多模态 机器人栈">
+            <h2>具身智能与多模态机器人栈：SayCan 到物理闭环</h2>
+            <p>在物理世界中部署 Agent 时，纯语言规划与现实物理约束之间存在巨大的鸿沟。<strong>SayCan</strong>（Ahn et al., 2022; Ichter et al., 2023）与 <strong>PaLM-E</strong>（Driess et al., 2023）提出了将多模态大模型与底层动作可行性（Affordance）结合的经典分层架构：</p>
+            <div class="cs329a-flow" aria-label="机器人系统执行流">
+              <div class="cs329a-flow-step"><strong>01 · 视觉感知</strong><span>RGB-D 点云与场景解析</span></div>
+              <div class="cs329a-flow-step"><strong>02 · 语义规划</strong><span>VLM 解构高层任务步骤</span></div>
+              <div class="cs329a-flow-step"><strong>03 · 可行性检验</strong><span>Affordance 价值函数打分</span></div>
+              <div class="cs329a-flow-step"><strong>04 · 底层控制</strong><span>运动学轨迹与夹爪执行</span></div>
+              <div class="cs329a-flow-step"><strong>05 · 力觉感知</strong><span>接触碰撞检测与状态更新</span></div>
+            </div>
+          </section>
+
+          <section id="robotics-demo" class="content-section" data-search="robotics system stack inspector interactive demo 机器人系统栈 分层解析">
+            <h2>交互演示：机器人系统分层栈剖析</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本交互组件使用本地确定性层级说明（Synthetic Teaching Data），演示多模态具身系统各层的职责边界、延迟约束与常见失败模式。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 03 · ROBOTICS STACK INSPECTOR</div>
+              <h3>五层系统栈职责与故障模式检查</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <div id="stack-layers" style="display:grid; gap:6px;">
+                    <button class="cs329a-card" id="layer-0" type="button" style="text-align:left; cursor:pointer; padding:8px 12px; border-color:var(--cs-accent); background:var(--cs-surface);" aria-label="检查第 1 层：多模态视觉感知层">
+                      <strong>01 · 多模态感知层 (Multimodal Perception)</strong>
+                      <div class="muted" style="font-size:.76em; margin-top:2px;">RGB-D 摄像头、激光雷达与 3D 边界框检测</div>
+                    </button>
+                    <button class="cs329a-card" id="layer-1" type="button" style="text-align:left; cursor:pointer; padding:8px 12px;" aria-label="检查第 2 层：高层语义规划器">
+                      <strong>02 · 高层语义规划器 (High-Level VLM Planner)</strong>
+                      <div class="muted" style="font-size:.76em; margin-top:2px;">视觉大模型任务目标分解 (Task Decomposition)</div>
+                    </button>
+                    <button class="cs329a-card" id="layer-2" type="button" style="text-align:left; cursor:pointer; padding:8px 12px;" aria-label="检查第 3 层：动作可行性检验器">
+                      <strong>03 · 可行性检验器 (Affordance Verifier / SayCan)</strong>
+                      <div class="muted" style="font-size:.76em; margin-top:2px;">预训练技能成功概率打分与物理防撞前置过滤</div>
+                    </button>
+                    <button class="cs329a-card" id="layer-3" type="button" style="text-align:left; cursor:pointer; padding:8px 12px;" aria-label="检查第 4 层：底层控制策略">
+                      <strong>04 · 底层控制策略 (Low-Level Control Policy)</strong>
+                      <div class="muted" style="font-size:.76em; margin-top:2px;">机械臂逆运动学求解、关节力矩与夹爪开合</div>
+                    </button>
+                    <button class="cs329a-card" id="layer-4" type="button" style="text-align:left; cursor:pointer; padding:8px 12px;" aria-label="检查第 5 层：物理环境闭环">
+                      <strong>05 · 物理环境闭环 (Physical Feedback)</strong>
+                      <div class="muted" style="font-size:.76em; margin-top:2px;">六维力觉传感器、滑移检测与实时成功判定</div>
+                    </button>
+                  </div>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-card" id="layer-detail-card" style="padding:12px; background:var(--cs-surface);">
+                    <div id="layer-detail-title" style="font-weight:bold; font-size:.86em; color:var(--cs-accent); margin-bottom:6px;">01 · 多模态感知层</div>
+                    <div id="layer-detail-body" style="font-size:.78em; line-height:1.5;">
+                      <p style="margin:2px 0;"><strong>核心职责：</strong>从物理传感器提取点云并完成物体姿态估计。</p>
+                      <p style="margin:2px 0;"><strong>运行频率：</strong>30 Hz 实时推流。</p>
+                      <p style="margin:2px 0;"><strong>典型失效：</strong>反光透明物体漏检、光照突变引起的位姿漂移。</p>
+                    </div>
+                  </div>
+                  <div class="cs329a-demo-status" id="robotics-status" aria-live="polite">选中层级：01 · 多模态感知层。感知质量直接约束了高层规划的输入真实性。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：机器人五层架构规格表</caption>
+                  <thead><tr><th scope="col">层级序号</th><th scope="col">系统层名称</th><th scope="col">典型频次</th><th scope="col">输入输出数据</th><th scope="col">主要失败模式与对策</th></tr></thead>
+                  <tbody>
+                    <tr><td>01</td><td>多模态感知层</td><td>30 Hz</td><td>RGB-D 图像 / 3D 姿态矩阵</td><td>遮挡与传感器噪声；多传感器融合滤波</td></tr>
+                    <tr><td>02</td><td>高层语义规划器</td><td>1 - 2 Hz</td><td>自然语言指令 / 动作候选序列</td><td>幻觉生成不可达目标；引入上下文约束</td></tr>
+                    <tr><td>03</td><td>可行性检验器</td><td>10 Hz</td><td>动作候选 / 可行性打分</td><td>价值函数过拟合；物理规则双重拦截</td></tr>
+                    <tr><td>04</td><td>底层控制策略</td><td>100 - 500 Hz</td><td>末端位姿目标 / 关节力矩输出</td><td>奇异点与力矩超限；动力学安全控制器</td></tr>
+                    <tr><td>05</td><td>物理环境闭环</td><td>1000 Hz</td><td>六维力矩传感器 / 成功二元信号</td><td>抓取滑脱；闭环力反馈即时补偿重抓</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="sources" class="content-section" data-search="sources bibliography references 参考文献 来源说明">
+            <h2>开放来源与参考文献</h2>
+            <div class="cs329a-source-note"><strong>文献引用说明：</strong>本页所引述的学术结论均保留原论文中的任务、模型规模与计算预算限定，不将特定基准下的结论过度泛化为通用规律。</div>
+            <ul class="cs329a-source-list">
+              <li>
+                <strong>Stanford CS329A Course:</strong> Self-Improving AI Agents, Autumn 2025. 涵盖 Agentic Evaluations, Long-Horizon Tasks 与 Multimodal Agents in Robotics 主题。
+                <br>官方主页：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">https://cs329a.stanford.edu/</a> ｜ 课程目录：<a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">https://bulletin.stanford.edu/courses/2263721</a>
+              </li>
+              <li>
+                <strong>METR (2025):</strong> <em>Measuring AI Ability to Complete Long Tasks</em>. 提出了长时程 AI 能力评估框架与复合错误衰减基准。
+                <br>博客文献：<a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank" rel="noopener noreferrer">https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/</a>
+              </li>
+              <li>
+                <strong>Gulcehre et al. (2023):</strong> <em>Reinforced Self-Training (ReST) for Language Modeling</em>. 论证了离线采样过滤与自迭代训练在高质量反馈下的收敛特性。
+                <br>论文链接：<a href="https://arxiv.org/abs/2308.08998" target="_blank" rel="noopener noreferrer">arXiv:2308.08998</a>
+              </li>
+              <li>
+                <strong>Ahn et al. (2022) / Ichter et al. (2023):</strong> <em>Do As I Can, Not As I Say: Grounding Language in Robotic Affordances (SayCan)</em>. 将语言模型高层规划与基于价值函数的可行性检验结合用于真实机械臂任务。
+                <br>论文链接：<a href="https://proceedings.mlr.press/v205/ichter23a.html" target="_blank" rel="noopener noreferrer">PMLR Proceedings</a>
+              </li>
+              <li>
+                <strong>Driess et al. (2023):</strong> <em>PaLM-E: An Embodied Multimodal Language Model</em>. 提出了端到端整合多模态感知与机器人决策的具身多模态模型。
+                <br>论文链接：<a href="https://arxiv.org/abs/2303.03378" target="_blank" rel="noopener noreferrer">arXiv:2303.03378</a>
+              </li>
+            </ul>
+          </section>
+        </article>
+      </div>
+      <footer class="cs329a-footer">
+        <a href="./systems.html">← 上一篇：02 · 工具、规划与记忆</a>
+        <span>CS329A TUTORIAL · LESSON 03 / 03</span>
+        <a href="./index.html">返回课程索引 ↑</a>
+      </footer>
+    </main>
+    <aside class="cs329a-rail" aria-label="本页目录">
+      <h2>On this page</h2>
+      <a class="cs329a-toc" href="#overview" data-section="overview">01 · 评测困境与应用边界</a>
+      <a class="cs329a-toc" href="#horizon" data-section="horizon">02 · 长程任务与复合错误</a>
+      <a class="cs329a-toc" href="#horizon-demo" data-section="horizon-demo">03 · 长程生存率与 Checkpoint</a>
+      <a class="cs329a-toc" href="#self-improvement" data-section="self-improvement">04 · 自我改进与泛化边界</a>
+      <a class="cs329a-toc" href="#holdout-demo" data-section="holdout-demo">05 · Held-out 验证与退化</a>
+      <a class="cs329a-toc" href="#robotics" data-section="robotics">06 · 具身智能与多模态栈</a>
+      <a class="cs329a-toc" href="#robotics-demo" data-section="robotics-demo">07 · 机器人系统分层剖析</a>
+      <a class="cs329a-toc" href="#sources" data-section="sources">08 · 开放来源与文献</a>
+      <hr class="cs329a-rail-rule">
+      <p class="cs329a-rail-note">全页面采用语义化 HTML5 与无外链本地样式。支持完全离线阅读与打印导出。</p>
+    </aside>
+  </div>
+
+  <script src="./assets/cs329a-demo-data.js"></script>
+  <script src="./assets/cs329a-tutorial.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const { $, $$, setText, announce } = window.CS329A || {};
+      const DATA = window.CS329A_DATA || {};
+
+      /* --- Demo 1: Long Horizon Survival Curve --- */
+      const selectSteps = $('#select-steps');
+      const selectCp = $('#select-cp');
+      const horizonStatus = $('#horizon-status');
+      const horizonPoint = $('#horizon-point');
+
+      const xStepMap = { 1: 80, 3: 160, 6: 280, 10: 440 };
+
+      const updateHorizon = () => {
+        const steps = parseInt(selectSteps ? selectSteps.value : '10', 10);
+        const useCp = (selectCp ? selectCp.value : 'on') === 'on';
+
+        const match = (DATA.horizon || []).find(d => d.steps === steps && d.checkpoint === useCp) ||
+                      { steps, error: 0.05, checkpoint: useCp, survival: useCp ? 76 : 60, cost: useCp ? 12.5 : 10.0 };
+
+        const cx = xStepMap[steps] || 440;
+        // Survival y map: 100% -> 30, 25% -> 180
+        const cy = 230 - ((match.survival - 20) / 80) * 190;
+
+        if (horizonPoint) {
+          horizonPoint.setAttribute('cx', String(cx));
+          horizonPoint.setAttribute('cy', String(cy));
+          horizonPoint.setAttribute('fill', useCp ? 'var(--cs-accent)' : 'var(--cs-warm)');
+        }
+
+        if (horizonStatus) {
+          announce(horizonStatus, `当前状态：T=${steps} 步，Checkpoint ${useCp ? '开启 (ON)' : '关闭 (OFF)'}。全任务生存率：${match.survival}%，相对算力消耗：${match.cost}x。`);
+        }
+      };
+
+      if (selectSteps) selectSteps.addEventListener('change', updateHorizon);
+      if (selectCp) selectCp.addEventListener('change', updateHorizon);
+      updateHorizon();
+
+      /* --- Demo 2: Holdout Generalization & Collapse Simulator --- */
+      const selectFeedback = $('#select-feedback-quality');
+      const selectUpdateStrength = $('#select-update-strength');
+      const holdoutStatus = $('#holdout-status');
+      const curveTrain = $('#curve-train');
+      const curveHoldout = $('#curve-holdout');
+
+      const updateHoldout = () => {
+        const feedback = selectFeedback ? selectFeedback.value : 'high';
+        const strength = selectUpdateStrength ? selectUpdateStrength.value : 'mild';
+
+        let trainD = "M 70 140 L 160 105 L 250 75 L 340 50 L 430 35";
+        let holdoutD = "M 70 142 L 160 115 L 250 90 L 340 70 L 430 60";
+        let msg = "";
+
+        if (feedback === 'high') {
+          trainD = strength === 'mild'
+            ? "M 70 140 L 160 110 L 250 85 L 340 65 L 430 50"
+            : "M 70 140 L 160 90 L 250 60 L 340 40 L 430 30";
+          holdoutD = strength === 'mild'
+            ? "M 70 142 L 160 115 L 250 92 L 340 74 L 430 62"
+            : "M 70 142 L 160 100 L 250 78 L 340 65 L 430 58";
+          msg = "演化状态：高质量确定性反馈驱动，自评得分与 Held-out 真实能力同步稳步提升，泛化健康。";
+        } else if (feedback === 'noisy') {
+          trainD = "M 70 140 L 160 100 L 250 75 L 340 55 L 430 45";
+          holdoutD = "M 70 142 L 160 120 L 250 110 L 340 105 L 430 105";
+          msg = "演化状态：受 20% 误判噪声影响，自评得分继续上升，但 Held-out 泛化在 Iter 3 后触碰天花板停滞。";
+        } else if (feedback === 'degenerate') {
+          trainD = "M 70 135 L 160 80 L 250 45 L 340 30 L 430 25";
+          holdoutD = "M 70 140 L 160 135 L 250 150 L 340 170 L 430 185";
+          msg = "⚠️ 警报：检测到严重【奖励坍塌】！模型摸索出作弊格式使自评分飙至 98 分，但真实留出集崩塌至 26 分！";
+        }
+
+        if (curveTrain) curveTrain.setAttribute('d', trainD);
+        if (curveHoldout) {
+          curveHoldout.setAttribute('d', holdoutD);
+          curveHoldout.setAttribute('stroke', feedback === 'degenerate' ? 'var(--cs-danger)' : 'var(--cs-warm)');
+        }
+        if (holdoutStatus) announce(holdoutStatus, msg);
+      };
+
+      if (selectFeedback) selectFeedback.addEventListener('change', updateHoldout);
+      if (selectUpdateStrength) selectUpdateStrength.addEventListener('change', updateHoldout);
+      updateHoldout();
+
+      /* --- Demo 3: Robotics Stack Inspector --- */
+      const layerData = [
+        {
+          name: '01 · 多模态感知层 (Multimodal Perception)',
+          freq: '30 Hz 实时推流',
+          resp: '从物理传感器提取点云、深度图并完成物体 3D 姿态估计与语义分割。',
+          fail: '反光透明物体漏检、光照突变引起的位姿漂移。对策：多传感器交叉校验。'
+        },
+        {
+          name: '02 · 高层语义规划器 (High-Level VLM Planner)',
+          freq: '1 - 2 Hz 异步决策',
+          resp: '利用视觉语言模型将用户自然语言指令分解为结构化子动作序列。',
+          fail: '生成不可行目标（如让机械臂穿越实体障碍物）。对策：引入几何可行性校验。'
+        },
+        {
+          name: '03 · 动作可行性检验器 (Affordance Verifier / SayCan)',
+          freq: '10 Hz 前置拦截',
+          resp: '结合当前场景状态，对规划动作的可行性与价值函数进行双重打分过滤。',
+          fail: '价值函数在罕见物理构型下失真。对策：硬性运动学包络线安全锁定。'
+        },
+        {
+          name: '04 · 底层控制策略 (Low-Level Control Policy)',
+          freq: '100 - 500 Hz 实时控制',
+          resp: '执行逆运动学（IK）求解、关节力矩平滑滤波与末端执行器驱动。',
+          fail: '机械臂奇异点奇异位形与力矩过载。对策：阻抗控制与安全柔顺停机。'
+        },
+        {
+          name: '05 · 物理环境闭环 (Physical Feedback)',
+          freq: '1000 Hz 触觉/力觉闭环',
+          resp: '六维腕部力传感器实时感知接触力、摩擦滑移与装配配合间隙。',
+          fail: '抓取滑脱或装配卡死。对策：力控阻抗即时重试与自适应重抓。'
+        }
+      ];
+
+      const layerButtons = $$('#stack-layers button');
+      const detailTitle = $('#layer-detail-title');
+      const detailBody = $('#layer-detail-body');
+      const roboticsStatus = $('#robotics-status');
+
+      const selectLayer = (index) => {
+        layerButtons.forEach((btn, i) => {
+          btn.style.borderColor = i === index ? 'var(--cs-accent)' : 'var(--cs-line)';
+          btn.style.background = i === index ? 'var(--cs-surface)' : 'var(--cs-surface-2)';
+        });
+
+        const item = layerData[index];
+        if (item && detailTitle && detailBody) {
+          setText(detailTitle, item.name);
+          detailBody.replaceChildren();
+          [['核心职责', item.resp], ['运行频率', item.freq], ['典型失效', item.fail]].forEach(([label, value]) => {
+            const paragraph = document.createElement('p');
+            paragraph.style.cssText = 'margin:3px 0;';
+            const strong = document.createElement('strong');
+            strong.textContent = `${label}：`;
+            paragraph.append(strong, document.createTextNode(value));
+            detailBody.append(paragraph);
+          });
+        }
+        if (item && roboticsStatus) {
+          announce(roboticsStatus, `选中层级：${item.name}。运行频次：${item.freq}。`);
+        }
+      };
+
+      layerButtons.forEach((btn, i) => {
+        btn.addEventListener('click', () => selectLayer(i));
+      });
+      selectLayer(0);
+    });
+  </script>
+</body>
+</html>

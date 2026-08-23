@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Stanford CS329A 学习教程 01：Agent 闭环架构、推理时计算扩展与验证器机制。">
+  <meta name="color-scheme" content="light dark">
+  <title>01 · 闭环、扩展与验证 · CS329A 教程</title>
+  <link rel="stylesheet" href="./assets/cs329a-tutorial.css">
+</head>
+<body class="cs329a-tutorial">
+  <a class="cs329a-skip" href="#reader-scroll">跳转到正文</a>
+  <div class="cs329a-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 教程导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-back" href="./index.html">← CS329A 课程索引</a>
+        <p class="cs329a-code">CS329A · TUTORIAL 01</p>
+        <h1>闭环、扩展与验证</h1>
+        <div class="cs329a-brand-meta">Agent Loop · Scaling · Verification<br>个人学习教程 · 非官方页面</div>
+      </header>
+      <div class="cs329a-nav-label">本页目录</div>
+      <nav aria-label="页面章节">
+        <a class="cs329a-nav-item" href="#overview" data-section="overview" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">闭环架构概览</span></a>
+        <a class="cs329a-nav-item" href="#loop-demo" data-section="loop-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">闭环状态转移模拟</span></a>
+        <a class="cs329a-nav-item" href="#scaling" data-section="scaling" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">推理时计算扩展</span></a>
+        <a class="cs329a-nav-item" href="#scaling-demo" data-section="scaling-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">04</span><span class="cs329a-nav-title">扩展与验证曲线模拟</span></a>
+        <a class="cs329a-nav-item" href="#verification" data-section="verification" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">05</span><span class="cs329a-nav-title">过程与结果验证器</span></a>
+        <a class="cs329a-nav-item" href="#verifier-demo" data-section="verifier-demo" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">06</span><span class="cs329a-nav-title">判别门限与混淆矩阵</span></a>
+        <a class="cs329a-nav-item" href="#sources" data-section="sources" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">07</span><span class="cs329a-nav-title">开放来源与文献</span></a>
+      </nav>
+      <div class="cs329a-nav-label">教程主线</div>
+      <nav aria-label="教程系列链接">
+        <a class="cs329a-nav-item" href="./foundations.html" data-close-sidebar aria-current="page"><span class="cs329a-nav-number">01</span><span class="cs329a-nav-title">闭环、扩展与验证</span></a>
+        <a class="cs329a-nav-item" href="./systems.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">02</span><span class="cs329a-nav-title">工具、规划与记忆</span></a>
+        <a class="cs329a-nav-item" href="./evaluation.html" data-close-sidebar aria-current="false"><span class="cs329a-nav-number">03</span><span class="cs329a-nav-title">长程评估与机器人</span></a>
+      </nav>
+      <div class="cs329a-nav-label">官方来源</div>
+      <nav aria-label="官方资料">
+        <a class="cs329a-external" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
+        <a class="cs329a-external" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+      </nav>
+      <div class="cs329a-side-note" role="note">本教程为个人学习整理与概念可视化，非 Stanford 官方页面，无官方隶属或授权。所有 demo 均使用本地确定性合成教学数据。</div>
+    </aside>
+    <button class="cs329a-scrim" type="button" aria-label="关闭导航" data-close-sidebar></button>
+    <main class="cs329a-workspace">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开导航" aria-expanded="false">☰</button>
+        <div class="cs329a-toolbar-title">CS329A / 01 · 闭环、扩展与验证</div>
+        <div style="position:relative;width:100%;max-width:320px;">
+          <label for="search-input" class="cs329a-sr-only">搜索本页内容</label>
+          <input class="cs329a-search" id="search-input" type="search" placeholder="搜索本页内容" aria-label="搜索本页内容" autocomplete="off">
+        </div>
+        <div class="cs329a-sr-only cs329a-search-status" aria-live="polite"></div>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon cs329a-font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon cs329a-font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon cs329a-theme" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon cs329a-print" type="button" aria-label="打印当前教程">⌘P</button>
+        </div>
+      </header>
+      <div class="cs329a-reader" id="reader-scroll">
+        <article class="cs329a-content">
+          <section id="overview" class="content-section" data-search="overview agent loop test time compute verification foundations 闭环 扩展 验证 状态机">
+            <div class="cs329a-kicker">CS329A TUTORIAL · LESSON 01</div>
+            <h1>闭环、扩展与验证 <em>Agent Loop &amp; Scaling.</em></h1>
+            <p class="cs329a-lead">从单轮文本补全到具备自我改进能力的智能体，核心转变在于建立“生成—执行—验证—修正”的闭环，并在推理时（Test-time）按需分配计算预算与验证强度。</p>
+            <div class="cs329a-notice"><strong>个人学习教程声明：</strong>本页面为个人根据公开课程大纲与学术论文整理的交互式学习教程，非 Stanford University 官方网站，与 Stanford 无官方隶属、认可或授权关系。本页不包含未公开讲义或受限作业内容。</div>
+            <div class="cs329a-pill-row">
+              <span class="cs329a-pill">Agent Loop 闭环状态机</span>
+              <span class="cs329a-pill">Test-Time Compute Scaling</span>
+              <span class="cs329a-pill">ORM vs PRM 过程验证</span>
+              <span class="cs329a-pill">混淆矩阵与误判分析</span>
+            </div>
+            <h2>为什么单轮推理不够？从静态生成到反馈闭环</h2>
+            <p>在传统的 LLM 推理中，模型根据输入单向生成自回归 Token 序列。一旦中间某一步推理出现幻觉或逻辑断层，错误会级联放大导致最终答案失败。而 <strong>Self-Improving Agent</strong> 的本质是将推理拆解为带有显式验证和回滚机制的状态机：</p>
+            <div class="cs329a-flow" aria-label="Agent 闭环执行流">
+              <div class="cs329a-flow-step"><strong>01 · 目标解析</strong><span>接收输入并分解子目标</span></div>
+              <div class="cs329a-flow-step"><strong>02 · 候选生成</strong><span>生成动作、代码或推导路径</span></div>
+              <div class="cs329a-flow-step"><strong>03 · 环境交互</strong><span>执行工具或运行测试</span></div>
+              <div class="cs329a-flow-step"><strong>04 · 反馈校验</strong><span>验证器评分与错误归因</span></div>
+              <div class="cs329a-flow-step"><strong>05 · 接受或重试</strong><span>接受合格输出或触发修订</span></div>
+            </div>
+          </section>
+
+          <section id="loop-demo" class="content-section" data-search="agent loop interactive state machine demo 闭环步进 自动演示">
+            <h2>交互演示：Agent 闭环状态转移</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本交互演示采用本地确定性状态机与合成教学数据（Synthetic Teaching Data），用于展示闭环控制流与状态转移机制，不是课程实验或论文运行结果。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 01 · AGENT LOOP</div>
+              <h3>单步推进与闭环状态追踪</h3>
+              <p>观察智能体在遇到测试失败时，如何通过验证器捕获反馈、组织上下文并重新生成修订补丁：</p>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <svg id="loop-svg" viewBox="0 0 520 230" role="img" aria-labelledby="loop-svg-title loop-svg-desc">
+                    <title id="loop-svg-title">Agent 闭环状态转移图</title>
+                    <desc id="loop-svg-desc">展示智能体生成候选、运行工具测试、验证器反馈、修订重试与最终接受的五步状态流。</desc>
+                    <defs>
+                      <marker id="arrow-accent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--cs-accent)"/>
+                      </marker>
+                      <marker id="arrow-warm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                        <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="var(--cs-warm)"/>
+                      </marker>
+                    </defs>
+                    <g id="loop-nodes">
+                      <g class="loop-node" id="node-0" transform="translate(20, 30)">
+                        <rect width="135" height="58" rx="8" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                        <text x="12" y="24" font-weight="bold" fill="var(--cs-ink)">01 提议补丁</text>
+                        <text x="12" y="44" class="muted" font-size="10">Agent · candidate</text>
+                      </g>
+                      <g class="loop-node" id="node-1" transform="translate(195, 30)">
+                        <rect width="135" height="58" rx="8" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                        <text x="12" y="24" font-weight="bold" fill="var(--cs-ink)">02 运行测试</text>
+                        <text x="12" y="44" class="muted" font-size="10">Tool · observe</text>
+                      </g>
+                      <g class="loop-node" id="node-2" transform="translate(365, 30)">
+                        <rect width="135" height="58" rx="8" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                        <text x="12" y="24" font-weight="bold" fill="var(--cs-ink)">03 检查反馈</text>
+                        <text x="12" y="44" class="muted" font-size="10">Verifier · feedback</text>
+                      </g>
+                      <g class="loop-node" id="node-3" transform="translate(195, 140)">
+                        <rect width="135" height="58" rx="8" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                        <text x="12" y="24" font-weight="bold" fill="var(--cs-ink)">04 生成修订</text>
+                        <text x="12" y="44" class="muted" font-size="10">Agent · retry</text>
+                      </g>
+                      <g class="loop-node" id="node-4" transform="translate(365, 140)">
+                        <rect width="135" height="58" rx="8" fill="var(--cs-surface-2)" stroke="var(--cs-line)" stroke-width="1.5"/>
+                        <text x="12" y="24" font-weight="bold" fill="var(--cs-ink)">05 再次测试</text>
+                        <text x="12" y="44" class="muted" font-size="10">Tool · accepted</text>
+                      </g>
+                    </g>
+                    <path d="M 155 59 L 190 59" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#arrow-accent)"/>
+                    <path d="M 330 59 L 360 59" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#arrow-accent)"/>
+                    <path d="M 432 88 L 432 110 L 262 110 L 262 135" stroke="var(--cs-warm)" stroke-dasharray="4,3" stroke-width="2" fill="none" marker-end="url(#arrow-warm)"/>
+                    <path d="M 330 169 L 360 169" stroke="var(--cs-line)" stroke-width="2" marker-end="url(#arrow-accent)"/>
+                  </svg>
+                </div>
+                <div class="cs329a-controls">
+                  <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    <button class="cs329a-button-link" id="btn-loop-prev" type="button" aria-label="闭环演示上一步">← 上一步</button>
+                    <button class="cs329a-button-link" id="btn-loop-next" type="button" aria-label="闭环演示下一步">下一步 →</button>
+                    <button class="cs329a-button-link" id="btn-loop-auto" type="button" aria-label="自动播放闭环演示">自动演示</button>
+                    <button class="cs329a-button-link" id="btn-loop-reset" type="button" aria-label="重置闭环演示">重置</button>
+                  </div>
+                  <div class="cs329a-demo-status" id="loop-status" aria-live="polite">当前步骤：准备就绪。点击“下一步”启动闭环。</div>
+                  <div class="cs329a-demo-caption"><strong>闭环逻辑：</strong>若验证器在第 3 步给出失败反馈，系统不中断任务，而是将错误 trace 回填到上下文，驱动第 4 步修订。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：闭环教学执行轨迹（无脚本环境下直接可读）</caption>
+                  <thead><tr><th scope="col">步骤序号</th><th scope="col">操作阶段</th><th scope="col">角色 (Actor)</th><th scope="col">状态标识</th><th scope="col">详细动作说明</th></tr></thead>
+                  <tbody>
+                    <tr><td>01</td><td>提议补丁</td><td>Agent</td><td>candidate</td><td>为 parse_date 增加 ISO 分支</td></tr>
+                    <tr><td>02</td><td>运行测试</td><td>Tool</td><td>observe</td><td>2/10 失败：时区后缀未处理</td></tr>
+                    <tr><td>03</td><td>检查反馈</td><td>Verifier</td><td>feedback</td><td>保留失败样例，拒绝当前补丁并回传上下文</td></tr>
+                    <tr><td>04</td><td>生成修订</td><td>Agent</td><td>retry</td><td>补充 Z / offset 解析路径并完善正则表达式</td></tr>
+                    <tr><td>05</td><td>再次测试</td><td>Tool</td><td>accepted</td><td>10/10 通过（教学模拟验收）</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="scaling" class="content-section" data-search="test time compute scaling inference pass@k best of n 推理时扩展 计算预算">
+            <h2>推理时计算扩展：Test-Time Compute Scaling</h2>
+            <p>过去几年模型能力提升主要依赖预训练（Pre-training）和后训练（Post-training）计算量的增加。近期研究（如 Snell et al., 2024）指出：在<strong>推理阶段按需扩展计算量（Test-time compute）</strong>同样能带来显著的准确率提升，甚至在某些推理任务上，较小模型通过推理时搜索能超越数倍参数量的基准模型。</p>
+            <div class="cs329a-grid cs329a-grid-2">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">PARALLEL SAMPLING</span>
+                <h3>并行采样与重排序 (Best-of-N)</h3>
+                <p>独立采样 <var>N</var> 条候选解，利用验证器（Verifier）对候选答案进行打分排序，选取最优解。适合验证容易但生成较难的问题（如数学答案代回检验、代码单元测试）。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">SEQUENTIAL SEARCH</span>
+                <h3>序贯修订与树搜索 (Sequential Search)</h3>
+                <p>在推理过程中维护搜索树（如 Beam Search、MCTS），在每一步评估分叉并回溯剪枝。相比并行采样，能在长程规划中有效抑制无谓的算力浪费。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="scaling-demo" class="content-section" data-search="scaling curve compute budget verifier interactive demo 扩展曲线 验证器增益">
+            <h2>交互模拟：推理预算与验证器收益曲线</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本图表采用本地预置合成数据（Synthetic Teaching Data），展示采样数量 <var>K</var> 与验证器开启状态对综合成功率和算力开销的影响趋势，非特定学术基准实测数据。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 02 · SCALING TRADE-OFFS</div>
+              <h3>采样预算 <var>K</var> 与 Verifier 协同效应</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <svg id="scaling-svg" viewBox="0 0 520 240" role="img" aria-labelledby="scaling-svg-title scaling-svg-desc">
+                    <title id="scaling-svg-title">推理预算扩展曲线图</title>
+                    <desc id="scaling-svg-desc">显示不同采样预算 K 下，开启与关闭验证器的任务成功率及相对算力消耗对比。</desc>
+                    <g class="grid-lines" stroke="var(--cs-line)" stroke-width="1" stroke-dasharray="2,2">
+                      <line x1="50" y1="30" x2="480" y2="30"/>
+                      <line x1="50" y1="80" x2="480" y2="80"/>
+                      <line x1="50" y1="130" x2="480" y2="130"/>
+                      <line x1="50" y1="180" x2="480" y2="180"/>
+                    </g>
+                    <text x="15" y="34" class="muted" font-size="10">90%</text>
+                    <text x="15" y="84" class="muted" font-size="10">75%</text>
+                    <text x="15" y="134" class="muted" font-size="10">60%</text>
+                    <text x="15" y="184" class="muted" font-size="10">45%</text>
+                    <text x="100" y="205" text-anchor="middle" class="muted" font-size="11">K = 1</text>
+                    <text x="210" y="205" text-anchor="middle" class="muted" font-size="11">K = 2</text>
+                    <text x="320" y="205" text-anchor="middle" class="muted" font-size="11">K = 4</text>
+                    <text x="430" y="205" text-anchor="middle" class="muted" font-size="11">K = 8</text>
+                    <path id="curve-off" d="M 100 190 L 210 137 L 320 103 L 430 83" fill="none" stroke="var(--cs-muted)" stroke-width="2.5" stroke-dasharray="4,4"/>
+                    <path id="curve-on" d="M 210 110 L 320 67 L 430 50" fill="none" stroke="var(--cs-accent)" stroke-width="3"/>
+                    <circle id="point-active" cx="100" cy="190" r="6" fill="var(--cs-warm)" stroke="#fff" stroke-width="2"/>
+                    <text id="curve-label-on" x="435" y="46" fill="var(--cs-accent)" font-weight="bold" font-size="10">Verifier ON</text>
+                    <text id="curve-label-off" x="435" y="93" fill="var(--cs-muted)" font-size="10">Verifier OFF</text>
+                  </svg>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-k">采样预算 (Samples K)：</label>
+                    <select id="select-k">
+                      <option value="1">K = 1 (单次采样)</option>
+                      <option value="2">K = 2 (双候选)</option>
+                      <option value="4" selected>K = 4 (标准扩展)</option>
+                      <option value="8">K = 8 (深度扩展)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-control">
+                    <label for="select-verifier">验证器模式 (Verifier Policy)：</label>
+                    <select id="select-verifier">
+                      <option value="off">无验证器 (无序/随机择一)</option>
+                      <option value="on" selected>启用验证器 (Best-of-K 排序)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-demo-status" id="scaling-status" aria-live="polite">当前配置：K=4，验证器 ON。预估成功率：79%，相对开销：5.2x。</div>
+                  <div class="cs329a-demo-caption"><strong>边际递减法则：</strong>随着 <var>K</var> 增大，成功率曲线趋向平缓，且验证器调用会引入额外 Token 计算成本。合理平衡 <var>K</var> 与验证开销是核心工程权衡。</div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：推理扩展教学数据表（Synthetic Teaching Data）</caption>
+                  <thead><tr><th scope="col">预算 K</th><th scope="col">验证器</th><th scope="col">预估成功率 (Success %)</th><th scope="col">相对算力开销 (Relative Cost)</th><th scope="col">单单位算力产出</th></tr></thead>
+                  <tbody>
+                    <tr><td>1</td><td>关闭 (off)</td><td>42%</td><td>1.0x</td><td>42.0 % / unit</td></tr>
+                    <tr><td>2</td><td>关闭 (off)</td><td>58%</td><td>2.0x</td><td>29.0 % / unit</td></tr>
+                    <tr><td>4</td><td>关闭 (off)</td><td>68%</td><td>4.0x</td><td>17.0 % / unit</td></tr>
+                    <tr><td>8</td><td>关闭 (off)</td><td>74%</td><td>8.0x</td><td>9.25 % / unit</td></tr>
+                    <tr><td>2</td><td>开启 (on)</td><td>66%</td><td>2.8x</td><td>23.57 % / unit</td></tr>
+                    <tr><td>4</td><td>开启 (on)</td><td>79%</td><td>5.2x</td><td>15.19 % / unit</td></tr>
+                    <tr><td>8</td><td>开启 (on)</td><td>84%</td><td>9.6x</td><td>8.75 % / unit</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="verification" class="content-section" data-search="process reward model outcome verification prm orm false positives 过程验证 结果验证 混淆矩阵">
+            <h2>过程验证 vs 结果验证：PRM 与 ORM 的权衡</h2>
+            <p>验证器（Verifier）的质量直接决定了推理时搜索与自我改进的上限。主流验证架构可分为两类：</p>
+            <div class="cs329a-grid cs329a-grid-2">
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">OUTCOME REWARD MODEL (ORM)</span>
+                <h3>结果级验证 (ORM)</h3>
+                <p>仅对最终生成的答案或输出进行二元判定（Pass/Fail）。实现简单且无标注歧义，但无法指出中间具体哪一步出错，容易产生“推理步骤错误但蒙对最终答案”的伪正例（False Positive）。</p>
+              </div>
+              <div class="cs329a-card">
+                <span class="cs329a-card-kicker">PROCESS REWARD MODEL (PRM)</span>
+                <h3>过程级验证 (PRM)</h3>
+                <p>对推导过程中的每一个中间步骤单独给出信用分配与打分（Lightman et al., 2023）。能够精准实现步骤级剪枝与回溯，但训练数据构建成本更高且容易对特定推导风格产生偏见。</p>
+              </div>
+            </div>
+          </section>
+
+          <section id="verifier-demo" class="content-section" data-search="verifier threshold confusion matrix candidate cards 判别门限 混淆矩阵">
+            <h2>交互演示：验证器判别门限与混淆矩阵</h2>
+            <div class="cs329a-teaching-note"><strong>教学模拟声明：</strong>本演示基于本地预设的 4 个候选推导案例（Candidates A/B/C/D），模拟“宽松模式（仅看最终答案）”与“严格模式（同时校验过程与最终答案）”下的判别差异。</div>
+            <div class="cs329a-demo">
+              <div class="cs329a-demo-kicker">INTERACTIVE DEMO 03 · VERIFICATION MATRIX</div>
+              <h3>候选推导评分与门限过滤</h3>
+              <div class="cs329a-demo-grid">
+                <div class="cs329a-viz">
+                  <div id="candidate-cards" style="display:grid; gap:8px;">
+                    <div class="cs329a-card" id="card-A" style="padding:10px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>候选 A · 答案：<code>x = 4</code></strong>
+                        <span class="cs329a-pill" id="badge-A">得分: 0.68</span>
+                      </div>
+                      <p style="margin:4px 0 0; font-size:.8em;">过程描述：一步跳到结果（缺少代回验证）。</p>
+                    </div>
+                    <div class="cs329a-card" id="card-B" style="padding:10px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>候选 B · 答案：<code>x = 4</code></strong>
+                        <span class="cs329a-pill" id="badge-B">得分: 0.94</span>
+                      </div>
+                      <p style="margin:4px 0 0; font-size:.8em;">过程描述：逐步移项并代回原方程严格验证。</p>
+                    </div>
+                    <div class="cs329a-card" id="card-C" style="padding:10px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>候选 C · 答案：<code>x = 5</code></strong>
+                        <span class="cs329a-pill" id="badge-C">得分: 0.12</span>
+                      </div>
+                      <p style="margin:4px 0 0; font-size:.8em;">过程描述：移项符号错误，导致最终答案算错。</p>
+                    </div>
+                    <div class="cs329a-card" id="card-D" style="padding:10px 12px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <strong>候选 D · 答案：<code>x = 4</code></strong>
+                        <span class="cs329a-pill" id="badge-D">得分: 0.58</span>
+                      </div>
+                      <p style="margin:4px 0 0; font-size:.8em;">过程描述：步骤省略，中间缺少因式分解步骤。</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="cs329a-controls">
+                  <div class="cs329a-control">
+                    <label for="select-threshold">验证器过滤门限：</label>
+                    <select id="select-threshold">
+                      <option value="strict" selected>严格门限 (Strict PRM：分数 ≥ 0.70)</option>
+                      <option value="lenient">宽松门限 (Lenient ORM：仅匹配答案 x=4)</option>
+                    </select>
+                  </div>
+                  <div class="cs329a-demo-status" id="matrix-status" aria-live="polite">严格模式状态：通过 1 例 (B)，拦截 3 例 (A, C, D)。有效避免了缺少证明过程的误通过。</div>
+                  <div class="cs329a-card" style="margin-top:8px; padding:10px 12px; background:var(--cs-surface);">
+                    <div style="font-weight:bold; font-size:.82em; margin-bottom:6px;">混淆判定分布 (Confusion Matrix Summary)</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:.76em;">
+                      <div style="padding:6px; background:var(--cs-surface-2); border-radius:4px;" id="stat-tp">真正例 (TP): 1 (严格有效)</div>
+                      <div style="padding:6px; background:var(--cs-surface-2); border-radius:4px;" id="stat-fp">伪正例 (FP): 0 (无蒙混通过)</div>
+                      <div style="padding:6px; background:var(--cs-surface-2); border-radius:4px;" id="stat-tn">真负例 (TN): 3 (正确拦截)</div>
+                      <div style="padding:6px; background:var(--cs-surface-2); border-radius:4px;" id="stat-fn">伪负例 (FN): 0 (无误杀)</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="cs329a-data-table-wrap">
+                <table class="cs329a-data-table">
+                  <caption>静态数据备用表：候选推导与验证特征分析表</caption>
+                  <thead><tr><th scope="col">候选 ID</th><th scope="col">声称答案</th><th scope="col">过程质量状态</th><th scope="col">验证器评分</th><th scope="col">宽松模式判定</th><th scope="col">严格模式判定</th></tr></thead>
+                  <tbody>
+                    <tr><td>A</td><td>x = 4 (对)</td><td>warn (跳步)</td><td>0.68</td><td data-state="bad">通过 (产生 FP 风险)</td><td data-state="good">拒绝 (拦截成功)</td></tr>
+                    <tr><td>B</td><td>x = 4 (对)</td><td>pass (严谨)</td><td>0.94</td><td data-state="good">通过 (TP)</td><td data-state="good">通过 (TP)</td></tr>
+                    <tr><td>C</td><td>x = 5 (错)</td><td>fail (符号错)</td><td>0.12</td><td data-state="good">拒绝 (TN)</td><td data-state="good">拒绝 (TN)</td></tr>
+                    <tr><td>D</td><td>x = 4 (对)</td><td>warn (缺步)</td><td>0.58</td><td data-state="bad">通过 (产生 FP 风险)</td><td data-state="good">拒绝 (拦截成功)</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="sources" class="content-section" data-search="sources bibliography references 参考文献 来源说明">
+            <h2>开放来源与参考文献</h2>
+            <div class="cs329a-source-note"><strong>文献引用说明：</strong>本页所引述的学术结论均保留原论文中的任务、模型规模与计算预算限定，不将特定基准下的结论过度泛化为通用规律。</div>
+            <ul class="cs329a-source-list">
+              <li>
+                <strong>Stanford CS329A Course:</strong> Self-Improving AI Agents, Autumn 2025. 涵盖 Test-time Compute Scaling 与 Robust Verification 主题。
+                <br>官方主页：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">https://cs329a.stanford.edu/</a> ｜ 课程目录：<a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">https://bulletin.stanford.edu/courses/2263721</a>
+              </li>
+              <li>
+                <strong>Snell et al. (2024):</strong> <em>Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</em>. 讨论了通过在推理时动态分配采样预算与搜索策略，以超越单纯堆叠预训练参数的效果（限定于 MATH 及推理基准任务）。
+                <br>论文链接：<a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener noreferrer">arXiv:2408.03314</a>
+              </li>
+              <li>
+                <strong>Lightman et al. (2023):</strong> <em>Let's Verify Step by Step</em>. 提出了 PRM800K 数据集并论证了过程级验证模型（PRM）在多步数学推导中相比结果级验证模型（ORM）能显著减少伪正例与搜索幻觉。
+                <br>论文链接：<a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener noreferrer">arXiv:2305.20050</a>
+              </li>
+              <li>
+                <strong>Large Language Monkeys (2024):</strong> 讨论多次独立采样覆盖率（Coverage@K）随采样预算增加的扩展规律与验证瓶颈。
+                <br>论文链接：<a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener noreferrer">arXiv:2407.21787</a>
+              </li>
+            </ul>
+          </section>
+        </article>
+      </div>
+      <footer class="cs329a-footer">
+        <a href="./index.html">← CS329A 课程索引</a>
+        <span>CS329A TUTORIAL · LESSON 01 / 03</span>
+        <a href="./systems.html">下一篇：02 · 工具、规划与记忆 →</a>
+      </footer>
+    </main>
+    <aside class="cs329a-rail" aria-label="本页目录">
+      <h2>On this page</h2>
+      <a class="cs329a-toc" href="#overview" data-section="overview">01 · 闭环架构概览</a>
+      <a class="cs329a-toc" href="#loop-demo" data-section="loop-demo">02 · 闭环状态转移模拟</a>
+      <a class="cs329a-toc" href="#scaling" data-section="scaling">03 · 推理时计算扩展</a>
+      <a class="cs329a-toc" href="#scaling-demo" data-section="scaling-demo">04 · 扩展与验证曲线</a>
+      <a class="cs329a-toc" href="#verification" data-section="verification">05 · 过程与结果验证器</a>
+      <a class="cs329a-toc" href="#verifier-demo" data-section="verifier-demo">06 · 判别门限与混淆矩阵</a>
+      <a class="cs329a-toc" href="#sources" data-section="sources">07 · 开放来源与文献</a>
+      <hr class="cs329a-rail-rule">
+      <p class="cs329a-rail-note">本教程遵循纯静态、无外部依赖规范。所有交互式组件均可在本地离线执行。</p>
+    </aside>
+  </div>
+
+  <script src="./assets/cs329a-demo-data.js"></script>
+  <script src="./assets/cs329a-tutorial.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const { $, $$, setText, announce } = window.CS329A || {};
+      const DATA = window.CS329A_DATA || {};
+
+      /* --- Demo 1: Agent Loop Stepper --- */
+      const toolTrace = DATA.toolTrace || [
+        { step: '提议补丁', actor: 'agent', state: 'candidate', detail: '为 parse_date 增加 ISO 分支' },
+        { step: '运行测试', actor: 'tool', state: 'observe', detail: '2/10 失败：时区后缀未处理' },
+        { step: '检查反馈', actor: 'verifier', state: 'feedback', detail: '保留失败样例，拒绝当前补丁' },
+        { step: '生成修订', actor: 'agent', state: 'retry', detail: '补充 Z / offset 解析路径' },
+        { step: '再次测试', actor: 'tool', state: 'accepted', detail: '10/10 通过（教学模拟）' }
+      ];
+      let currentStep = 0;
+      let autoInterval = null;
+
+      const loopNodes = $$('.loop-node');
+      const loopStatus = $('#loop-status');
+      const btnPrev = $('#btn-loop-prev');
+      const btnNext = $('#btn-loop-next');
+      const btnAuto = $('#btn-loop-auto');
+      const btnReset = $('#btn-loop-reset');
+
+      const renderLoop = () => {
+        loopNodes.forEach((node, idx) => {
+          const rect = $('rect', node);
+          if (idx === currentStep) {
+            rect.setAttribute('fill', 'var(--cs-accent-soft)');
+            rect.setAttribute('stroke', 'var(--cs-accent)');
+            rect.setAttribute('stroke-width', '2.5');
+          } else if (idx < currentStep) {
+            rect.setAttribute('fill', 'var(--cs-surface-3)');
+            rect.setAttribute('stroke', 'var(--cs-line)');
+            rect.setAttribute('stroke-width', '1.5');
+          } else {
+            rect.setAttribute('fill', 'var(--cs-surface-2)');
+            rect.setAttribute('stroke', 'var(--cs-line)');
+            rect.setAttribute('stroke-width', '1');
+          }
+        });
+        const info = toolTrace[currentStep];
+        if (info && loopStatus) {
+          announce(loopStatus, `步骤 ${currentStep + 1} / ${toolTrace.length} · [${info.actor.toUpperCase()}] ${info.step}：${info.detail}`);
+        }
+      };
+
+      if (btnPrev) btnPrev.addEventListener('click', () => {
+        currentStep = Math.max(0, currentStep - 1);
+        renderLoop();
+      });
+      if (btnNext) btnNext.addEventListener('click', () => {
+        currentStep = (currentStep + 1) % toolTrace.length;
+        renderLoop();
+      });
+      if (btnReset) btnReset.addEventListener('click', () => {
+        if (autoInterval) { clearInterval(autoInterval); autoInterval = null; if (btnAuto) btnAuto.textContent = '自动演示'; }
+        currentStep = 0;
+        renderLoop();
+      });
+      if (btnAuto) btnAuto.addEventListener('click', () => {
+        if (autoInterval) {
+          clearInterval(autoInterval);
+          autoInterval = null;
+          btnAuto.textContent = '自动演示';
+        } else {
+          btnAuto.textContent = '暂停演示';
+          autoInterval = setInterval(() => {
+            currentStep = (currentStep + 1) % toolTrace.length;
+            renderLoop();
+          }, 1600);
+        }
+      });
+      renderLoop();
+
+      /* --- Demo 2: Scaling Curve --- */
+      const selectK = $('#select-k');
+      const selectVerifier = $('#select-verifier');
+      const scalingStatus = $('#scaling-status');
+      const pointActive = $('#point-active');
+
+      const kMap = { 1: 100, 2: 210, 4: 320, 8: 430 };
+      const yMap = (success) => 240 - ((success - 30) / 70) * 190;
+
+      const updateScaling = () => {
+        const k = parseInt(selectK ? selectK.value : '4', 10);
+        let verifier = selectVerifier ? selectVerifier.value : 'on';
+        if (k === 1) verifier = 'off';
+
+        const match = (DATA.scaling || []).find(d => d.budget === k && d.verifier === verifier) ||
+                      { budget: k, verifier, success: verifier === 'on' ? 79 : 68, cost: 5.0 };
+
+        const cx = kMap[k] || 320;
+        const cy = yMap(match.success);
+
+        if (pointActive) {
+          pointActive.setAttribute('cx', String(cx));
+          pointActive.setAttribute('cy', String(cy));
+          pointActive.setAttribute('fill', verifier === 'on' ? 'var(--cs-accent)' : 'var(--cs-warm)');
+        }
+
+        if (scalingStatus) {
+          announce(scalingStatus, `当前配置：K=${k}，验证器 ${verifier.toUpperCase()}。预估成功率：${match.success}%，相对算力开销：${match.cost}x。`);
+        }
+      };
+
+      if (selectK) selectK.addEventListener('change', updateScaling);
+      if (selectVerifier) selectVerifier.addEventListener('change', updateScaling);
+      updateScaling();
+
+      /* --- Demo 3: Verification Matrix --- */
+      const selectThreshold = $('#select-threshold');
+      const matrixStatus = $('#matrix-status');
+      const statTp = $('#stat-tp');
+      const statFp = $('#stat-fp');
+      const statTn = $('#stat-tn');
+      const statFn = $('#stat-fn');
+
+      const updateMatrix = () => {
+        const mode = selectThreshold ? selectThreshold.value : 'strict';
+        const candidates = DATA.candidates || [];
+
+        let tp = 0, fp = 0, tn = 0, fn = 0;
+
+        candidates.forEach(c => {
+          const card = $(`#card-${c.id}`);
+          const badge = $(`#badge-${c.id}`);
+          let accepted = false;
+
+          if (mode === 'strict') {
+            accepted = c.score >= 0.70 && c.processStatus === 'pass';
+          } else {
+            accepted = c.answerStatus === 'pass';
+          }
+
+          const isGroundTruthValid = c.answerStatus === 'pass' && c.processStatus === 'pass';
+
+          if (accepted && isGroundTruthValid) tp++;
+          else if (accepted && !isGroundTruthValid) fp++;
+          else if (!accepted && !isGroundTruthValid) tn++;
+          else fn++;
+
+          if (card) {
+            card.style.borderColor = accepted ? 'var(--cs-accent)' : 'var(--cs-line)';
+            card.style.background = accepted ? 'var(--cs-surface)' : 'var(--cs-surface-2)';
+          }
+          if (badge) {
+            badge.textContent = accepted ? `已接受 (得分 ${c.score})` : `已拦截 (得分 ${c.score})`;
+            badge.style.color = accepted ? 'var(--cs-accent)' : 'var(--cs-muted)';
+          }
+        });
+
+        if (statTp) setText(statTp, `真正例 (TP): ${tp} (严谨且通过)`);
+        if (statFp) setText(statFp, `伪正例 (FP): ${fp} (${fp > 0 ? '产生跳步/蒙混风险' : '无伪正例'})`);
+        if (statTn) setText(statTn, `真负例 (TN): ${tn} (正确拦截)`);
+        if (statFn) setText(statFn, `伪负例 (FN): ${fn} (误杀)`);
+
+        if (matrixStatus) {
+          if (mode === 'strict') {
+            announce(matrixStatus, `严格门限状态：仅通过候选 B (严格通过)，成功拦截跳步与符号错误候选 (A, C, D)，伪正例 FP = 0。`);
+          } else {
+            announce(matrixStatus, `宽松门限状态：通过候选 A, B, D (答案均声称 x=4)。候选 A 与 D 因跳步产生 2 例伪正例 (FP = 2)。`);
+          }
+        }
+      };
+
+      if (selectThreshold) selectThreshold.addEventListener('change', updateMatrix);
+      updateMatrix();
+    });
+  </script>
+</body>
+</html>
