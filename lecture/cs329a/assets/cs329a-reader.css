@@ -112,6 +112,9 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 3px solid 
 .cs329a-reading-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 6px 12px; margin: 10px 0 0; padding-top: 9px; border-top: 1px solid var(--line); font-size: .82em; line-height: 1.55; }
 .cs329a-reading-facts dt { color: var(--accent); font: 700 .78em/1.4 ui-monospace, Menlo, monospace; }
 .cs329a-reading-facts dd { min-width: 0; margin: 0; color: var(--ink); }
+.cs329a-reading-quick { margin: 14px 0; padding: 0 12px 12px; border: 1px dashed var(--line); border-radius: 7px; background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+.cs329a-reading-quick > summary { padding: 11px 2px; color: var(--accent); cursor: pointer; font: 700 .78em/1.4 ui-monospace, Menlo, monospace; }
+.cs329a-reading-quick > .cs329a-paper-list { margin-top: 2px; }
 .cs329a-content code { padding: .1em .28em; border: 1px solid var(--line); border-radius: 3px; background: var(--surface-2); font: .84em ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
 .cs329a-content pre { max-width: 100%; margin: 1.1em 0; padding: 14px 16px; overflow: auto; border-radius: 5px; color: #e9f0ec; background: var(--code); font: .82em/1.55 ui-monospace, Menlo, monospace; }
 .cs329a-content table { display: block; width: max-content; max-width: 100%; margin: 1.2em 0; overflow-x: auto; border-collapse: collapse; font-size: .86em; }

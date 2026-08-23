@@ -34,6 +34,10 @@
     if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
     target.focus({ preventScroll: true });
   };
+  const revealTarget = target => {
+    const details = target?.closest('details');
+    if (details) details.open = true;
+  };
   const decodeHash = encoded => {
     try { return decodeURIComponent(encoded); } catch (_) { return encoded; }
   };
@@ -111,6 +115,7 @@
         event.preventDefault();
         const target = document.getElementById(heading.id);
         if (target) {
+          revealTarget(target);
           history.pushState(null, '', `#${heading.id}`);
           reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'smooth' });
           focusTarget(target);
@@ -138,6 +143,7 @@
     const target = candidate && candidate.closest('.session-view') === active ? candidate : null;
     if (writeHash) history.pushState(null, '', `#${target ? headingId : active.id}`);
     if (target) {
+      revealTarget(target);
       reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'auto' });
       markToc(target.id);
       if (focusHeading) focusTarget(target);
