@@ -5,24 +5,51 @@
   const sidebar = document.getElementById('sidebar');
   const menu = document.getElementById('menu-button');
   const scrim = document.getElementById('sidebar-scrim');
-  const returnFocus = () => { if (menu) menu.focus(); };
+  const mobileQuery = window.matchMedia('(max-width: 780px)');
+  let drawerOpen = false;
+  let returnFocus = menu;
+  const focusMain = target => {
+    if (!target) return;
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  };
+  const updateDrawerA11y = () => {
+    const mobile = mobileQuery.matches;
+    if (sidebar) {
+      sidebar.setAttribute('aria-hidden', mobile && !drawerOpen ? 'true' : 'false');
+      if ('inert' in sidebar) sidebar.inert = mobile && !drawerOpen;
+    }
+  };
   const close = (restore = false) => {
+    drawerOpen = false;
     body.classList.remove('cs329a-drawer-open');
     menu?.setAttribute('aria-expanded', 'false');
-    if (restore) returnFocus();
+    menu?.setAttribute('aria-label', '打开参考框架导航');
+    updateDrawerA11y();
+    if (restore && returnFocus) returnFocus.focus();
   };
   const open = () => {
+    returnFocus = document.activeElement;
+    drawerOpen = true;
     body.classList.add('cs329a-drawer-open');
     menu?.setAttribute('aria-expanded', 'true');
+    menu?.setAttribute('aria-label', '关闭参考框架导航');
+    updateDrawerA11y();
     sidebar?.querySelector('a[href]')?.focus();
   };
   body.classList.add('cs329a-enhanced');
-  menu?.addEventListener('click', () => body.classList.contains('cs329a-drawer-open') ? close() : open());
+  mobileQuery.addEventListener?.('change', updateDrawerA11y);
+  updateDrawerA11y();
+  document.querySelector('.cs329a-skip')?.addEventListener('click', event => {
+    event.preventDefault();
+    focusMain(document.getElementById('framework-main'));
+  });
+  menu?.addEventListener('click', () => drawerOpen ? close() : open());
   scrim?.addEventListener('click', () => close(true));
   sidebar?.querySelectorAll('a[href]').forEach(link => link.addEventListener('click', () => close(false)));
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && body.classList.contains('cs329a-drawer-open')) { close(true); return; }
-    if (event.key !== 'Tab' || !body.classList.contains('cs329a-drawer-open') || !sidebar) return;
+    if (event.key === 'Escape' && drawerOpen) { close(true); return; }
+    if (event.key !== 'Tab' || !drawerOpen || !sidebar) return;
     const focusable = [...sidebar.querySelectorAll('a[href],button,input,[tabindex]:not([tabindex="-1"])')];
     if (!focusable.length) return;
     const first = focusable[0], last = focusable[focusable.length - 1];

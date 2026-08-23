@@ -29,6 +29,24 @@
   const numberOf = view => view.dataset.number || view.id.replace(/\D/g, '').padStart(2, '0');
   const viewFor = id => document.getElementById(id)?.closest('.session-view') || document.getElementById(id);
   const short = value => value.replace(/\s+/g, ' ').trim().slice(0, 150);
+  const focusTarget = target => {
+    if (!target) return;
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.focus({ preventScroll: true });
+  };
+  const decodeHash = encoded => {
+    try { return decodeURIComponent(encoded); } catch (_) { return encoded; }
+  };
+  const headingExcerpt = heading => {
+    const parts = [];
+    let sibling = heading.nextElementSibling;
+    while (sibling && parts.join(' ').length < 220) {
+      if (/^H[1-3]$/.test(sibling.tagName)) break;
+      if (sibling.matches('p, ul, ol, table, .cs329a-question, .cs329a-paper-meta')) parts.push(sibling.textContent || '');
+      sibling = sibling.nextElementSibling;
+    }
+    return short(parts.join(' ') || heading.parentElement?.textContent || heading.textContent);
+  };
 
   const setNavState = viewId => navLinks.forEach(link => {
     const active = link.dataset.view === viewId;
@@ -70,6 +88,14 @@
     headings.forEach(heading => tocObserver.observe(heading));
   };
 
+  const updateFallbackToc = () => {
+    if ('IntersectionObserver' in window || !activeView || !reader) return;
+    const headings = [...activeView.querySelectorAll('h2[id], h3[id]')];
+    const current = headings.reduce((found, heading) => heading.offsetTop <= reader.scrollTop + 36 ? heading : found, headings[0]);
+    if (current) markToc(current.id);
+  };
+  reader?.addEventListener('scroll', updateFallbackToc, { passive: true });
+
   const buildToc = active => {
     toc.replaceChildren();
     const headings = [...active.querySelectorAll('h2[id], h3[id]')];
@@ -87,12 +113,13 @@
         if (target) {
           history.pushState(null, '', `#${heading.id}`);
           reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'smooth' });
-          target.focus({ preventScroll: true });
+          focusTarget(target);
           markToc(heading.id);
         }
       });
       toc.append(link);
     });
+    if (headings[0]) markToc(headings[0].id);
     observeToc(active);
   };
 
@@ -113,13 +140,25 @@
     if (target) {
       reader.scrollTo({ top: Math.max(0, target.offsetTop - 18), behavior: 'auto' });
       markToc(target.id);
-      if (focusHeading) target.focus({ preventScroll: true });
+      if (focusHeading) focusTarget(target);
     }
   };
 
   const activateFromHash = () => {
-    const raw = decodeURIComponent(location.hash.slice(1));
+    const encoded = location.hash.slice(1);
+    const raw = decodeHash(encoded);
     const direct = raw ? document.getElementById(raw) : null;
+    const current = activeView || views[0];
+    if (direct && !direct.closest('.session-view')) {
+      activate(current.id, '', false, false);
+      return;
+    }
+    const known = !raw || Boolean(direct) || sessionIds.includes(raw);
+    if (!known) {
+      history.replaceState(null, '', `#${views[0].id}`);
+      activate(views[0].id, '', false, false);
+      return;
+    }
     const active = direct?.closest('.session-view') || views.find(view => view.id === raw) || views[0];
     const heading = direct && direct !== active ? direct.id : '';
     activate(active.id, heading, false, Boolean(heading));
@@ -137,28 +176,57 @@
     if (target) { activate(target.id, '', true, false); closeDrawer(true); }
   }));
   window.addEventListener('hashchange', activateFromHash);
-  window.addEventListener('popstate', activateFromHash);
+  document.querySelector('.cs329a-skip')?.addEventListener('click', event => {
+    event.preventDefault();
+    const target = document.getElementById('reader-main');
+    focusTarget(target);
+  });
 
+  const mobileQuery = window.matchMedia('(max-width: 780px)');
+  let drawerOpen = false;
+  const updateDrawerA11y = () => {
+    const mobile = mobileQuery.matches;
+    if (sidebar) {
+      sidebar.setAttribute('aria-hidden', mobile && !drawerOpen ? 'true' : 'false');
+      if ('inert' in sidebar) sidebar.inert = mobile && !drawerOpen;
+    }
+  };
   const closeDrawer = restore => {
+    drawerOpen = false;
     body.classList.remove('cs329a-drawer-open');
-    if (menu) menu.setAttribute('aria-expanded', 'false');
+    if (menu) {
+      menu.setAttribute('aria-expanded', 'false');
+      menu.setAttribute('aria-label', '打开课程导航');
+    }
+    updateDrawerA11y();
     if (restore && returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
   };
   const openDrawer = () => {
     if (!menu) return;
     returnFocus = document.activeElement;
+    drawerOpen = true;
     body.classList.add('cs329a-drawer-open');
     menu.setAttribute('aria-expanded', 'true');
+    menu.setAttribute('aria-label', '关闭课程导航');
+    updateDrawerA11y();
     sidebar?.querySelector('a[href], button, input, select')?.focus();
   };
-  menu?.addEventListener('click', () => body.classList.contains('cs329a-drawer-open') ? closeDrawer(false) : openDrawer());
+  mobileQuery.addEventListener?.('change', updateDrawerA11y);
+  updateDrawerA11y();
+  menu?.addEventListener('click', () => drawerOpen ? closeDrawer(false) : openDrawer());
   scrim?.addEventListener('click', () => closeDrawer(true));
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && body.classList.contains('cs329a-drawer-open')) {
+    if (event.key === 'Escape' && drawerOpen) {
       closeDrawer(true);
       return;
     }
-    if (event.key === 'Tab' && body.classList.contains('cs329a-drawer-open') && sidebar) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      if (drawerOpen) closeDrawer(false);
+      search?.focus();
+      return;
+    }
+    if (event.key === 'Tab' && drawerOpen && sidebar) {
       const focusable = [...sidebar.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(node => !node.disabled);
       if (!focusable.length) return;
       const first = focusable[0];
@@ -166,7 +234,6 @@
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     }
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); search?.focus(); }
   });
 
   const root = document.documentElement;
@@ -189,10 +256,14 @@
   const searchIndex = [];
   views.forEach(view => {
     [...view.querySelectorAll('h1, h2, h3')].forEach(heading => {
-      searchIndex.push({ viewId: view.id, headingId: heading.id, title: heading.textContent.trim(), body: short(heading.parentElement?.textContent || view.textContent) });
+      searchIndex.push({ viewId: view.id, headingId: heading.id, title: heading.textContent.trim(), body: headingExcerpt(heading) });
     });
   });
-  const clearResults = () => { searchResults.replaceChildren(); searchResults.hidden = true; };
+  const clearResults = () => {
+    searchResults.replaceChildren();
+    searchResults.hidden = true;
+    search?.setAttribute('aria-expanded', 'false');
+  };
   const runSearch = () => {
     const query = search.value.trim().toLocaleLowerCase();
     if (!query) { clearResults(); text(searchStatus, '搜索已清除。'); return; }
@@ -202,6 +273,8 @@
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'cs329a-search-result';
+      button.setAttribute('role', 'option');
+      button.setAttribute('aria-selected', 'false');
       const meta = document.createElement('span'); meta.className = 'cs329a-result-meta'; meta.textContent = `SESSION ${numberOf(document.getElementById(hit.viewId))}`;
       const heading = document.createElement('span'); heading.className = 'cs329a-result-heading'; heading.textContent = hit.title;
       const snippet = document.createElement('span'); snippet.className = 'cs329a-result-snippet'; snippet.textContent = hit.body;
@@ -210,6 +283,7 @@
       searchResults.append(button);
     });
     searchResults.hidden = hits.length === 0;
+    search?.setAttribute('aria-expanded', hits.length ? 'true' : 'false');
     text(searchStatus, hits.length ? `找到 ${hits.length} 个匹配标题。` : `没有找到“${query}”的讲次或小节。`);
   };
   search?.addEventListener('input', runSearch);
