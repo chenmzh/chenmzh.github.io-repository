@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-22",
+  "updated": "2026-08-23",
   "briefs": [
+    {
+      "date": "2026-08-23",
+      "title": "每日合成与发育生物学简报 - 2026-08-23",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Hidden Dynamical Canalization at the Onset of Hydra Morphogenesis",
+        "Scarless conditional sgRNAs via endogenous mascRNA processing enable rapid and temporally controlled genome editing",
+        "Population dynamics of ribozymes during in vitro selection",
+        "Temporal resource variation promotes growth equalization through alternative plasticity strategies",
+        "The Movie After-Effect: widespread adaptation of human cortex following naturalistic sensory experience",
+        "Human Cytomegalovirus Infects and Remodels 3D-biofabricated Skin Equivalents",
+        "Identification of chloroplast transit peptides in Dunaliella salina and their application for heterologous astaxanthin production",
+        "Harnessing Yeast Biodiversity for Advanced Industrial Applications",
+        "Engineering Biomimetic Tumor Organoids Inspired by Janus Stiffness-Driven Cell Stemness",
+        "Function-first organoid engineering for regenerative medicine: current challenges and future perspectives"
+      ],
+      "summary": "动态 canalization、稳态可塑性和空间力学把形态发生与生物系统适应连接起来；条件 CRISPR、叶绿体定位和酵母底盘工程推进合成生物学的时间与空间可编程性；类器官和工程组织正转向功能、材料边界与长期动力学的联合设计。",
+      "markdown": "briefs/2026-08-23.md",
+      "url": "reader.html?date=2026-08-23",
+      "tags": [
+        "synthetic biology",
+        "developmental synthetic biology",
+        "cybernetics and biology"
+      ],
+      "items": [
+        "Hidden Dynamical Canalization at the Onset of Hydra Morphogenesis",
+        "Scarless conditional sgRNAs via endogenous mascRNA processing enable rapid and temporally controlled genome editing",
+        "Population dynamics of ribozymes during in vitro selection",
+        "Temporal resource variation promotes growth equalization through alternative plasticity strategies",
+        "The Movie After-Effect: widespread adaptation of human cortex following naturalistic sensory experience",
+        "Human Cytomegalovirus Infects and Remodels 3D-biofabricated Skin Equivalents",
+        "Identification of chloroplast transit peptides in Dunaliella salina and their application for heterologous astaxanthin production",
+        "Harnessing Yeast Biodiversity for Advanced Industrial Applications",
+        "Engineering Biomimetic Tumor Organoids Inspired by Janus Stiffness-Driven Cell Stemness",
+        "Function-first organoid engineering for regenerative medicine: current challenges and future perspectives"
+      ]
+    },
     {
       "date": "2026-08-22",
       "title": "每日合成与发育生物学简报 - 2026-08-22",
