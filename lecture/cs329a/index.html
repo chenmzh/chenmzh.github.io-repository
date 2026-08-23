@@ -3,449 +3,482 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Stanford CS329A Self Improving AI Agents 的公开课程索引与学习笔记入口">
+  <meta name="description" content="Stanford CS329A Self-Improving AI Agents：20 个公开课程讲次的个人阅读器与论文导读。">
   <meta name="color-scheme" content="light dark">
-  <title>CS329A · Self-Improving AI Agents</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --paper:#f1efe8;
-      --surface:#fffdf7;
-      --surface-2:#e9e7df;
-      --ink:#20231f;
-      --muted:#6c7068;
-      --line:#c8c5ba;
-      --accent:#176653;
-      --accent-soft:#dcece5;
-      --warm:#a45e25;
-      --sidebar:#20312c;
-      --sidebar-ink:#f0efe8;
-      --sidebar-muted:#aebdb6;
-      --code:#172622;
-      --reader-size:17px;
-    }
-    html[data-theme="dark"] {
-      color-scheme: dark;
-      --paper:#171b19;
-      --surface:#202522;
-      --surface-2:#292f2b;
-      --ink:#edf0e9;
-      --muted:#aeb6ae;
-      --line:#424943;
-      --accent:#71b69f;
-      --accent-soft:#29483e;
-      --warm:#e2a36d;
-      --sidebar:#111815;
-      --sidebar-ink:#f0f2ed;
-      --sidebar-muted:#93a69d;
-      --code:#0f1613;
-    }
-    * { box-sizing:border-box; }
-    html, body { min-height:100%; }
-    html { scroll-behavior:smooth; }
-    body { margin:0; overflow:hidden; color:var(--ink); background:var(--paper); font-family:Georgia,"Songti SC","STSong",serif; line-height:1.72; }
-    button, input { font:inherit; }
-    button:focus-visible, input:focus-visible, a:focus-visible { outline:3px solid color-mix(in srgb,var(--accent) 38%,transparent); outline-offset:2px; }
-    .skip-link { position:fixed; z-index:100; top:10px; left:10px; padding:8px 12px; color:#fff; background:var(--accent); border-radius:5px; font:700 .78rem/1.3 Menlo,Monaco,"Courier New",monospace; text-decoration:none; transform:translateY(-160%); }
-     .skip-link:focus { transform:translateY(0); }
-     .workspace:focus { outline:none; }
-     a { color:var(--accent); }
-    .app-shell { display:grid; grid-template-columns:260px minmax(0,1fr) 244px; height:100vh; min-width:0; }
-    .sidebar { min-width:0; overflow-y:auto; color:var(--sidebar-ink); background:var(--sidebar); border-right:1px solid #354841; }
-    .brand { padding:19px 18px 17px; border-bottom:1px solid #42544d; }
-    .back-link { display:inline-block; margin-bottom:15px; color:var(--sidebar-muted); font:700 .7rem/1.3 Menlo,Monaco,"Courier New",monospace; text-decoration:none; }
-    .back-link:hover { color:var(--sidebar-ink); }
-    .brand-code, .nav-label, .brand-meta, .nav-number, .status, .toolbar-title { font-family:Menlo,Monaco,"Courier New",monospace; }
-    .brand-code { margin:0 0 5px; color:#8fc4b2; font-size:.7rem; font-weight:700; letter-spacing:.04em; }
-    .brand h1 { margin:0; font-size:1.17rem; line-height:1.28; }
-    .brand-meta { margin-top:9px; color:var(--sidebar-muted); font-size:.68rem; line-height:1.45; }
-    .nav-label { margin:17px 18px 7px; color:var(--sidebar-muted); font-size:.67rem; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
-    .nav-item { display:grid; grid-template-columns:34px minmax(0,1fr); gap:7px; align-items:center; width:100%; min-width:0; min-height:40px; padding:6px 14px 6px 15px; border:0; border-left:3px solid transparent; color:var(--sidebar-ink); background:transparent; cursor:pointer; text-align:left; text-decoration:none; }
-    .nav-item:hover, .nav-item[aria-current="page"] { background:rgba(255,255,255,.07); }
-    .nav-item[aria-current="page"] { border-left-color:#e2a36d; background:rgba(255,255,255,.1); }
-    .nav-number { color:#91b5a8; font-size:.7rem; }
-    .nav-title { min-width:0; overflow:hidden; font-size:.82rem; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
-    .nav-external { display:block; min-height:39px; padding:8px 18px; color:var(--sidebar-ink); font-size:.8rem; text-decoration:none; }
-    .nav-external:hover { background:rgba(255,255,255,.07); }
-    .nav-note { margin:18px; padding:10px 11px; border:1px solid #52665d; color:#f0c99f; font-size:.73rem; line-height:1.5; }
-    .workspace { display:grid; grid-template-rows:58px minmax(0,1fr) 50px; min-width:0; min-height:0; background:var(--surface); }
-    .toolbar { display:grid; grid-template-columns:minmax(170px,1fr) minmax(190px,360px) auto; gap:10px; align-items:center; padding:8px 14px; border-bottom:1px solid var(--line); background:var(--surface); }
-    .toolbar-title { min-width:0; overflow:hidden; font-size:.79rem; font-weight:700; text-overflow:ellipsis; white-space:nowrap; }
-    .menu-button { display:none; }
-    .search-input { width:100%; height:38px; padding:7px 11px; border:1px solid var(--line); border-radius:4px; color:var(--ink); background:var(--surface); font-size:.84rem; }
-    .tool-actions { display:flex; gap:5px; }
-    .icon-button { display:inline-grid; place-items:center; min-width:36px; height:36px; padding:0 7px; border:1px solid var(--line); border-radius:4px; color:var(--ink); background:var(--surface); cursor:pointer; font-family:Menlo,Monaco,"Courier New",monospace; font-size:.76rem; font-weight:700; }
-    .icon-button:hover { background:var(--surface-2); }
-    .reader-scroll { min-width:0; min-height:0; overflow:auto; scroll-behavior:smooth; background:var(--surface); }
-    .lecture-view { width:min(860px,calc(100% - 48px)); margin:0 auto; padding:42px 0 80px; font-size:var(--reader-size); }
-    .lecture-kicker { margin-bottom:8px; color:var(--accent); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.72rem; font-weight:700; letter-spacing:.06em; }
-    .lecture-content h1 { margin:0 0 17px; font-size:2.25em; line-height:1.12; letter-spacing:-.025em; }
-    .lecture-content h1 em { color:var(--accent); font-style:normal; }
-    .lecture-content h2 { margin:2.4em 0 .8em; padding-top:.6em; border-top:1px solid var(--line); font-size:1.48em; line-height:1.25; scroll-margin-top:16px; }
-    .lecture-content h3 { margin:1.6em 0 .55em; color:var(--accent); font-size:1.08em; line-height:1.3; }
-    .lecture-content p { margin:.75em 0; }
-    .lead { max-width:760px; color:var(--muted); font-size:1.08em; }
-    .notice { margin:23px 0 28px; padding:13px 16px; border-left:4px solid var(--warm); color:var(--muted); background:var(--surface-2); font-size:.87em; }
-    .notice strong { color:var(--ink); }
-     .noscript-note { margin:18px 0; padding:11px 14px; border-left:4px solid var(--accent); color:var(--muted); background:var(--surface-2); font-size:.84em; }
-    .course-actions { display:flex; flex-wrap:wrap; gap:9px; margin:20px 0 27px; }
-    .course-actions a { display:inline-flex; align-items:center; gap:5px; padding:8px 12px; border:1px solid var(--line); border-radius:5px; color:var(--accent); background:var(--surface); font-size:.8em; font-weight:700; text-decoration:none; }
-    .course-actions a:hover { background:var(--accent-soft); }
-    .signal-grid, .map-grid, .assessment-grid, .resource-grid { display:grid; gap:11px; }
-    .signal-grid { grid-template-columns:repeat(4,1fr); margin:24px 0 30px; }
-    .signal-card, .map-card, .assessment-card, .resource-card { min-width:0; padding:13px 14px; border:1px solid var(--line); border-radius:8px; background:var(--surface-2); }
-    .signal-card dt { color:var(--muted); font:700 .64em/1.3 Menlo,Monaco,"Courier New",monospace; letter-spacing:.05em; text-transform:uppercase; }
-    .signal-card dd { margin:4px 0 0; font-size:1.02em; font-weight:700; }
-    .signal-card small { display:block; margin-top:3px; color:var(--muted); font-size:.72em; line-height:1.35; }
-    .map-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .map-card { background:var(--surface); }
-    .map-card .map-index { color:var(--warm); font:700 .68em/1.3 Menlo,Monaco,"Courier New",monospace; }
-    .map-card h3 { margin:.3em 0 .25em; font-size:1em; }
-    .map-card p { margin:.25em 0 0; color:var(--muted); font-size:.82em; line-height:1.5; }
-    .source-line { color:var(--muted); font-size:.8em; }
-    .source-line a { font-weight:700; }
-    .table-wrap { overflow-x:auto; margin:16px 0; border:1px solid var(--line); }
-    table { width:100%; min-width:650px; border-collapse:collapse; font-size:.8em; }
-    th, td { padding:9px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
-    th { color:var(--muted); background:var(--surface-2); font:700 .7em/1.3 Menlo,Monaco,"Courier New",monospace; letter-spacing:.04em; text-transform:uppercase; }
-    tr:last-child td { border-bottom:0; }
-    .session { width:48px; color:var(--warm); font-family:Menlo,Monaco,"Courier New",monospace; font-weight:700; }
-    .session-type { color:var(--muted); font-size:.82em; }
-    .deadline-row td { color:var(--warm); background:color-mix(in srgb,var(--warm) 7%,transparent); }
-    .assessment-grid { grid-template-columns:repeat(4,minmax(0,1fr)); margin:18px 0; }
-    .assessment-card strong { display:block; font-size:.95em; }
-    .assessment-card span { display:block; margin-top:3px; color:var(--muted); font-size:.75em; line-height:1.4; }
-    .status { display:inline-block; padding:2px 6px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:.62em; font-weight:700; letter-spacing:.02em; white-space:nowrap; }
-    .status.todo { color:var(--warm); border-color:color-mix(in srgb,var(--warm) 52%,var(--line)); }
-    .notebook-list { display:grid; gap:8px; margin:16px 0; padding:0; list-style:none; }
-    .notebook-list li { display:flex; align-items:baseline; justify-content:space-between; gap:14px; padding:10px 12px; border:1px solid var(--line); background:var(--surface); }
-    .notebook-list li span:first-child { min-width:0; }
-    .resource-grid { grid-template-columns:repeat(3,minmax(0,1fr)); margin:16px 0; }
-    .resource-card { color:var(--muted); font-size:.82em; }
-    .resource-card a { display:block; margin-bottom:3px; color:var(--accent); font-weight:700; }
-    .resource-card p { margin:.25em 0 0; line-height:1.45; }
-    blockquote { margin:1.2em 0; padding:.3em 1.1em; border-left:3px solid var(--warm); color:var(--muted); background:var(--surface-2); }
-    code { padding:.12em .28em; border:1px solid var(--line); border-radius:3px; background:var(--surface-2); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.84em; }
-    .section-note { margin-top:-.3em; color:var(--muted); font-size:.82em; }
-    .search-empty { display:none; margin:16px 0; padding:12px; color:var(--muted); border:1px dashed var(--line); font-size:.84em; }
-    .search-empty.visible { display:block; }
-    .pager { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:6px 14px; border-top:1px solid var(--line); background:var(--surface-2); }
-    .pager a { color:var(--accent); font-size:.8em; font-weight:700; text-decoration:none; }
-    .pager a:last-child { justify-self:end; text-align:right; }
-    .page-count { color:var(--muted); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.69rem; }
-    .section-rail { min-width:0; overflow-y:auto; padding:19px 14px 24px; border-left:1px solid var(--line); background:var(--paper); }
-    .section-rail h2 { margin:0 0 10px; color:var(--muted); font-family:Menlo,Monaco,"Courier New",monospace; font-size:.68rem; text-transform:uppercase; }
-    .toc-button { display:block; width:100%; padding:5px 6px; border:0; border-left:2px solid transparent; color:var(--muted); background:transparent; cursor:pointer; font-size:.76rem; line-height:1.35; text-align:left; text-decoration:none; }
-    .toc-button:hover, .toc-button.active { color:var(--accent); }
-    .toc-button.active { border-left-color:var(--accent); font-weight:700; }
-    .rail-rule { margin:18px 6px; border:0; border-top:1px solid var(--line); }
-    .rail-meta { padding:0 6px; color:var(--muted); font-size:.72em; line-height:1.55; }
-    .sidebar-scrim { display:none; }
-    @media (max-width:1120px) {
-      .app-shell { grid-template-columns:238px minmax(0,1fr); }
-      .section-rail { display:none; }
-      .toolbar { grid-template-columns:minmax(140px,1fr) minmax(180px,340px) auto; }
-    }
-    @media (max-width:760px) {
-      .app-shell { display:block; height:100vh; }
-      .workspace { height:100vh; }
-      .sidebar { position:fixed; z-index:70; inset:0 auto 0 0; width:min(300px,86vw); transform:translateX(-102%); transition:transform 180ms ease; box-shadow:16px 0 40px rgba(0,0,0,.28); }
-      body.sidebar-open .sidebar { transform:translateX(0); }
-      .sidebar-scrim { position:fixed; z-index:65; inset:0; display:none; border:0; background:rgba(0,0,0,.42); }
-      body.sidebar-open .sidebar-scrim { display:block; }
-      .toolbar { grid-template-columns:auto minmax(0,1fr) auto; gap:7px; padding:8px 9px; }
-      .menu-button { display:inline-grid; }
-      .toolbar-title { display:none; }
-      .tool-actions .font-down { display:none; }
-      .lecture-view { width:min(calc(100% - 30px),860px); padding-top:27px; }
-      .lecture-content h1 { font-size:1.8em; }
-      .signal-grid { grid-template-columns:repeat(2,1fr); }
-      .map-grid, .resource-grid { grid-template-columns:1fr; }
-      .assessment-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .pager { grid-template-columns:1fr 1fr; padding-inline:9px; }
-      .page-count { display:none; }
-    }
-    @media print {
-      body { overflow:visible; background:#fff; }
-      .app-shell { display:block; height:auto; }
-      .sidebar, .toolbar, .pager, .section-rail, .sidebar-scrim { display:none!important; }
-      .workspace, .reader-scroll { display:block; height:auto; overflow:visible; }
-      .lecture-view { width:100%; padding:0; color:#111; background:#fff; }
-    }
-  </style>
+  <title>CS329A · 20 讲公开阅读器</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./assets/cs329a-reader.css">
 </head>
-<body>
-  <a class="skip-link" href="#main-content">跳转到正文</a>
-  <div class="app-shell">
-    <aside class="sidebar" id="sidebar" aria-label="CS329A 课程导航">
-      <header class="brand">
-        <a class="back-link" href="../">← Lecture Archive</a>
-        <p class="brand-code">CS329A · OPEN NOTES</p>
+<body class="cs329a-reader">
+  <a class="cs329a-skip" href="#reader-main">跳转到正文</a>
+  <div class="cs329a-reader-app">
+    <aside class="cs329a-sidebar" id="sidebar" aria-label="CS329A 20 讲导航">
+      <header class="cs329a-brand">
+        <a class="cs329a-source-link" href="../">← Lecture Archive</a>
+        <p class="cs329a-brand-code">CS329A · 20 SESSION READER</p>
         <h1>Self-Improving<br>AI Agents</h1>
-        <div class="brand-meta">公开课程索引 · Autumn 2025<br>个人整理页，不代表官方页面</div>
+        <div class="cs329a-brand-meta">Autumn 2025 · 3 units<br>个人阅读器 · 非官方页面</div>
       </header>
-      <div class="nav-label">Course map</div>
-      <nav aria-label="页面章节">
-        <a class="nav-item" href="#overview" data-section="overview" aria-current="page"><span class="nav-number">00</span><span class="nav-title">Overview</span></a>
-        <a class="nav-item" href="#map" data-section="map" aria-current="false"><span class="nav-number">01</span><span class="nav-title">Learning path</span></a>
-        <a class="nav-item" href="#schedule" data-section="schedule" aria-current="false"><span class="nav-number">02</span><span class="nav-title">Schedule</span></a>
-        <a class="nav-item" href="#project" data-section="project" aria-current="false"><span class="nav-number">03</span><span class="nav-title">Research project</span></a>
-        <a class="nav-item" href="#notebook" data-section="notebook" aria-current="false"><span class="nav-number">04</span><span class="nav-title">Reading notebook</span></a>
-        <a class="nav-item" href="#resources" data-section="resources" aria-current="false"><span class="nav-number">05</span><span class="nav-title">Resources</span></a>
+      <div class="cs329a-nav-label">Sessions · 20 lectures</div>
+      <nav class="cs329a-session-nav" aria-label="课程讲次">
+        <a class="cs329a-nav-item" href="#session-01" data-view="session-01" aria-current="false"><span class="cs329a-nav-number">01</span><span><span class="cs329a-nav-title">Course Overview</span><span class="cs329a-nav-status">课程地图</span></span></a>
+        <a class="cs329a-nav-item" href="#session-02" data-view="session-02" aria-current="false"><span class="cs329a-nav-number">02</span><span><span class="cs329a-nav-title">Test-time Compute Scaling</span><span class="cs329a-nav-status">推理时扩展</span></span></a>
+        <a class="cs329a-nav-item" href="#session-03" data-view="session-03" aria-current="false"><span class="cs329a-nav-number">03</span><span><span class="cs329a-nav-title">Robust Verification</span><span class="cs329a-nav-status">验证器</span></span></a>
+        <a class="cs329a-nav-item" href="#session-04" data-view="session-04" aria-current="false"><span class="cs329a-nav-number">04</span><span><span class="cs329a-nav-title">Tools / Code Feedback</span><span class="cs329a-nav-status">工具反馈</span></span></a>
+        <a class="cs329a-nav-item" href="#session-05" data-view="session-05" aria-current="false"><span class="cs329a-nav-number">05</span><span><span class="cs329a-nav-title">Multi-step Planning</span><span class="cs329a-nav-status">搜索规划</span></span></a>
+        <a class="cs329a-nav-item" href="#session-06" data-view="session-06" aria-current="false"><span class="cs329a-nav-number">06</span><span><span class="cs329a-nav-title">Train-time Scaling / RL</span><span class="cs329a-nav-status">训练时改进</span></span></a>
+        <a class="cs329a-nav-item" href="#session-07" data-view="session-07" aria-current="false"><span class="cs329a-nav-number">07</span><span><span class="cs329a-nav-title">Open-ended Evolution</span><span class="cs329a-nav-status">开放式演化</span></span></a>
+        <a class="cs329a-nav-item" href="#session-08" data-view="session-08" aria-current="false"><span class="cs329a-nav-number">08</span><span><span class="cs329a-nav-title">Search &amp; Deep Research</span><span class="cs329a-nav-status">研究型 Agent</span></span></a>
+        <div class="cs329a-nav-gap">09–12 · 嘉宾主题与期中展示<br>公开材料不足处明确标注</div>
+        <a class="cs329a-nav-item" href="#session-09" data-view="session-09" aria-current="false"><span class="cs329a-nav-number">09</span><span><span class="cs329a-nav-title">Guest · Melvin Johnson</span><span class="cs329a-nav-status">待补主题导读</span></span></a>
+        <a class="cs329a-nav-item" href="#session-10" data-view="session-10" aria-current="false"><span class="cs329a-nav-number">10</span><span><span class="cs329a-nav-title">Midterm Presentations I</span><span class="cs329a-nav-status">研究表达</span></span></a>
+        <a class="cs329a-nav-item" href="#session-11" data-view="session-11" aria-current="false"><span class="cs329a-nav-number">11</span><span><span class="cs329a-nav-title">Midterm Presentations II</span><span class="cs329a-nav-status">证据审查</span></span></a>
+        <a class="cs329a-nav-item" href="#session-12" data-view="session-12" aria-current="false"><span class="cs329a-nav-number">12</span><span><span class="cs329a-nav-title">Midterm Presentations III</span><span class="cs329a-nav-status">反馈迭代</span></span></a>
+        <a class="cs329a-nav-item" href="#session-13" data-view="session-13" aria-current="false"><span class="cs329a-nav-number">13</span><span><span class="cs329a-nav-title">Software Engineering Agents</span><span class="cs329a-nav-status">代码智能体</span></span></a>
+        <a class="cs329a-nav-item" href="#session-14" data-view="session-14" aria-current="false"><span class="cs329a-nav-number">14</span><span><span class="cs329a-nav-title">Agents with Memory</span><span class="cs329a-nav-status">记忆系统</span></span></a>
+        <a class="cs329a-nav-item" href="#session-15" data-view="session-15" aria-current="false"><span class="cs329a-nav-number">15</span><span><span class="cs329a-nav-title">Guest · Denny Zhou</span><span class="cs329a-nav-status">待补主题导读</span></span></a>
+        <a class="cs329a-nav-item" href="#session-16" data-view="session-16" aria-current="false"><span class="cs329a-nav-number">16</span><span><span class="cs329a-nav-title">Guest · Thang Luong</span><span class="cs329a-nav-status">待补主题导读</span></span></a>
+        <a class="cs329a-nav-item" href="#session-17" data-view="session-17" aria-current="false"><span class="cs329a-nav-number">17</span><span><span class="cs329a-nav-title">Evaluations &amp; Long Horizons</span><span class="cs329a-nav-status">长程评测</span></span></a>
+        <a class="cs329a-nav-item" href="#session-18" data-view="session-18" aria-current="false"><span class="cs329a-nav-number">18</span><span><span class="cs329a-nav-title">Guest · Misha Laskin</span><span class="cs329a-nav-status">待补主题导读</span></span></a>
+        <a class="cs329a-nav-item" href="#session-19" data-view="session-19" aria-current="false"><span class="cs329a-nav-number">19</span><span><span class="cs329a-nav-title">Multimodal Robotics</span><span class="cs329a-nav-status">具身智能</span></span></a>
+        <a class="cs329a-nav-item" href="#session-20" data-view="session-20" aria-current="false"><span class="cs329a-nav-number">20</span><span><span class="cs329a-nav-title">Future Research Areas</span><span class="cs329a-nav-status">开放问题</span></span></a>
       </nav>
-      <div class="nav-label">Official sources</div>
-      <nav aria-label="官方资料">
-        <a class="nav-external" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
-        <a class="nav-external" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
+      <div class="cs329a-nav-label">Public sources</div>
+      <nav class="cs329a-source-nav" aria-label="公开来源">
+        <a class="cs329a-source-link" href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a>
+        <a class="cs329a-source-link" href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a>
       </nav>
-      <div class="nav-note" role="note">本页只做公开课程信息的导航与学习记录入口；讲义、论文和作业请以原课程页面及其授权为准。</div>
+      <div class="cs329a-side-note" role="note">这是个人学习整理，不是 Stanford 官方网站，也不代表官方隶属、认可或授权。论文只做标题与摘要级导读；不转载讲义全文、论文全文或作业答案。</div>
     </aside>
-    <button class="sidebar-scrim" id="sidebar-scrim" type="button" aria-label="关闭课程导航"></button>
-    <main id="main-content" class="workspace" tabindex="-1">
-      <header class="toolbar">
-        <button class="icon-button menu-button" id="menu-button" type="button" aria-label="打开课程导航" aria-expanded="false" aria-controls="sidebar">☰</button>
-        <div class="toolbar-title">CS329A / Self-Improving AI Agents</div>
-        <div class="search-wrap">
-          <label for="search-input" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">搜索课程页</label>
-          <input class="search-input" id="search-input" type="search" placeholder="搜索本页内容" autocomplete="off">
+    <button class="cs329a-scrim" id="sidebar-scrim" type="button" aria-label="关闭课程导航"></button>
+    <main class="cs329a-workspace" id="reader-main" tabindex="-1">
+      <header class="cs329a-toolbar">
+        <button class="cs329a-icon cs329a-menu" id="menu-button" type="button" aria-label="打开课程导航" aria-expanded="false" aria-controls="sidebar">☰</button>
+        <div class="cs329a-toolbar-title" id="toolbar-title">CS329A / 20-session reader</div>
+        <div class="cs329a-search-wrap">
+          <label class="cs329a-search-status" id="search-status" aria-live="polite">搜索尚未开始。</label>
+          <input class="cs329a-search" id="search-input" type="search" placeholder="搜索讲次、论文或概念 · ⌘K" autocomplete="off" aria-label="搜索讲次、论文或概念">
+          <div class="cs329a-search-results" id="search-results" hidden role="listbox" aria-label="搜索结果"></div>
         </div>
-        <div class="tool-actions">
-          <button class="icon-button font-down" id="font-down" type="button" aria-label="减小字号">A−</button>
-          <button class="icon-button" id="font-up" type="button" aria-label="增大字号">A+</button>
-          <button class="icon-button" id="theme-button" type="button" aria-label="切换明暗主题">◐</button>
-          <button class="icon-button" id="print-button" type="button" aria-label="打印当前课程页">⌘P</button>
+        <div class="cs329a-actions">
+          <button class="cs329a-icon" id="font-down" type="button" aria-label="减小字号">A−</button>
+          <button class="cs329a-icon" id="font-up" type="button" aria-label="增大字号">A+</button>
+          <button class="cs329a-icon" id="theme-button" type="button" aria-label="切换明暗主题">◐</button>
+          <button class="cs329a-icon" id="print-button" type="button" aria-label="打印当前讲次">⌘P</button>
         </div>
       </header>
-      <div class="reader-scroll" id="reader-scroll">
-        <article class="lecture-view lecture-content">
-          <section id="overview" class="content-section" data-search="overview self improving ai agents stanford cs329a">
-            <div class="lecture-kicker">STANFORD CS329A · AUTUMN 2025 · COURSE INDEX</div>
-            <h1>Self-Improving <em>AI Agents.</em></h1>
-            <p class="lead">这是第二门课程的公开索引页：围绕能够通过与自身和环境交互持续改进的 AI agent，整理课程主题、公开日程、研究项目入口与后续笔记位置。</p>
-            <div class="notice"><strong>页面声明：</strong>这是个人学习整理页，不是 Stanford University 官方网站，也不代表 Stanford 的隶属或授权。课程名称与公开课程信息归原课程及相关权利人所有；本页不转载受限讲义、论文全文或作业答案。</div>
-             <noscript><p class="noscript-note">JavaScript 已关闭：搜索、主题和移动导航不可用；课程路线、静态日程和公开来源仍可直接阅读。</p></noscript>
-            <div class="course-actions">
-              <a href="../">← 返回课程目录</a>
-              <a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">查看官方课程页 ↗</a>
-              <a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">查看课程目录 ↗</a>
-            </div>
-            <dl class="signal-grid" aria-label="课程概况">
-              <div class="signal-card"><dt>Course</dt><dd>CS329A</dd><small>Graduate seminar</small></div>
-              <div class="signal-card"><dt>Units</dt><dd>3</dd><small>以课程目录为准</small></div>
-              <div class="signal-card"><dt>Sessions</dt><dd>20 listed</dd><small>Autumn 2025 公开日程</small></div>
-              <div class="signal-card"><dt>Status</dt><dd>Tutorial</dd><small>3 interactive lessons</small></div>
-            </dl>
-            <h2>课程简介</h2>
-            <p>官方课程介绍将重点放在 LLM 的自我改进方法、验证器与测试时计算扩展，以及搜索、工具、检索、记忆和多模态交互；后半部分延伸到多步推理与规划、agent workflow 的评测和编排，并讨论 coding agents、科研助手与机器人等应用场景。这里把这些方向做成一个可继续填充的阅读工作台。</p>
-            <p class="source-line">事实来源：<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页面</a> 与 <a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin 课程条目</a>。</p>
-          </section>
+      <div class="cs329a-reader-scroll" id="reader-scroll">
+        <noscript><p class="cs329a-noscript">JavaScript 已关闭：20 篇讲次会连续显示，仍可直接阅读；左侧链接可以跳到对应讲次，论文链接需要联网打开。</p></noscript>
+        <article class="session-view" id="session-01" data-number="01" data-title="课程地图：什么是 Self-Improving Agent" aria-labelledby="s01-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 01 · COURSE OVERVIEW · AUTUMN 2025</div>
+            <h1 id="s01-title">课程地图：<em>什么是 Self-Improving Agent？</em></h1>
+            <p class="cs329a-lead">先不要把 Agent 想成“会聊天的模型”。本课程真正关心的是：一个系统能否利用环境反馈、验证器、工具和历史经验，把下一轮行动做得更好。</p>
+            <div class="cs329a-notice"><strong>阅读边界：</strong>本页把官方公开课程主题翻译成个人讲解；它不是官方讲义。后续 19 讲按课程页面公开的 session 顺序组织。</div>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">基础概念</span><span class="cs329a-badge">20 讲中的 01</span></div>
+            <h2 id="s01-question">本讲要回答：改进发生在哪里？</h2>
+            <p>普通语言模型通常是输入 <code>x</code> 后一次性生成 <code>y</code>。Self-improving agent 则多出一个循环：提出候选、执行动作、观察结果、更新策略。改进可以发生在三个位置：<strong>推理时</strong>增加搜索和验证，<strong>训练时</strong>利用反馈更新模型，或在系统层增加工具、记忆和规划。</p>
+            <div class="cs329a-flow" aria-label="Agent 改进闭环"><div class="cs329a-flow-step"><strong>01 · propose</strong><span>生成候选答案或动作</span></div><div class="cs329a-flow-step"><strong>02 · act</strong><span>调用工具或环境</span></div><div class="cs329a-flow-step"><strong>03 · verify</strong><span>获得可检查反馈</span></div><div class="cs329a-flow-step"><strong>04 · update</strong><span>重试、搜索或学习</span></div></div>
+            <h2 id="s01-explain">讲解：把“聪明”拆成可检查的接口</h2>
+            <h3 id="s01-state">状态、动作和反馈</h3>
+            <p>用最小模型表示：状态是 <code>s_t</code>，Agent 选择动作 <code>a_t</code>，环境返回观察 <code>o_{t+1}</code>。如果反馈只有“好/坏”，系统很难知道错在目标、工具还是最后一步；如果反馈包含测试断言、执行轨迹或可复现的失败样例，下一轮就有了可操作的学习信号。</p>
+            <h3 id="s01-loop">三条改进路线</h3>
+            <div class="cs329a-concept-grid"><div class="cs329a-concept-card"><strong>Inference-time</strong><span>同一个模型多采样、搜索、验证；成本增加但不改权重。</span></div><div class="cs329a-concept-card"><strong>Train-time</strong><span>把成功轨迹或反思转成训练数据；需要防止错误自我复制。</span></div><div class="cs329a-concept-card"><strong>System-time</strong><span>接入代码、检索、记忆和物理传感器；能力取决于接口质量。</span></div></div>
+            <h2 id="s01-reading">公开阅读：先建立共同词汇</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s01-paper-constitutional">Constitutional AI</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · 公开论文</span><p><a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener noreferrer">Bai et al., 2022 · arXiv:2212.08073 ↗</a>。把原则、批评和修订组成反馈链，是理解“反馈如何进入系统”的一个早期例子；这里不把它等同于本课程全部方法。</p></div><div class="cs329a-paper"><h3 id="s01-paper-official">官方课程地图</h3><span class="cs329a-paper-meta official">官方课程来源</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">CS329A 官方课程页 ↗</a>。它公开列出课程目标、20 个 session、reading 和项目语境；具体课堂材料以原页授权为准。</p></div></div>
+            <h2 id="s01-practice">小练习：辨认反馈类型</h2>
+            <h3 id="s01-practice-check">把一个失败案例写成接口</h3>
+            <p class="cs329a-question"><strong>问题：</strong>“代码没通过测试”是结果反馈；“第 4 个断言在时区后缀上失败”是诊断反馈。你会把哪一种直接放进下一轮 prompt？还需要保存哪些上下文，才能避免 Agent 重复同一错误？</p>
+            <p class="cs329a-reader-note">下一讲：用重复采样和验证器把推理时计算预算显式化。</p>
+          </div>
+        </article>
 
-          <section id="map" class="content-section" data-search="learning path course map tutorial visualization test time compute verification tools retrieval planning evaluation orchestration">
-            <h2>学习路线：从改进信号到可验证的 agent</h2>
-            <p class="section-note">下面是根据公开课程简介与日程做的主题归纳，不是官方讲义目录；具体课次和阅读材料请回到官方页面核对。</p>
-            <h3>可视化教程主线</h3>
-             <p>按“先理解闭环，再接入系统，最后评估是否真的变好”的顺序阅读。每页都使用本地确定性模拟，不需要 API，也不把教学数字冒充论文结果。</p>
-             <div class="course-actions" aria-label="CS329A 可视化教程入口">
-               <a href="./foundations.html">01 · 闭环、扩展与验证 ↗</a>
-               <a href="./systems.html">02 · 工具、规划与记忆 ↗</a>
-               <a href="./evaluation.html">03 · 长程评估与机器人 ↗</a>
-             </div>
-             <div class="map-grid">
-              <article class="map-card"><span class="map-index">TRACK 01</span><h3>Inference-time scaling</h3><p>先观察推理时增加计算、重复采样或搜索如何改变结果质量与成本。</p></article>
-              <article class="map-card"><span class="map-index">TRACK 02</span><h3>Verification &amp; feedback</h3><p>把 verifier、工具执行结果或环境反馈变成可利用的改进信号。</p></article>
-              <article class="map-card"><span class="map-index">TRACK 03</span><h3>Search, tools &amp; memory</h3><p>研究 agent 如何调用工具、检索信息、保存上下文，并在多步任务中持续工作。</p></article>
-              <article class="map-card"><span class="map-index">TRACK 04</span><h3>Planning &amp; orchestration</h3><p>把分解、规划、执行与重试组织成 workflow，同时明确边界条件与失败模式。</p></article>
-              <article class="map-card"><span class="map-index">TRACK 05</span><h3>Evaluation &amp; applications</h3><p>用长时程任务、真实工具链和应用场景检查 agent 是否可靠，而不只看单步 benchmark。</p></article>
-              <article class="map-card"><span class="map-index">TRACK 06</span><h3>Research practice</h3><p>从论文讨论走向可复现实验、项目提案、中期交流和最终研究展示。</p></article>
-            </div>
-            <h3>建议的阅读方法</h3>
-            <blockquote>不要把“能生成答案”直接等同于“能完成任务”。每次阅读都记录：改进信号是什么、agent 如何获得反馈、评价指标是否覆盖长程失败。</blockquote>
-          </section>
+        <article class="session-view" id="session-02" data-number="02" data-title="Test-time Compute Scaling：把预算用在推理时" aria-labelledby="s02-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 02 · TEST-TIME COMPUTE SCALING</div>
+            <h1 id="s02-title">推理时计算扩展：<em>多想几次，真的会更好吗？</em></h1>
+            <p class="cs329a-lead">Test-time scaling 把“模型大小”之外的旋钮打开：给同一个模型更多采样、搜索和验证预算。但预算不是越大越好，关键是能否筛掉错误候选。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题与阅读</span><span class="cs329a-badge">重复采样 · 路由 · 成本</span></div>
+            <h2 id="s02-question">本讲要回答：预算增加的收益从哪里来？</h2>
+            <p>假设单次生成得到正确答案的概率是 <code>p</code>，独立采样 <code>K</code> 次并且有完美选择器时，至少出现一个正确答案的概率是 <code>1 − (1 − p)^K</code>。现实中选择器并不完美，采样之间也不独立，所以曲线会出现边际收益递减。</p>
+            <div class="cs329a-flow"><div class="cs329a-flow-step"><strong>sample</strong><span>生成多个候选</span></div><div class="cs329a-flow-step"><strong>score</strong><span>打分或验证</span></div><div class="cs329a-flow-step"><strong>select</strong><span>选择并汇总</span></div><div class="cs329a-flow-step"><strong>budget</strong><span>控制成本与延迟</span></div></div>
+            <h2 id="s02-explain">讲解：从“多生成”到“会分配计算”</h2>
+            <h3 id="s02-sampling">重复采样不是盲目投票</h3>
+            <p>如果每个候选只是换一种表述，投票带来的信息很少；如果候选覆盖了不同推理路径，验证器才可能利用多样性。工程上要同时看四项：候选多样性、验证器校准、每个候选的 token 成本，以及总延迟。</p>
+            <h3 id="s02-routing">静态 K 与自适应预算</h3>
+            <p>简单系统对所有问题固定取 <code>K=8</code>；更好的路由器先判断题目难度，再把预算给不确定样本。路由器本身也可能错，因此需要保留小预算的安全路径和停止规则。</p>
+            <a class="cs329a-deep-link" href="./foundations.html#scaling-demo">进入交互深挖：采样预算与 Verifier 曲线 ↗</a>
+            <h2 id="s02-reading">公开阅读：三种扩展视角</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s02-paper-monkeys">Large Language Monkeys</h3><span class="cs329a-paper-meta official">官方课程阅读 · 重复采样</span><p><a href="https://arxiv.org/abs/2407.21787" target="_blank" rel="noopener noreferrer">Brown et al., 2024 ↗</a>。把 inference compute 视为可增加的样本预算，适合用来观察“覆盖率”和“选择器”之间的关系。</p></div><div class="cs329a-paper"><h3 id="s02-paper-archon">Archon</h3><span class="cs329a-paper-meta official">官方课程阅读 · 组合式推理时技术</span><p><a href="https://arxiv.org/abs/2409.15254" target="_blank" rel="noopener noreferrer">Saad-Falcon et al., 2024 ↗</a>。核心问题不是单个技巧，而是如何搜索不同 inference-time 组件的组合。</p></div><div class="cs329a-paper"><h3 id="s02-paper-snell">Scaling LLM Test-Time Compute Optimally</h3><span class="cs329a-paper-meta official">官方课程阅读 · 预算分配</span><p><a href="https://arxiv.org/abs/2408.03314" target="_blank" rel="noopener noreferrer">Snell et al., 2024 ↗</a>。阅读时重点关注“增加参数”和“增加推理预算”的比较条件，不要把特定 benchmark 的结论泛化成普遍定律。</p></div></div>
+            <h2 id="s02-practice">小练习：算一笔预算账</h2>
+            <h3 id="s02-practice-check">收益、成本与停止</h3>
+            <p class="cs329a-question"><strong>问题：</strong>单次正确率 0.35 时，理想独立采样取 <code>K=4</code> 的覆盖率是多少？如果验证每个候选的成本等于生成成本，为什么一个更弱但更便宜的初筛器可能更实用？</p>
+          </div>
+        </article>
 
-          <section id="schedule" class="content-section" data-search="schedule autumn 2025 lecture session date topic reading">
-            <h2>公开日程：Autumn 2025</h2>
-            <p class="section-note">以下为官方课程页公开的课次标题的精简索引。日期、嘉宾和阅读条目可能随课程更新，请以<a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方页面</a>为准。</p>
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>#</th><th>Date</th><th>Topic</th><th>Type</th></tr></thead>
-                <tbody id="schedule-body">
-                  <tr data-search="1 sep 22 course overview"><td class="session">01</td><td>Sep 22</td><td>Course Overview</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="2 sep 26 test time compute scaling"><td class="session">02</td><td>Sep 26</td><td>Test-time Compute Scaling</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="3 sep 29 robust verification"><td class="session">03</td><td>Sep 29</td><td>Robust Verification</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="4 oct 3 feedback tools code"><td class="session">04</td><td>Oct 03</td><td>Learning from Feedback with Tools / Code</td><td class="session-type">Lecture · HW 1</td></tr>
-                  <tr data-search="5 oct 6 multi step reasoning planning"><td class="session">05</td><td>Oct 06</td><td>Multi-step Reasoning / Planning</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="6 oct 10 train time scaling reinforcement learning"><td class="session">06</td><td>Oct 10</td><td>Train-time Scaling / Scaling RL</td><td class="session-type">Lecture · Proposal</td></tr>
-                  <tr data-search="7 oct 13 open ended evolution self improving agents"><td class="session">07</td><td>Oct 13</td><td>Open-ended Evolution of Self-Improving Agents</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="8 oct 17 search deep research agents"><td class="session">08</td><td>Oct 17</td><td>Self-improvement with Search &amp; Deep Research Agents</td><td class="session-type">Lecture · HW 2</td></tr>
-                  <tr data-search="9 oct 20 guest lecture melvin johnson google deepmind"><td class="session">09</td><td>Oct 20</td><td>Guest Lecture · Melvin Johnson</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="10 oct 24 midterm presentations"><td class="session">10</td><td>Oct 24</td><td>Midterm Presentations</td><td class="session-type">Presentation</td></tr>
-                  <tr data-search="11 oct 27 midterm presentations"><td class="session">11</td><td>Oct 27</td><td>Midterm Presentations</td><td class="session-type">Presentation</td></tr>
-                  <tr data-search="12 oct 31 midterm presentations"><td class="session">12</td><td>Oct 31</td><td>Midterm Presentations</td><td class="session-type">Presentation · HW 3</td></tr>
-                  <tr data-search="13 nov 3 agentic frameworks software engineering"><td class="session">13</td><td>Nov 03</td><td>Agentic Frameworks for Software Engineering</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="14 nov 7 augmenting agents memory junchen jiang"><td class="session">14</td><td>Nov 07</td><td>Augmenting Agents with Memory · Junchen Jiang</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="15 nov 10 guest lecture denny zhou"><td class="session">15</td><td>Nov 10</td><td>Guest Lecture · Denny Zhou</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="16 nov 14 guest lecture thang luong"><td class="session">16</td><td>Nov 14</td><td>Guest Lecture · Thang Luong</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="17 nov 17 agentic evaluations long horizon tasks"><td class="session">17</td><td>Nov 17</td><td>Agentic Evaluations &amp; Long-Horizon Tasks</td><td class="session-type">Lecture</td></tr>
-                  <tr data-search="18 nov 21 guest lecture misha laskin reflection ai"><td class="session">18</td><td>Nov 21</td><td>Guest Lecture · Misha Laskin</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="nov 24 holiday"><td class="session">—</td><td>Nov 24</td><td>Holiday</td><td class="session-type">No class</td></tr>
-                  <tr data-search="nov 28 holiday"><td class="session">—</td><td>Nov 28</td><td>Holiday</td><td class="session-type">No class</td></tr>
-                  <tr data-search="19 dec 1 guest lecture danny driess multimodal robotics"><td class="session">19</td><td>Dec 01</td><td>Guest Lecture · Danny Driess / Multimodal Agents in Robotics</td><td class="session-type">Guest lecture</td></tr>
-                  <tr data-search="20 dec 5 future research areas"><td class="session">20</td><td>Dec 05</td><td>Future Research Areas</td><td class="session-type">Lecture</td></tr>
-                  <tr class="deadline-row" data-search="deadline dec 10 final project due"><td class="session">—</td><td>Dec 10</td><td>Final Project Due</td><td class="session-type">Deadline</td></tr>
-                  <tr class="deadline-row" data-search="dec 12 final project poster presentation"><td class="session">—</td><td>Dec 12</td><td>Final Project Poster Presentation</td><td class="session-type">Presentation</td></tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="search-empty" id="search-empty">没有匹配的课次。可以尝试搜索 <code>verification</code>、<code>memory</code> 或日期。</div>
-          </section>
+        <article class="session-view" id="session-03" data-number="03" data-title="Robust Verification：让反馈值得信任" aria-labelledby="s03-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 03 · ROBUST VERIFICATION</div>
+            <h1 id="s03-title">稳健验证：<em>答案对了，不等于过程对了</em></h1>
+            <p class="cs329a-lead">验证器把“看起来合理”变成可执行的判定接口。它也会被模型钻空子，因此必须区分结果验证、过程验证、校准和分布外失败。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题与阅读</span><span class="cs329a-badge">ORM · PRM · calibration</span></div>
+            <h2 id="s03-question">本讲要回答：验证器在验证什么？</h2>
+            <p>ORM 只看最终答案，成本低但可能放过“中间步骤错误、最后蒙对”的轨迹；PRM 对中间步骤打分，反馈更细但标注与校准更难。两者都不是地面真理：它们只是被训练出来的测量仪。</p>
+            <div class="cs329a-concept-grid"><div class="cs329a-concept-card"><strong>Outcome</strong><span>最终答案是否满足检查器。</span></div><div class="cs329a-concept-card"><strong>Process</strong><span>每一步是否保持可接受的状态。</span></div><div class="cs329a-concept-card"><strong>Calibration</strong><span>分数 0.8 是否真的约等于 80% 成功率。</span></div></div>
+            <h2 id="s03-explain">讲解：从分数到决策</h2>
+            <h3 id="s03-gap">Generation–verification gap</h3>
+            <p>生成器负责提出候选，验证器负责排序或拒绝；两者能力不对称时，系统可能生成很多好答案却挑错，也可能验证器很严格导致误杀。评估验证器时要报告 TP、FP、TN、FN，而不是只报最终准确率。</p>
+            <h3 id="s03-weak">弱验证器的可用边界</h3>
+            <p>一个弱验证器仍可用于早期剪枝，但不能被包装成最终裁判。可行策略是分层：便宜规则先过滤，昂贵检查器复核，保留少量候选供人工或独立评测。</p>
+            <a class="cs329a-deep-link" href="./foundations.html#verifier-demo">进入交互深挖：验证门限与混淆矩阵 ↗</a>
+            <h2 id="s03-reading">公开阅读：过程监督与数学验证</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s03-paper-cobbe">Training Verifiers to Solve Math Word Problems</h3><span class="cs329a-paper-meta official">官方课程阅读 · 结果验证</span><p><a href="https://arxiv.org/abs/2110.14168" target="_blank" rel="noopener noreferrer">Cobbe et al., 2021 ↗</a>。把生成解答交给 verifier 排序，是理解“生成—筛选”分工的基础案例。</p></div><div class="cs329a-paper"><h3 id="s03-paper-lightman">Let’s Verify Step by Step</h3><span class="cs329a-paper-meta official">官方课程阅读 · 过程验证</span><p><a href="https://arxiv.org/abs/2305.20050" target="_blank" rel="noopener noreferrer">Lightman et al., 2023 ↗</a>。阅读时比较 step-level signal 与 final-answer signal 的信息差，并注意实验任务边界。</p></div></div>
+            <h2 id="s03-practice">小练习：写一个反作弊测试</h2>
+            <h3 id="s03-practice-check">不要只测“答案对不对”</h3>
+            <p class="cs329a-question"><strong>问题：</strong>为一个能解方程的 Agent 设计两条测试：一条检查最终代入，一条检查过程是否出现非法除零。若两条信号冲突，你会保留、拒绝还是进入人工复核？</p>
+          </div>
+        </article>
 
-          <section id="project" class="content-section" data-search="research project homework grading assessment proposal midterm final poster">
-            <h2>研究项目与课程要求</h2>
-            <p>官方课程页将研究项目放在课程核心位置：学生围绕 agent workflow 相关问题开展原创项目，并经历 proposal、中期展示与最终项目展示。下面只保留公开要求的导航信息，不复制作业题面或评分细则之外的受限材料。</p>
-            <div class="assessment-grid" aria-label="公开评估构成">
-              <div class="assessment-card"><strong>Homework 1</strong><span>15% · 基础 self-improvement 直觉</span></div>
-              <div class="assessment-card"><strong>Homework 2</strong><span>15% · 推理、搜索或工具使用</span></div>
-              <div class="assessment-card"><strong>Homework 3</strong><span>20% · 课程后半段主题</span></div>
-              <div class="assessment-card"><strong>Project proposal</strong><span>2.5% · 研究问题与计划</span></div>
-              <div class="assessment-card"><strong>Midterm</strong><span>10% · presentation + report</span></div>
-              <div class="assessment-card"><strong>Final project</strong><span>35% · 最终研究成果</span></div>
-              <div class="assessment-card"><strong>Poster</strong><span>2.5% · 结果交流</span></div>
-            </div>
-            <p class="section-note">上述比例来自公开课程页面的 Autumn 2025 版本，仅作学习计划参考；选课、迟交、审计和评分政策以官方页面最新版本为准。</p>
-            <h3>个人项目工作台（待补）</h3>
-            <p>此处预留后续内容：问题定义、agent 环境、反馈信号、评测协议、失败案例和复现实验。等你提供自己的项目方向或允许整理的资料后，再逐项填入。</p>
-          </section>
+        <article class="session-view" id="session-04" data-number="04" data-title="Learning from Feedback with Tools and Code" aria-labelledby="s04-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 04 · TOOLS / CODE FEEDBACK</div>
+            <h1 id="s04-title">从工具与代码反馈学习：<em>让环境回答模型</em></h1>
+            <p class="cs329a-lead">工具调用的价值不在于“能运行代码”，而在于把模糊的自然语言判断转换成 stdout、测试断言和可复现的失败轨迹。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">ReAct · sandbox · feedback</span></div>
+            <h2 id="s04-question">本讲要回答：工具反馈如何进入下一轮？</h2>
+            <p>一个可靠的工具接口应声明输入 schema、权限、超时、输出格式和失败语义。Agent 不应该只收到“失败”，而要收到可以定位的最小反例；否则循环会变成重复猜测。</p>
+            <h2 id="s04-explain">讲解：Thought–Action–Observation</h2>
+            <h3 id="s04-contract">工具是一个有边界的环境</h3>
+            <p>把工具看成函数 <code>tool: (input, state) → (observation, state')</code>。沙箱隔离危险副作用，测试集提供可重复的判定；模型负责提出动作，但不应拥有绕过验证器的隐藏通道。</p>
+            <h3 id="s04-trace">一条好的失败轨迹</h3>
+            <ol><li>保留触发失败的输入。</li><li>记录期望值与实际值。</li><li>将失败归因成可修复的假设。</li><li>只修改一个变量，再运行回归测试。</li></ol>
+            <a class="cs329a-deep-link" href="./systems.html#tool-demo">进入交互深挖：代码修复反馈轨迹 ↗</a>
+            <h2 id="s04-reading">公开阅读：行动让推理落地</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s04-paper-react">ReAct</h3><span class="cs329a-paper-meta official">官方课程阅读 · 推理与行动交替</span><p><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener noreferrer">Yao et al., 2022 ↗</a>。将语言推理和外部动作交织；本页只提炼接口思想，不复制论文 prompt 或实验全文。</p></div><div class="cs329a-paper"><h3 id="s04-paper-constitutional">Constitutional AI</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · AI feedback</span><p><a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener noreferrer">Bai et al., 2022 ↗</a>。可作为“反馈来自何处、如何转成修订信号”的对照阅读。</p></div></div>
+            <h2 id="s04-practice">小练习：给失败加结构</h2>
+            <h3 id="s04-practice-check">从 traceback 到下一步假设</h3>
+            <p class="cs329a-question"><strong>问题：</strong>把“测试失败”改写成三列：观察、最可能原因、下一次最小实验。哪一列是事实，哪一列是 Agent 的推断？</p>
+          </div>
+        </article>
 
-          <section id="notebook" class="content-section" data-search="reading notebook notes paper reading pending placeholder">
-            <h2>Reading notebook：个人笔记队列</h2>
-            <p>当前只建立目录，不转载论文全文或官方讲义。每个条目后续可以加入自己的摘要、公式、实验结果和开放问题。</p>
-            <ul class="notebook-list">
-              <li><span><b>01</b> · Test-time compute &amp; verification</span><span class="status todo">待补充</span></li>
-              <li><span><b>02</b> · Tool / code feedback and learning</span><span class="status todo">待补充</span></li>
-              <li><span><b>03</b> · Search, planning and deep research agents</span><span class="status todo">待补充</span></li>
-              <li><span><b>04</b> · Memory, orchestration and software agents</span><span class="status todo">待补充</span></li>
-              <li><span><b>05</b> · Long-horizon evaluation and robotics</span><span class="status todo">待补充</span></li>
-            </ul>
-            <div class="notice"><strong>补充入口：</strong>如果你希望把这一页继续做成完整课程，请提供目标学期、语言偏好，以及你拥有或获准整理的讲义、论文清单、作业或实验材料。没有来源的部分会继续保持“待补充”，不凭空补写。</div>
-          </section>
+        <article class="session-view" id="session-05" data-number="05" data-title="Multi-step Reasoning and Planning" aria-labelledby="s05-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 05 · MULTI-STEP REASONING / PLANNING</div>
+            <h1 id="s05-title">多步推理与规划：<em>何时应该回溯？</em></h1>
+            <p class="cs329a-lead">单路径生成擅长顺着局部线索走下去，却不天然知道“这条路以后会死”。搜索把中间状态显式化，让系统能比较分支、剪枝和回滚。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">search · branching · backtracking</span></div>
+            <h2 id="s05-question">本讲要回答：规划和生成有什么不同？</h2>
+            <p>生成是一条轨迹，规划是一组候选轨迹及其评估。若动作有前置条件，最接近目标的动作可能不是正确的下一步；搜索的价值就在于保留“暂时绕路但可行”的分支。</p>
+            <h2 id="s05-explain">讲解：树搜索的三个成本</h2>
+            <h3 id="s05-branching">分支数、深度和评估器</h3>
+            <p>树搜索的粗略成本随分支数 <code>b</code> 和深度 <code>d</code> 增长。实际系统用启发式、beam、早停和并行执行减少成本；但每一次剪枝都依赖评估器，错误评估会把正确路径提前删掉。</p>
+            <h3 id="s05-backtrack">回溯不是反思口号</h3>
+            <p>可执行的回溯需要保存 checkpoint：状态、已用工具、失败原因和未尝试分支。只有“我应该更谨慎”而没有可恢复状态的文字反思，不足以改变行动。</p>
+            <a class="cs329a-deep-link" href="./systems.html#planning-demo">进入交互深挖：规划 DAG 与回溯 ↗</a>
+            <h2 id="s05-reading">公开阅读：把思考变成搜索</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s05-paper-tot">Tree of Thoughts</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · 树状思考</span><p><a href="https://arxiv.org/abs/2305.10601" target="_blank" rel="noopener noreferrer">Yao et al., 2023 ↗</a>。在特定实验任务中研究分支、评估和回溯；不要把结果外推到所有推理任务。</p></div><div class="cs329a-paper"><h3 id="s05-paper-lats">Language Agent Tree Search</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · Agent tree search</span><p><a href="https://arxiv.org/abs/2310.04406" target="_blank" rel="noopener noreferrer">Zhou et al., 2023 ↗</a>。把 reasoning、acting 和 planning 放进统一树搜索框架，适合与上一讲的工具反馈连读。</p></div></div>
+            <h2 id="s05-practice">小练习：画出一棵最小决策树</h2>
+            <h3 id="s05-practice-check">给节点写前置条件</h3>
+            <p class="cs329a-question"><strong>问题：</strong>“打开房门”需要“拿钥匙”。请画出 start → key → door 和 start → door 两条分支，并写出哪一个 observation 能让系统剪掉第二条分支。</p>
+          </div>
+        </article>
 
-          <section id="resources" class="content-section" data-search="resources official course bulletin github sources copyright">
-            <h2>Resources &amp; attribution</h2>
-            <div class="resource-grid">
-              <article class="resource-card"><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Official course site ↗</a><p>课程概览、公开日程、阅读条目、项目与政策。</p></article>
-              <article class="resource-card"><a href="https://bulletin.stanford.edu/courses/2263721" target="_blank" rel="noopener noreferrer">Stanford Bulletin ↗</a><p>课程名称、目录描述、学分和先修信息。</p></article>
-              <article class="resource-card"><a href="https://github.com/stanford-cs329a" target="_blank" rel="noopener noreferrer">Course GitHub organization ↗</a><p>公开代码或资料是否存在，以组织页及各项目许可为准。</p></article>
-            </div>
-            <p>本页的定位是 <em>curated learning index</em>：用相对链接挂在现有 Lecture Archive 下，保留原课程入口，并把外部课程资料交还给官方来源。Stanford 名称仅用于准确标识课程，不使用 Stanford 标识，也不声称官方隶属。</p>
-            <p class="source-line">最后整理：Autumn 2025 公开课程页 · 页面内容会在获得新材料后更新。</p>
-          </section>
+        <article class="session-view" id="session-06" data-number="06" data-title="Train-time Scaling and Scaling RL" aria-labelledby="s06-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 06 · TRAIN-TIME SCALING / RL</div>
+            <h1 id="s06-title">训练时扩展：<em>怎样让一次成功变成可复用能力？</em></h1>
+            <p class="cs329a-lead">推理时搜索只在当前任务花预算；训练时扩展试图把成功轨迹、奖励和反思写回模型。难点是：模型生成的示范并不自动等于高质量标签。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">self-training · RL · data quality</span></div>
+            <h2 id="s06-question">本讲要回答：反馈怎样改变参数？</h2>
+            <p>可以把循环写成：采样轨迹 → 过滤或评分 → 更新策略 → 在独立任务上复测。每一步都可能放大偏差：采样分布变窄、奖励被投机、训练集和评测集泄漏。</p>
+            <h2 id="s06-explain">讲解：从 STaR 到更谨慎的自训练</h2>
+            <h3 id="s06-rationale">为什么要保留推理过程？</h3>
+            <p>若只保留最终答案，训练信号告诉模型“结果是什么”，却没有告诉它如何抵达。自生成 rationale 可以提供路径，但必须由正确性检查、人工抽样或独立 verifier 过滤。</p>
+            <h3 id="s06-collapse">反馈质量决定上限</h3>
+            <p>高质量反馈让模型逐步覆盖更难样本；噪声反馈会让模型学习验证器的漏洞。一个安全实验应同时记录训练集分数、held-out 分数、数据去重和失败类型。</p>
+            <a class="cs329a-deep-link" href="./foundations.html#scaling">进入交互深挖：验证器与推理时预算 ↗</a>
+            <h2 id="s06-reading">公开阅读：自举和开放模型训练</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s06-paper-star">STaR</h3><span class="cs329a-paper-meta official">官方课程阅读 · rationale bootstrapping</span><p><a href="https://arxiv.org/abs/2203.14465" target="_blank" rel="noopener noreferrer">Zelikman et al., 2022 ↗</a>。用模型生成的推理过程进行自举；重点阅读它如何筛选可学习样本。</p></div><div class="cs329a-paper"><h3 id="s06-paper-math">DeepSeekMath</h3><span class="cs329a-paper-meta official">官方课程阅读 · 数学推理训练</span><p><a href="https://arxiv.org/abs/2402.03300" target="_blank" rel="noopener noreferrer">Shao et al., 2024 ↗</a>。用于讨论数据、训练和推理时策略如何共同影响数学能力；不把单一模型结果当成普遍规律。</p></div></div>
+            <h2 id="s06-practice">小练习：设计一个 held-out 规则</h2>
+            <h3 id="s06-practice-check">训练分数上升够不够？</h3>
+            <p class="cs329a-question"><strong>问题：</strong>如果 self-score 从 70 升到 95，但新题准确率从 60 降到 42，你会先检查奖励函数、数据泄漏还是模型容量？请说明证据顺序。</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-07" data-number="07" data-title="Open-ended Evolution of Self-Improving Agents" aria-labelledby="s07-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 07 · OPEN-ENDED EVOLUTION</div>
+            <h1 id="s07-title">开放式演化：<em>从一个解到一群可比较的解</em></h1>
+            <p class="cs329a-lead">开放式演化把 Agent 看成候选程序或策略的群体：生成变体、运行评估、保留有潜力的分支，再继续探索。真正的挑战是定义不会被轻易作弊的目标。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">exploration · novelty · selection</span></div>
+            <h2 id="s07-question">本讲要回答：改进和探索如何共存？</h2>
+            <p>只保留当前最高分会迅速收敛到熟悉的套路；只追求新颖又可能产生无用变体。一个可解释的演化器需要同时记录性能、行为差异、资源成本和失败原因。</p>
+            <h2 id="s07-explain">讲解：生成—评估—保留—再生成</h2>
+            <h3 id="s07-loop">四个可观测接口</h3>
+            <p>生成器产生候选，评估器给出任务分数，档案库保存可复用的多样解，调度器决定下一批实验。将这四者分开，才能回答“是搜索变聪明了，还是评估器变宽松了”。</p>
+            <h3 id="s07-novelty">新颖性不是成功</h3>
+            <p>新颖性奖励可能鼓励格式变化、无关行为或资源浪费。实践中要把 novelty 当作辅助指标，并用独立任务、预算上限和人工抽查守住边界。</p>
+            <a class="cs329a-deep-link" href="./foundations.html#loop-demo">进入交互深挖：Agent 闭环状态转移 ↗</a>
+            <h2 id="s07-reading">公开材料：以官方主题为主</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s07-paper-course">Open-ended evolution 主题</h3><span class="cs329a-paper-meta official">官方课程来源 · 课程页公开日程</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页的 session 07 条目 ↗</a>公开了主题和课程位置；本页不把未公开讲义或嘉宾材料补写成事实。</p></div><div class="cs329a-paper"><h3 id="s07-paper-note">阅读方法：把系统拆成测量表</h3><span class="cs329a-paper-meta supplementary">个人讲解 · 非官方 reading</span><p>阅读任何演化系统时，分别记录 candidate generator、evaluator、archive 和 compute budget；这是一套分析框架，不是一篇官方指定论文。</p></div></div>
+            <h2 id="s07-practice">小练习：找出奖励投机</h2>
+            <h3 id="s07-practice-check">把分数拆成分量</h3>
+            <p class="cs329a-question"><strong>问题：</strong>一个程序在训练 benchmark 得分高、运行时间却是其他方案的 30 倍。你会把它保留为“最佳解”吗？请给性能、成本、泛化各设一个报告字段。</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-08" data-number="08" data-title="Self-improvement with Search and Deep Research Agents" aria-labelledby="s08-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 08 · SEARCH / DEEP RESEARCH AGENTS</div>
+            <h1 id="s08-title">搜索与深度研究 Agent：<em>把问题拆成可验证的证据链</em></h1>
+            <p class="cs329a-lead">研究型 Agent 不只是“联网回答”。它需要提出检索计划、区分来源质量、合并证据，并在结论和证据之间留下可追溯关系。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">search · code · evidence</span></div>
+            <h2 id="s08-question">本讲要回答：搜索空间如何变成证据图？</h2>
+            <p>把研究任务表示成 claim 节点和 source 边：每条主张都要知道来自哪里、是否直接支持、有没有相反证据。搜索 Agent 的“自我改进”首先表现为更会选择下一条检索动作，而不是更会写漂亮总结。</p>
+            <h2 id="s08-explain">讲解：候选程序和候选证据的共同结构</h2>
+            <h3 id="s08-code-search">代码搜索的反馈闭环</h3>
+            <p>AlphaCode 类系统把自然语言目标转成许多程序候选，再用测试、过滤和排序缩小集合。研究 Agent 也可以这样看：查询是动作，文档是观察，引用一致性是验证器。</p>
+            <h3 id="s08-evidence">引用不是装饰</h3>
+            <p>一条引用至少要回答三个问题：它支持哪一句话？是原始证据还是二手转述？在时间、模型和任务范围上是否可比？无法回答时，应该降低断言强度。</p>
+            <a class="cs329a-deep-link" href="./systems.html#planning-demo">进入交互深挖：搜索分支与剪枝 ↗</a>
+            <h2 id="s08-reading">公开阅读：从代码生成到搜索系统</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s08-paper-alphacode">Competition-Level Code Generation with AlphaCode</h3><span class="cs329a-paper-meta official">官方课程阅读 · 候选程序搜索</span><p><a href="https://arxiv.org/abs/2203.07814" target="_blank" rel="noopener noreferrer">Li et al., 2022 ↗</a>。阅读重点是采样、过滤、聚类和测试，而不是复制其工程规模。</p></div><div class="cs329a-paper"><h3 id="s08-paper-alphacode2">AlphaCode 2 Technical Report</h3><span class="cs329a-paper-meta official">官方课程阅读 · 公开技术报告</span><p><a href="https://storage.googleapis.com/deepmind-media/AlphaCode2/AlphaCode2_Tech_Report.pdf" target="_blank" rel="noopener noreferrer">Google DeepMind technical report ↗</a>。作为公开系统报告阅读，仍需区分报告内容与本页的个人归纳。</p></div></div>
+            <h2 id="s08-practice">小练习：做一个证据卡片</h2>
+            <h3 id="s08-practice-check">主张—证据—限制</h3>
+            <p class="cs329a-question"><strong>问题：</strong>把“方法提升了能力”改写成一张卡片：任务、基线、指标、来源、限制。缺一个字段时，你会如何改写结论？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-09" data-number="09" data-title="Guest Lecture: Melvin Johnson" aria-labelledby="s09-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 09 · GUEST LECTURE · MELVIN JOHNSON</div>
+            <h1 id="s09-title">嘉宾主题导读：<em>如何听懂一场 Agent 研究报告？</em></h1>
+            <p class="cs329a-lead">官方日程列出 Melvin Johnson 嘉宾讲次，但本页没有把未公开的讲稿、标题细节或个人观点臆补进来。这里提供一个可带进报告厅的分析框架。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge pending">公开材料待补</span><span class="cs329a-badge">guest lecture</span><span class="cs329a-badge official">官方日程事实</span></div>
+            <h2 id="s09-position">可确认的课程位置</h2>
+            <h3 id="s09-fact">官方事实与未知部分</h3>
+            <p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页 ↗</a>确认这是第 9 个 session 的嘉宾讲次。讲座具体题目、slides、reading 和录屏若未在公开页面出现，本页统一标记为待补。</p>
+            <h2 id="s09-listen">听报告时记录什么</h2>
+            <h3 id="s09-system">系统边界</h3><p>记录模型、工具、环境和人类操作员分别做什么；不要把产品演示自动等同于通用能力。</p>
+            <h3 id="s09-evidence">证据强度</h3><p>追问任务集合、成功定义、失败样例和成本。嘉宾观点可以启发问题，但论文、数据和可复现实验才是证据。</p>
+            <h2 id="s09-pending">材料状态与延伸准备</h2>
+            <h3 id="s09-pending-list">待补清单</h3>
+            <p class="cs329a-pending"><strong>待公开：</strong>讲座标题、官方 reading、slides/录屏和具体应用案例。补充材料出现后，应放在这里并标明来源与访问日期。</p>
+            <p class="cs329a-question"><strong>带走的问题：</strong>这场报告中的“改进”发生在模型参数、推理循环还是产品工作流？它由什么 verifier 约束？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-10" data-number="10" data-title="Midterm Presentations I" aria-labelledby="s10-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 10 · MIDTERM PRESENTATIONS I</div>
+            <h1 id="s10-title">期中展示一：<em>把研究想法变成可审查的主张</em></h1>
+            <p class="cs329a-lead">这是课程活动导读，不是对学生项目的虚构总结。展示的价值在于让一个 Agent 研究问题经历问题定义、证据选择和可证伪预测。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方日程活动</span><span class="cs329a-badge pending">具体项目待补</span></div>
+            <h2 id="s10-goal">本讲目标：缩小研究问题</h2>
+            <h3 id="s10-claim">一句话主张</h3><p>“我们的 Agent 更好”不是研究主张。好的句子包含任务分布、比较基线、改动接口和预期指标。</p>
+            <h3 id="s10-measure">一项可测量结果</h3><p>至少同时报告质量、成本和失败类型；只报平均成功率会掩盖长尾问题。</p>
+            <h2 id="s10-explain">讲解：展示页是一张实验协议</h2>
+            <p>把 presentation 看成一份别人可以照着执行的协议：输入是什么、系统如何循环、反馈在哪里、停止条件是什么。听众的追问不是“挑刺”，而是在寻找协议的未定义变量。</p>
+            <h2 id="s10-reading">公开材料状态</h2>
+            <h3 id="s10-reading-note">课程活动不是论文阅读</h3><p class="cs329a-pending"><strong>待补：</strong>公开页面未提供具体学生项目和展示 slides。本页只提供研究表达框架，不声称知道项目内容。</p>
+            <h2 id="s10-practice">练习：审查一个摘要</h2>
+            <h3 id="s10-practice-check">找三处隐含假设</h3><p class="cs329a-question"><strong>问题：</strong>摘要说“工具让 Agent 更可靠”。请圈出可靠性的定义、工具的权限边界和评测集来源。</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-11" data-number="11" data-title="Midterm Presentations II" aria-labelledby="s11-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 11 · MIDTERM PRESENTATIONS II</div>
+            <h1 id="s11-title">期中展示二：<em>从 demo 走向对照实验</em></h1>
+            <p class="cs329a-lead">第二次阅读展示时，最重要的不是把 demo 做得更长，而是解释哪一个组件造成了变化。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方日程活动</span><span class="cs329a-badge pending">具体项目待补</span></div>
+            <h2 id="s11-question">本讲要回答：改进到底来自哪里？</h2>
+            <h3 id="s11-ablation">消融一个组件</h3><p>去掉 verifier、memory 或 planning 中的一个组件，再比较相同预算下的结果。若没有消融，就无法区分“系统更复杂”和“系统更有效”。</p>
+            <h3 id="s11-baseline">选择能说话的基线</h3><p>基线应共享输入、工具权限和预算；否则差异可能来自资源不对等，而不是方法。</p>
+            <h2 id="s11-explain">讲解：把反馈变成审稿问题</h2>
+            <p>听众反馈可以分成三类：定义不清、证据不足、机制不成立。先把意见写成问题，再决定下一轮实验是否能回答它。</p>
+            <h2 id="s11-reading">公开材料状态</h2>
+            <h3 id="s11-pending">只保留可验证信息</h3><p class="cs329a-pending">官方页面只确认这是期中展示 session；项目标题、学生数据和评价细节没有在本页编造。可参考前面第 3、4、5 讲的验证、工具和搜索框架。</p>
+            <h2 id="s11-practice">练习：做一张消融表</h2>
+            <h3 id="s11-practice-check">控制变量</h3><p class="cs329a-question"><strong>问题：</strong>同一个任务，比较 no-tool、tool-only、tool+verifier 三种系统。你需要固定哪些随机种子、token 预算和失败重试次数？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-12" data-number="12" data-title="Midterm Presentations III" aria-labelledby="s12-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 12 · MIDTERM PRESENTATIONS III</div>
+            <h1 id="s12-title">期中展示三：<em>把批评变成下一次迭代</em></h1>
+            <p class="cs329a-lead">一个成熟的研究展示不需要假装没有失败；它需要说明失败暴露了哪一个假设，以及下一轮如何区分不同解释。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方日程活动</span><span class="cs329a-badge pending">具体项目待补</span></div>
+            <h2 id="s12-question">本讲要回答：什么反馈值得行动？</h2>
+            <h3 id="s12-failure">失败分类</h3><p>把失败分成数据、规划、工具、验证和部署五类，避免所有问题都被归因成“模型不够大”。</p>
+            <h3 id="s12-next">下一步实验</h3><p>每条批评都要对应一个最小实验；如果一个实验同时改变三层系统，它很难告诉你原因。</p>
+            <h2 id="s12-explain">讲解：从展示到研究循环</h2>
+            <div class="cs329a-flow"><div class="cs329a-flow-step"><strong>claim</strong><span>提出可证伪主张</span></div><div class="cs329a-flow-step"><strong>evidence</strong><span>展示基线与结果</span></div><div class="cs329a-flow-step"><strong>critique</strong><span>记录反例和限制</span></div><div class="cs329a-flow-step"><strong>revision</strong><span>设计最小下一步</span></div></div>
+            <h2 id="s12-reading">公开材料状态</h2>
+            <h3 id="s12-pending">不把活动写成论文</h3><p class="cs329a-pending">没有公开的学生项目清单或 slides 可供本页引用。可用本课程官方页面核对活动位置，再回到第 17 讲学习如何设计长程评测。</p>
+            <h2 id="s12-practice">练习：写一条诚实结论</h2>
+            <h3 id="s12-practice-check">限制优先</h3><p class="cs329a-question"><strong>句式：</strong>“在任务 A、预算 B、反馈 C 的条件下，我们观察到 D；尚不能说明 E，因为缺少 F。”</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-13" data-number="13" data-title="Agentic Frameworks for Software Engineering" aria-labelledby="s13-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 13 · SOFTWARE ENGINEERING AGENTS</div>
+            <h1 id="s13-title">软件工程 Agent：<em>仓库是环境，测试是反馈</em></h1>
+            <p class="cs329a-lead">代码 Agent 的难点不是生成一个函数，而是在大型仓库中定位、修改、测试、回滚，并把局部修复的副作用控制住。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">repository · tests · patch</span></div>
+            <h2 id="s13-question">本讲要回答：代码任务为何是长程任务？</h2>
+            <p>一个 issue 往往包含自然语言描述、多个相关文件、隐藏约束和回归风险。Agent 需要先建立仓库地图，再提出小补丁，最后用测试与人工 review 验证。</p>
+            <h2 id="s13-explain">讲解：从 issue 到可合并 patch</h2>
+            <h3 id="s13-localization">定位比生成更早</h3><p>搜索符号、调用链和测试引用，先缩小改动面；“直接重写整个文件”可能短期通过，却会引入难以发现的行为变化。</p>
+            <h3 id="s13-regression">验证不等于通过一组测试</h3><p>测试集只覆盖已知行为。合并前还要检查差异范围、错误处理、权限、性能和未覆盖的边界样例。</p>
+            <a class="cs329a-deep-link" href="./systems.html#tool-demo">进入交互深挖：工具反馈与代码修复 ↗</a>
+            <h2 id="s13-reading">公开阅读：软件工程评测的边界</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s13-paper-swebench">SWE-bench</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · 软件工程 benchmark</span><p><a href="https://arxiv.org/abs/2310.06770" target="_blank" rel="noopener noreferrer">Jimenez et al., 2023 ↗</a>。提供真实仓库 issue 与测试语境；阅读时要关注任务构造、补丁可接受标准和数据污染风险。</p></div><div class="cs329a-paper"><h3 id="s13-paper-course">官方课程主题</h3><span class="cs329a-paper-meta official">官方课程来源</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">课程页面 ↗</a>确认 software engineering agents 是课程应用语境；本页不声称某篇补充论文是官方指定阅读。</p></div></div>
+            <h2 id="s13-practice">小练习：写 patch 的验收清单</h2>
+            <h3 id="s13-practice-check">四个问题</h3><p class="cs329a-question">改动解决了哪个行为？新增了哪些测试？失败时能否回滚？如果测试全绿但用户仍遇到问题，下一条观测是什么？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-14" data-number="14" data-title="Augmenting Agents with Memory" aria-labelledby="s14-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 14 · MEMORY</div>
+            <h1 id="s14-title">给 Agent 加记忆：<em>记住什么，也要忘掉什么</em></h1>
+            <p class="cs329a-lead">记忆不是把全部聊天记录塞进 prompt。它是一套写入、压缩、检索、更新和遗忘策略；错误记忆会让 Agent 更稳定地犯错。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">working · episodic · semantic</span></div>
+            <h2 id="s14-question">本讲要回答：记忆如何影响下一次决策？</h2>
+            <p>当前上下文是 working memory，长期存储可以保存事件、事实和用户偏好。检索通常在相关性之外考虑时间、新鲜度、重要性和 token 预算；如果没有过期策略，旧 API 或错误偏好会污染新任务。</p>
+            <h2 id="s14-explain">讲解：四个记忆接口</h2>
+            <h3 id="s14-write">写入与压缩</h3><p>不要保存每个 token；保存可复用的事件、证据和失败原因，并保留来源与时间。压缩摘要若丢失限定条件，就会把猜测变成事实。</p>
+            <h3 id="s14-retrieve">检索与陈旧性</h3><p>Top-K 只是预算，不是质量保证。检索结果进入 prompt 前要过滤 stale、冲突和低置信度条目，并允许 Agent 表示“没有可靠记忆”。</p>
+            <a class="cs329a-deep-link" href="./systems.html#memory-demo">进入交互深挖：Top-K 和记忆污染过滤 ↗</a>
+            <h2 id="s14-reading">公开阅读：虚拟上下文与情景记忆</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s14-paper-memgpt">MemGPT</h3><span class="cs329a-paper-meta official">官方课程阅读 · virtual context</span><p><a href="https://arxiv.org/abs/2310.08560" target="_blank" rel="noopener noreferrer">Packer et al., 2023 ↗</a>。用操作系统分页作类比讨论上下文管理；类比有启发性，但不等同于真实 OS 实现。</p></div><div class="cs329a-paper"><h3 id="s14-paper-generative">Generative Agents</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · experience memory</span><p><a href="https://arxiv.org/abs/2304.03442" target="_blank" rel="noopener noreferrer">Park et al., 2023 ↗</a>。展示经验记忆、反思和检索评分的组合，可用来比较“记住事件”和“记住规则”。</p></div></div>
+            <h2 id="s14-practice">小练习：给记忆加 provenance</h2>
+            <h3 id="s14-practice-check">每条记忆都回答四问</h3><p class="cs329a-question">它来自哪一次观察？什么时候写入？什么条件下过期？如果和当前工具输出冲突，谁优先？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-15" data-number="15" data-title="Guest Lecture: Denny Zhou" aria-labelledby="s15-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 15 · GUEST LECTURE · DENNY ZHOU</div>
+            <h1 id="s15-title">嘉宾主题导读：<em>从推理论文读出可复用的实验习惯</em></h1>
+            <p class="cs329a-lead">官方日程列出 Denny Zhou 嘉宾讲次。本页只提供阅读方法，不把未公开讲题、slide 或讲者观点写成事实。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge pending">公开材料待补</span><span class="cs329a-badge">guest lecture</span><span class="cs329a-badge official">官方日程事实</span></div>
+            <h2 id="s15-position">课程脉络：推理能力如何被测量</h2>
+            <h3 id="s15-fact">可确认与不可确认</h3><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页 ↗</a>确认 session 位置；具体内容、论文和讲座标题以公开页面后续更新为准。</p>
+            <h2 id="s15-listen">阅读一篇 reasoning paper 的四层方法</h2>
+            <h3 id="s15-task">任务层</h3><p>题目是否需要真正多步推理，还是只需要模式匹配？</p>
+            <h3 id="s15-signal">信号层</h3><p>奖励、过程标签或 verifier 是否能区分“会做”和“蒙对”？</p>
+            <h3 id="s15-generalize">泛化层</h3><p>性能是否迁移到不同模板、长度和工具条件？</p>
+            <h2 id="s15-pending">材料状态</h2><h3 id="s15-pending-list">等待公开材料</h3><p class="cs329a-pending"><strong>待补：</strong>讲座主题、公开 reading、录屏或 slides。补充后应保留原链接和访问范围。</p>
+            <p class="cs329a-question"><strong>记录问题：</strong>讲者展示的是一个更好的模型，还是一个更好的训练/验证循环？这两者怎样被实验分开？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-16" data-number="16" data-title="Guest Lecture: Thang Luong" aria-labelledby="s16-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 16 · GUEST LECTURE · THANG LUONG</div>
+            <h1 id="s16-title">嘉宾主题导读：<em>把规模、数据和系统放在同一张图上</em></h1>
+            <p class="cs329a-lead">本讲保留官方课程中的嘉宾位置，但不虚构讲者材料。用一个“系统账本”理解任何规模化 Agent 方案，是安全的准备方式。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge pending">公开材料待补</span><span class="cs329a-badge">guest lecture</span><span class="cs329a-badge official">官方日程事实</span></div>
+            <h2 id="s16-position">可确认的课程位置</h2><h3 id="s16-fact">不替嘉宾发言</h3><p>官方页面公开 session 顺序，但未在本页使用未经核实的演讲摘要。资料边界比填满空白更重要。</p>
+            <h2 id="s16-ledger">系统账本：四种资源</h2>
+            <div class="cs329a-concept-grid"><div class="cs329a-concept-card"><strong>Data</strong><span>来源、覆盖、质量和去重。</span></div><div class="cs329a-concept-card"><strong>Compute</strong><span>训练、推理、搜索和存储成本。</span></div><div class="cs329a-concept-card"><strong>Feedback</strong><span>谁判定成功，判定是否可靠。</span></div></div>
+            <h3 id="s16-systems">系统而非单点指标</h3><p>当论文声称能力提升时，检查是否同时改变了数据、模型、工具、提示和评测；否则无法判断增益来源。</p>
+            <h2 id="s16-pending">材料状态</h2><h3 id="s16-pending-list">待补清单</h3><p class="cs329a-pending">具体 lecture title、reading 和公开幻灯片待课程页面提供。可先复习第 2、6、13、17 讲的预算、训练、代码和评测框架。</p>
+            <h2 id="s16-practice">小练习：画一张资源—能力图</h2><h3 id="s16-practice-check">避免单因果</h3><p class="cs329a-question">把一个能力提升拆成 data、model、tool、evaluation 四个节点，并给每条因果箭头写一个可以反驳它的实验。</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-17" data-number="17" data-title="Agentic Evaluations and Long-Horizon Tasks" aria-labelledby="s17-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 17 · AGENTIC EVALUATIONS / LONG HORIZONS</div>
+            <h1 id="s17-title">Agent 评测：<em>短题高分，能撑过长任务吗？</em></h1>
+            <p class="cs329a-lead">长程任务把每一步的小错误累积成系统级失败。评测 Agent 不能只看单轮准确率，还要记录任务时程、恢复能力、成本和失败形态。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程阅读</span><span class="cs329a-badge">horizon · checkpoint · generalization</span></div>
+            <h2 id="s17-question">本讲要回答：如何测量“能完成一项工作”？</h2>
+            <p>在独立、无恢复的简化假设下，单步成功率为 <code>p</code>、任务有 <code>T</code> 步时，连续成功率近似为 <code>p^T</code>。这不是所有真实任务的定律，却提醒我们：任务长度会暴露短板。</p>
+            <h2 id="s17-explain">讲解：从 endpoint 到 trajectory</h2>
+            <h3 id="s17-horizon">任务时程</h3><p>报告完成 50% 任务所需的时间或步骤跨度，比单次 benchmark 分数更能说明 Agent 能否承担长工作；同时要记录工具调用、人工介入和重试。</p>
+            <h3 id="s17-checkpoint">检查点与恢复</h3><p>Checkpoint 不是把失败藏起来，而是保存可恢复状态，让系统能回到最近健康节点。评测应区分“从头重做”和“带状态恢复”。</p>
+            <a class="cs329a-deep-link" href="./evaluation.html#horizon-demo">进入交互深挖：长程生存率与 Checkpoint ↗</a>
+            <h2 id="s17-reading">公开阅读：METR 长任务框架</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s17-paper-metr">Measuring AI Ability to Complete Long Tasks</h3><span class="cs329a-paper-meta official">官方课程阅读 · 长任务能力</span><p><a href="https://arxiv.org/abs/2503.14499" target="_blank" rel="noopener noreferrer">METR 论文预印本 ↗</a> 与<a href="https://metr.org/blog/2025-03-19-measuring-ai-ability-to-complete-long-tasks/" target="_blank" rel="noopener noreferrer">公开说明 ↗</a>。它提供以任务完成时长衡量能力的框架；本页的 checkpoint 曲线是独立的合成教学数据。</p></div></div>
+            <h2 id="s17-practice">小练习：写清楚一次成功</h2><h3 id="s17-practice-check">不要只写 pass</h3><p class="cs329a-question">一次任务成功经历了几次重试？用了多少 token？是否修改了环境？如果去掉 checkpoint，失败发生在哪一步？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-18" data-number="18" data-title="Guest Lecture: Misha Laskin" aria-labelledby="s18-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 18 · GUEST LECTURE · MISHA LASKIN</div>
+            <h1 id="s18-title">嘉宾主题导读：<em>从公开叙事回到可复现实验</em></h1>
+            <p class="cs329a-lead">嘉宾讲次可以提供研究视角，但本页不替未公开的报告内容下结论。这里用复现清单帮助读者把故事拆成实验对象。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge pending">公开材料待补</span><span class="cs329a-badge">guest lecture</span><span class="cs329a-badge official">官方日程事实</span></div>
+            <h2 id="s18-position">可确认的课程位置</h2><h3 id="s18-fact">主题而非讲稿</h3><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页 ↗</a>确认 session 18 的嘉宾安排；没有公开的详细 reading 时，不把相关领域论文冒充为讲座指定材料。</p>
+            <h2 id="s18-reproduce">复现一项 Agent 结果</h2>
+            <h3 id="s18-object">对象</h3><p>明确模型版本、工具权限、任务分布和随机性。</p>
+            <h3 id="s18-metric">指标</h3><p>同时记录质量、成本、延迟、失败类型和人工介入。</p>
+            <h3 id="s18-boundary">边界</h3><p>写出哪些条件没有测试；“未测试”不是“效果不好”，也不是“效果好”。</p>
+            <h2 id="s18-pending">材料状态</h2><h3 id="s18-pending-list">等待公开来源</h3><p class="cs329a-pending">讲座标题、slides、reading 和录屏待官方页面公开。后续添加时保留原始出处，不复制受版权保护内容。</p>
+            <p class="cs329a-question"><strong>记录问题：</strong>报告中的核心 claim 是否可以被一个小规模、独立、可重复的实验推翻？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-19" data-number="19" data-title="Multimodal Agents in Robotics" aria-labelledby="s19-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 19 · MULTIMODAL AGENTS IN ROBOTICS</div>
+            <h1 id="s19-title">多模态机器人 Agent：<em>语言计划必须落到物理可行性</em></h1>
+            <p class="cs329a-lead">机器人系统把 Agent 的错误变成真实动作。视觉感知、语言规划、affordance 检验、低层控制和力觉反馈必须形成闭环。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">SayCan · PaLM-E · grounding</span></div>
+            <h2 id="s19-question">本讲要回答：知道“该做什么”够不够？</h2>
+            <p>语言模型可以提出“把杯子放到桌上”，但它不知道杯子是否可见、夹爪是否能抓住、桌面是否有障碍。机器人 Agent 要把语义目标和当前传感器状态、技能成功率、运动学约束连接起来。</p>
+            <div class="cs329a-flow"><div class="cs329a-flow-step"><strong>perception</strong><span>RGB-D、触觉和状态估计</span></div><div class="cs329a-flow-step"><strong>planning</strong><span>把目标分解成技能</span></div><div class="cs329a-flow-step"><strong>affordance</strong><span>判断动作是否可行</span></div><div class="cs329a-flow-step"><strong>control</strong><span>执行、感知、重试</span></div></div>
+            <h2 id="s19-explain">讲解：互补而不是同一架构</h2>
+            <h3 id="s19-saycan">SayCan 的 grounding</h3><p>SayCan 关注语言模型提出的技能与环境 affordance/value 之间的结合：不是只问“这句话合理吗”，而是问“当前状态下这个动作能不能做”。</p>
+            <h3 id="s19-palme">PaLM-E 的具身输入</h3><p>PaLM-E 研究将连续传感器观察接入具身语言模型。它和 SayCan 是互补路线；本页的五层流程是教学合成图，不声称两篇论文使用同一系统。</p>
+            <a class="cs329a-deep-link" href="./evaluation.html#robotics-demo">进入交互深挖：机器人五层系统栈 ↗</a>
+            <h2 id="s19-reading">公开相关阅读</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s19-paper-saycan">Do As I Can, Not As I Say: SayCan</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · affordance grounding</span><p><a href="https://proceedings.mlr.press/v205/ichter23a.html" target="_blank" rel="noopener noreferrer">Ichter et al., 2023 ↗</a>。关注高层语言规划与低层技能可行性的接口。</p></div><div class="cs329a-paper"><h3 id="s19-paper-palme">PaLM-E</h3><span class="cs329a-paper-meta supplementary">补充相关阅读 · embodied multimodal model</span><p><a href="https://arxiv.org/abs/2303.03378" target="_blank" rel="noopener noreferrer">Driess et al., 2023 ↗</a>。关注连续传感器输入如何进入具身语言模型。</p></div></div>
+            <h2 id="s19-practice">小练习：给动作加安全闸</h2><h3 id="s19-practice-check">语义可行不等于物理可行</h3><p class="cs329a-question">为“抓起透明杯子”列出三个前置检查：视觉置信度、夹爪几何和接触力阈值。任何一个检查失败时，Agent 应重规划还是停止？</p>
+          </div>
+        </article>
+
+        <article class="session-view" id="session-20" data-number="20" data-title="Future Research Areas" aria-labelledby="s20-title">
+          <div class="cs329a-content">
+            <div class="cs329a-kicker">SESSION 20 · FUTURE RESEARCH AREAS</div>
+            <h1 id="s20-title">未来研究：<em>把“会做”推进到“可信地会做”</em></h1>
+            <p class="cs329a-lead">最后一讲不是一个答案，而是一张研究地图：更强的模型、更多的搜索、更多的工具，都必须和可靠反馈、长期评测以及真实约束一起设计。</p>
+            <div class="cs329a-session-meta"><span class="cs329a-badge official">官方课程主题</span><span class="cs329a-badge">synthesis · open questions</span></div>
+            <h2 id="s20-synthesis">20 讲如何连成一条主线？</h2>
+            <div class="cs329a-flow"><div class="cs329a-flow-step"><strong>improve</strong><span>训练和推理时预算</span></div><div class="cs329a-flow-step"><strong>ground</strong><span>工具、代码和记忆</span></div><div class="cs329a-flow-step"><strong>plan</strong><span>分支、搜索和恢复</span></div><div class="cs329a-flow-step"><strong>measure</strong><span>长程与真实环境</span></div></div>
+            <h2 id="s20-explain">讲解：五个值得继续追问的问题</h2>
+            <h3 id="s20-question-feedback">反馈会不会被优化坏？</h3><p>当 Agent 能主动寻找高分路径时，验证器就成为攻击面。未来系统需要独立、动态、多视角的评测。</p>
+            <h3 id="s20-question-memory">记忆如何保持可撤销？</h3><p>可靠记忆必须带来源、时间和冲突处理；否则长期运行只会积累不可审计的隐性状态。</p>
+            <h3 id="s20-question-horizon">能力如何跨过长时程？</h3><p>单步进步不会自动变成长程可靠性；checkpoint、子目标和恢复策略应成为一等评测对象。</p>
+            <h3 id="s20-question-world">模拟器和真实世界如何互相校验？</h3><p>代码环境便宜但可能过于干净，机器人环境昂贵但有物理噪声；跨环境泛化需要明确的失效报告。</p>
+            <h2 id="s20-reading">公开课程来源与三篇深挖教程</h2>
+            <div class="cs329a-paper-list"><div class="cs329a-paper"><h3 id="s20-paper-course">Stanford CS329A 官方页面</h3><span class="cs329a-paper-meta official">课程事实来源</span><p><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">Self-Improving AI Agents ↗</a>。核对官方 session 顺序、reading 和活动状态；本阅读器是个人解释层。</p></div><div class="cs329a-paper"><h3 id="s20-paper-deepdives">Supplementary personal tutorials</h3><span class="cs329a-paper-meta supplementary">本站深挖页面 · 非官方</span><p>想看交互式图表和更长的解释，可以继续阅读：<a href="./foundations.html">闭环、扩展与验证 ↗</a>、<a href="./systems.html">工具、规划与记忆 ↗</a>、<a href="./evaluation.html">长程评估与机器人 ↗</a>。它们是三篇专题，不是课程只有三节。</p></div></div>
+            <h2 id="s20-practice">结课练习：写一份 Agent 设计审查</h2>
+            <h3 id="s20-practice-check">从主张到证据</h3><p class="cs329a-question">选择一个真实任务，写出：状态、动作、反馈、记忆、搜索预算、验证器、长程指标、失败恢复和公开来源。任何一个空白都应该成为下一步研究问题，而不是一句“模型会自己改进”。</p>
+            <p class="cs329a-reader-note">阅读完毕。可以用左侧导航回到任意 session，也可以在搜索框输入 paper、memory、verification、robotics 等关键词。</p>
+          </div>
         </article>
       </div>
-      <footer class="pager"><a href="../">← 课程目录</a><span class="page-count">CS329A · PUBLIC INDEX</span><a href="https://cs329a.stanford.edu/" target="_blank" rel="noopener noreferrer">官方课程页 ↗</a></footer>
+      <footer class="cs329a-pager">
+        <a id="previous-button" href="#session-01" aria-disabled="true">←</a>
+        <span class="cs329a-pager-meta" id="page-count">01 / 20</span>
+        <a id="next-button" href="#session-02" aria-disabled="false">→ 02 · Test-time Compute Scaling</a>
+      </footer>
     </main>
-    <aside class="section-rail" aria-label="本页目录">
-      <h2>On this page</h2>
-      <a class="toc-button active" href="#overview" data-section="overview">Overview</a>
-      <a class="toc-button" href="#map" data-section="map">Learning path</a>
-      <a class="toc-button" href="#schedule" data-section="schedule">Schedule</a>
-      <a class="toc-button" href="#project" data-section="project">Research project</a>
-      <a class="toc-button" href="#notebook" data-section="notebook">Reading notebook</a>
-      <a class="toc-button" href="#resources" data-section="resources">Resources</a>
-      <hr class="rail-rule">
-      <p class="rail-meta">本页沿用 IML 阅读器的三栏结构与移动端抽屉导航。内容不足的部分明确标记为待补充。</p>
+    <aside class="cs329a-section-rail" aria-label="当前讲次目录">
+      <h2>On this session</h2>
+      <nav id="section-toc" aria-label="当前讲次小节"></nav>
+      <hr class="cs329a-rail-rule">
+      <p class="cs329a-rail-meta">右侧目录来自当前文章真实的 h2 / h3。论文链接是公开外部来源；本站正文和交互不依赖外网。</p>
     </aside>
   </div>
-  <script>
-    (() => {
-      const root = document.documentElement;
-      const body = document.body;
-      const reader = document.getElementById('reader-scroll');
-      const sidebar = document.getElementById('sidebar');
-      const scrim = document.getElementById('sidebar-scrim');
-      const menu = document.getElementById('menu-button');
-      const search = document.getElementById('search-input');
-      const empty = document.getElementById('search-empty');
-      const sections = [...document.querySelectorAll('.content-section')];
-      const navLinks = [...document.querySelectorAll('[data-section]')];
-      const scheduleRows = [...document.querySelectorAll('#schedule-body tr')];
-       let returnFocus = menu;
-      const setSidebar = (open) => {
-         if (open) returnFocus = document.activeElement;
-         body.classList.toggle('sidebar-open', open);
-         menu.setAttribute('aria-expanded', String(open));
-       };
-       const closeSidebar = () => setSidebar(false);
-      const setActive = (id) => navLinks.forEach(link => {
-        const active = link.dataset.section === id;
-        link.classList.toggle('active', active);
-        if (link.classList.contains('nav-item')) link.setAttribute('aria-current', active ? 'page' : 'false');
-      });
-      menu.addEventListener('click', () => {
-         const open = !body.classList.contains('sidebar-open');
-         setSidebar(open);
-         if (open) sidebar.querySelector('a[href], button, input, select, textarea')?.focus();
-       });
-      scrim.addEventListener('click', closeSidebar);
-      navLinks.forEach(link => link.addEventListener('click', closeSidebar));
-      document.addEventListener('keydown', event => {
-         if (!body.classList.contains('sidebar-open')) return;
-         if (event.key === 'Escape') {
-           closeSidebar();
-           if (returnFocus && typeof returnFocus.focus === 'function') returnFocus.focus();
-           return;
-         }
-         if (event.key === 'Tab') {
-           const focusable = [...sidebar.querySelectorAll('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(node => !node.disabled);
-           if (!focusable.length) return;
-           const first = focusable[0];
-           const last = focusable[focusable.length - 1];
-           if (event.shiftKey && document.activeElement === first) {
-             event.preventDefault();
-             last.focus();
-           } else if (!event.shiftKey && document.activeElement === last) {
-             event.preventDefault();
-             first.focus();
-           }
-         }
-       });
-       document.getElementById('print-button').addEventListener('click', () => window.print());
-      const savedTheme = (() => { try { return localStorage.getItem('cs329a-theme'); } catch (_) { return null; } })();
-      if (savedTheme === 'dark') root.dataset.theme = 'dark';
-      document.getElementById('theme-button').addEventListener('click', () => {
-        const dark = root.dataset.theme !== 'dark';
-        if (dark) root.dataset.theme = 'dark'; else delete root.dataset.theme;
-        try { localStorage.setItem('cs329a-theme', dark ? 'dark' : 'light'); } catch (_) {}
-      });
-      const setSize = (delta) => {
-        const current = parseFloat(getComputedStyle(root).getPropertyValue('--reader-size')) || 17;
-        root.style.setProperty('--reader-size', `${Math.max(14, Math.min(21, current + delta))}px`);
-      };
-      document.getElementById('font-down').addEventListener('click', () => setSize(-1));
-      document.getElementById('font-up').addEventListener('click', () => setSize(1));
-      const filter = () => {
-        const query = search.value.trim().toLowerCase();
-        let visibleRows = 0;
-        scheduleRows.forEach(row => {
-          const visible = !query || row.dataset.search.includes(query);
-          row.hidden = !visible;
-          if (visible) visibleRows += 1;
-        });
-        empty.classList.toggle('visible', Boolean(query) && visibleRows === 0);
-        sections.forEach(section => {
-          if (section.id === 'schedule') return;
-          const matches = !query || section.dataset.search.includes(query) || section.textContent.toLowerCase().includes(query);
-          section.hidden = !matches;
-        });
-      };
-      search.addEventListener('input', filter);
-      if ('IntersectionObserver' in window) {
-         const observer = new IntersectionObserver(entries => {
-        const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        if (visible[0]) setActive(visible[0].target.id);
-      }, { root: reader, rootMargin: '-12% 0px -65% 0px', threshold: [0.05, 0.25, 0.6] });
-      sections.forEach(section => observer.observe(section));
-       }
-    })();
-  </script>
+  <script src="./assets/cs329a-reader.js"></script>
 </body>
 </html>
