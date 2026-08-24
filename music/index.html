@@ -33,7 +33,7 @@
       <div>
         <p class="ss-kicker">New release / Guzheng study</p>
         <h1 class="ss-page-title">Music <em>by moonlight.</em></h1>
-        <p class="ss-lede">一处安静的音乐工作台：记录旋律、聆听合成音色，也把从创作到导出的过程完整留下。</p>
+        <p class="ss-lede">一处安静的音乐工作台：记录旋律、聆听更接近真实古筝的音色，也把从采样许可到导出的过程完整留下。</p>
       </div>
       <aside class="ss-signal-panel" aria-label="音乐作品概况">
         <span class="ss-signal-label">Release signal</span>
@@ -59,9 +59,9 @@
 
       <div class="music-player" aria-label="月下流水音乐播放器">
         <div class="music-player-copy">
-          <span class="music-eyebrow">Listen / Synthesized guzheng</span>
+          <span class="music-eyebrow">Listen / Recorded guzheng core</span>
           <h2>流水穿过月色。</h2>
-          <p>以拨弦音头、衰减谐波、短装饰音和轻微房间反射，构成一段独奏古筝风格小品。</p>
+          <p>以 CC0 实录古筝 A3 单音为核心，经确定性变调扩展音域，再加入轻微指甲瞬态、装饰音和房间尾韵。</p>
           <div class="music-waveform" aria-hidden="true">
             <span style="--bar-height:34%"></span><span style="--bar-height:52%"></span><span style="--bar-height:78%"></span><span style="--bar-height:44%"></span><span style="--bar-height:64%"></span><span style="--bar-height:92%"></span><span style="--bar-height:57%"></span><span style="--bar-height:38%"></span><span style="--bar-height:70%"></span><span style="--bar-height:46%"></span><span style="--bar-height:84%"></span><span style="--bar-height:58%"></span><span style="--bar-height:36%"></span><span style="--bar-height:68%"></span><span style="--bar-height:96%"></span><span style="--bar-height:50%"></span><span style="--bar-height:72%"></span><span style="--bar-height:41%"></span><span style="--bar-height:62%"></span><span style="--bar-height:88%"></span><span style="--bar-height:47%"></span><span style="--bar-height:76%"></span><span style="--bar-height:54%"></span><span style="--bar-height:32%"></span><span style="--bar-height:66%"></span><span style="--bar-height:90%"></span><span style="--bar-height:45%"></span><span style="--bar-height:60%"></span><span style="--bar-height:82%"></span><span style="--bar-height:40%"></span><span style="--bar-height:74%"></span><span style="--bar-height:52%"></span></div>
           <audio controls preload="metadata" aria-label="播放月下流水">
@@ -76,7 +76,7 @@
             <div><dt>Mode</dt><dd>D pentatonic</dd></div>
             <div><dt>Tempo</dt><dd>80 BPM</dd></div>
             <div><dt>Audio</dt><dd>44.1 kHz / stereo</dd></div>
-            <div><dt>Source</dt><dd>Local synthesis</dd></div>
+            <div><dt>Source</dt><dd>CC0 sample + model</dd></div>
           </dl>
           <div class="music-downloads">
             <span class="music-downloads-label">Take it with you</span>
@@ -89,7 +89,7 @@
         </div>
       </div>
 
-      <p class="ss-note">说明：这是确定性本地合成的古筝风格近似音色，不是实采古筝录音。没有使用未授权的第三方采样库。</p>
+      <p class="ss-note">说明：新版以明确标示 CC0 的古筝实录单音作为音色核心，再进行确定性重采样和轻量合成处理；不是把原始录音直接拼接成整曲。许可与哈希见 <a href="./assets/LICENSES.md">音色资产记录</a>。</p>
     </section>
 
     <section class="ss-section" aria-labelledby="story-title">
@@ -109,10 +109,10 @@
           <span class="ss-card-meta">Original / D pentatonic / 80 BPM</span>
         </article>
         <article class="ss-card music-info-card" style="--card-accent:#e8edfd">
-          <span class="ss-card-number">SOUND / LOCAL RENDER</span>
+          <span class="ss-card-number">SOUND / RECORDED CORE</span>
           <h3 class="ss-card-title">Pluck, ring, return.</h3>
-          <p class="ss-card-copy">拨弦瞬态噪声、衰减谐波、轻微音高漂移和短延迟房间反射，让每个音符保留一点木质尾韵。</p>
-          <span class="ss-card-meta">44.1 kHz / 16-bit PCM / stereo</span>
+          <p class="ss-card-copy">真实古筝录音保留指甲触弦的起振、非整数谐波与弦体衰减；重采样负责把 A3 模板延展到整段旋律。</p>
+          <span class="ss-card-meta">CC0 A3 / Hybrid render / 44.1 kHz</span>
         </article>
       </div>
     </section>
@@ -123,7 +123,7 @@
           <span class="ss-section-index">03 / Open process</span>
           <h2 class="ss-section-title" id="process-title">Notes behind the sound</h2>
         </div>
-        <p class="ss-section-note">从音符源到验收哈希，完整创作记录与可复现材料。</p>
+        <p class="ss-section-note">从音符源、真实参考音许可到验收哈希，完整创作记录与可复现材料。</p>
       </div>
 
       <div class="ss-index-list">
@@ -149,6 +149,18 @@
           <span class="ss-row-number">SRC</span>
           <span><span class="ss-row-title">Composition source</span><span class="ss-row-copy">可继续编辑的 JSON 音符事件、速度、调式和随机种子</span></span>
           <span class="ss-row-kind">JSON / 98 events</span>
+          <span class="ss-row-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="ss-index-row" href="./assets/LICENSES.md">
+          <span class="ss-row-number">LIC</span>
+          <span><span class="ss-row-title">Sample license &amp; provenance</span><span class="ss-row-copy">CC0 古筝参考音的来源页面、许可全文、下载地址与文件校验和</span></span>
+          <span class="ss-row-kind">CC0 / Provenance</span>
+          <span class="ss-row-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="ss-index-row" href="./notes/moonlit-stream.metadata.json">
+          <span class="ss-row-number">META</span>
+          <span><span class="ss-row-title">Render metadata</span><span class="ss-row-copy">混合引擎、基准音、时长、渲染统计与最终哈希</span></span>
+          <span class="ss-row-kind">JSON / v1.1</span>
           <span class="ss-row-arrow" aria-hidden="true">↗</span>
         </a>
       </div>

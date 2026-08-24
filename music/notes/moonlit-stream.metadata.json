@@ -1,0 +1,40 @@
+{
+  "title": "月下流水",
+  "title_en": "Moonlit Stream",
+  "renderer": "source/create_guzheng.py",
+  "renderer_version": "1.1.0",
+  "engine": "hybrid",
+  "seed": 20260824,
+  "tempo_bpm": 80,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B)",
+  "wav": {
+    "sample_rate_hz": 44100,
+    "channels": 2,
+    "sample_width_bits": 16,
+    "duration_seconds": 52.5,
+    "peak_normalized": 0.9,
+    "rms_normalized": 0.07836942367740113,
+    "expanded_note_count": 109,
+    "source_event_count": 98,
+    "tail_seconds": 4.5,
+    "engine": "hybrid-cc0-sample",
+    "reference_sample": "assets/samples/guzheng-cc0-preview.wav",
+    "reference_sample_base_midi": 57
+  },
+  "midi": {
+    "format": "SMF type 0",
+    "ppq": 480,
+    "track_count": 1,
+    "note_event_count": 109
+  },
+  "source_sha256": "a49247da8cb6501fc564cc5a8eee633cc8573710f868412a2fc7c7cf608157a7",
+  "wav_sha256": "0ff5bc7b8c33bd3e0070d9d5cda4c2da460e72ea89af36c88fa722e11d75e24f",
+  "midi_sha256": "b5ebd1d2a69d4338347e734bee917875ab311d4eb22e438a45cd4114abcf0d55",
+  "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
+  "reference_sample_license": "CC0 1.0"
+}

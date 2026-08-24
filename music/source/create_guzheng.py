@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Render a small guzheng-style piece without third-party audio assets.
+"""Render a guzheng-style piece with a licensed reference sample and a fallback model.
 
 The renderer is intentionally deterministic: the composition JSON fixes the musical
-input and the seed fixes the small amount of pluck noise/phase variation.
+input, the seed fixes small variations, and the optional CC0 reference sample supplies
+the characteristic recorded guzheng attack/resonance that an additive oscillator alone
+cannot reproduce.
 """
 from __future__ import annotations
 
@@ -19,9 +21,15 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_COMPOSITION = ROOT / "composition" / "moonlit_stream.json"
+if not DEFAULT_COMPOSITION.exists():
+    # The public Pages copy keeps the composition beside this source file.
+    DEFAULT_COMPOSITION = ROOT / "source" / "moonlit-stream.json"
 DEFAULT_WAV = ROOT / "outputs" / "moonlit_stream.wav"
 DEFAULT_MIDI = ROOT / "outputs" / "moonlit_stream.mid"
 DEFAULT_METADATA = ROOT / "outputs" / "moonlit_stream.metadata.json"
+DEFAULT_SAMPLE = ROOT / "assets" / "samples" / "guzheng-cc0-preview.wav"
+REFERENCE_SAMPLE_MIDI = 57  # A3; the CC0 recording's first note is approximately 220 Hz.
+REFERENCE_SAMPLE_SECONDS = 5.25  # Stop before the second attack in the public preview.
 
 
 def midi_to_hz(note: int) -> float:
@@ -71,6 +79,89 @@ def expanded_events(events: list[dict]) -> list[dict]:
             continue
         result.append(base)
     return sorted(result, key=lambda item: (float(item["start"]), int(item["midi"])))
+
+
+def load_reference_sample(path: Path, sample_rate: int) -> np.ndarray | None:
+    """Load the first pluck from the CC0 reference recording as stereo float audio."""
+    if not path.exists():
+        return None
+    with wave.open(str(path), "rb") as handle:
+        source_rate = handle.getframerate()
+        channels = handle.getnchannels()
+        frames = handle.getnframes()
+        if source_rate != sample_rate:
+            raise ValueError(
+                f"reference sample must be {sample_rate} Hz, got {source_rate} Hz"
+            )
+        if channels not in (1, 2):
+            raise ValueError(f"reference sample must be mono or stereo, got {channels} channels")
+        raw = np.frombuffer(handle.readframes(frames), dtype="<i2")
+    if channels == 1:
+        source = np.column_stack((raw, raw)).astype(np.float64) / 32768.0
+    else:
+        source = raw.reshape(-1, channels).astype(np.float64) / 32768.0
+    source = source[: int(REFERENCE_SAMPLE_SECONDS * sample_rate)].copy()
+    if len(source) < int(0.25 * sample_rate):
+        raise ValueError("reference sample is too short")
+    source -= np.mean(source[: min(len(source), sample_rate // 20)], axis=0, keepdims=True)
+    fade = min(len(source), int(0.12 * sample_rate))
+    source[-fade:] *= np.linspace(1.0, 0.0, fade)[:, None]
+    return source
+
+
+def render_attack_detail(
+    midi: int,
+    velocity: int,
+    layer: str,
+    rng: np.random.Generator,
+    sample_rate: int,
+) -> np.ndarray:
+    """Add a very quiet synthetic nail transient above the sampled string body."""
+    count = max(16, int(0.20 * sample_rate))
+    t = np.arange(count, dtype=np.float64) / sample_rate
+    frequency = midi_to_hz(midi)
+    noise = rng.normal(0.0, 1.0, count) * np.exp(-t / 0.008)
+    detail = 0.035 * noise
+    for partial, gain in ((3, 0.12), (5, 0.08), (7, 0.045)):
+        partial_frequency = min(sample_rate * 0.42, frequency * partial)
+        detail += gain * np.sin(2.0 * math.pi * partial_frequency * t + rng.uniform(0, 2 * math.pi))
+    detail *= np.exp(-t / 0.045)
+    layer_gain = {"melody": 0.060, "drone": 0.018, "grace": 0.040, "tremolo": 0.048}.get(layer, 0.050)
+    return detail * (max(1, min(127, velocity)) / 127.0) * layer_gain
+
+
+def render_note_from_sample(
+    midi: int,
+    seconds: float,
+    velocity: int,
+    layer: str,
+    rng: np.random.Generator,
+    sample_rate: int,
+    reference: np.ndarray,
+) -> np.ndarray:
+    """Transpose the recorded A3 pluck and keep its real attack/body spectrum."""
+    seconds = max(0.08, seconds)
+    # Small deterministic detuning avoids machine-perfect chorus when notes overlap.
+    ratio = 2.0 ** ((midi - REFERENCE_SAMPLE_MIDI) / 12.0)
+    ratio *= 1.0 + float(rng.uniform(-0.0015, 0.0015))
+    count = min(
+        max(16, int(math.ceil(seconds * sample_rate))),
+        max(16, int((len(reference) - 1) / ratio)),
+    )
+    source_positions = np.arange(count, dtype=np.float64) * ratio
+    source_axis = np.arange(len(reference), dtype=np.float64)
+    voice = np.column_stack(
+        (
+            np.interp(source_positions, source_axis, reference[:, 0]),
+            np.interp(source_positions, source_axis, reference[:, 1]),
+        )
+    )
+    layer_gain = {"melody": 0.235, "drone": 0.085, "grace": 0.135, "tremolo": 0.175}.get(layer, 0.20)
+    voice *= (max(1, min(127, velocity)) / 127.0) * layer_gain
+    detail = render_attack_detail(midi, velocity, layer, rng, sample_rate)
+    detail_count = min(len(voice), len(detail))
+    voice[:detail_count] += detail[:detail_count, None]
+    return voice
 
 
 def render_note(
@@ -133,20 +224,26 @@ def render_note(
     return voice * (max(1, min(127, velocity)) / 127.0) * layer_gain
 
 
-def add_reverb(stereo: np.ndarray, sample_rate: int) -> np.ndarray:
+def add_reverb(stereo: np.ndarray, sample_rate: int, wet_scale: float = 1.0) -> np.ndarray:
     """Add a small deterministic room made from cross-fed delay taps."""
     wet = stereo.copy()
     taps = ((0.17, 0.135), (0.31, 0.095), (0.53, 0.068), (0.79, 0.045), (1.07, 0.028))
+    wet_scale = max(0.0, float(wet_scale))
     for delay_seconds, gain in taps:
         delay = int(delay_seconds * sample_rate)
         if delay >= len(stereo):
             continue
-        wet[delay:, 0] += stereo[:-delay, 1] * gain
-        wet[delay:, 1] += stereo[:-delay, 0] * gain
+        wet[delay:, 0] += stereo[:-delay, 1] * gain * wet_scale
+        wet[delay:, 1] += stereo[:-delay, 0] * gain * wet_scale
     return wet
 
 
-def render_wav(composition: dict, output_path: Path) -> dict:
+def render_wav(
+    composition: dict,
+    output_path: Path,
+    sample_path: Path | None = DEFAULT_SAMPLE,
+    engine: str = "hybrid",
+) -> dict:
     sample_rate = int(composition["sample_rate"])
     tempo = float(composition["tempo_bpm"])
     beat_seconds = 60.0 / tempo
@@ -155,6 +252,11 @@ def render_wav(composition: dict, output_path: Path) -> dict:
     frame_count = int(math.ceil(total_seconds * sample_rate))
     stereo = np.zeros((frame_count, 2), dtype=np.float64)
     rng = np.random.default_rng(int(composition["seed"]))
+    reference = None
+    if engine == "hybrid" and sample_path is not None:
+        reference = load_reference_sample(sample_path, sample_rate)
+        if reference is None:
+            print(f"warning: reference sample not found, using additive fallback: {sample_path}")
     events = expanded_events(composition["events"])
 
     for event_index, event in enumerate(events):
@@ -165,29 +267,47 @@ def render_wav(composition: dict, output_path: Path) -> dict:
         note_seconds = float(event["dur"]) * beat_seconds
         # Ring past the written duration, but cap every voice for a bounded render.
         ring_seconds = min(3.4, 1.0 + max(0.0, 72.0 - int(event["midi"])) * 0.010)
-        voice = render_note(
-            int(event["midi"]),
-            note_seconds + ring_seconds,
-            int(event["velocity"]),
-            str(event.get("layer", "melody")),
-            rng,
-            sample_rate,
-        )
+        layer = str(event.get("layer", "melody"))
+        if reference is not None:
+            voice = render_note_from_sample(
+                int(event["midi"]),
+                note_seconds + ring_seconds,
+                int(event["velocity"]),
+                layer,
+                rng,
+                sample_rate,
+                reference,
+            )
+        else:
+            voice = render_note(
+                int(event["midi"]),
+                note_seconds + ring_seconds,
+                int(event["velocity"]),
+                layer,
+                rng,
+                sample_rate,
+            )
         end_frame = min(frame_count, start_frame + len(voice))
         if end_frame <= start_frame:
             continue
         voice = voice[: end_frame - start_frame]
         # Mildly moving pan: higher strings lean right, grace notes lean left.
         pan = 0.50 + 0.16 * math.sin(int(event["midi"]) * 0.37 + event_index * 0.91)
-        if event.get("layer") == "drone":
+        if layer == "drone":
             pan = 0.46 + 0.08 * math.sin(event_index)
-        left_gain = math.cos(pan * math.pi / 2.0)
-        right_gain = math.sin(pan * math.pi / 2.0)
-        stereo[start_frame:end_frame, 0] += voice * left_gain
-        stereo[start_frame:end_frame, 1] += voice * right_gain
+        if voice.ndim == 1:
+            left_gain = math.cos(pan * math.pi / 2.0)
+            right_gain = math.sin(pan * math.pi / 2.0)
+            stereo[start_frame:end_frame, 0] += voice * left_gain
+            stereo[start_frame:end_frame, 1] += voice * right_gain
+        else:
+            # Keep the real recording's stereo room while adding only a subtle pan.
+            pan_shift = 0.10 * math.sin(int(event["midi"]) * 0.37 + event_index * 0.91)
+            stereo[start_frame:end_frame, 0] += voice[:, 0] * (1.0 - pan_shift) + voice[:, 1] * 0.035
+            stereo[start_frame:end_frame, 1] += voice[:, 1] * (1.0 + pan_shift) + voice[:, 0] * 0.035
 
-    # Short room reflections and a gentle master fade keep the coda natural.
-    stereo = add_reverb(stereo, sample_rate)
+    # The sampled recording already contains a small room; use less synthetic reflection.
+    stereo = add_reverb(stereo, sample_rate, wet_scale=0.58 if reference is not None else 1.0)
     fade_in = min(frame_count, int(0.025 * sample_rate))
     fade_out = min(frame_count, int(2.8 * sample_rate))
     if fade_in:
@@ -221,6 +341,9 @@ def render_wav(composition: dict, output_path: Path) -> dict:
         "expanded_note_count": len(events),
         "source_event_count": len(composition["events"]),
         "tail_seconds": tail_seconds,
+        "engine": "hybrid-cc0-sample" if reference is not None else "additive-fallback",
+        "reference_sample": display_path(sample_path) if reference is not None and sample_path is not None else None,
+        "reference_sample_base_midi": REFERENCE_SAMPLE_MIDI if reference is not None else None,
     }
 
 
@@ -276,6 +399,13 @@ def make_midi(composition: dict, output_path: Path) -> dict:
     return {"format": "SMF type 0", "ppq": ppq, "track_count": 1, "note_event_count": len(events)}
 
 
+def display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -290,16 +420,25 @@ def main() -> None:
     parser.add_argument("--wav", type=Path, default=DEFAULT_WAV)
     parser.add_argument("--midi", type=Path, default=DEFAULT_MIDI)
     parser.add_argument("--metadata", type=Path, default=DEFAULT_METADATA)
+    parser.add_argument("--sample", type=Path, default=DEFAULT_SAMPLE)
+    parser.add_argument(
+        "--engine",
+        choices=("hybrid", "additive"),
+        default="hybrid",
+        help="hybrid uses the bundled CC0 guzheng reference; additive is the fallback model",
+    )
     args = parser.parse_args()
 
     composition = read_composition(args.composition)
-    wav_info = render_wav(composition, args.wav)
+    sample_path = args.sample if args.engine == "hybrid" else None
+    wav_info = render_wav(composition, args.wav, sample_path=sample_path, engine=args.engine)
     midi_info = make_midi(composition, args.midi)
     metadata = {
         "title": composition["title"],
         "title_en": composition.get("title_en"),
         "renderer": "src/create_guzheng.py",
-        "renderer_version": "1.0.0",
+        "renderer_version": "1.1.0",
+        "engine": args.engine,
         "seed": composition["seed"],
         "tempo_bpm": composition["tempo_bpm"],
         "time_signature": composition["time_signature"],
@@ -311,6 +450,9 @@ def main() -> None:
     metadata["source_sha256"] = sha256(args.composition)
     metadata["wav_sha256"] = sha256(args.wav)
     metadata["midi_sha256"] = sha256(args.midi)
+    if args.engine == "hybrid" and args.sample.exists():
+        metadata["reference_sample_sha256"] = sha256(args.sample)
+        metadata["reference_sample_license"] = "CC0 1.0"
     args.metadata.parent.mkdir(parents=True, exist_ok=True)
     args.metadata.write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
