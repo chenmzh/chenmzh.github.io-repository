@@ -1,0 +1,127 @@
+<section id="lab">
+  <h2 class="mrl-sec-title"><span class="num">04</span>互动实验：先别训练，亲手感受“策略”</h2>
+  <p class="mrl-sec-lead">这个 demo 在浏览器里直接计算 CartPole 的经典动力学。我们故意先不用神经网络：目标是把“状态 → 动作 → 新状态”的因果链看清楚。</p>
+
+  <div class="mrl-viz">
+    <div class="mrl-viz-head">
+      <div><h3>CartPole Physics Lab</h3><p id="cpStatus">等待动作</p></div>
+      <div class="mrl-pill">step <b id="cpStepCount">0</b> · reward <b id="cpReward">0</b></div>
+    </div>
+
+    <div class="mrl-cartpole-stage">
+      <svg id="cartpoleSvg" viewBox="0 0 760 320" role="img" aria-label="可交互的 CartPole 倒立摆示意图">
+        <defs>
+          <marker id="arrowRight" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2854d7"/></marker>
+          <marker id="arrowLeft" markerWidth="10" markerHeight="10" refX="1" refY="3" orient="auto"><path d="M9,0 L9,6 L0,3 z" fill="#2854d7"/></marker>
+        </defs>
+        <line x1="92" y1="246" x2="668" y2="246" stroke="#b8beb5" stroke-width="3"/>
+        <line x1="125" y1="254" x2="125" y2="265" stroke="#d1d5cd"/><line x1="635" y1="254" x2="635" y2="265" stroke="#d1d5cd"/>
+        <text x="125" y="286" text-anchor="middle" font-size="11" fill="#7b847d">−2.4</text><text x="635" y="286" text-anchor="middle" font-size="11" fill="#7b847d">+2.4</text>
+        <rect id="cpCart" x="342" y="206" width="76" height="38" rx="8" fill="#2854d7"/>
+        <circle cx="355" cy="248" r="9" fill="#263039"/><circle cx="405" cy="248" r="9" fill="#263039"/>
+        <line id="cpPole" x1="380" y1="206" x2="380" y2="94" stroke="#d7653b" stroke-width="9" stroke-linecap="round"/>
+        <circle cx="380" cy="206" r="8" fill="#141a20"/>
+        <circle id="cpTip" cx="380" cy="94" r="7" fill="#d7653b"/>
+        <line id="cpForceArrow" x1="380" y1="270" x2="444" y2="270" stroke="#2854d7" stroke-width="3" opacity="0" marker-end="url(#arrowRight)"/>
+        <text id="cpForceLabel" x="452" y="275" font-size="12" fill="#2854d7" opacity="0">action = 1</text>
+      </svg>
+    </div>
+
+    <div class="mrl-controls">
+      <label class="mrl-control">策略
+        <select id="policySelect">
+          <option value="manual">手动：我来选动作</option>
+          <option value="random">随机策略：50 / 50</option>
+          <option value="feedback" selected>简单反馈控制器</option>
+        </select>
+      </label>
+      <label class="mrl-control">初始倾角 <span id="angleValue">4.0°</span>
+        <input id="angleSlider" type="range" min="-9" max="9" value="4" step="0.5">
+      </label>
+      <div class="mrl-control"><span>运行</span><div class="mrl-actions"><button class="mrl-btn primary" id="cpStart">自动运行</button><button class="mrl-btn" id="cpStep">走一步</button><button class="mrl-btn" id="cpReset">重置</button></div></div>
+      <div class="mrl-control"><span>手动动作</span><div class="mrl-actions"><button class="mrl-btn" id="cpLeft">← 左</button><button class="mrl-btn" id="cpRight">右 →</button></div></div>
+    </div>
+
+    <div class="mrl-grid2">
+      <div class="mrl-card compact">
+        <h3>当前观测 $s_t$</h3>
+        <div class="mrl-state-grid">
+          <div><span>$x$</span><strong id="statX">0.000</strong></div>
+          <div><span>$\dot x$</span><strong id="statXDot">0.000</strong></div>
+          <div><span>$\theta$</span><strong id="statTheta">4.00°</strong></div>
+          <div><span>$\dot\theta$</span><strong id="statThetaDot">0.00°/s</strong></div>
+        </div>
+      </div>
+      <div class="mrl-card compact">
+        <h3>动作倾向</h3>
+        <div class="mrl-prob-row"><span>左 $a=0$</span><div class="mrl-prob-track"><div id="fillLeft" class="mrl-prob-fill"></div></div><b id="probLeft">0.50</b></div>
+        <div class="mrl-prob-row"><span>右 $a=1$</span><div class="mrl-prob-track"><div id="fillRight" class="mrl-prob-fill"></div></div><b id="probRight">0.50</b></div>
+        <p class="mrl-small">反馈控制器内部的线性 score：<code id="feedbackScore">0.000</code>。它不是训练出来的，只是用来建立 policy 的直觉。</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>先做三个小实验</h3>
+  <ol>
+    <li><strong>切到“手动”：</strong>从 $4^\circ$ 倾角开始，只凭直觉左右控制。你会发现“看角度决定方向”很快失效，因为角速度会积累。</li>
+    <li><strong>切到“随机策略”：</strong>让它自动跑。每步仍然有一半概率选对方向，但连续控制需要的是“根据状态改变动作概率”。</li>
+    <li><strong>切到“简单反馈控制器”：</strong>它用 $x,\dot x,\theta,\dot\theta$ 的加权组合选方向。它不是 RL，却展示了一个好 policy 应该做的事：同一动作的好坏依赖状态。</li>
+  </ol>
+
+  <div class="mrl-viz">
+    <div class="mrl-viz-head"><div><h3>随机策略 vs. 状态反馈</h3><p>各跑 30 个随机初始回合，比较平均存活步数。</p></div><button class="mrl-btn primary" id="runComparison">比较 30 + 30 回合</button></div>
+    <div class="mrl-result-row"><span>随机策略</span><div class="mrl-result-track"><div id="barRandom" class="mrl-result-bar"></div></div><strong><span id="resultRandom">—</span> steps</strong></div>
+    <div class="mrl-result-row"><span>反馈控制</span><div class="mrl-result-track"><div id="barFeedback" class="mrl-result-bar alt"></div></div><strong><span id="resultFeedback">—</span> steps</strong></div>
+    <p class="mrl-caption">这个比较不能证明反馈控制器“学会了”——它根本没训练。它要说明的是：<strong>policy 的价值来自把状态映射为动作</strong>，而不是某个动作本身天然更好。后面的 RL 要做的，就是从交互数据中自动学出这种映射。</p>
+  </div>
+</section>
+
+<section id="trajectory">
+  <h2 class="mrl-sec-title"><span class="num">05</span>一串交互叫轨迹：奖励为什么不能只看眼前</h2>
+  <p class="mrl-sec-lead">一次 CartPole 回合不是一个训练样本，而是一整串相互依赖的决策。</p>
+
+  <div class="mrl-viz">
+    <svg class="mrl-diagram" viewBox="0 0 900 225" role="img" aria-label="状态动作奖励组成的轨迹">
+      <defs><marker id="trajArrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#59655d"/></marker></defs>
+      <g fill="#fff" stroke="#2854d7" stroke-width="2">
+        <rect x="36" y="74" width="120" height="62" rx="12"/><rect x="214" y="74" width="120" height="62" rx="12"/><rect x="392" y="74" width="120" height="62" rx="12"/><rect x="570" y="74" width="120" height="62" rx="12"/><rect x="748" y="74" width="120" height="62" rx="12"/>
+      </g>
+      <g font-size="14" text-anchor="middle" fill="#173ba6"><text x="96" y="111">state s₀</text><text x="274" y="111">state s₁</text><text x="452" y="111">state s₂</text><text x="630" y="111">state s₃</text><text x="808" y="111">… terminal</text></g>
+      <g stroke="#59655d" stroke-width="2" marker-end="url(#trajArrow)"><line x1="156" y1="105" x2="207" y2="105"/><line x1="334" y1="105" x2="385" y2="105"/><line x1="512" y1="105" x2="563" y2="105"/><line x1="690" y1="105" x2="741" y2="105"/></g>
+      <g font-size="12" text-anchor="middle" fill="#59655d"><text x="181" y="78">a₀, r₀</text><text x="359" y="78">a₁, r₁</text><text x="537" y="78">a₂, r₂</text><text x="715" y="78">a₃, r₃</text></g>
+    </svg>
+    <p class="mrl-caption">一条 trajectory 常写成 $\tau=(s_0,a_0,r_0,s_1,a_1,r_1,\ldots)$。它保留了“某个早期动作怎样影响后面结果”的时间结构。</p>
+  </div>
+
+  <p>如果目标只是最大化当前一步 reward，CartPole 会变得很奇怪：因为只要杆还没倒，每个动作立刻都拿到 $+1$。真正有意义的是从当前时刻开始，未来还能累计多少奖励。</p>
+  <div class="mrl-equation">$$G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots$$</div>
+  <p>$G_t$ 叫 <strong>return（回报）</strong>，$\gamma\in[0,1]$ 是折扣因子。它控制“未来奖励在今天值多少钱”。</p>
+
+  <div class="mrl-viz">
+    <div class="mrl-viz-head"><div><h3>折扣因子实验</h3><p>假设未来连续 8 步奖励都为 1，拖动 $\gamma$ 看当前回报怎么变。</p></div><div class="mrl-pill">$G_0$ ≈ <b id="returnValue">—</b></div></div>
+    <label class="mrl-control">$\gamma$ = <span id="gammaValue">0.90</span><input id="gammaSlider" type="range" min="0" max="1" step="0.01" value="0.90"></label>
+    <div class="mrl-code-line" id="returnFormula">1 + 0.90^1 + 0.90^2 + …</div>
+    <p class="mrl-caption">当 $\gamma$ 接近 0，agent 几乎只关心眼前；接近 1，则更愿意为了长期存活承受短期看不出收益的动作。</p>
+  </div>
+
+  <div class="mrl-card blue">
+    <h3>这一步连接到后面的什么？</h3>
+    <p>Value function 本质上就是在估计“从某个状态开始，未来 return 大概有多大”。Advantage 又是在问“这个动作比当前状态下的平均预期好多少”。所以 return 不是一个孤立公式，它是 Value、Actor-Critic、PPO 的地基。</p>
+  </div>
+</section>
+
+<section id="policy">
+  <h2 class="mrl-sec-title"><span class="num">06</span>策略不是“选右”，而是一张条件分布</h2>
+  <p class="mrl-sec-lead">Policy 的概念一旦真正吃透，后面的 policy gradient、PPO，甚至 LLM token policy 都会自然很多。</p>
+  <div class="mrl-equation">$$\pi(a\mid s)=P(A_t=a\mid S_t=s)$$</div>
+  <p>对于 CartPole，一个策略接收四维状态 $s$，输出两个动作的概率。比如某一刻：</p>
+  <div class="mrl-flow" style="grid-template-columns:minmax(160px,1fr) auto minmax(180px,1fr)">
+    <div class="box">$s=[0.03,0.21,5.2^\circ,18^\circ/s]$</div><div class="arrow">→</div><div class="box">$\pi(0\mid s)=0.18$<br>$\pi(1\mid s)=0.82$</div>
+  </div>
+  <p>如果杆子继续转快、或者小车已经冲到右边，同一个策略面对新的 $s$ 会输出另一组概率。这就是“策略”与“固定规则”的区别：它描述的是<strong>条件行为</strong>。</p>
+
+  <div class="mrl-card green">
+    <h3>和 LLM 做一次提前连接</h3>
+    <p>语言模型也输出条件分布：$P_\theta(\text{next token}\mid\text{context})$。把 context 看成状态、next token 看成动作，一个 LLM 就天然具有 policy 的数学形状。后面 RLHF、GRPO 为什么能直接优化语言模型，根子就在这里。</p>
+  </div>
+</section>
