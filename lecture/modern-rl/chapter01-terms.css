@@ -1,0 +1,44 @@
+/* Chapter 01 — first-use terminology explanations */
+.mrl-term-opening,
+.mrl-term-intro,
+.mrl-term-bridge{
+  max-width:650px;
+  font-family:var(--ed-sans);
+  color:var(--ed-muted);
+  font-size:.82rem;
+  line-height:1.72;
+}
+.mrl-term-opening{
+  margin:18px 0 0!important;
+  padding:14px 0 0;
+  border-top:1px solid var(--ed-rule);
+}
+.mrl-term-intro{
+  margin:14px 0 22px!important;
+}
+.mrl-term-bridge{
+  margin:14px 0 22px!important;
+  padding:12px 15px;
+  border-left:2px solid var(--ed-accent);
+  background:rgba(36,79,69,.035);
+}
+.mrl-term-opening strong,
+.mrl-term-intro strong,
+.mrl-term-bridge strong{
+  color:var(--ed-ink);
+  font-weight:680;
+}
+.mrl-term-bridge code{
+  font-size:.78em;
+}
+@media(max-width:760px){
+  .mrl-term-opening,
+  .mrl-term-intro,
+  .mrl-term-bridge{
+    font-size:.79rem;
+    line-height:1.7;
+  }
+  .mrl-term-bridge{
+    padding:11px 13px;
+  }
+}
