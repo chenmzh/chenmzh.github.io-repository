@@ -14,6 +14,7 @@ import json
 import math
 import struct
 import wave
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +31,167 @@ DEFAULT_METADATA = ROOT / "outputs" / "moonlit_stream.metadata.json"
 DEFAULT_SAMPLE = ROOT / "assets" / "samples" / "guzheng-cc0-preview.wav"
 REFERENCE_SAMPLE_MIDI = 57  # A3; the CC0 recording's first note is approximately 220 Hz.
 REFERENCE_SAMPLE_SECONDS = 5.25  # Stop before the second attack in the public preview.
+
+
+@dataclass(frozen=True)
+class GuzhengTimbre:
+    """Centralized synthesis and polyphony controls for a guzheng-like voice."""
+
+    # A guzheng rings naturally, but a bounded pool prevents a long strum from
+    # turning into an uncontrolled gain stack.
+    max_voices: int = 24
+    retrigger_fade_seconds: float = 0.012
+    steal_fade_seconds: float = 0.035
+
+    # Compared with the old bright model, the onset is gentler and the body rings
+    # longer.  Upper partials still speak at the attack, then die away faster.
+    attack_seconds: float = 0.008
+    base_decay_seconds: float = 2.05
+    low_register_decay_scale: float = 0.020
+    ring_base_seconds: float = 1.65
+    ring_register_scale: float = 0.018
+    max_ring_seconds: float = 4.0
+    partial_amplitudes: tuple[float, ...] = (1.0, 0.38, 0.17, 0.078, 0.036, 0.017, 0.008, 0.004)
+    partial_decay_step: float = 0.26
+    inharmonicity: float = 0.00025
+    pluck_noise_gain: float = 0.032
+    pluck_noise_decay_seconds: float = 0.006
+    soundboard_resonance_gain: float = 0.058
+    soundboard_decay_multiplier: float = 1.35
+
+    # The sampled attack is retained, while its high-frequency edge closes down
+    # quickly so the sustained sound does not become a pipa-like bright buzz.
+    sample_body_cutoff_hz: float = 7600.0
+    sample_brightness_decay_seconds: float = 0.18
+
+    # Conservative per-voice levels leave room for chords and a short room tail.
+    additive_layer_gains: tuple[tuple[str, float], ...] = (
+        ("melody", 0.155),
+        ("drone", 0.058),
+        ("harmony", 0.070),
+        ("grace", 0.095),
+        ("tremolo", 0.115),
+    )
+    sample_layer_gains: tuple[tuple[str, float], ...] = (
+        ("melody", 0.205),
+        ("drone", 0.075),
+        ("harmony", 0.082),
+        ("grace", 0.118),
+        ("tremolo", 0.145),
+    )
+    master_gain: float = 0.76
+
+
+TIMBRE_CONFIG = GuzhengTimbre()
+
+
+@dataclass
+class RenderedVoice:
+    """One rendered note tracked independently by the offline voice pool."""
+
+    midi: int
+    start_frame: int
+    audio: np.ndarray
+    pan: float
+    event_index: int
+    layer: str
+    stereo_pan_shift: float = 0.0
+    active_end_frame: int = field(init=False)
+    released: bool = False
+
+    def __post_init__(self) -> None:
+        self.active_end_frame = self.start_frame + len(self.audio)
+
+
+class VoicePool:
+    """Bounded polyphonic allocator with click-safe retriggering and stealing."""
+
+    def __init__(self, sample_rate: int, max_voices: int = TIMBRE_CONFIG.max_voices) -> None:
+        self.sample_rate = sample_rate
+        self.max_voices = max(1, int(max_voices))
+        self.retrigger_fade_frames = max(
+            1, int(round(TIMBRE_CONFIG.retrigger_fade_seconds * sample_rate))
+        )
+        self.steal_fade_frames = max(
+            1, int(round(TIMBRE_CONFIG.steal_fade_seconds * sample_rate))
+        )
+        self.voices: list[RenderedVoice] = []
+        self.retrigger_count = 0
+        self.steal_count = 0
+        self.peak_active_voices = 0
+
+    def _active_at(self, frame: int) -> list[RenderedVoice]:
+        return [
+            voice
+            for voice in self.voices
+            if not voice.released and voice.active_end_frame > frame
+        ]
+
+    def _level_at(self, voice: RenderedVoice, frame: int) -> float:
+        offset = max(0, frame - voice.start_frame)
+        end = min(
+            len(voice.audio),
+            offset + max(64, int(round(self.sample_rate * 0.025))),
+            max(0, voice.active_end_frame - voice.start_frame),
+        )
+        if end <= offset:
+            return 0.0
+        window = voice.audio[offset:end]
+        return float(np.sqrt(np.mean(window * window)))
+
+    @staticmethod
+    def _fade_out(voice: RenderedVoice, frame: int, fade_frames: int) -> None:
+        offset = max(0, frame - voice.start_frame)
+        if offset >= len(voice.audio):
+            voice.active_end_frame = min(voice.active_end_frame, frame)
+            voice.released = True
+            return
+        end = min(len(voice.audio), offset + max(1, fade_frames))
+        fade = np.linspace(1.0, 0.0, end - offset, dtype=np.float64)
+        if voice.audio.ndim == 1:
+            voice.audio[offset:end] *= fade
+        else:
+            voice.audio[offset:end] *= fade[:, None]
+        if end < len(voice.audio):
+            voice.audio[end:] = 0.0
+        voice.active_end_frame = min(voice.active_end_frame, voice.start_frame + end)
+        voice.released = True
+
+    def add(self, voice: RenderedVoice) -> None:
+        """Allocate a voice, fading an old same-pitch voice or quietest victim."""
+        active = self._active_at(voice.start_frame)
+        self.peak_active_voices = max(self.peak_active_voices, len(active))
+
+        same_pitch = [candidate for candidate in active if candidate.midi == voice.midi]
+        for candidate in same_pitch:
+            self._fade_out(candidate, voice.start_frame, self.retrigger_fade_frames)
+            self.retrigger_count += 1
+
+        active = self._active_at(voice.start_frame)
+        if len(active) >= self.max_voices:
+            victim = min(
+                active,
+                key=lambda candidate: (
+                    self._level_at(candidate, voice.start_frame),
+                    candidate.start_frame,
+                ),
+            )
+            self._fade_out(victim, voice.start_frame, self.steal_fade_frames)
+            self.steal_count += 1
+
+        self.voices.append(voice)
+        self.peak_active_voices = max(
+            self.peak_active_voices, len(self._active_at(voice.start_frame))
+        )
+
+    def summary(self) -> dict:
+        return {
+            "max_voices": self.max_voices,
+            "peak_active_voices": self.peak_active_voices,
+            "same_pitch_retriggers": self.retrigger_count,
+            "voice_steals": self.steal_count,
+            "rendered_voices": len(self.voices),
+        }
 
 
 def midi_to_hz(note: int) -> float:
@@ -109,6 +271,11 @@ def load_reference_sample(path: Path, sample_rate: int) -> np.ndarray | None:
     return source
 
 
+def layer_gain(layer: str, sampled: bool) -> float:
+    gains = TIMBRE_CONFIG.sample_layer_gains if sampled else TIMBRE_CONFIG.additive_layer_gains
+    return dict(gains).get(layer, 0.16 if not sampled else 0.19)
+
+
 def render_attack_detail(
     midi: int,
     velocity: int,
@@ -116,18 +283,43 @@ def render_attack_detail(
     rng: np.random.Generator,
     sample_rate: int,
 ) -> np.ndarray:
-    """Add a very quiet synthetic nail transient above the sampled string body."""
-    count = max(16, int(0.20 * sample_rate))
+    """Add a restrained synthetic nail transient above the sampled string body."""
+    count = max(16, int(0.16 * sample_rate))
     t = np.arange(count, dtype=np.float64) / sample_rate
     frequency = midi_to_hz(midi)
-    noise = rng.normal(0.0, 1.0, count) * np.exp(-t / 0.008)
-    detail = 0.035 * noise
-    for partial, gain in ((3, 0.12), (5, 0.08), (7, 0.045)):
+    noise = rng.normal(0.0, 1.0, count) * np.exp(-t / 0.0055)
+    detail = 0.022 * noise
+    for partial, gain in ((3, 0.075), (5, 0.042), (7, 0.020)):
         partial_frequency = min(sample_rate * 0.42, frequency * partial)
         detail += gain * np.sin(2.0 * math.pi * partial_frequency * t + rng.uniform(0, 2 * math.pi))
-    detail *= np.exp(-t / 0.045)
-    layer_gain = {"melody": 0.060, "drone": 0.018, "grace": 0.040, "tremolo": 0.048}.get(layer, 0.050)
-    return detail * (max(1, min(127, velocity)) / 127.0) * layer_gain
+    detail *= np.exp(-t / 0.032)
+    detail_layer_gain = {"melody": 0.040, "drone": 0.012, "harmony": 0.022, "grace": 0.028, "tremolo": 0.032}.get(layer, 0.032)
+    return detail * (max(1, min(127, velocity)) / 127.0) * detail_layer_gain
+
+
+def one_pole_lowpass(stereo: np.ndarray, sample_rate: int, cutoff_hz: float) -> np.ndarray:
+    """Apply a small deterministic body filter without adding an audio dependency."""
+    cutoff_hz = max(20.0, min(float(cutoff_hz), sample_rate * 0.45))
+    coefficient = 1.0 - math.exp(-2.0 * math.pi * cutoff_hz / sample_rate)
+    filtered = np.empty_like(stereo)
+    filtered[0] = stereo[0]
+    for index in range(1, len(stereo)):
+        filtered[index] = filtered[index - 1] + coefficient * (stereo[index] - filtered[index - 1])
+    return filtered
+
+
+def shape_sample_voice(voice: np.ndarray, sample_rate: int) -> np.ndarray:
+    """Keep the nail edge but let the sustained spectrum settle into the soundboard."""
+    if len(voice) == 0:
+        return voice
+    body = one_pole_lowpass(voice, sample_rate, TIMBRE_CONFIG.sample_body_cutoff_hz)
+    brightness = np.exp(
+        -np.arange(len(voice), dtype=np.float64)
+        / (sample_rate * TIMBRE_CONFIG.sample_brightness_decay_seconds)
+    )
+    shaped = body + (voice - body) * brightness[:, None]
+    onset = 1.0 - np.exp(-np.arange(len(voice), dtype=np.float64) / (sample_rate * TIMBRE_CONFIG.attack_seconds))
+    return shaped * onset[:, None]
 
 
 def render_note_from_sample(
@@ -156,8 +348,8 @@ def render_note_from_sample(
             np.interp(source_positions, source_axis, reference[:, 1]),
         )
     )
-    layer_gain = {"melody": 0.235, "drone": 0.085, "grace": 0.135, "tremolo": 0.175}.get(layer, 0.20)
-    voice *= (max(1, min(127, velocity)) / 127.0) * layer_gain
+    voice = shape_sample_voice(voice, sample_rate)
+    voice *= (max(1, min(127, velocity)) / 127.0) * layer_gain(layer, sampled=True)
     detail = render_attack_detail(midi, velocity, layer, rng, sample_rate)
     detail_count = min(len(voice), len(detail))
     voice[:detail_count] += detail[:detail_count, None]
@@ -172,20 +364,20 @@ def render_note(
     rng: np.random.Generator,
     sample_rate: int,
 ) -> np.ndarray:
-    """Create one plucked-string voice with a bright attack and decaying body."""
+    """Create one guzheng-like plucked-string voice with a soft nail onset."""
     seconds = max(0.08, seconds)
     count = max(16, int(math.ceil(seconds * sample_rate)))
     t = np.arange(count, dtype=np.float64) / sample_rate
     frequency = midi_to_hz(midi)
 
-    # A low register rings longer; upper strings decay more quickly.
-    decay = 1.55 + max(0.0, 72.0 - midi) * 0.012
+    # Low strings ring longer; upper strings lose their high partials sooner.
+    decay = TIMBRE_CONFIG.base_decay_seconds + max(0.0, 72.0 - midi) * TIMBRE_CONFIG.low_register_decay_scale
     if layer == "drone":
-        decay *= 1.30
+        decay *= 1.28
     if layer == "grace":
-        decay *= 0.68
+        decay *= 0.72
     if layer == "tremolo":
-        decay *= 0.76
+        decay *= 0.80
 
     # A tiny, deterministic drift keeps the additive partials from sounding sterile.
     phase = float(rng.uniform(0.0, 2.0 * math.pi))
@@ -194,34 +386,36 @@ def render_note(
     phase_mod = drift_depth * np.sin(2.0 * math.pi * drift_rate * t + phase)
 
     body = np.zeros_like(t)
-    partial_amplitudes = (1.00, 0.47, 0.25, 0.14, 0.085, 0.050, 0.030, 0.018)
     nyquist_limit = sample_rate * 0.47
-    for partial, partial_gain in enumerate(partial_amplitudes, start=1):
-        partial_frequency = frequency * partial
+    for partial, partial_gain in enumerate(TIMBRE_CONFIG.partial_amplitudes, start=1):
+        # A very small inharmonic offset gives the string a metal/wood bridge
+        # character without the hard, buzzy upper spectrum of a pipa model.
+        partial_frequency = frequency * partial * (1.0 + TIMBRE_CONFIG.inharmonicity * (partial - 1) ** 2)
         if partial_frequency >= nyquist_limit:
             break
-        partial_decay = decay / (1.0 + 0.18 * (partial - 1))
+        partial_decay = decay / (1.0 + TIMBRE_CONFIG.partial_decay_step * (partial - 1))
         partial_phase = float(rng.uniform(0.0, 2.0 * math.pi))
         body += partial_gain * np.sin(
             2.0 * math.pi * partial_frequency * t + partial_phase + phase_mod * partial
         ) * np.exp(-t / partial_decay)
 
-    # A short noise burst is the plectrum/string contact; it disappears quickly.
+    # A restrained nail/string contact burst: clear articulation without a pipa-like click.
     pluck_noise = rng.normal(0.0, 1.0, count)
-    pluck_noise *= np.exp(-t / 0.010)
-    pluck_noise *= 0.070 if layer != "drone" else 0.040
+    pluck_noise *= np.exp(-t / TIMBRE_CONFIG.pluck_noise_decay_seconds)
+    pluck_noise *= TIMBRE_CONFIG.pluck_noise_gain * (0.72 if layer == "drone" else 1.0)
 
-    # A faint octave-lower body resonance gives the low strings a wooden soundboard.
-    resonance = 0.075 * np.sin(2.0 * math.pi * frequency * 0.5 * t + phase)
-    resonance *= np.exp(-t / (decay * 1.25))
+    # A quiet octave-lower soundboard resonance gives the body a wooden bloom.
+    resonance = TIMBRE_CONFIG.soundboard_resonance_gain * np.sin(
+        2.0 * math.pi * frequency * 0.5 * t + phase
+    )
+    resonance *= np.exp(-t / (decay * TIMBRE_CONFIG.soundboard_decay_multiplier))
 
-    attack = 1.0 - np.exp(-t / 0.0038)
+    attack = 1.0 - np.exp(-t / TIMBRE_CONFIG.attack_seconds)
     envelope = attack * np.exp(-t / decay)
     voice = (body + pluck_noise + resonance) * envelope
 
-    # Velocity and register are kept conservative so overlapping ringing strings do not clip.
-    layer_gain = {"melody": 0.185, "drone": 0.070, "grace": 0.115, "tremolo": 0.145}.get(layer, 0.16)
-    return voice * (max(1, min(127, velocity)) / 127.0) * layer_gain
+    # Conservative per-voice level leaves headroom for the new chord voices.
+    return voice * (max(1, min(127, velocity)) / 127.0) * layer_gain(layer, sampled=False)
 
 
 def add_reverb(stereo: np.ndarray, sample_rate: int, wet_scale: float = 1.0) -> np.ndarray:
@@ -236,6 +430,31 @@ def add_reverb(stereo: np.ndarray, sample_rate: int, wet_scale: float = 1.0) -> 
         wet[delay:, 0] += stereo[:-delay, 1] * gain * wet_scale
         wet[delay:, 1] += stereo[:-delay, 0] * gain * wet_scale
     return wet
+
+
+def mix_rendered_voice(stereo: np.ndarray, rendered: RenderedVoice) -> None:
+    """Mix one pooled voice, honoring any fade applied by the allocator."""
+    start_frame = max(0, rendered.start_frame)
+    audio_offset = max(0, -rendered.start_frame)
+    end_frame = min(stereo.shape[0], rendered.active_end_frame)
+    audio_end = min(len(rendered.audio), end_frame - rendered.start_frame)
+    if end_frame <= start_frame or audio_end <= audio_offset:
+        return
+    voice = rendered.audio[audio_offset:audio_end]
+    frame_end = start_frame + len(voice)
+    if voice.ndim == 1:
+        left_gain = math.cos(rendered.pan * math.pi / 2.0)
+        right_gain = math.sin(rendered.pan * math.pi / 2.0)
+        stereo[start_frame:frame_end, 0] += voice * left_gain
+        stereo[start_frame:frame_end, 1] += voice * right_gain
+    else:
+        # Keep the real recording's stereo room while adding only a subtle pan.
+        stereo[start_frame:frame_end, 0] += (
+            voice[:, 0] * (1.0 - rendered.stereo_pan_shift) + voice[:, 1] * 0.035
+        )
+        stereo[start_frame:frame_end, 1] += (
+            voice[:, 1] * (1.0 + rendered.stereo_pan_shift) + voice[:, 0] * 0.035
+        )
 
 
 def render_wav(
@@ -258,6 +477,7 @@ def render_wav(
         if reference is None:
             print(f"warning: reference sample not found, using additive fallback: {sample_path}")
     events = expanded_events(composition["events"])
+    pool = VoicePool(sample_rate)
 
     for event_index, event in enumerate(events):
         start_seconds = float(event["start"]) * beat_seconds
@@ -265,14 +485,20 @@ def render_wav(
             continue
         start_frame = max(0, int(round(start_seconds * sample_rate)))
         note_seconds = float(event["dur"]) * beat_seconds
-        # Ring past the written duration, but cap every voice for a bounded render.
-        ring_seconds = min(3.4, 1.0 + max(0.0, 72.0 - int(event["midi"])) * 0.010)
+        # Guzheng tails are allowed to ring beyond note-off, with a bounded render.
+        ring_seconds = min(
+            TIMBRE_CONFIG.max_ring_seconds,
+            TIMBRE_CONFIG.ring_base_seconds
+            + max(0.0, 72.0 - int(event["midi"])) * TIMBRE_CONFIG.ring_register_scale,
+        )
+        midi = int(event["midi"])
+        velocity = int(event["velocity"])
         layer = str(event.get("layer", "melody"))
         if reference is not None:
             voice = render_note_from_sample(
-                int(event["midi"]),
+                midi,
                 note_seconds + ring_seconds,
-                int(event["velocity"]),
+                velocity,
                 layer,
                 rng,
                 sample_rate,
@@ -280,9 +506,9 @@ def render_wav(
             )
         else:
             voice = render_note(
-                int(event["midi"]),
+                midi,
                 note_seconds + ring_seconds,
-                int(event["velocity"]),
+                velocity,
                 layer,
                 rng,
                 sample_rate,
@@ -291,22 +517,32 @@ def render_wav(
         if end_frame <= start_frame:
             continue
         voice = voice[: end_frame - start_frame]
-        # Mildly moving pan: higher strings lean right, grace notes lean left.
-        pan = 0.50 + 0.16 * math.sin(int(event["midi"]) * 0.37 + event_index * 0.91)
+
+        # Higher strings lean right, harmony stays nearer the center, and bass
+        # drones remain stable so a chord reads as one guzheng soundboard.
+        pan = 0.50 + 0.14 * math.sin(midi * 0.37 + event_index * 0.91)
         if layer == "drone":
-            pan = 0.46 + 0.08 * math.sin(event_index)
-        if voice.ndim == 1:
-            left_gain = math.cos(pan * math.pi / 2.0)
-            right_gain = math.sin(pan * math.pi / 2.0)
-            stereo[start_frame:end_frame, 0] += voice * left_gain
-            stereo[start_frame:end_frame, 1] += voice * right_gain
-        else:
-            # Keep the real recording's stereo room while adding only a subtle pan.
-            pan_shift = 0.10 * math.sin(int(event["midi"]) * 0.37 + event_index * 0.91)
-            stereo[start_frame:end_frame, 0] += voice[:, 0] * (1.0 - pan_shift) + voice[:, 1] * 0.035
-            stereo[start_frame:end_frame, 1] += voice[:, 1] * (1.0 + pan_shift) + voice[:, 0] * 0.035
+            pan = 0.46 + 0.07 * math.sin(event_index)
+        if layer == "harmony":
+            pan = 0.50 + 0.10 * math.sin(midi * 0.37 + event_index * 0.71)
+        stereo_pan_shift = 0.10 * math.sin(midi * 0.37 + event_index * 0.91) if voice.ndim == 2 else 0.0
+        pool.add(
+            RenderedVoice(
+                midi=midi,
+                start_frame=start_frame,
+                audio=voice,
+                pan=pan,
+                event_index=event_index,
+                layer=layer,
+                stereo_pan_shift=stereo_pan_shift,
+            )
+        )
+
+    for rendered in pool.voices:
+        mix_rendered_voice(stereo, rendered)
 
     # The sampled recording already contains a small room; use less synthetic reflection.
+    stereo *= TIMBRE_CONFIG.master_gain
     stereo = add_reverb(stereo, sample_rate, wet_scale=0.58 if reference is not None else 1.0)
     fade_in = min(frame_count, int(0.025 * sample_rate))
     fade_out = min(frame_count, int(2.8 * sample_rate))
@@ -315,9 +551,13 @@ def render_wav(
     if fade_out:
         stereo[-fade_out:] *= np.linspace(1.0, 0.0, fade_out)[:, None]
 
-    peak_before = float(np.max(np.abs(stereo)))
-    if peak_before > 0.0:
-        stereo *= 0.90 / peak_before
+    peak_before_safety = float(np.max(np.abs(stereo)))
+    normalization_gain = 0.0
+    if peak_before_safety > 0.0:
+        # Make-up gain keeps the rendered deliverable listenable; the 0.86
+        # ceiling leaves 1 dB of PCM headroom after all voices and reverb.
+        normalization_gain = 0.86 / peak_before_safety
+        stereo *= normalization_gain
     peak_after = float(np.max(np.abs(stereo)))
     rms = float(np.sqrt(np.mean(stereo * stereo)))
     # Deterministic low-level dither before 16-bit PCM conversion.
@@ -337,6 +577,8 @@ def render_wav(
         "sample_width_bits": 16,
         "duration_seconds": frame_count / sample_rate,
         "peak_normalized": peak_after,
+        "peak_before_safety": peak_before_safety,
+        "normalization_gain": normalization_gain,
         "rms_normalized": rms,
         "expanded_note_count": len(events),
         "source_event_count": len(composition["events"]),
@@ -344,6 +586,8 @@ def render_wav(
         "engine": "hybrid-cc0-sample" if reference is not None else "additive-fallback",
         "reference_sample": display_path(sample_path) if reference is not None and sample_path is not None else None,
         "reference_sample_base_midi": REFERENCE_SAMPLE_MIDI if reference is not None else None,
+        "voice_pool": pool.summary(),
+        "master_gain": TIMBRE_CONFIG.master_gain,
     }
 
 
@@ -437,8 +681,10 @@ def main() -> None:
         "title": composition["title"],
         "title_en": composition.get("title_en"),
         "renderer": "src/create_guzheng.py",
-        "renderer_version": "1.1.0",
+        "renderer_version": "1.2.0",
         "engine": args.engine,
+        "polyphony": "voice-pool",
+        "timbre": asdict(TIMBRE_CONFIG),
         "seed": composition["seed"],
         "tempo_bpm": composition["tempo_bpm"],
         "time_signature": composition["time_signature"],
