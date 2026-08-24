@@ -4,97 +4,59 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Hands-On Modern RL 中文学习伴侣：从经典强化学习到 LLM 对齐、RLVR 与 Agentic RL。">
-  <meta name="theme-color" content="#f4f5f1">
-  <title>Hands-On Modern RL · Learning Companion</title>
-  <link rel="stylesheet" href="../../assets/site-shell.css">
-  <link rel="stylesheet" href="./modern-rl.css">
+  <meta name="theme-color" content="#fbfbf8">
+  <title>Hands-On Modern RL · Learning Notes</title>
+  <link rel="stylesheet" href="./minimal.css?v=1">
 </head>
-<body class="ss-page mrl-page">
-  <a class="ss-skip" href="#chapters">跳到章节</a>
-  <header class="ss-site-header">
-    <nav class="ss-site-nav ss-shell" aria-label="主导航">
-      <a class="ss-brand" href="../../" aria-label="返回 Mingzhe Chen 首页"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
-      <div class="ss-nav-links">
-        <a href="../../#briefs">Briefs</a>
-        <a href="../" aria-current="page">Learning</a>
-        <a href="../../gaming/">Play</a>
-        <a href="../../tools/">Tools</a>
-      </div>
+<body class="mrl-page">
+  <header class="mrl-min-header">
+    <a class="mrl-min-brand" href="../">
+      <small>Lecture / Modern RL</small>
+      <span>Hands-On Modern Reinforcement Learning</span>
+    </a>
+    <nav class="mrl-min-links" aria-label="页面导航">
+      <a href="../">Lecture</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">Source ↗</a>
     </nav>
   </header>
 
-  <section class="mrl-course-hero">
-    <div class="mrl-shell mrl-course-grid">
-      <div>
-        <p class="mrl-kicker">Learning companion · Modern RL</p>
-        <h1 class="mrl-course-title">Hands-On <em>Modern RL.</em></h1>
-        <p class="mrl-course-lede">给已经学过机器学习导论的读者的一条平滑路线：不把强化学习变成公式清单，而是从可观察的现象出发，逐步建立状态、动作、奖励、价值、策略优化，再走向 RLHF、GRPO、RLVR 与 Agentic RL。</p>
-      </div>
-      <aside class="mrl-signal" aria-label="课程概况">
-        <span class="mrl-signal-label">Course signal</span>
-        <dl>
-          <div><dt>起点</dt><dd>ML INTRO</dd></div>
-          <div><dt>目标</dt><dd>MODERN RL</dd></div>
-          <div><dt>形式</dt><dd>NOTES + LABS</dd></div>
-          <div><dt>当前</dt><dd>CH.01 LIVE</dd></div>
-        </dl>
-      </aside>
-    </div>
-  </section>
+  <main class="mrl-index">
+    <p class="mrl-index-kicker">A learning companion for modern reinforcement learning</p>
+    <h1>Modern RL,<br>from interaction to agents.</h1>
+    <p class="intro">给已经学过机器学习导论的读者的一条平滑路线。这里不把强化学习讲成算法名词表，而是从可观察的现象出发：先理解行动怎样改变数据，再建立状态、奖励、回报、价值与策略，最后连接到 PPO、RLHF、GRPO、RLVR 和 Agentic RL。</p>
+    <p class="mrl-index-note">每章遵循同一个原则：先提出一个真实问题，再引入必要抽象；公式需要能翻译回环境里的量，实验需要能回答一个具体问题。内容参考 walkinglabs/hands-on-modern-rl 的主线，但讲解结构重新组织。</p>
 
-  <main class="mrl-shell" id="chapters">
-    <section class="mrl-section">
-      <div class="mrl-section-head">
-        <div><p class="mrl-kicker">How to learn</p><h2>这套讲义怎么用</h2></div>
-        <p class="mrl-section-note">每章都尽量遵循同一节奏：先看到问题，再建立抽象，再读公式与代码，最后用一个可以改变变量的实验验证理解。</p>
-      </div>
-      <div class="mrl-principles">
-        <div class="mrl-principle"><strong>01 · 现象先于术语</strong><span>先让你看到“为什么需要这个概念”，再给它名字。MDP、Value、Advantage 都应该回答一个已经出现的问题。</span></div>
-        <div class="mrl-principle"><strong>02 · 数学服务于直觉</strong><span>公式不跳步，但每个符号都要能翻译回环境中的具体量，并与代码里的 tensor 对上。</span></div>
-        <div class="mrl-principle"><strong>03 · 实验必须能说明问题</strong><span>不做“按按钮看动画”的装饰 demo。每个实验都应该支持一个可检验的判断，并告诉你它不能证明什么。</span></div>
-      </div>
-    </section>
-
-    <section class="mrl-section">
-      <div class="mrl-section-head">
-        <div><p class="mrl-kicker">Part I · First contact</p><h2>从一次试错开始</h2></div>
-        <p class="mrl-section-note">第一阶段先建立 RL 的语言。你暂时不需要把 PPO 的全部推导背下来，但需要真正理解“数据从哪里来、优化目标为什么不同”。</p>
-      </div>
-      <div class="mrl-path">
-        <a class="mrl-path-card is-live" href="./chapter01.html">
-          <span class="num">CHAPTER 01</span>
-          <h3>让一根杆子站起来</h3>
-          <p>CartPole、交互式学习、状态/动作/奖励、轨迹与回报；最后用一个浏览器实验理解策略为什么比随机动作强。</p>
-          <span class="status">● AVAILABLE NOW</span>
+    <section class="mrl-index-section" id="chapters">
+      <header><h2>Chapters</h2><span>01 published</span></header>
+      <div class="mrl-chapter-list">
+        <a class="mrl-chapter-row" href="./chapter01.html">
+          <span class="mrl-row-num">01</span>
+          <span><span class="mrl-row-title">让一根杆子站起来</span><span class="mrl-row-copy">从监督学习过渡到交互学习。用 CartPole 建立 state、action、reward、trajectory、return 与 policy 的第一层直觉，并通过浏览器实验观察策略如何改变行为。</span></span>
+          <span class="mrl-row-state live">READ →</span>
         </a>
-        <div class="mrl-path-card is-locked">
-          <span class="num">CHAPTER 02</span>
-          <h3>探索还是利用？</h3>
-          <p>从多臂老虎机理解 reward、regret、exploration，以及为什么“总选当前最优”未必聪明。</p>
-          <span class="status">NEXT</span>
+        <div class="mrl-chapter-row">
+          <span class="mrl-row-num">02</span>
+          <span><span class="mrl-row-title">探索还是利用？</span><span class="mrl-row-copy">用多臂老虎机把问题压缩到最小：如何在尝试新动作和利用当前最优之间做选择。</span></span>
+          <span class="mrl-row-state">NEXT</span>
         </div>
-        <div class="mrl-path-card is-locked">
-          <span class="num">CHAPTER 03</span>
-          <h3>把交互写成 MDP</h3>
-          <p>状态、转移、Markov 性、回报与 Bellman 方程：第一次把直觉压缩成可推理的数学对象。</p>
-          <span class="status">PLANNED</span>
+        <div class="mrl-chapter-row">
+          <span class="mrl-row-num">03</span>
+          <span><span class="mrl-row-title">把交互写成 MDP</span><span class="mrl-row-copy">状态、转移、Markov 性、回报与 Bellman 方程：第一次把交互直觉压缩成可以推理的数学对象。</span></span>
+          <span class="mrl-row-state">PLANNED</span>
         </div>
       </div>
     </section>
 
-    <section class="mrl-section">
-      <div class="mrl-section-head">
-        <div><p class="mrl-kicker">Long arc</p><h2>最终我们会走到哪里</h2></div>
-        <p class="mrl-section-note">课程主线参考 walkinglabs/hands-on-modern-rl 的章节结构，但讲解会重新组织，目标是把经典 RL 与今天的 LLM/Agent 训练真正接起来。</p>
-      </div>
-      <div class="mrl-path">
-        <div class="mrl-path-card is-locked"><span class="num">FOUNDATION</span><h3>Value → DQN</h3><p>从 Bellman backup 到函数逼近，理解“估计一个动作有多值钱”。</p></div>
-        <div class="mrl-path-card is-locked"><span class="num">POLICY</span><h3>Policy Gradient → PPO</h3><p>直接优化策略、Actor-Critic、Advantage、GAE 与稳定的策略更新。</p></div>
-        <div class="mrl-path-card is-locked"><span class="num">MODERN</span><h3>RLHF → GRPO → Agents</h3><p>偏好、可验证奖励、reasoning rollout、工具调用与长轨迹 credit assignment。</p></div>
+    <section class="mrl-index-section">
+      <header><h2>Long arc</h2><span>where this goes</span></header>
+      <div class="mrl-chapter-list">
+        <div class="mrl-chapter-row"><span class="mrl-row-num">A</span><span><span class="mrl-row-title">Value → DQN</span><span class="mrl-row-copy">从 Bellman backup 到函数逼近，理解“一个状态或动作有多值钱”。</span></span><span class="mrl-row-state">FOUNDATION</span></div>
+        <div class="mrl-chapter-row"><span class="mrl-row-num">B</span><span><span class="mrl-row-title">Policy Gradient → PPO</span><span class="mrl-row-copy">直接优化策略，引出 Actor-Critic、Advantage、GAE 与稳定的策略更新。</span></span><span class="mrl-row-state">POLICY</span></div>
+        <div class="mrl-chapter-row"><span class="mrl-row-num">C</span><span><span class="mrl-row-title">RLHF → GRPO → Agents</span><span class="mrl-row-copy">偏好、可验证奖励、reasoning rollout、工具调用，以及长轨迹中的 credit assignment。</span></span><span class="mrl-row-state">MODERN</span></div>
       </div>
     </section>
 
-    <footer class="mrl-footer"><span>Mingzhe Chen · Modern RL Learning Companion</span><span>基于公开课程结构重新讲解 · 非原项目官方译本</span></footer>
+    <footer class="mrl-index-footer">Modern RL Learning Notes · independent learning companion, not an official translation.</footer>
   </main>
 </body>
 </html>
