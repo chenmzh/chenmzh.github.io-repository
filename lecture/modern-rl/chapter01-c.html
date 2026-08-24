@@ -1,0 +1,112 @@
+<section id="ppo-preview">
+  <h2 class="mrl-sec-title"><span class="num">07</span>PPO 这一章先看懂什么，不必一次吃完</h2>
+  <p class="mrl-sec-lead">原项目第一章直接跑 PPO。作为学习入口，我们只抓住它最核心的三件事：收集轨迹、判断动作比预期好多少、再谨慎地修改策略。</p>
+
+  <div class="mrl-grid3">
+    <div class="mrl-concept"><span class="label">STEP 1 · ROLLOUT</span><h4>用旧策略收集一段经验</h4><p>让当前策略与环境交互，保存 $s_t,a_t,r_t$ 以及旧策略对动作的概率。数据必须来自真实交互，而不是预先固定的数据集。</p></div>
+    <div class="mrl-concept"><span class="label">STEP 2 · ADVANTAGE</span><h4>哪些动作比预期更好？</h4><p>Critic 给出基准 $V(s_t)$，再根据实际结果估计 advantage $A_t$。正 advantage 的动作值得更常发生，负的则相反。</p></div>
+    <div class="mrl-concept"><span class="label">STEP 3 · CLIP</span><h4>更新，但别一下改得太猛</h4><p>PPO 比较新旧策略对同一个动作的概率，并裁剪过大的概率变化，避免一次更新把 policy 推到完全陌生的区域。</p></div>
+  </div>
+
+  <h3>概率比是 PPO 的主角之一</h3>
+  <div class="mrl-equation">$$r_t(\theta)=\frac{\pi_\theta(a_t\mid s_t)}{\pi_{\theta_{old}}(a_t\mid s_t)}$$</div>
+  <p>如果 $r_t=1$，新旧策略对这个动作的看法没变；如果 $r_t=1.5$，新策略让这个动作出现的概率提高了 50%。PPO 不希望每个好样本都把这个比例推得无限大，于是有了 clip。</p>
+
+  <div class="mrl-viz">
+    <div class="mrl-viz-head"><div><h3>直觉图：好动作也不能无限加码</h3><p>假设 $A_t&gt;0$，横轴是概率比 $r_t$。</p></div></div>
+    <svg class="mrl-diagram" viewBox="0 0 860 300" role="img" aria-label="PPO clipping 直觉图">
+      <line x1="86" y1="240" x2="800" y2="240" stroke="#7b847d" stroke-width="1.5"/>
+      <line x1="86" y1="240" x2="86" y2="52" stroke="#7b847d" stroke-width="1.5"/>
+      <line x1="250" y1="48" x2="250" y2="240" stroke="#d7a538" stroke-width="1.5" stroke-dasharray="6 6"/>
+      <line x1="600" y1="48" x2="600" y2="240" stroke="#d7a538" stroke-width="1.5" stroke-dasharray="6 6"/>
+      <path d="M90 218 L600 74 L800 74" fill="none" stroke="#2854d7" stroke-width="4"/>
+      <text x="250" y="265" text-anchor="middle" font-size="12" fill="#7b847d">1−ε</text>
+      <text x="425" y="265" text-anchor="middle" font-size="12" fill="#7b847d">1.0</text>
+      <text x="600" y="265" text-anchor="middle" font-size="12" fill="#7b847d">1+ε</text>
+      <text x="705" y="64" text-anchor="middle" font-size="12" fill="#2854d7">继续增大概率，不再增加收益</text>
+      <text x="430" y="292" text-anchor="middle" font-size="13" fill="#59655d">probability ratio rₜ(θ)</text>
+    </svg>
+    <p class="mrl-caption">这是“为什么 PPO 比裸 policy gradient 更稳”的第一层直觉，不是完整推导。下一阶段学 Actor-Critic、GAE 时再把这里补严谨。</p>
+  </div>
+
+  <div class="mrl-card warm">
+    <h3>现在不要背 PPO loss</h3>
+    <p>这一章能回答下面的问题就够了：PPO 的数据从哪里来？为什么需要 Critic？advantage 正负分别意味着什么？为什么旧策略与新策略的概率不能差太远？如果这四个问题清楚，后面的公式只是把直觉写精确。</p>
+  </div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">08</span>把概念落到 Gymnasium 代码</h2>
+  <p class="mrl-sec-lead">第一次读 RL 代码时，最容易被框架 API 淹没。先只认出交互循环，你就已经抓住了骨架。</p>
+
+  <pre class="mrl-code"><code>import gymnasium as gym
+
+env = gym.make("CartPole-v1")
+obs, info = env.reset(seed=42)
+
+done = False
+while not done:
+    # policy: state -> action
+    action = policy(obs)
+
+    # environment: action -> next state + reward
+    next_obs, reward, terminated, truncated, info = env.step(action)
+
+    # 这里通常会保存 transition，供后续算法更新使用
+    obs = next_obs
+    done = terminated or truncated</code></pre>
+
+  <table>
+    <thead><tr><th>代码</th><th>RL 语言</th><th>这一章该怎么理解</th></tr></thead>
+    <tbody>
+      <tr><td><code>obs</code></td><td>$s_t$</td><td>当前决策所依据的信息</td></tr>
+      <tr><td><code>action</code></td><td>$a_t$</td><td>policy 在当前状态下选出的动作</td></tr>
+      <tr><td><code>reward</code></td><td>$r_t$</td><td>这一步环境返回的即时反馈</td></tr>
+      <tr><td><code>next_obs</code></td><td>$s_{t+1}$</td><td>动作改变世界后的新局面</td></tr>
+      <tr><td><code>terminated</code></td><td>自然终止</td><td>杆倒了 / 小车越界，任务真正失败</td></tr>
+      <tr><td><code>truncated</code></td><td>时间截断</td><td>达到 500 步上限，并不等于状态本身“坏了”</td></tr>
+    </tbody>
+  </table>
+
+  <h3>如果 policy 是一个神经网络</h3>
+  <pre class="mrl-code"><code># 伪代码：离散动作 policy
+logits = actor(obs_tensor)             # shape: [2]
+dist = Categorical(logits=logits)
+action = dist.sample()                 # 训练时常保留随机性
+log_prob = dist.log_prob(action)       # PPO 更新时要用
+
+# critic 同时估计当前状态的长期价值
+value = critic(obs_tensor)             # V(s)</code></pre>
+  <p>这里的两个输出扮演不同角色：Actor 回答“做什么”，Critic 回答“这个局面大概值多少”。等到后面的 Actor-Critic 章节，我们会把它们为什么能共同降低 policy gradient 的方差讲清楚。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">09</span>检查你的理解：第一章真正应该带走什么</h2>
+  <p class="mrl-sec-lead">不需要背术语。你能用自己的话回答这些问题，就可以进入下一章。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么 CartPole 不能简单看成一个“状态 → 左/右标签”的分类问题？</summary><div class="inner">因为没有现成的正确动作标签，而且某一步动作的好坏取决于它对未来状态和长期回报的影响。动作还会改变未来收集到的数据分布。</div></details>
+    <details><summary>2. Reward 和 Return 有什么区别？</summary><div class="inner">Reward $r_t$ 是一步的即时反馈；Return $G_t$ 是从当前时刻开始的一串未来 reward 的折扣和。RL 的优化通常关心长期 return，而不是单步 reward。</div></details>
+    <details><summary>3. 为什么状态里需要 $\dot\theta$，只有杆角度 $\theta$ 不够？</summary><div class="inner">角度只描述位置，不描述运动趋势。相同角度下，杆可能正在加速倒下，也可能正在回正，这两个状态需要不同动作。</div></details>
+    <details><summary>4. Policy 到底是什么？</summary><div class="inner">它不是一个固定动作，而是状态到动作分布的映射：$\pi(a\mid s)$。状态变化后，动作概率也会变化。</div></details>
+    <details><summary>5. 为什么 PPO 需要比较新旧策略？</summary><div class="inner">rollout 数据来自旧策略。如果一次更新让新策略偏离太远，这批数据就不再能很好代表新策略会遇到的行为分布，训练也容易不稳定。PPO 用概率比和 clipping 限制过大的更新。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>一张图记住第一章</h3>
+    <div class="mrl-flow" style="grid-template-columns:repeat(7,auto)">
+      <div class="box">state</div><div class="arrow">→</div><div class="box">policy</div><div class="arrow">→</div><div class="box">action</div><div class="arrow">→</div><div class="box">environment</div>
+    </div>
+    <p>环境给出新的 state 和 reward，循环继续；很多步组成 trajectory，trajectory 产生 return；算法再利用这些数据把 policy 改得更好。这就是接下来所有章节反复扩展的骨架。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 2 章：探索还是利用？</h3>
+    <p>我们会用多臂老虎机把环境大幅简化：没有复杂状态转移，只剩“选哪个动作”和“得到多少奖励”。这样可以专心理解 exploration、exploitation、regret，以及为什么 RL 不能只贪当前最优。</p>
+  </div>
+
+  <p class="mrl-source-note">本页是基于 walkinglabs/hands-on-modern-rl 第一章主题重新组织的学习伴侣，不是原项目官方译本。原项目的 CartPole 第一章包含 PPO 训练、原理与训练指标分析；本页为了降低第一遍学习的认知坡度，先把基础概念与交互直觉拆开。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 01</span><span><a href="./">返回课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
