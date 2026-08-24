@@ -2,13 +2,15 @@
   "title": "月下流水",
   "title_en": "Moonlit Stream",
   "renderer": "music/source/create_guzheng.py",
-  "renderer_version": "1.2.0",
+  "renderer_version": "1.3.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
     "max_voices": 24,
-    "retrigger_fade_seconds": 0.012,
-    "steal_fade_seconds": 0.035,
+    "retrigger_fade_seconds": 0.008,
+    "steal_fade_seconds": 0.045,
+    "release_fade_seconds": 0.12,
+    "recent_voice_protection_seconds": 0.18,
     "attack_seconds": 0.008,
     "base_decay_seconds": 2.05,
     "low_register_decay_scale": 0.02,
@@ -33,6 +35,8 @@
     "soundboard_decay_multiplier": 1.35,
     "sample_body_cutoff_hz": 7600.0,
     "sample_brightness_decay_seconds": 0.18,
+    "sample_sustain_decay_seconds": 2.4,
+    "sample_sustain_crossfade_seconds": 0.06,
     "additive_layer_gains": [
       [
         "melody",
@@ -44,7 +48,11 @@
       ],
       [
         "harmony",
-        0.07
+        0.095
+      ],
+      [
+        "arpeggio",
+        0.125
       ],
       [
         "grace",
@@ -66,7 +74,11 @@
       ],
       [
         "harmony",
-        0.082
+        0.11
+      ],
+      [
+        "arpeggio",
+        0.145
       ],
       [
         "grace",
@@ -93,21 +105,21 @@
     "sample_width_bits": 16,
     "duration_seconds": 52.5,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.10879310742250994,
-    "normalization_gain": 7.904912547998982,
-    "rms_normalized": 0.08102381135738855,
-    "expanded_note_count": 141,
-    "source_event_count": 130,
+    "peak_before_safety": 0.11342104856480577,
+    "normalization_gain": 7.58236686119701,
+    "rms_normalized": 0.08347713528551416,
+    "expanded_note_count": 205,
+    "source_event_count": 138,
     "tail_seconds": 4.5,
     "engine": "hybrid-cc0-sample",
     "reference_sample": "music/assets/samples/guzheng-cc0-preview.wav",
     "reference_sample_base_midi": 57,
     "voice_pool": {
       "max_voices": 24,
-      "peak_active_voices": 10,
-      "same_pitch_retriggers": 69,
+      "peak_active_voices": 14,
+      "same_pitch_retriggers": 103,
       "voice_steals": 0,
-      "rendered_voices": 141
+      "rendered_voices": 205
     },
     "master_gain": 0.76
   },
@@ -115,11 +127,11 @@
     "format": "SMF type 0",
     "ppq": 480,
     "track_count": 1,
-    "note_event_count": 141
+    "note_event_count": 205
   },
-  "source_sha256": "fa2df802a1d7185f3c284c56649200bd3e0642d0600489203c513585d226ae9d",
-  "wav_sha256": "8e911237571f06c63e6031924a57bc817a947e8908133c6498da6c71a8a8e2fb",
-  "midi_sha256": "1d0d9d547795d25554ca51d18920800655fcb368bf70e3ac874185317b3c5a4f",
+  "source_sha256": "af5266540619f1c57c2f10d6feed2ba3c92840346ef7e2183398a7aac75be800",
+  "wav_sha256": "9f9616ae85d181c6eefae38a87ef916101c6d5180c665a1193846ce78537d7ad",
+  "midi_sha256": "7a5a8018ce707fd4939390e4d74cedef852b3de51c5cf5bed82e0ba57e1aae90",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

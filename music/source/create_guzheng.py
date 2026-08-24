@@ -40,8 +40,10 @@ class GuzhengTimbre:
     # A guzheng rings naturally, but a bounded pool prevents a long strum from
     # turning into an uncontrolled gain stack.
     max_voices: int = 24
-    retrigger_fade_seconds: float = 0.012
-    steal_fade_seconds: float = 0.035
+    retrigger_fade_seconds: float = 0.008
+    steal_fade_seconds: float = 0.045
+    release_fade_seconds: float = 0.120
+    recent_voice_protection_seconds: float = 0.180
 
     # Compared with the old bright model, the onset is gentler and the body rings
     # longer.  Upper partials still speak at the attack, then die away faster.
@@ -63,19 +65,25 @@ class GuzhengTimbre:
     # quickly so the sustained sound does not become a pipa-like bright buzz.
     sample_body_cutoff_hz: float = 7600.0
     sample_brightness_decay_seconds: float = 0.18
+    sample_sustain_decay_seconds: float = 2.40
+    sample_sustain_crossfade_seconds: float = 0.060
 
     # Conservative per-voice levels leave room for chords and a short room tail.
+    # Arpeggio is deliberately above the quiet harmony bed so it is audible as
+    # a musical gesture rather than disappearing into the drone.
     additive_layer_gains: tuple[tuple[str, float], ...] = (
         ("melody", 0.155),
         ("drone", 0.058),
-        ("harmony", 0.070),
+        ("harmony", 0.095),
+        ("arpeggio", 0.125),
         ("grace", 0.095),
         ("tremolo", 0.115),
     )
     sample_layer_gains: tuple[tuple[str, float], ...] = (
         ("melody", 0.205),
         ("drone", 0.075),
-        ("harmony", 0.082),
+        ("harmony", 0.110),
+        ("arpeggio", 0.145),
         ("grace", 0.118),
         ("tremolo", 0.145),
     )
@@ -147,7 +155,9 @@ class VoicePool:
             voice.released = True
             return
         end = min(len(voice.audio), offset + max(1, fade_frames))
-        fade = np.linspace(1.0, 0.0, end - offset, dtype=np.float64)
+        # Equal-power release avoids the small amplitude dip that made dense
+        # repeated notes sound like separate, clipped blocks.
+        fade = np.cos(np.linspace(0.0, math.pi / 2.0, end - offset, dtype=np.float64))
         if voice.audio.ndim == 1:
             voice.audio[offset:end] *= fade
         else:
@@ -156,6 +166,26 @@ class VoicePool:
             voice.audio[end:] = 0.0
         voice.active_end_frame = min(voice.active_end_frame, voice.start_frame + end)
         voice.released = True
+
+    def _steal_key(self, voice: RenderedVoice, frame: int) -> tuple:
+        age_seconds = max(0.0, (frame - voice.start_frame) / self.sample_rate)
+        layer_priority = {
+            "harmony": 0,
+            "drone": 1,
+            "arpeggio": 2,
+            "grace": 3,
+            "tremolo": 4,
+            "melody": 5,
+        }
+        # Keep a newly started melody/arpeggio alive; old quiet support voices
+        # are the first victims when a real strum exceeds the pool size.
+        recently_started = age_seconds < TIMBRE_CONFIG.recent_voice_protection_seconds
+        return (
+            recently_started,
+            layer_priority.get(voice.layer, 3),
+            self._level_at(voice, frame),
+            voice.start_frame,
+        )
 
     def add(self, voice: RenderedVoice) -> None:
         """Allocate a voice, fading an old same-pitch voice or quietest victim."""
@@ -169,13 +199,7 @@ class VoicePool:
 
         active = self._active_at(voice.start_frame)
         if len(active) >= self.max_voices:
-            victim = min(
-                active,
-                key=lambda candidate: (
-                    self._level_at(candidate, voice.start_frame),
-                    candidate.start_frame,
-                ),
-            )
+            victim = min(active, key=lambda candidate: self._steal_key(candidate, voice.start_frame))
             self._fade_out(victim, voice.start_frame, self.steal_fade_frames)
             self.steal_count += 1
 
@@ -226,6 +250,22 @@ def expanded_events(events: list[dict]) -> list[dict]:
             grace["layer"] = "grace"
             result.append(grace)
             base["start"] = float(event["start"]) - 0.015
+        if ornament == "arpeggio":
+            pattern = [int(interval) for interval in base.pop("pattern", (0, 4, 7, 12, 16, 12, 7, 4))]
+            step = max(0.03, float(base.pop("step", 0.16)))
+            note_duration = max(0.08, float(base.pop("note_dur", base["dur"])))
+            start = float(event["start"])
+            for index, interval in enumerate(pattern):
+                arpeggio = dict(base)
+                arpeggio["start"] = start + index * step
+                arpeggio["dur"] = note_duration
+                arpeggio["midi"] = int(event["midi"]) + interval
+                accent = 1.08 if index == 0 else (0.96 if index == len(pattern) - 1 else 0.84)
+                arpeggio["velocity"] = max(1, min(127, int(round(int(event["velocity"]) * accent))))
+                arpeggio["layer"] = "arpeggio"
+                arpeggio["arpeggio_index"] = index
+                result.append(arpeggio)
+            continue
         if ornament == "tremolo":
             start = float(event["start"])
             duration = float(event["dur"])
@@ -293,7 +333,7 @@ def render_attack_detail(
         partial_frequency = min(sample_rate * 0.42, frequency * partial)
         detail += gain * np.sin(2.0 * math.pi * partial_frequency * t + rng.uniform(0, 2 * math.pi))
     detail *= np.exp(-t / 0.032)
-    detail_layer_gain = {"melody": 0.040, "drone": 0.012, "harmony": 0.022, "grace": 0.028, "tremolo": 0.032}.get(layer, 0.032)
+    detail_layer_gain = {"melody": 0.040, "drone": 0.012, "harmony": 0.026, "arpeggio": 0.036, "grace": 0.028, "tremolo": 0.032}.get(layer, 0.032)
     return detail * (max(1, min(127, velocity)) / 127.0) * detail_layer_gain
 
 
@@ -318,8 +358,40 @@ def shape_sample_voice(voice: np.ndarray, sample_rate: int) -> np.ndarray:
         / (sample_rate * TIMBRE_CONFIG.sample_brightness_decay_seconds)
     )
     shaped = body + (voice - body) * brightness[:, None]
-    onset = 1.0 - np.exp(-np.arange(len(voice), dtype=np.float64) / (sample_rate * TIMBRE_CONFIG.attack_seconds))
+    attack_phase = np.minimum(
+        1.0,
+        np.arange(len(voice), dtype=np.float64) / (sample_rate * TIMBRE_CONFIG.attack_seconds),
+    )
+    onset = np.sin(attack_phase * math.pi / 2.0)
     return shaped * onset[:, None]
+
+
+def render_sample_sustain_tail(
+    midi: int,
+    count: int,
+    target_rms: float,
+    rng: np.random.Generator,
+    sample_rate: int,
+) -> np.ndarray:
+    """Extend high transposed notes with a quiet, phase-coherent body tail."""
+    if count <= 0:
+        return np.empty((0, 2), dtype=np.float64)
+    t = np.arange(count, dtype=np.float64) / sample_rate
+    frequency = midi_to_hz(midi)
+    phase = float(rng.uniform(0.0, 2.0 * math.pi))
+    left = np.zeros(count, dtype=np.float64)
+    right = np.zeros(count, dtype=np.float64)
+    for partial, partial_gain in enumerate((1.0, 0.32, 0.12, 0.045), start=1):
+        partial_frequency = frequency * partial * (1.0 + TIMBRE_CONFIG.inharmonicity * (partial - 1) ** 2)
+        partial_decay = TIMBRE_CONFIG.sample_sustain_decay_seconds / (1.0 + 0.22 * (partial - 1))
+        left += partial_gain * np.sin(2.0 * math.pi * partial_frequency * t + phase * partial) * np.exp(-t / partial_decay)
+        right += partial_gain * np.sin(2.0 * math.pi * partial_frequency * t + phase * partial + 0.008 * partial) * np.exp(-t / partial_decay)
+    onset = np.sin(np.minimum(1.0, t / TIMBRE_CONFIG.sample_sustain_crossfade_seconds) * math.pi / 2.0)
+    tail = np.column_stack((left * onset, right * onset))
+    current_rms = float(np.sqrt(np.mean(tail * tail)))
+    if current_rms > 0.0:
+        tail *= max(0.0001, target_rms) / current_rms
+    return tail
 
 
 def render_note_from_sample(
@@ -336,11 +408,12 @@ def render_note_from_sample(
     # Small deterministic detuning avoids machine-perfect chorus when notes overlap.
     ratio = 2.0 ** ((midi - REFERENCE_SAMPLE_MIDI) / 12.0)
     ratio *= 1.0 + float(rng.uniform(-0.0015, 0.0015))
-    count = min(
-        max(16, int(math.ceil(seconds * sample_rate))),
+    desired_count = max(16, int(math.ceil(seconds * sample_rate)))
+    source_count = min(
+        desired_count,
         max(16, int((len(reference) - 1) / ratio)),
     )
-    source_positions = np.arange(count, dtype=np.float64) * ratio
+    source_positions = np.arange(source_count, dtype=np.float64) * ratio
     source_axis = np.arange(len(reference), dtype=np.float64)
     voice = np.column_stack(
         (
@@ -350,6 +423,20 @@ def render_note_from_sample(
     )
     voice = shape_sample_voice(voice, sample_rate)
     voice *= (max(1, min(127, velocity)) / 127.0) * layer_gain(layer, sampled=True)
+    if source_count < desired_count:
+        fade_guard = int(0.14 * sample_rate)
+        sustain_start = max(0, len(voice) - int(0.45 * sample_rate))
+        sustain_end = max(sustain_start + 1, len(voice) - fade_guard)
+        sustain_window = voice[sustain_start:sustain_end]
+        target_rms = float(np.sqrt(np.mean(sustain_window * sustain_window))) * 0.82
+        tail = render_sample_sustain_tail(
+            midi,
+            desired_count - source_count,
+            target_rms,
+            rng,
+            sample_rate,
+        )
+        voice = np.vstack((voice, tail))
     detail = render_attack_detail(midi, velocity, layer, rng, sample_rate)
     detail_count = min(len(voice), len(detail))
     voice[:detail_count] += detail[:detail_count, None]
@@ -410,12 +497,29 @@ def render_note(
     )
     resonance *= np.exp(-t / (decay * TIMBRE_CONFIG.soundboard_decay_multiplier))
 
-    attack = 1.0 - np.exp(-t / TIMBRE_CONFIG.attack_seconds)
+    attack_phase = np.minimum(1.0, t / TIMBRE_CONFIG.attack_seconds)
+    attack = np.sin(attack_phase * math.pi / 2.0)
     envelope = attack * np.exp(-t / decay)
     voice = (body + pluck_noise + resonance) * envelope
 
     # Conservative per-voice level leaves headroom for the new chord voices.
     return voice * (max(1, min(127, velocity)) / 127.0) * layer_gain(layer, sampled=False)
+
+
+def apply_release_fade(audio: np.ndarray, sample_rate: int) -> np.ndarray:
+    """Fade every bounded voice to zero so a capped tail never clicks."""
+    fade_frames = min(
+        len(audio),
+        max(1, int(round(TIMBRE_CONFIG.release_fade_seconds * sample_rate))),
+    )
+    if fade_frames <= 1:
+        return audio
+    fade = np.cos(np.linspace(0.0, math.pi / 2.0, fade_frames, dtype=np.float64))
+    if audio.ndim == 1:
+        audio[-fade_frames:] *= fade
+    else:
+        audio[-fade_frames:] *= fade[:, None]
+    return audio
 
 
 def add_reverb(stereo: np.ndarray, sample_rate: int, wet_scale: float = 1.0) -> np.ndarray:
@@ -513,6 +617,7 @@ def render_wav(
                 rng,
                 sample_rate,
             )
+        voice = apply_release_fade(voice, sample_rate)
         end_frame = min(frame_count, start_frame + len(voice))
         if end_frame <= start_frame:
             continue
@@ -525,6 +630,8 @@ def render_wav(
             pan = 0.46 + 0.07 * math.sin(event_index)
         if layer == "harmony":
             pan = 0.50 + 0.10 * math.sin(midi * 0.37 + event_index * 0.71)
+        if layer == "arpeggio":
+            pan = 0.50 + 0.18 * math.sin(midi * 0.37 + event_index * 0.67)
         stereo_pan_shift = 0.10 * math.sin(midi * 0.37 + event_index * 0.91) if voice.ndim == 2 else 0.0
         pool.add(
             RenderedVoice(
@@ -681,7 +788,7 @@ def main() -> None:
         "title": composition["title"],
         "title_en": composition.get("title_en"),
         "renderer": "src/create_guzheng.py",
-        "renderer_version": "1.2.0",
+        "renderer_version": "1.3.0",
         "engine": args.engine,
         "polyphony": "voice-pool",
         "timbre": asdict(TIMBRE_CONFIG),

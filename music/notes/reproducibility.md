@@ -2,7 +2,7 @@
 
 ## 环境
 
-本次 v1.2 渲染环境记录为：
+本次 v1.3 渲染环境记录为：
 
 - Python `3.12.3`
 - NumPy `1.26.4`
@@ -10,7 +10,8 @@
 - 外部参考音：`music/assets/samples/guzheng-cc0-preview.wav`
 - 随机种子：`20260824`
 - 参考音基准音：A3 / MIDI 57 / 约 220 Hz
-- 复音池：最多 24 个 voice；同音重触发淡出 12 ms，偷音淡出 35 ms
+- 复音池：最多 24 个 voice；同音重触发淡出 8 ms，偷音淡出 45 ms；voice 末尾收束 120 ms
+- 琶音：每组 8 音，音间隔 0.16 拍，单音保持 0.72 拍；高音采样不足时补 phase-coherent sustain tail
 
 ## 从源文件重新生成
 
