@@ -1,5 +1,11 @@
 /* Chapter 01 compatibility + rendering fixes */
 
+/* Chapter shell: no empty right rail until a glossary is actually present */
+.mrl-chapter-layout {
+  grid-template-columns: 240px minmax(0, 920px);
+  max-width: 1240px;
+}
+
 /* KaTeX: keep long equations readable on narrow screens */
 .mrl-article .katex-display {
   margin: .35em 0;
@@ -10,6 +16,107 @@
 }
 .mrl-equation .katex-display { margin: 0; }
 .mrl-article .katex { font-size: 1.02em; }
+
+/* Clickable roadmap in the chapter hero */
+.mrl-hero-roadmap {
+  position: relative;
+  z-index: 2;
+  margin-top: 26px;
+  padding: 16px 16px 17px;
+  border: 1px solid var(--mrl-line-strong);
+  border-radius: 14px;
+  background: rgba(255,255,255,.82);
+  font-family: var(--mrl-sans);
+  box-shadow: 0 8px 24px rgba(24,35,28,.05);
+}
+.mrl-roadmap-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 13px;
+}
+.mrl-roadmap-head > span {
+  font-size: .8rem;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+.mrl-roadmap-head > small {
+  color: var(--mrl-muted);
+  font: 700 .68rem/1.4 var(--mrl-mono);
+}
+.mrl-roadmap-track {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(92px,1fr));
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 5px;
+  scrollbar-width: thin;
+}
+.mrl-roadmap-step {
+  position: relative;
+  display: flex;
+  min-width: 96px;
+  min-height: 92px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 11px 10px;
+  border: 1px solid var(--mrl-line);
+  border-radius: 10px;
+  background: var(--mrl-surface);
+  text-decoration: none;
+  transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.mrl-roadmap-step::after {
+  content: '→';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  z-index: 3;
+  padding: 0 1px;
+  color: var(--mrl-muted);
+  background: rgba(255,255,255,.9);
+  font: 800 .72rem/1 var(--mrl-mono);
+  transform: translate(50%,-50%);
+}
+.mrl-roadmap-step:last-child::after { display:none; }
+.mrl-roadmap-step:hover {
+  z-index: 4;
+  transform: translateY(-2px);
+  border-color: var(--mrl-accent);
+  background: var(--mrl-accent-soft);
+  box-shadow: 0 8px 18px rgba(40,84,215,.10);
+}
+.mrl-roadmap-step > b {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--mrl-accent);
+  font: 800 .66rem/1.2 var(--mrl-mono);
+  letter-spacing: .06em;
+}
+.mrl-roadmap-step > span {
+  color: var(--mrl-ink);
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+.mrl-roadmap-step > small {
+  display: block;
+  margin-top: 4px;
+  color: var(--mrl-muted);
+  font-size: .65rem;
+  line-height: 1.35;
+}
+.mrl-roadmap-step.is-lab {
+  border-color: color-mix(in srgb,var(--mrl-green) 45%,var(--mrl-line));
+  background: var(--mrl-green-soft);
+}
+.mrl-roadmap-step.is-lab > b { color: var(--mrl-green); }
+.mrl-roadmap-step.is-goal {
+  border-color: color-mix(in srgb,var(--mrl-warm) 45%,var(--mrl-line));
+  background: var(--mrl-warm-soft);
+}
+.mrl-roadmap-step.is-goal > b { color: var(--mrl-warm); }
 
 /* Interactive lab controls */
 .mrl-card.compact { padding: 15px 17px; }
@@ -155,7 +262,20 @@
 .mrl-diagram { max-width: 100%; }
 .mrl-cartpole-stage { isolation: isolate; }
 
+@media (max-width: 1180px) {
+  .mrl-chapter-layout { grid-template-columns: 220px minmax(0,860px); }
+}
+
+@media (max-width: 880px) {
+  .mrl-chapter-layout { display:block; }
+  .mrl-hero-roadmap { margin-top:22px; padding:13px; }
+  .mrl-roadmap-track { grid-template-columns:repeat(7,122px); }
+}
+
 @media (max-width: 680px) {
+  .mrl-roadmap-head { display:block; }
+  .mrl-roadmap-head > small { display:block; margin-top:3px; }
+  .mrl-roadmap-step { min-height:84px; }
   .mrl-state-grid { grid-template-columns: 1fr 1fr; }
   .mrl-prob-row { grid-template-columns: 66px 1fr 38px; gap: 7px; }
   .mrl-result-row { grid-template-columns: 78px 1fr; }
