@@ -1,0 +1,167 @@
+/* Chapter 01 compatibility + rendering fixes */
+
+/* KaTeX: keep long equations readable on narrow screens */
+.mrl-article .katex-display {
+  margin: .35em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: .15rem 0 .3rem;
+  -webkit-overflow-scrolling: touch;
+}
+.mrl-equation .katex-display { margin: 0; }
+.mrl-article .katex { font-size: 1.02em; }
+
+/* Interactive lab controls */
+.mrl-card.compact { padding: 15px 17px; }
+.mrl-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 5px; }
+.mrl-controls > .mrl-control { display: flex; flex-direction: column; gap: 5px; }
+.mrl-controls > label.mrl-control { color: var(--mrl-muted); font-size: .78rem; font-weight: 750; }
+.mrl-controls > label.mrl-control select,
+.mrl-controls > label.mrl-control input { margin-top: 3px; }
+
+.mrl-state-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+.mrl-state-grid > div {
+  padding: 10px 11px;
+  border: 1px solid var(--mrl-line);
+  border-radius: 9px;
+  background: var(--mrl-surface-2);
+}
+.mrl-state-grid span {
+  display: block;
+  color: var(--mrl-muted);
+  font-size: .72rem;
+}
+.mrl-state-grid strong {
+  display: block;
+  margin-top: 3px;
+  font: 800 .82rem/1.4 var(--mrl-mono);
+}
+
+.mrl-prob-row {
+  display: grid;
+  grid-template-columns: 72px minmax(90px, 1fr) 42px;
+  gap: 9px;
+  align-items: center;
+  margin: 11px 0;
+  font-size: .8rem;
+}
+.mrl-prob-row > b { text-align: right; font-family: var(--mrl-mono); }
+.mrl-prob-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--mrl-surface-2);
+  border: 1px solid var(--mrl-line);
+}
+.mrl-prob-fill {
+  width: 50%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--mrl-accent);
+  transition: width .12s linear;
+}
+.mrl-prob-row:nth-of-type(2) .mrl-prob-fill { background: var(--mrl-green); }
+
+.mrl-result-row {
+  display: grid;
+  grid-template-columns: 94px minmax(120px, 1fr) 92px;
+  gap: 12px;
+  align-items: center;
+  margin: 12px 0;
+  font-size: .84rem;
+}
+.mrl-result-row strong { text-align: right; font-family: var(--mrl-mono); font-size: .78rem; }
+.mrl-result-track {
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid var(--mrl-line);
+  border-radius: 999px;
+  background: var(--mrl-surface-2);
+}
+.mrl-result-bar {
+  width: 0;
+  height: 100%;
+  background: var(--mrl-accent);
+  transition: width .55s ease;
+}
+.mrl-result-bar.alt { background: var(--mrl-green); }
+
+.mrl-code-line {
+  margin: 12px 0;
+  padding: 11px 13px;
+  overflow-x: auto;
+  border: 1px solid var(--mrl-line);
+  border-radius: 9px;
+  background: var(--mrl-surface-2);
+  font: 750 .78rem/1.6 var(--mrl-mono);
+  white-space: nowrap;
+}
+
+/* Quiz + end-of-chapter cards */
+.mrl-quiz details {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--mrl-line);
+  border-radius: 0;
+  background: var(--mrl-surface);
+}
+.mrl-quiz details:last-child { border-bottom: 0; }
+.mrl-quiz summary {
+  list-style: none;
+  padding: 14px 17px;
+  cursor: pointer;
+  font-weight: 750;
+  background: var(--mrl-surface);
+}
+.mrl-quiz summary::-webkit-details-marker { display: none; }
+.mrl-quiz summary::before { content: '＋'; display: inline-block; width: 1.4em; color: var(--mrl-accent); }
+.mrl-quiz details[open] summary::before { content: '−'; }
+.mrl-quiz .inner {
+  padding: 0 17px 15px 40px;
+  color: var(--mrl-muted);
+  font-size: .9rem;
+  line-height: 1.7;
+}
+
+.mrl-takeaway,
+.mrl-next {
+  margin-top: 22px;
+  padding: 20px 22px;
+  border: 1px solid var(--mrl-line);
+  border-radius: 14px;
+  background: var(--mrl-surface);
+  font-family: var(--mrl-sans);
+}
+.mrl-takeaway { border-top: 4px solid var(--mrl-green); }
+.mrl-next { border-top: 4px solid var(--mrl-accent); background: linear-gradient(135deg, var(--mrl-surface), var(--mrl-accent-soft)); }
+.mrl-takeaway h3,
+.mrl-next h3 { margin-top: 0; }
+.mrl-source-note {
+  margin-top: 24px !important;
+  padding-top: 17px;
+  border-top: 1px dashed var(--mrl-line-strong);
+  color: var(--mrl-muted);
+  font-family: var(--mrl-sans);
+  font-size: .78rem;
+}
+
+/* SVG and media resilience */
+.mrl-cartpole-stage svg,
+.mrl-diagram { max-width: 100%; }
+.mrl-cartpole-stage { isolation: isolate; }
+
+@media (max-width: 680px) {
+  .mrl-state-grid { grid-template-columns: 1fr 1fr; }
+  .mrl-prob-row { grid-template-columns: 66px 1fr 38px; gap: 7px; }
+  .mrl-result-row { grid-template-columns: 78px 1fr; }
+  .mrl-result-row strong { grid-column: 2; text-align: left; }
+  .mrl-viz-head { align-items: stretch; }
+  .mrl-viz-head > .mrl-btn { width: 100%; justify-content: center; }
+  .mrl-article table { display: block; overflow-x: auto; white-space: nowrap; }
+  .mrl-article .katex { font-size: .96em; }
+}
