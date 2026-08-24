@@ -65,7 +65,7 @@
       target: () => {
         const section = document.querySelector('#ppo-preview');
         if (!section) return null;
-        return [...section.querySelectorAll('p')].find(p => p.textContent.includes('如果 $r_t=1$') || p.textContent.includes('如果 r_t=1')) || null;
+        return [...section.querySelectorAll('p')].find(p => p.textContent.includes('PPO 不希望每个好样本')) || null;
       }
     }
   ];
