@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hands-On Modern RL 第一章中文深度讲义：从机器学习过渡到强化学习，以 CartPole 理解状态、动作、奖励、轨迹、策略、回报与 PPO 的第一层直觉。">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>第 1 章 · 让一根杆子站起来 | Hands-On Modern RL</title>
+  <link rel="stylesheet" href="../iml26/katex/katex.min.css">
+  <link rel="stylesheet" href="./modern-rl.css">
+</head>
+<body class="mrl-page">
+  <header class="mrl-topbar">
+    <a class="brand" href="./" aria-label="返回 Modern RL 课程目录">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <span class="course"><small>Hands-On Modern RL</small><span>第 1 章 · 让一根杆子站起来</span></span>
+    </a>
+    <div class="mrl-topbar-actions">
+      <a class="mrl-btn ghost hide-mobile" href="../">Lecture</a>
+      <a class="mrl-btn" href="./">课程目录</a>
+      <a class="mrl-btn primary hide-mobile" href="https://github.com/walkinglabs/hands-on-modern-rl/tree/main/docs/chapter01_cartpole" target="_blank" rel="noopener">原章 ↗</a>
+    </div>
+  </header>
+
+  <div class="mrl-chapter-layout">
+    <nav class="mrl-toc" aria-label="本章目录">
+      <p class="mrl-rail-label">Chapter map</p>
+      <a href="#start">从熟悉的 ML 出发</a>
+      <a href="#loop">RL 的最小闭环</a>
+      <a class="sub" href="#state">状态 State</a>
+      <a class="sub" href="#action">动作 Action</a>
+      <a class="sub" href="#reward">奖励 Reward</a>
+      <a href="#cartpole">CartPole 到底难在哪</a>
+      <a href="#lab">互动实验：亲手控杆</a>
+      <a href="#trajectory">轨迹与回报</a>
+      <a href="#policy">策略不是一个动作</a>
+      <a href="#ppo-preview">PPO 先看懂什么</a>
+      <a href="#code">代码如何对应概念</a>
+      <a href="#takeaways">检查你的理解</a>
+      <div class="mrl-progress">
+        <span class="mrl-small">阅读进度</span>
+        <div class="mrl-progress-track"><div class="mrl-progress-fill" id="readingProgress"></div></div>
+      </div>
+    </nav>
+
+    <main class="mrl-article">
+      <section class="mrl-chapter-hero" id="hero">
+        <div class="mrl-eyebrow">Chapter 01 · First contact with RL</div>
+        <h1>让一根杆子站起来：从“预测答案”到“通过行动学习”</h1>
+        <p class="lead">你已经学过机器学习导论，所以这一章不从“什么是神经网络”讲起。我们只做一个关键转换：从固定数据集上的预测，走到一个会因为你的动作而改变的世界。</p>
+        <div class="mrl-question"><strong>本章核心问题：</strong>如果没有老师告诉模型“这一刻应该向左还是向右”，只有杆子最终倒没倒、撑了多久，它怎样学会连续做对几百次决定？</div>
+        <div class="mrl-meta">
+          <span class="mrl-pill">预计阅读 45–70 min</span>
+          <span class="mrl-pill">先修：ML 导论</span>
+          <span class="mrl-pill">数学：概率 + 向量直觉</span>
+          <span class="mrl-pill">实验：纯浏览器 CartPole</span>
+        </div>
+      </section>
+
+      <section id="start">
+        <h2 class="mrl-sec-title"><span class="num">01</span>先把你熟悉的机器学习放在桌上</h2>
+        <p class="mrl-sec-lead">强化学习最容易被讲复杂的地方，是一上来就定义 MDP。我们先看它到底改变了哪条机器学习假设。</p>
+
+        <div class="mrl-compare">
+          <div class="supervised">
+            <h3>监督学习</h3>
+            <div class="mrl-flow" style="grid-template-columns:auto auto auto">
+              <div class="box">输入 $x$</div><div class="arrow">→</div><div class="box">预测 $\hat y$</div>
+            </div>
+            <ul>
+              <li>训练数据通常先收集好：$\{(x_i,y_i)\}$。</li>
+              <li>每个样本有比较明确的目标 $y_i$。</li>
+              <li>模型的一次预测通常不会改变下一条训练样本。</li>
+              <li>损失函数直接告诉你“错了多少”。</li>
+            </ul>
+          </div>
+          <div class="rl">
+            <h3>强化学习</h3>
+            <div class="mrl-flow" style="grid-template-columns:auto auto auto">
+              <div class="box">状态 $s_t$</div><div class="arrow">→</div><div class="box">动作 $a_t$</div>
+            </div>
+            <ul>
+              <li>数据不是先给你的，而是 agent 自己行动产生的。</li>
+              <li>环境通常不告诉你“正确动作标签”。</li>
+              <li>今天的动作会改变明天看到的状态。</li>
+              <li>奖励可能延迟，甚至只有任务最后才知道好坏。</li>
+            </ul>
+          </div>
+        </div>
+
+        <p>这意味着一个很深的变化：在监督学习里，你大多是在一个<strong>固定的数据分布</strong>上学习；在 RL 里，你正在学习的策略会改变自己的数据分布。你越喜欢往右走，未来就越常看到“右边的世界”。所以“收集数据”和“更新模型”不再是完全分开的两个阶段。</p>
+
+        <div class="mrl-card warm">
+          <h3>一个值得记住的反直觉点</h3>
+          <p>RL 不是“监督学习 + 一个叫 reward 的标签”。Reward 通常只评价<strong>结果</strong>，并不直接给出每一步的正确动作。真正困难的是：从结果反推哪些早期决策值得增加概率，哪些应该减少——这就是后面会不断出现的 <strong>credit assignment（信用分配）</strong>。</p>
+        </div>
+      </section>
+
+      <section id="loop">
+        <h2 class="mrl-sec-title"><span class="num">02</span>RL 的最小闭环：观察 → 行动 → 后果</h2>
+        <p class="mrl-sec-lead">先不要管算法名。只要一个问题能被写成下面这个闭环，我们就已经开始用强化学习的语言思考。</p>
+
+        <div class="mrl-viz">
+          <div class="mrl-viz-head"><div><h3>Agent–Environment Loop</h3><p>一切现代 RL——包括 LLM agent——都可以先从这个循环看。</p></div></div>
+          <svg class="mrl-diagram" viewBox="0 0 820 280" role="img" aria-label="Agent 与 Environment 交互循环">
+            <defs><marker id="loopArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2854d7"/></marker></defs>
+            <rect x="70" y="82" width="220" height="112" rx="18" fill="#e7edff" stroke="#2854d7" stroke-width="2"/>
+            <text x="180" y="125" text-anchor="middle" font-size="18" font-weight="700" fill="#173ba6">AGENT</text>
+            <text x="180" y="154" text-anchor="middle" font-size="13" fill="#5e6b63">根据当前信息选择动作</text>
+            <text x="180" y="178" text-anchor="middle" font-size="13" fill="#5e6b63">policy π(a | s)</text>
+            <rect x="530" y="82" width="220" height="112" rx="18" fill="#e5f4ee" stroke="#16745a" stroke-width="2"/>
+            <text x="640" y="125" text-anchor="middle" font-size="18" font-weight="700" fill="#12604b">ENVIRONMENT</text>
+            <text x="640" y="154" text-anchor="middle" font-size="13" fill="#5e6b63">接收动作，推进世界</text>
+            <text x="640" y="178" text-anchor="middle" font-size="13" fill="#5e6b63">产生下一状态与奖励</text>
+            <path d="M295 112 C380 55 440 55 525 112" fill="none" stroke="#2854d7" stroke-width="2.5" marker-end="url(#loopArrow)"/>
+            <text x="410" y="58" text-anchor="middle" font-size="14" fill="#173ba6">action  aₜ</text>
+            <path d="M525 166 C440 225 380 225 295 166" fill="none" stroke="#16745a" stroke-width="2.5" marker-end="url(#loopArrow)"/>
+            <text x="410" y="235" text-anchor="middle" font-size="14" fill="#12604b">next state  sₜ₊₁  +  reward  rₜ</text>
+          </svg>
+          <p class="mrl-caption">这里最重要的不是箭头，而是闭环：agent 的动作改变环境，改变后的环境又成为下一次决策的输入。</p>
+        </div>
+
+        <div class="mrl-grid3">
+          <div class="mrl-concept" id="state"><span class="label">STATE / OBSERVATION</span><h4>状态：我现在处在什么局面？</h4><p>CartPole 用 4 个连续数描述局面：小车位置、速度、杆角度、杆角速度。它们不是“特征工程表格”，而是下一次动作的决策依据。</p></div>
+          <div class="mrl-concept" id="action"><span class="label">ACTION</span><h4>动作：我此刻能改变什么？</h4><p>CartPole 的动作空间只有两个离散动作：向左施力 $a=0$，或向右施力 $a=1$。没有“不动”，也不能自己选力度。</p></div>
+          <div class="mrl-concept" id="reward"><span class="label">REWARD</span><h4>奖励：环境给了什么反馈？</h4><p>每存活一步得到 $+1$。它没有告诉你“刚才往右是正确答案”，只是说：做完这一步以后，任务还活着。</p></div>
+        </div>
+
+        <h3>为什么必须同时知道角度和角速度？</h3>
+        <p>假设两个时刻杆子都向右倾 $5^\circ$。只看截图，它们完全一样；但第一个时刻杆子正在<strong>快速向右倒</strong>，第二个时刻正在<strong>从右侧回正</strong>。这两种局面的合理动作可能相反。所以 CartPole 的观测不是一张“静态照片”，它还必须包含运动趋势。</p>
+
+        <div class="mrl-equation">
+          $$s_t = [x_t,\ \dot{x}_t,\ \theta_t,\ \dot{\theta}_t]$$
+        </div>
+        <table>
+          <thead><tr><th>量</th><th>直觉</th><th>为什么有用</th></tr></thead>
+          <tbody>
+            <tr><td>$x$</td><td>小车在哪</td><td>避免把车推出轨道中心太远</td></tr>
+            <tr><td>$\dot{x}$</td><td>小车正往哪跑、多快</td><td>同一个位置，不同速度需要不同制动</td></tr>
+            <tr><td>$\theta$</td><td>杆子往哪倾</td><td>最直接的失衡信号</td></tr>
+            <tr><td>$\dot{\theta}$</td><td>杆子正在往哪转、多快</td><td>告诉你倾倒是在恶化还是恢复</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="cartpole">
+        <h2 class="mrl-sec-title"><span class="num">03</span>CartPole 看着简单，真正难在哪？</h2>
+        <p class="mrl-sec-lead">它只有 4 个观测、2 个动作，却已经包含了强化学习里几乎所有关键麻烦的缩影。</p>
+
+        <div class="mrl-grid2">
+          <div class="mrl-card blue"><h3>动作有延迟后果</h3><p>往右推并不会“直接把杆子向左掰”。你先改变小车加速度，再通过转轴改变杆子的动力学。一次动作的影响会延续到后面很多步。</p></div>
+          <div class="mrl-card green"><h3>奖励信息非常贫乏</h3><p>几乎每一步都是 $+1$。一个糟糕动作可能做完以后仍然得到 $+1$，只是它让十几步后的失败更可能发生。</p></div>
+          <div class="mrl-card gold"><h3>好动作取决于上下文</h3><p>“杆向右倾就向右推”不是完整规则。角速度、小车速度与位置都会改变判断。策略学习的是条件关系，而不是固定动作。</p></div>
+          <div class="mrl-card violet"><h3>训练数据由策略自己制造</h3><p>随机策略大多很快失败，只能看到失败附近的状态；更好的策略活得更久，会进入随机策略几乎见不到的新状态。</p></div>
+        </div>
+
+        <div class="mrl-card warm">
+          <h3>和分类问题做个对照</h3>
+          <p>如果这是分类，你可能想收集很多状态，然后标注“左 / 右”。但谁来给这些标签？而且某个动作是否好，常常要看几十步之后才知道。RL 的任务不是拟合一张现成答案表，而是<strong>通过交互发现一套能长期获得高回报的决策规则</strong>。</p>
+        </div>
+      </section>
+
+      <section id="lab">
+        <h2 class="mrl-sec-title"><span class="num">04</span>互动实验：先别训练，亲手感受“策略”</h2>
+        <p class="mrl-sec-lead">这个 demo 在浏览器里直接计算 CartPole 的经典动力学。我们故意先不用神经网络：目标是把“状态 → 动作 → 新状态”的因果链看清楚。</p>
+
+        <div class="mrl-viz">
+          <div class="mrl-viz-head">
+            <div><h3>CartPole Physics Lab</h3><p id="cpStatus">等待动作</p></div>
+            <div class="mrl-pill">step <b id="cpStepCount">0</b> · reward <b id="cpReward">0</b></div>
+          </div>
+          <div class="mrl-cartpole-stage">
+            <svg id="cartpoleSvg" viewBox="0 0 760 320" role="img" aria-label="可交互 CartPole
