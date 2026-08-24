@@ -147,29 +147,29 @@
 .music-page .ss-index-row:hover .ss-row-title { color: var(--music-accent-strong); }
 .music-page .ss-row-arrow { color: var(--music-accent); }
 
-.music-player--neon {
-  --music-accent: #d85cff;
-  --music-accent-strong: #7230a8;
-  --music-line: rgba(129, 70, 180, 0.42);
+.music-player--citypop {
+  --music-accent: #ff6f91;
+  --music-accent-strong: #a13265;
+  --music-line: rgba(49, 145, 171, 0.38);
   background:
-    linear-gradient(135deg, rgba(45, 20, 73, 0.96), rgba(12, 45, 62, 0.95)),
-    var(--ss-surface);
-  box-shadow: 0 20px 60px rgba(63, 23, 93, 0.26), inset 0 0 44px rgba(50, 223, 221, 0.08);
+    radial-gradient(circle at 88% 12%, rgba(255, 199, 109, 0.34), transparent 13rem),
+    linear-gradient(135deg, #fff4e7 0%, #e9f8fa 58%, #f4eafa 100%);
+  box-shadow: 0 20px 60px rgba(45, 116, 143, 0.18), inset 0 0 42px rgba(255, 126, 160, 0.08);
 }
 
-.music-player--neon h2,
-.music-player--neon .music-stats dd { color: #fff4ff; }
-.music-player--neon p,
-.music-player--neon .music-stats dt { color: #c9bdd4; }
-.music-player--neon .music-eyebrow,
-.music-player--neon .music-downloads-label { color: #63f5ed; }
-.music-player--neon .music-waveform span {
-  background: linear-gradient(to top, #35d9de, #ef62ff);
-  box-shadow: 0 0 12px rgba(81, 230, 231, 0.45);
+.music-player--citypop h2,
+.music-player--citypop .music-stats dd { color: #233e5a; }
+.music-player--citypop p,
+.music-player--citypop .music-stats dt { color: #617487; }
+.music-player--citypop .music-eyebrow,
+.music-player--citypop .music-downloads-label { color: #a13265; }
+.music-player--citypop .music-waveform span {
+  background: linear-gradient(to top, #39b8c8, #ff7098 58%, #ffc76d);
+  box-shadow: 0 0 10px rgba(255, 112, 152, 0.24);
 }
-.music-player--neon .music-stats div { border-color: rgba(168, 141, 187, 0.3); }
-.music-player--neon .ss-button { border-color: #6cebe6; background: #6cebe6; color: #132a35; }
-.music-player--neon .ss-button--ghost { background: transparent; color: #e8dcef; }
+.music-player--citypop .music-stats div { border-color: rgba(51, 117, 142, 0.22); }
+.music-player--citypop .ss-button { border-color: #ff7098; background: #ff7098; color: #fff; }
+.music-player--citypop .ss-button--ghost { background: transparent; color: #2e6075; }
 
 @media (max-width: 760px) {
   .music-player { grid-template-columns: 1fr; }
