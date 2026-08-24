@@ -1,0 +1,89 @@
+/* Mobile chapter navigation: compact horizontal jump bar */
+
+@media (max-width: 880px) {
+  .mrl-chapter-layout {
+    display: block !important;
+  }
+
+  .mrl-toc {
+    position: relative !important;
+    top: auto !important;
+    z-index: 10;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 54px !important;
+    height: auto !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 9px 12px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid var(--mrl-line) !important;
+    background: rgba(255, 254, 251, .96) !important;
+    white-space: nowrap !important;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mrl-toc::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mrl-toc .mrl-rail-label,
+  .mrl-toc .mrl-progress {
+    display: none !important;
+  }
+
+  .mrl-toc a,
+  .mrl-toc a.sub {
+    display: inline-flex !important;
+    flex: 0 0 auto !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    border: 1px solid var(--mrl-line-strong) !important;
+    border-left: 1px solid var(--mrl-line-strong) !important;
+    border-radius: 999px !important;
+    background: var(--mrl-surface) !important;
+    color: var(--mrl-muted) !important;
+    font: 700 .74rem/1 var(--mrl-sans) !important;
+    text-decoration: none !important;
+    box-shadow: none !important;
+  }
+
+  .mrl-toc a:hover,
+  .mrl-toc a.active {
+    border-color: var(--mrl-accent) !important;
+    background: var(--mrl-accent-soft) !important;
+    color: var(--mrl-accent-dark) !important;
+  }
+
+  .mrl-toc a.active {
+    font-weight: 800 !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .mrl-toc {
+    min-height: 50px !important;
+    padding: 7px 10px !important;
+  }
+
+  .mrl-toc a,
+  .mrl-toc a.sub {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding-inline: 11px !important;
+    font-size: .71rem !important;
+  }
+}
