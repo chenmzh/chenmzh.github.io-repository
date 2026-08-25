@@ -2,7 +2,7 @@
   "title": "小桥流水",
   "title_en": "Beneath the Little Bridge",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082515,
   "tempo_bpm": 96,
@@ -149,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 9.5,
-    "peak_normalized": 0.8600000000000001,
-    "peak_before_safety": 0.10172439027044267,
-    "normalization_gain": 8.45421631639786,
-    "rms_normalized": 0.08715248463909278,
+    "peak_normalized": 0.8599999999999999,
+    "peak_before_safety": 0.10530437960510632,
+    "normalization_gain": 8.166801829373274,
+    "rms_normalized": 0.08449706648747426,
     "expanded_note_count": 23,
     "source_event_count": 23,
     "tail_seconds": 4.5,
@@ -174,9 +170,9 @@
     "track_count": 1,
     "note_event_count": 23
   },
-  "source_sha256": "93e7c63f64f8cf15e4f80eef00ee00f7917e30d71d4ff8b389759018cffab03e",
-  "wav_sha256": "1f859c6170ed13a793492f0eff03506806d4f2b3b3c677fb871416b9c55249c8",
-  "midi_sha256": "80ea1b988ada4985adf8d06e194e2c400a80358603ad99ce1f7113330cd4733a",
+  "source_sha256": "e4431f9670794749acb3257038b48327082911a52091934972b640a4e7760de7",
+  "wav_sha256": "c5bb9ad632ebd899aec8a797739b61b66cc243b0356fd4fb9574ba397bf0d578",
+  "midi_sha256": "edea62796c7c43f450cd1f58246ffd12a0a604484148ea634db5a2c40f5eeb05",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

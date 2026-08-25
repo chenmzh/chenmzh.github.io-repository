@@ -2,7 +2,7 @@
   "title": "渔歌晚唱",
   "title_en": "Evening Fishing Song",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082509,
   "tempo_bpm": 60,
@@ -149,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 12.5,
-    "peak_normalized": 0.8599999999999999,
-    "peak_before_safety": 0.09639237912327958,
-    "normalization_gain": 8.921867141593381,
-    "rms_normalized": 0.05905980783014955,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.08803800310371766,
+    "normalization_gain": 9.76850870852708,
+    "rms_normalized": 0.06322413252366268,
     "expanded_note_count": 11,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -174,9 +170,9 @@
     "track_count": 1,
     "note_event_count": 11
   },
-  "source_sha256": "fc8a501bc1baa4d1bec13c8de98433cd037bd2b03fdab3992a2b7ea5895407aa",
-  "wav_sha256": "f06e29cd9d743d4b0328febefc7e9aa8843cc396ea0895753a8eae94baf30bac",
-  "midi_sha256": "b4c88e87f4c25a5739ff79e3b763505651c222320f8ed8db213fa8d38f072391",
+  "source_sha256": "bd5fe6f26c13d47823c595b4852bb12644a92cbc81c4b1dbd63ca5f97aceddfd",
+  "wav_sha256": "34b3877d115d36b1723d4bdb86f8abe39c99286c2f653001de1f570cb24fc8e2",
+  "midi_sha256": "ec95d9e89fdb1893d92585023c236fc4f7d1d0343b4fcf44ad3f54080e95b381",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

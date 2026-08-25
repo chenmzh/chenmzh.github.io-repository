@@ -2,7 +2,7 @@
   "title": "寒江独钓",
   "title_en": "Angling the Cold River",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082504,
   "tempo_bpm": 50,
@@ -150,10 +146,10 @@
     "sample_width_bits": 16,
     "duration_seconds": 14.1,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.0817738238119089,
-    "normalization_gain": 10.516812837053076,
-    "rms_normalized": 0.05238487295993096,
-    "expanded_note_count": 7,
+    "peak_before_safety": 0.08158927892532644,
+    "normalization_gain": 10.540600570659585,
+    "rms_normalized": 0.0503153428636651,
+    "expanded_note_count": 6,
     "source_event_count": 6,
     "tail_seconds": 4.5,
     "engine": "hybrid-cc0-sample",
@@ -161,10 +157,10 @@
     "reference_sample_base_midi": 57,
     "voice_pool": {
       "max_voices": 24,
-      "peak_active_voices": 5,
+      "peak_active_voices": 4,
       "same_pitch_retriggers": 0,
       "voice_steals": 0,
-      "rendered_voices": 7
+      "rendered_voices": 6
     },
     "master_gain": 0.76
   },
@@ -172,11 +168,11 @@
     "format": "SMF type 0",
     "ppq": 480,
     "track_count": 1,
-    "note_event_count": 7
+    "note_event_count": 6
   },
-  "source_sha256": "a63f5698949a0ec70dd85bc35a62753aa9c6b97b15deac29a4c78b9fd8eadc0a",
-  "wav_sha256": "306d7a5ec7fd3294d0fdcd9a44370f40612ea969b88e1f6957a1df902a202c12",
-  "midi_sha256": "36e23cee9ba78c7e143cb67dcb4cbaa212b0b489f9c84e3612aac537500da257",
+  "source_sha256": "03d0ea11c98d99542a0781ca2d727d435e6bcc6462532a695a18e08b0dd9255e",
+  "wav_sha256": "689adee4f8006903b29abf93ea80432cec5ca887267eb2ea5b89c7cdc4d2bea4",
+  "midi_sha256": "f9c8bca49eb762a13d9a16ef536c01b1fcac28e2dd97b2728ebba111e6fee5d6",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

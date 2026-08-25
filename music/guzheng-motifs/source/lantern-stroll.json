@@ -59,7 +59,7 @@
       -5
     ],
     "rhythmic_feel": "bouncy off-beat steps with a grace note into the final held fifth",
-    "jianpu": "5 6 5 3 5 2 | 3 5 6 4 1′ 5",
+    "jianpu": "5 6 5 3 5 | 2 3 5 6 1′ 5",
     "jianpu_note": "1=D 固定首调；′ 高八度，, 低八度，| 分句，~ 摇指反复，（）内为按音滑动的变化音"
   },
   "events": [
@@ -139,7 +139,8 @@
       "midi": 69,
       "velocity": 90,
       "layer": "motif",
-      "ornament": "grace"
+      "slide": -2
     }
-  ]
+  ],
+  "swing": true
 }

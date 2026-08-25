@@ -2,7 +2,7 @@
   "title": "丹青泼墨",
   "title_en": "Ink Wash Splash",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082506,
   "tempo_bpm": 76,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.815804988662132,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.11001594247572154,
-    "normalization_gain": 7.8170488808000345,
-    "rms_normalized": 0.06893987576805158,
+    "peak_before_safety": 0.11423225866180514,
+    "normalization_gain": 7.528521365808823,
+    "rms_normalized": 0.06641300222459989,
     "expanded_note_count": 27,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 27
   },
   "source_sha256": "e0637156a43ffeb95c9d865c3c5d0d26820964980a114ee36260d256d16026ef",
-  "wav_sha256": "705d36eb02812bec5a949cca8e2e32abc762d05996ae230edd17708307cce14a",
-  "midi_sha256": "b9e451fea66f9d98da1bfb7bd569c76cecbcbbc13872fd6c03a0c8e8136dbddf",
+  "wav_sha256": "0614f4820f05f7fb554c3d255b7921df7109bd97d9693e84dc39bc7644863063",
+  "midi_sha256": "d58724ad17456028c670813f8a27cb90a6d5012b8d01d0097fb3de99f801058d",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

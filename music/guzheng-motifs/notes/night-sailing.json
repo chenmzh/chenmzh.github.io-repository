@@ -2,7 +2,7 @@
   "title": "星夜行舟",
   "title_en": "Boating Under the Stars",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082516,
   "tempo_bpm": 68,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 15.088253968253968,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08611666145438673,
-    "normalization_gain": 9.986453091374365,
-    "rms_normalized": 0.0678005492889337,
+    "peak_before_safety": 0.0890298199458193,
+    "normalization_gain": 9.6596848171025,
+    "rms_normalized": 0.06638816003028293,
     "expanded_note_count": 16,
     "source_event_count": 9,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 16
   },
   "source_sha256": "8c487f41a1f134dd36127aa1281aeae813a5d40ebf0dbf773240a6b3d8d8d599",
-  "wav_sha256": "9bfaed0b6c76307f042049f542e05146a31220e9a23be21cdb81594a55112b5a",
-  "midi_sha256": "24c4ef0c27824628b646f84ff51748ace77c582499c2c9923874d53e9ea9b3e4",
+  "wav_sha256": "615c3c4de0415de583456346ef7370f2fec3b3a32dd0a2716a2849db865f813a",
+  "midi_sha256": "eea48ca5a89c1301e0340684962d8a1332d320c011f28df6bb98d9f7697fa7b9",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

@@ -2,7 +2,7 @@
   "title": "花间醉",
   "title_en": "Drunk Among Flowers",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082507,
   "tempo_bpm": 82,
@@ -150,10 +146,10 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.353673469387756,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08974500967825887,
-    "normalization_gain": 9.58270552405254,
-    "rms_normalized": 0.06349931381857454,
-    "expanded_note_count": 12,
+    "peak_before_safety": 0.09102904995165785,
+    "normalization_gain": 9.447533512177861,
+    "rms_normalized": 0.06143028482100457,
+    "expanded_note_count": 11,
     "source_event_count": 11,
     "tail_seconds": 4.5,
     "engine": "hybrid-cc0-sample",
@@ -161,10 +157,10 @@
     "reference_sample_base_midi": 57,
     "voice_pool": {
       "max_voices": 24,
-      "peak_active_voices": 7,
+      "peak_active_voices": 6,
       "same_pitch_retriggers": 4,
       "voice_steals": 0,
-      "rendered_voices": 12
+      "rendered_voices": 11
     },
     "master_gain": 0.76
   },
@@ -172,11 +168,11 @@
     "format": "SMF type 0",
     "ppq": 480,
     "track_count": 1,
-    "note_event_count": 12
+    "note_event_count": 11
   },
-  "source_sha256": "2a48175830e58e02337875e5ecf01b23a1ea9307e44ffde022892ceceb5b7c47",
-  "wav_sha256": "034e612a455848d77e1a4ff04fd2609a705a427b38ace83766ec61e190fa68c6",
-  "midi_sha256": "12b7203060495686b46607999cc9fa361c6fd46ef0ba44d553d816157f86f340",
+  "source_sha256": "b546e6c125a67a4dd2ea9708f49c08619f08d86d8bf007aff7fc8ea63bf90e10",
+  "wav_sha256": "8b03dd51d906934d3bb9fb1e57034ec1b57a3eab686ed5a5a8142a1cf2e2f3e5",
+  "midi_sha256": "a552c08d80bf9272eccfd27ec5320f7df9cf73642c7d60e89703f65041eae795",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

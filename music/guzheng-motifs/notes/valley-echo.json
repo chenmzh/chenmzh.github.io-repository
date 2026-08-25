@@ -2,7 +2,7 @@
   "title": "空谷回音",
   "title_en": "Echo in the Empty Valley",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082511,
   "tempo_bpm": 66,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 11.772743764172336,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08455258757652034,
-    "normalization_gain": 10.171184876177769,
-    "rms_normalized": 0.03873422451758027,
+    "peak_before_safety": 0.0843394611600725,
+    "normalization_gain": 10.196887532489194,
+    "rms_normalized": 0.03961164571816642,
     "expanded_note_count": 6,
     "source_event_count": 6,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 6
   },
   "source_sha256": "77e4e72680ab63de4ed6f50b1651cba1e3d1e52893c3cfd5fc62545ccdd44288",
-  "wav_sha256": "370e531dff2652b8400e45b2c6600e14398c7aaafb57373a7340c31cd1a2a2a0",
-  "midi_sha256": "ba3c480926412aa92485c6a6ea46d15f4d47178c89b31ae7cc54bdbf1e02c88f",
+  "wav_sha256": "b0e5f8dd6f9e1c4714ef3533063556c71182b5ba7fbae7c03ba2cfe4474e2d39",
+  "midi_sha256": "b9aa9f5b8960cabe2646bb8a2e7a15580e0fbe98689ea5ddebb06ccb687f30b4",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

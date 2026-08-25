@@ -2,7 +2,7 @@
   "title": "花灯夜游",
   "title_en": "Lantern Festival Stroll",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082512,
   "tempo_bpm": 112,
@@ -149,11 +145,11 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 8.785714285714286,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.11572909368854037,
-    "normalization_gain": 7.431147800349172,
-    "rms_normalized": 0.05749562043776247,
-    "expanded_note_count": 12,
+    "peak_normalized": 0.8599999999999999,
+    "peak_before_safety": 0.10512195414390331,
+    "normalization_gain": 8.180974250371436,
+    "rms_normalized": 0.061718591822135495,
+    "expanded_note_count": 11,
     "source_event_count": 11,
     "tail_seconds": 4.5,
     "engine": "hybrid-cc0-sample",
@@ -161,10 +157,10 @@
     "reference_sample_base_midi": 57,
     "voice_pool": {
       "max_voices": 24,
-      "peak_active_voices": 6,
+      "peak_active_voices": 5,
       "same_pitch_retriggers": 6,
       "voice_steals": 0,
-      "rendered_voices": 12
+      "rendered_voices": 11
     },
     "master_gain": 0.76
   },
@@ -172,11 +168,11 @@
     "format": "SMF type 0",
     "ppq": 480,
     "track_count": 1,
-    "note_event_count": 12
+    "note_event_count": 11
   },
-  "source_sha256": "7b1bef2974b939f4a16ddfec0bfb53c33ae818f58ddf6870b780d2c1440498e5",
-  "wav_sha256": "511483a82bd575846e0b0bf7e9038f29662fe6ec7ef620b03b20e0d6e5fbe505",
-  "midi_sha256": "481765c7d0250d11ff69bf6f3314ddabfd56d6d011b22b3575e8d433c4e3439e",
+  "source_sha256": "822e6bda668e179658aa08eb899693e51b2d54410f1c011013012963b90fdaa4",
+  "wav_sha256": "6e5e2399adc713b6a31a2c90a8f815b3a2266c0ebea143929c6f691bbe176c88",
+  "midi_sha256": "3acae21d72a53d90d36b8b546c2cdabb98b1792e56d36d09d9d158bbd0631cb5",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

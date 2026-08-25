@@ -2,7 +2,7 @@
   "title": "塞外孤烟",
   "title_en": "Lone Smoke Beyond the Pass",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082514,
   "tempo_bpm": 72,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 11.166689342403629,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.0925191907747029,
-    "normalization_gain": 9.295368807258805,
-    "rms_normalized": 0.05966144419164096,
+    "peak_before_safety": 0.0796817219345594,
+    "normalization_gain": 10.79293944860148,
+    "rms_normalized": 0.06695635621990716,
     "expanded_note_count": 14,
     "source_event_count": 8,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 14
   },
   "source_sha256": "b4300d6b6c9fda80e78c38f47c5878168140aa212ea10f8387bc5e9d3b7ba5c7",
-  "wav_sha256": "6fa7165edee0c388ce4060cf82ddba5e3ed77c279220dd03569d86c81cf56f73",
-  "midi_sha256": "704e6a04b935bda7c68a56980a90c3069a06931014936e469422b7e00c7a4336",
+  "wav_sha256": "93db9f168ab145d99aa1616e7f141e6b5764a0ab12e136355801063bac8ed5e4",
+  "midi_sha256": "2de09ded44b596a7d0afc1752bc56dd4471a77ec3a33262ea1f24630a9cff311",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

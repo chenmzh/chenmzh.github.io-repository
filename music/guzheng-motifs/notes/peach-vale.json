@@ -2,7 +2,7 @@
   "title": "武陵桃花",
   "title_en": "Peach Blossom Vale",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082513,
   "tempo_bpm": 84,
@@ -149,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 13.071428571428571,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.10076597062106404,
-    "normalization_gain": 8.534627262551533,
-    "rms_normalized": 0.05672820740998314,
+    "peak_normalized": 0.8600000000000001,
+    "peak_before_safety": 0.10106658005334504,
+    "normalization_gain": 8.5092421208482,
+    "rms_normalized": 0.056960738828221044,
     "expanded_note_count": 14,
     "source_event_count": 14,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 14
   },
   "source_sha256": "ca02d625a74d98501c11070cd81a8faad13025059106b60dea1e0a09a9dc8393",
-  "wav_sha256": "e48ff2d7d01de0e950826962ec7d9375bb3f5e3ff218d1c57511a153606df754",
-  "midi_sha256": "d7a4fe252289aca48a8b224171514887433ab58918b9b5695b9062263f4ddd0b",
+  "wav_sha256": "820fb6366a42cb3265822cabeff49d57f7096395466d5298f95d1a2f67b556cd",
+  "midi_sha256": "ac0f50b41842d71ba6bf4cbd8f0627237993329190ff582dee860d73bf312391",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

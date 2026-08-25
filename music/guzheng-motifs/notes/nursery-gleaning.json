@@ -2,7 +2,7 @@
   "title": "童谣拾穗",
   "title_en": "Gleaning a Nursery Rhyme",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082519,
   "tempo_bpm": 100,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 9.300022675736962,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.09242065705211817,
-    "normalization_gain": 9.305279008296012,
-    "rms_normalized": 0.0813614315018819,
+    "peak_before_safety": 0.1077617283651852,
+    "normalization_gain": 7.980569846519295,
+    "rms_normalized": 0.06936550476972565,
     "expanded_note_count": 16,
     "source_event_count": 16,
     "tail_seconds": 4.5,
@@ -174,9 +170,9 @@
     "track_count": 1,
     "note_event_count": 16
   },
-  "source_sha256": "229d8ed97e3bdc0033d7b6e92395af507e4a3cec170741098d9315b2837a6be0",
-  "wav_sha256": "bc6f81d4fb948ba7cba51a534f25785a8c91c0c161b58a3112ce804b653ae570",
-  "midi_sha256": "79d7cd025a578414e1cdced1616ce8f7ac808b8179e7817c63bcdb32ea45449b",
+  "source_sha256": "72f0270d696201799f4f10838eb3da1fe23cd50a64b582c8ece3a4f0cdd005a3",
+  "wav_sha256": "4035030b04303e33867e11c4ba74f989122cc5da4c782eb7333b6f925deedd4b",
+  "midi_sha256": "38c66746e59530c0ee59f5be587d42131718e08aa3e107ba14a58a9339218371",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

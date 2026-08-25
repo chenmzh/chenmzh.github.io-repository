@@ -137,5 +137,6 @@
       "velocity": 86,
       "layer": "motif"
     }
-  ]
+  ],
+  "swing": true
 }

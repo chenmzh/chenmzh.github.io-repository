@@ -2,7 +2,7 @@
   "title": "将军令引",
   "title_en": "The General's Command",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082517,
   "tempo_bpm": 116,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 8.637936507936509,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.15205442073963688,
-    "normalization_gain": 5.655869759108023,
-    "rms_normalized": 0.0677516112164444,
+    "peak_before_safety": 0.12187013722812963,
+    "normalization_gain": 7.056691816061218,
+    "rms_normalized": 0.08430851417813776,
     "expanded_note_count": 19,
     "source_event_count": 18,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 19
   },
   "source_sha256": "a0063e91b9b784d97cd4ac125e240bd11aa45bed0e5229f9c1b7acb5c9c6de16",
-  "wav_sha256": "d45dda50b734eff67838cf57c5ffa646fe451dbb62459c8eb991bf6a77854956",
-  "midi_sha256": "6e476783dd31986d9db7a80853b2b4b5b6c218ab7cda6a84209c58c9b0b47543",
+  "wav_sha256": "7a749e78f8964393263dc8c0366f68ad9afb6b5d14b682fe53c95fd6bd227772",
+  "midi_sha256": "2680d5adc6b535af9f17f558c4265d7d658198e74742658a468bcac827d60ca3",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

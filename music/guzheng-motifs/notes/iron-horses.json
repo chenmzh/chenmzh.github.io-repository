@@ -2,7 +2,7 @@
   "title": "铁马冰河",
   "title_en": "Iron Horses on the Icy River",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082505,
   "tempo_bpm": 120,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.5,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.12373719311872147,
-    "normalization_gain": 6.950214226815864,
-    "rms_normalized": 0.08473722279195472,
+    "peak_before_safety": 0.15388635286753916,
+    "normalization_gain": 5.588539750111972,
+    "rms_normalized": 0.07063648856455193,
     "expanded_note_count": 19,
     "source_event_count": 19,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 19
   },
   "source_sha256": "f5039b5e5fc9fdc4b47a94d9d0805dd966cdca0be6f2940992ae703836dcf975",
-  "wav_sha256": "af9b82051562fa7cd11499ba56bd1e10715048f2c5ebb71bbe6fde34e6c70b34",
-  "midi_sha256": "30700eacb3050d76bd227d23d56d78c3b4cd86a480b70ec6a887fa05936df296",
+  "wav_sha256": "a186f81806a01b4e6fab7b2f48176a795b2f7aff54f4070aaef20994a98c0b54",
+  "midi_sha256": "c0085c9e416dc34ce0c403fd2458189ef6e749220cabe00003f2b3dd2ae776bb",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

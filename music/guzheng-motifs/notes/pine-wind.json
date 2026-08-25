@@ -2,7 +2,7 @@
   "title": "松风入琴",
   "title_en": "Pine Wind into the Qin",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082502,
   "tempo_bpm": 64,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 12.0,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08467013819016607,
-    "normalization_gain": 10.157063852529342,
-    "rms_normalized": 0.06802850275147172,
+    "peak_before_safety": 0.08285783074092996,
+    "normalization_gain": 10.379224176034079,
+    "rms_normalized": 0.06908415136373304,
     "expanded_note_count": 17,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 17
   },
   "source_sha256": "ccf55399d54f341b37e738501110cacbdbf9b82b632ded3cf0dcc6c2ac30d066",
-  "wav_sha256": "adbae91553b46b2823bb402312b5be0557285c20f5e3f99d73e1d16c30896320",
-  "midi_sha256": "38cd2a9eb260fbe83ab57908a64cb313b1ddadf6551eb7550cc4815a0445e058",
+  "wav_sha256": "e9f256c4ff17ac2376fec5fe9988501afb3ff550c87b19a00c5c9d1e0a9493a6",
+  "midi_sha256": "a505a9f58cb4ea9b40554d2d0ab5cebb394d2fd9373ebf3b60ee32198c7badaa",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

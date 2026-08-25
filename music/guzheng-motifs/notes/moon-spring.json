@@ -2,7 +2,7 @@
   "title": "月下听泉",
   "title_en": "Listening to the Spring by Moonlight",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.5.0",
+  "renderer_version": "1.6.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -116,25 +116,21 @@
     "master_gain": 0.76
   },
   "expression": {
-    "humanized_layers": [
-      "motif",
-      "melody",
-      "upper_melody",
-      "lower_melody"
+    "swing": false,
+    "weak_beat_pull_beats": 0.02,
+    "weak_beat_window": [
+      0.35,
+      0.85
     ],
-    "timing_jitter_ms": 10.0,
-    "duration_jitter": 0.02,
-    "phrase_walk_step": 0.02,
-    "phrase_ema": 0.35,
-    "phrase_max_delta": 0.1,
-    "velocity_jitter": 0.035,
-    "vibrato_probability": 0.55,
-    "vibrato_rate_min_hz": 3.8,
-    "vibrato_rate_max_hz": 5.2,
+    "cadence_delay_beats": 0.022,
+    "arpeggio_roll": 0.12,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_rate_base_hz": 4.0,
     "vibrato_depth_min_cents": 4.0,
     "vibrato_depth_max_cents": 10.0,
-    "vibrato_min_seconds": 0.9,
-    "vibrato_ramp_seconds": 0.35
+    "vibrato_depth_per_semitone": 0.18,
+    "vibrato_ramp_seconds": 0.35,
+    "slide_seconds": 0.12
   },
   "seed": 2026082520,
   "tempo_bpm": 76,
@@ -150,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.815804988662132,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.09008341862192482,
-    "normalization_gain": 9.546706965122771,
-    "rms_normalized": 0.06871822833542504,
+    "peak_before_safety": 0.09140832122545989,
+    "normalization_gain": 9.408333819836797,
+    "rms_normalized": 0.06745173705643909,
     "expanded_note_count": 17,
     "source_event_count": 10,
     "tail_seconds": 4.5,
@@ -175,8 +171,8 @@
     "note_event_count": 17
   },
   "source_sha256": "dbb94d5101ecb54d7ad2a7ea4e7a8d75abad429ca6eb15cd79200d597d06fca0",
-  "wav_sha256": "68a6ab84092dcec200a77e0788ac352e6d3fdf6f5cfd63b15b1f5a6c2e3ca7b2",
-  "midi_sha256": "986805e1c76c45505fe403c8b7db9a7fe7aed23b8b3f1a0a01dd98ddba605b30",
+  "wav_sha256": "7cc176036e871fe3cce22176b54371da3686cffa9182b71a8e3ad4d323440b45",
+  "midi_sha256": "2760fe5e4882942f2802c25208be2ae465acd624240f92c067ae6c493533e883",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }
