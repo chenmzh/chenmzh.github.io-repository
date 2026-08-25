@@ -1,0 +1,117 @@
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">07</span>把数学对象落到代码：其实只需要两个数组</h2>
+  <p class="mrl-sec-lead">Bandit 的好处是没有框架噪声。我们可以直接看到“估计值”和“选择次数”怎样变成程序状态。</p>
+
+  <h3>先把样本均值改写成可以在线更新的形式</h3>
+  <p>如果每次都保存所有历史奖励再重新求平均，当然能算，但没有必要。设旧的平均值是 $\hat\mu_{a,\,N-1}$，第 $N$ 次新奖励是 $r_N$：</p>
+  <div class="mrl-equation">$$\hat\mu_{a,\,N}=\frac{(N-1)\hat\mu_{a,\,N-1}+r_N}{N}$$</div>
+  <p>把它整理一下：</p>
+  <div class="mrl-equation">$$\hat\mu_{a,\,N}=\hat\mu_{a,\,N-1}+\frac{r_N-\hat\mu_{a,\,N-1}}{N}$$</div>
+  <p>这条式子非常值得读成人话：</p>
+  <div class="mrl-flow" style="grid-template-columns:repeat(5,auto)">
+    <div class="box">旧估计</div><div class="arrow">+</div><div class="box">新证据 − 旧预期</div><div class="arrow">×</div><div class="box">$1/N$ 的修正幅度</div>
+  </div>
+  <p>如果新奖励比旧平均高，就往上修；比旧平均低，就往下修。$N$ 越大，一条新样本对长期平均的影响越小，因为我们已经积累了更多证据。</p>
+
+  <pre class="mrl-code"><code>import random
+
+mu_hat = [0.0, 0.0]   # 估计的平均奖励
+count  = [0, 0]       # 每个动作被选择的次数
+
+
+def choose_action(epsilon=0.1):
+    # exploration: 偶尔随机试一个动作
+    if random.random() &lt; epsilon:
+        return random.randrange(2)
+
+    # exploitation: 选择当前估计最高的动作
+    if mu_hat[0] == mu_hat[1]:
+        return random.randrange(2)     # 平局时随机打破
+    return 0 if mu_hat[0] &gt; mu_hat[1] else 1
+
+
+def update(action, reward):
+    count[action] += 1
+    n = count[action]
+    mu_hat[action] += (reward - mu_hat[action]) / n</code></pre>
+
+  <table>
+    <thead><tr><th>数学对象</th><th>代码变量</th><th>它在记什么</th></tr></thead>
+    <tbody>
+      <tr><td>$a$ / $A_t$</td><td><code>action</code></td><td>这一轮选择了哪个动作</td></tr>
+      <tr><td>$r_t$</td><td><code>reward</code></td><td>环境这一次返回的随机奖励</td></tr>
+      <tr><td>$N_a$</td><td><code>count[action]</code></td><td>这个动作已经积累了多少条证据</td></tr>
+      <tr><td>$\hat\mu_a$</td><td><code>mu_hat[action]</code></td><td>根据已有样本估计出的平均奖励</td></tr>
+      <tr><td>$\epsilon$</td><td><code>epsilon</code></td><td>多少比例的轮次进入随机探索分支</td></tr>
+    </tbody>
+  </table>
+
+  <p>上游课程的 <code>two_armed_bandit.py</code> 做的事情本质上就是扩展这段最小代码：加入纯随机、纯贪心、$\epsilon$-贪心和 UCB，多次重复实验，再画累计平均奖励与 regret 曲线。先认出这五个变量，比先记住一整份训练脚本更重要。</p>
+</section>
+
+<section id="caveats">
+  <h2 class="mrl-sec-title"><span class="num">08</span>先别把 bandit 的结论外推太远</h2>
+  <p class="mrl-sec-lead">这一章故意把世界压得非常简单，所以它给了我们清楚的直觉，也藏掉了真正序贯决策里的很多麻烦。</p>
+
+  <h3>假设 1：每个动作的奖励规律不会自己变化</h3>
+  <p><strong>stationary bandit（平稳老虎机）</strong>指每个动作的奖励分布随时间保持不变。本章所有主实验都属于这种情况：A 永远是 0.60，B 永远是 0.40。于是“把所有历史样本等权平均”很合理，因为很久以前的数据仍然代表今天。</p>
+  <p>如果环境会变化——例如 B 在第 500 轮之后突然变好——历史平均反而可能反应太慢。这时常会给近期样本更高权重，而不是让每一条旧数据永远等价。这个问题本章不展开，但它提醒我们：<strong>探索策略永远依赖你对环境的假设。</strong></p>
+
+  <h3>假设 2：动作不会改变下一轮的局面</h3>
+  <p>在 bandit 里，选 A 还是 B 不会改变下一轮“你面对的是什么问题”。但 CartPole 完全不是这样：一次向右推会改变小车位置、速度、杆角度和角速度；下一步的正确决策因此依赖刚刚发生了什么。</p>
+  <div class="mrl-compare">
+    <div><h3>Bandit</h3><ul><li>每轮回到同一种决策局面</li><li>动作只影响这一轮奖励</li><li>核心未知量是每个动作的平均奖励</li><li>探索主要是在估计“哪个动作更好”</li></ul></div>
+    <div><h3>真正的序贯决策</h3><ul><li>动作会把系统带到新的状态</li><li>今天的动作会改变未来奖励机会</li><li>动作好坏取决于当前状态</li><li>还要处理长期后果与信用分配</li></ul></div>
+  </div>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“UCB 比 $\epsilon$-贪心更聪明，所以以后都应该用 UCB。”</strong> 不对。UCB 的漂亮行为建立在特定 bandit 假设上。进入高维状态、神经网络函数逼近、非平稳训练分布以后，怎样表示“不确定性”本身就会变成困难问题。</p>
+  </div>
+
+  <h3>和现代大模型训练有什么关系？</h3>
+  <p>以后做大模型强化学习时，你会经常看到“对同一个 prompt 采样多个回答”“保留输出多样性”“避免策略过早塌到一种行为”。这些现象和 bandit 的探索直觉有亲缘关系：如果策略从来不生成某类候选，就不可能从后续奖励里知道它是否更好。</p>
+  <p>但不要把两者直接画等号。提高 sampling temperature（采样温度）只是增加生成随机性，并不自动等价于“有信息价值的探索”；长轨迹、状态变化、奖励延迟和模型参数更新会让问题远比两臂老虎机复杂。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>真正稀缺的不是随机性，而是“能推翻当前信念的数据”</h3>
+      <p>随机选择当然能制造不同样本，但探索的目的不是让行为看起来丰富。真正有价值的是那些能区分“当前最好动作真的最好”与“我们只是暂时这么以为”的证据。</p>
+      <p class="mrl-insight-key">这给后面的现代 RL 留下一个很重要的问题：当动作空间巨大、轨迹很长时，怎样生成既多样、又真正有学习价值的 rollout（轨迹采样）？Bandit 只给了最小答案。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">09</span>检查你的理解：不要背策略名，解释它们为什么存在</h2>
+  <p class="mrl-sec-lead">下面的问题大多没有“看到关键词就能答”的捷径。能把因果关系说清楚，再进入下一章。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. A 的样本均值是 0.7，B 是 0.5。为什么还不能直接断言 A 的真实期望奖励更高？</summary><div class="inner">因为 $\hat\mu_A$ 和 $\hat\mu_B$ 都是有限样本估计。还需要知道各自动作被试了多少次、奖励噪声有多大，以及两者差距相对于不确定性是否足够大。5 次得到 0.7 和 5000 次得到接近 0.7，证据强度完全不同。</div></details>
+    <details><summary>2. 为什么纯贪心的错误可能“自我维持”？</summary><div class="inner">如果早期噪声让某个好动作被低估，纯贪心以后可能不再选择它；不选择就没有新样本，没有新样本就无法修正低估，于是当前错误估计反过来阻止产生纠错证据。</div></details>
+    <details><summary>3. $\epsilon$-贪心真正解决了纯贪心的哪一个结构性问题？</summary><div class="inner">它保证当前看起来不是最优的动作仍然有非零概率被再次选择，因此被低估的动作还有机会获得新证据、重新进入竞争。它并不能保证某个固定 $\epsilon$ 在所有环境和时间范围里都最优。</div></details>
+    <details><summary>4. UCB 为什么会选择一个当前样本均值更低的动作？</summary><div class="inner">因为 UCB 比较的是“当前估计 + 不确定性奖金”。一个动作如果尝试次数很少，均值虽然略低，但我们对它还缺证据；较大的不确定性奖金会让它值得再试。这个选择分数不是奖励概率。</div></details>
+    <details><summary>5. 如果只剩最后一次行动，探索通常为什么不值钱？</summary><div class="inner">探索得到的信息主要用于改善未来决策。如果没有未来轮次，这条信息几乎来不及产生回报；此时更合理的是利用当前最好的已有估计。时间范围越长，信息能被重复利用的机会越多。</div></details>
+    <details><summary>6. Regret 为什么同时会惩罚“探索太多”和“探索太少”？</summary><div class="inner">探索太多会反复选择已知较差动作，直接产生机会成本；探索太少又可能因为早期误判长期选错，同样持续产生机会成本。好的探索是在前期付出有限代价，以减少后面更大的持续损失。</div></details>
+    <details><summary>7. 为什么 bandit 还不足以描述 CartPole？</summary><div class="inner">Bandit 假设每一轮面对同一种决策局面，动作不会改变下一轮状态。CartPole 的动作会改变位置、速度、角度和角速度，因此动作的价值依赖当前状态，并且还要考虑对未来多步奖励的影响。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第二章真正建立起来的链条</h3>
+    <div class="mrl-flow" style="grid-template-columns:repeat(9,auto)">
+      <div class="box">随机奖励</div><div class="arrow">→</div><div class="box">有限样本估计</div><div class="arrow">→</div><div class="box">可能误判</div><div class="arrow">→</div><div class="box">需要探索</div><div class="arrow">→</div><div class="box">衡量机会成本</div>
+    </div>
+    <p>Exploration 不是 RL 里额外加的一点随机噪声。它从一个更基本的矛盾自然出现：<strong>我们需要数据来判断动作，但必须先选择动作才能得到数据。</strong></p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 3 章：把“动作会改变未来”正式写进问题</h3>
+    <p>Bandit 刻意删除了状态变化。下一章会把它加回来，并正式引入 <strong>Markov Decision Process（MDP，马尔可夫决策过程）</strong>：一种把状态、动作、状态转移和奖励放进同一套数学语言的序贯决策框架。那时我们终于可以精确讨论“今天的动作怎样改变明天”。</p>
+  </div>
+
+  <p class="mrl-source-note">本页参考 walkinglabs/hands-on-modern-rl 的 bandit 章节与 <code>code/chapter03_mdp/two_armed_bandit.py</code>，重新组织为 Chapter 01 → Chapter 03 之间的学习桥梁。上游材料还包含 Thompson sampling、理论 regret bound 等扩展；本页刻意不展开这些推导，把重点放在有限样本、探索动机、$\epsilon$-贪心、UCB 与 regret 的第一层心智模型。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 02</span><span><a href="./chapter01.html">← Chapter 01</a> · <a href="./">课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
