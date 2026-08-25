@@ -2,7 +2,7 @@
   "title": "将军令引",
   "title_en": "The General's Command",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 8.637936507936509,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.1218083886194531,
-    "normalization_gain": 7.060269081194099,
-    "rms_normalized": 0.08433951238773826,
+    "peak_before_safety": 0.12215257506951555,
+    "normalization_gain": 7.040375526349604,
+    "rms_normalized": 0.08406008262322888,
     "expanded_note_count": 19,
     "source_event_count": 18,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 19
   },
   "source_sha256": "a0063e91b9b784d97cd4ac125e240bd11aa45bed0e5229f9c1b7acb5c9c6de16",
-  "wav_sha256": "70295a2b6d0f01a16de803f31b4e3f9d77210edb5c78ed78af77bc4b776ef8ff",
+  "wav_sha256": "7906d4f76cf4c0037a06db010af60ecfa66bde38832aade885961406d1d61895",
   "midi_sha256": "2680d5adc6b535af9f17f558c4265d7d658198e74742658a468bcac827d60ca3",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

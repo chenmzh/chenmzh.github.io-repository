@@ -2,7 +2,7 @@
   "title": "武陵桃花",
   "title_en": "Peach Blossom Vale",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 13.071428571428571,
-    "peak_normalized": 0.8599999999999999,
-    "peak_before_safety": 0.10078921156763926,
-    "normalization_gain": 8.532659266045128,
-    "rms_normalized": 0.05706021289208703,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.10062893666141436,
+    "normalization_gain": 8.546249503695318,
+    "rms_normalized": 0.05711791798050982,
     "expanded_note_count": 14,
     "source_event_count": 14,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 14
   },
   "source_sha256": "ca02d625a74d98501c11070cd81a8faad13025059106b60dea1e0a09a9dc8393",
-  "wav_sha256": "2171b70d57c5128864ba143b560386fb1ce214fac3c29a7c771880bd04f79b92",
+  "wav_sha256": "f03216d4d07ed3b6567566f55165adfbffb0e6da54af48ffea8188da69092f0c",
   "midi_sha256": "ac0f50b41842d71ba6bf4cbd8f0627237993329190ff582dee860d73bf312391",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

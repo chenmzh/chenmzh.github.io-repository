@@ -2,7 +2,7 @@
   "title": "小桥流水",
   "title_en": "Beneath the Little Bridge",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 9.5,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.10523194286529541,
-    "normalization_gain": 8.172423473173568,
-    "rms_normalized": 0.08445999656481354,
+    "peak_normalized": 0.8600000000000001,
+    "peak_before_safety": 0.10574241968766956,
+    "normalization_gain": 8.132970689910202,
+    "rms_normalized": 0.08402395969855712,
     "expanded_note_count": 23,
     "source_event_count": 23,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 23
   },
   "source_sha256": "e4431f9670794749acb3257038b48327082911a52091934972b640a4e7760de7",
-  "wav_sha256": "99f4b1941c9fdaa6c1baca85545070dd76dbc51a5e6bad282348a3b0190a408d",
+  "wav_sha256": "2a54dea95a5c33d212a901655deb623d818d10a00ddd692af2176cbc88a7a3e9",
   "midi_sha256": "edea62796c7c43f450cd1f58246ffd12a0a604484148ea634db5a2c40f5eeb05",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

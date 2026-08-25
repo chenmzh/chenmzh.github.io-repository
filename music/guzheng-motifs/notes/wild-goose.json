@@ -2,7 +2,7 @@
   "title": "孤雁南飞",
   "title_en": "A Lone Goose Flying South",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -148,7 +148,7 @@
     "peak_normalized": 0.86,
     "peak_before_safety": 0.08177377359130575,
     "normalization_gain": 10.51681929585595,
-    "rms_normalized": 0.037886737057414084,
+    "rms_normalized": 0.03783396523956295,
     "expanded_note_count": 7,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 7
   },
   "source_sha256": "d00f3dbfe01dca0c2f9cf2b589e706340dbdbc0128ebd1563fb4abb003642623",
-  "wav_sha256": "b1c80a2e32c373984c44642a2c04c3f2a98317eecaad864d481fcf9b7090697f",
+  "wav_sha256": "f19b551eb30db91c84467162a6c35516173dcd23fc536de7021e8b0dd5530142",
   "midi_sha256": "c677e1fcbd6b26d9be4c8a946392e331487fd28d74ee146495db56bcff463287",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

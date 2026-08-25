@@ -2,7 +2,7 @@
   "title": "空谷回音",
   "title_en": "Echo in the Empty Valley",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -148,7 +148,7 @@
     "peak_normalized": 0.86,
     "peak_before_safety": 0.0843394611600725,
     "normalization_gain": 10.196887532489194,
-    "rms_normalized": 0.039584534792486505,
+    "rms_normalized": 0.039576119968633215,
     "expanded_note_count": 6,
     "source_event_count": 6,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 6
   },
   "source_sha256": "77e4e72680ab63de4ed6f50b1651cba1e3d1e52893c3cfd5fc62545ccdd44288",
-  "wav_sha256": "7b9d097336670e753a495ed739a5a89fe5049c1964deaa1e75ea6bd4818d4b66",
+  "wav_sha256": "42e2570a0c218e1a6b1f67a62f54e24b4dc935bc12b6cab4a099fd928689ee36",
   "midi_sha256": "b9aa9f5b8960cabe2646bb8a2e7a15580e0fbe98689ea5ddebb06ccb687f30b4",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

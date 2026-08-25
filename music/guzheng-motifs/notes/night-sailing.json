@@ -2,7 +2,7 @@
   "title": "星夜行舟",
   "title_en": "Boating Under the Stars",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 15.088253968253968,
-    "peak_normalized": 0.8599999999999999,
-    "peak_before_safety": 0.08948309319562056,
-    "normalization_gain": 9.610754046241325,
-    "rms_normalized": 0.06598742087965108,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.0896555945296314,
+    "normalization_gain": 9.592262529872219,
+    "rms_normalized": 0.06582486937416797,
     "expanded_note_count": 16,
     "source_event_count": 9,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 16
   },
   "source_sha256": "8c487f41a1f134dd36127aa1281aeae813a5d40ebf0dbf773240a6b3d8d8d599",
-  "wav_sha256": "31153fd9a080f5e9d544168f72081691e7822d262f53f997fc88475efdb9e1a0",
+  "wav_sha256": "da08a63c1ed039dc201adac7c6f5129fbb8865cbdb1705fc6cc0ddf1126a30af",
   "midi_sha256": "eea48ca5a89c1301e0340684962d8a1332d320c011f28df6bb98d9f7697fa7b9",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

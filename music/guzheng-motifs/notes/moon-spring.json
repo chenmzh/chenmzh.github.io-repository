@@ -2,7 +2,7 @@
   "title": "月下听泉",
   "title_en": "Listening to the Spring by Moonlight",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.1",
+  "renderer_version": "1.6.2",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.815804988662132,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.09110710201347916,
-    "normalization_gain": 9.439439747219314,
-    "rms_normalized": 0.06755374817066175,
+    "peak_before_safety": 0.09085041511884334,
+    "normalization_gain": 9.466109746169193,
+    "rms_normalized": 0.06760616428419128,
     "expanded_note_count": 17,
     "source_event_count": 10,
     "tail_seconds": 4.5,
@@ -186,7 +186,7 @@
           0.012
         ]
       ],
-      "wet_scale": 0.5
+      "wet_scale": 0.35
     }
   },
   "midi": {
@@ -196,7 +196,7 @@
     "note_event_count": 17
   },
   "source_sha256": "dbb94d5101ecb54d7ad2a7ea4e7a8d75abad429ca6eb15cd79200d597d06fca0",
-  "wav_sha256": "03b3a595de5925c26313e8d7386c0f62db738d74e9673dc3aef6423703b0d73d",
+  "wav_sha256": "56f79bb7e796a1af1a13e1cec757450f287ae20b8ffe4432257b9ed7d0c8f86d",
   "midi_sha256": "2760fe5e4882942f2802c25208be2ae465acd624240f92c067ae6c493533e883",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
