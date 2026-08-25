@@ -206,6 +206,7 @@
       var card = mkCard(p, 'progression');
       progWrap.appendChild(card);
     });
+    syncPreviewButtons();
   }
 
   function mkCard(item, type) {
@@ -221,12 +222,47 @@
       '<div class="pal-card-desc">' + (item.desc || '') + '</div>' +
       '<div class="pal-card-foot"><span class="pal-card-bars">' + item.bars + ' 小节</span>' +
       '<button class="pal-card-preview" title="试听">▶ 试听</button></div>';
-    // 试听
+    // 试听：第一次播放，第二次停止
     $('.pal-card-preview', div).addEventListener('click', function (ev) {
       ev.stopPropagation();
-      previewItem(item, type);
+      togglePreview(item, type);
     });
     return div;
+  }
+
+  var previewState = { ref: null, type: null, card: null };
+
+  function syncPreviewButtons() {
+    var cards = $$('.pal-card');
+    for (var i = 0; i < cards.length; i++) {
+      var btn = $('.pal-card-preview', cards[i]);
+      if (!btn) continue;
+      var active = previewState.card === cards[i];
+      btn.textContent = active ? '■ 停止' : '▶ 试听';
+      btn.classList.toggle('is-previewing', active);
+    }
+  }
+
+  function togglePreview(item, type) {
+    // 同一素材正在试听 → 停止
+    if (previewState.ref === item.id && previewState.type === type) {
+      audio.stopPreview();
+      previewState = { ref: null, type: null, card: null };
+      syncPreviewButtons();
+      return;
+    }
+    // 其它素材/新试听 → 先停旧（audio.preview 内部也会停），再播
+    previewItem(item, type);
+    previewState = { ref: item.id, type: type, card: previewState.card };
+    syncPreviewButtons();
+    // 找到卡片（palette 重建过时，ref 定位）
+    var cards = $$('.pal-card');
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].dataset.ref === item.id && cards[i].dataset.type === type) {
+        previewState.card = cards[i];
+      }
+    }
+    syncPreviewButtons();
   }
 
   function previewItem(item, type) {
@@ -270,7 +306,7 @@
   function timelinePxPerBar() {
     var tl = $('#timeline');
     var w = Math.max(tl.clientWidth - 8, 220);
-    return w / project.totalBars;
+    return Math.max(40, w / project.totalBars);   // 保证块内文字可读，过窄则横向滚动
   }
 
   function pointToVoice(x, y) {
@@ -308,8 +344,10 @@
         '<span class="voice-idx">' + (idx + 1) + '</span>' +
         (project.voices.length > 1 ? '<button class="vbtn vbtn--del" title="删除声部">✕</button>' : '') +
         '</div>' +
+        '<div class="voice-selects">' +
         '<select class="voice-timbre" title="音色">' + timbreOpts + '</select>' +
         '<select class="voice-sustain" title="延音">' + sustainOpts + '</select>' +
+        '</div>' +
         '<div class="voice-controls">' +
         '<button class="vbtn vbtn--mute' + muted + '" title="静音">M</button>' +
         '<button class="vbtn vbtn--solo' + solod + '" title="独奏">S</button>' +
@@ -405,6 +443,7 @@
         var w = blk.bars * timelinePxPerBar();
         bEl.style.left = x + 'px';
         bEl.style.width = Math.max(w, 14) + 'px';
+        if (Math.max(w, 14) < 96) bEl.classList.add('tl-block--narrow');
         var refObj = blk.type === 'motif' ? content.motif(blk.ref) : content.progression(blk.ref);
         var nm = refObj ? refObj.name : blk.ref;
         var octText = blk.octave ? (blk.octave > 0 ? '+' + blk.octave : '' + blk.octave) : '';
@@ -412,6 +451,7 @@
         var extra = blk.type === 'motif'
           ? (octText ? ' ' + octText : '') + (trText ? ' ' + trText : '')
           : (', ' + ((content.STYLES[blk.style] || {}).name || blk.style) + (octText ? ' ' + octText : '') + (trText ? ' ' + trText : ''));
+        bEl.title = nm + ' · ' + blk.bars + ' 小节';
         bEl.innerHTML =
           '<span class="tl-block-name">' + nm + '</span>' +
           '<span class="tl-block-meta">' + blk.bars + '小节' + extra + '</span>' +
@@ -909,6 +949,14 @@
     // 素材卡拖拽（pointer 统一）
     initPaletteDrag();
 
+    // 试听自动结束后复位按钮态
+    setInterval(function () {
+      if (previewState.ref && !audio.isPreviewing()) {
+        previewState = { ref: null, type: null, card: null };
+        syncPreviewButtons();
+      }
+    }, 350);
+
     // 全局 mousemove 记录
 
     // 快捷键：选中块删除
@@ -1017,6 +1065,7 @@
     _fireNote: function (n, when) { fireEventAt(n, when); },
     _buildSchedule: function () { return buildToneSchedule(); },
     _schedulerRunning: function () { return !!toneScheduled; },
+    _pxPerBar: function () { return timelinePxPerBar(); },
     _theory: theory, _content: content, _engine: engine
   };
 })(window.GZS = window.GZS || {});

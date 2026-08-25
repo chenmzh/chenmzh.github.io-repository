@@ -216,6 +216,35 @@ function finish() {
 // 兼容：若上面异步没跑（不应发生），保证退出
 setTimeout(() => finish(), 5000);
 
+/* ============ R12 每个音的音准复核（采样变调数学） ============ */
+load('../lib/audio.js');
+// 实测 CC0 采样攻击段基频（A3≈219.4Hz，低 4.7 音分）
+const MEASURED = { 57: 219.4, 81: 877.6 };   // 锚点：A3 / A5(由 A3 ×4 生成，基频一致)
+(function () {
+  const A = GZS.audio;
+  let worstCents = 0, worstMidi = null;
+  let clampViolations = 0;
+  for (let m = 40; m <= 96; m++) {
+    const pr = A.pitchRate(m);
+    const anchor = pr.anchor;
+    const srcHz = MEASURED[anchor];
+    const outHz = srcHz * pr.rate;
+    const targetHz = 440 * Math.pow(2, (m - 69) / 12);
+    const cents = 1200 * Math.log2(outHz / targetHz);
+    if (Math.abs(cents) > worstCents) { worstCents = Math.abs(cents); worstMidi = m; }
+    if (pr.rate > 2.5) clampViolations++;
+  }
+  check('R12.1 全音域 40..96 变调倍速均 ≤2.5（无钳位把音拉偏；旧版 2.6 钳位使 E5+ 全偏低）', clampViolations === 0, 'violations:' + clampViolations);
+  check('R12.2 每个音的最终频率误差 ≤ ±3 音分', worstCents <= 3, 'worst:' + worstCents.toFixed(2) + 'c @midi' + worstMidi);
+  check('R12.3 高音区(≥74)自动选 A5 锚点', (function(){ for (let m=74;m<=96;m++){ if (GZS.audio.pitchRate(m).anchor !== 81) return false; } return true; })());
+  check('R12.4 低音区(≤40)自动选 A3 锚点', (function(){ for (let m=40;m<=48;m++){ if (GZS.audio.pitchRate(m).anchor !== 57) return false; } return true; })());
+  // 音名复核：每个 midi 的音名与 targetHz 一致
+  check('R12.5 高八度 re(E5=76) 输出频率 = 目标 659.26Hz ±3c', (function(){
+    const pr = A.pitchRate(76); const out = MEASURED[pr.anchor]*pr.rate;
+    return Math.abs(1200*Math.log2(out/659.2551)) <= 3;
+  })());
+})();
+
 /* ============ 持久化结构 ============ */
 const normalized = E.normalize(loopProj);
 check('P1 normalize 保留 voices/blocks', normalized.voices.length === 2 && normalized.blocks.length === 2);

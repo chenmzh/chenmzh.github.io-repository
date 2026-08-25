@@ -7,13 +7,17 @@
 (function (G) {
   'use strict';
 
-  var SAMPLE_MIDI = 57;              // 采样基准音 A3
-  var SAMPLE_URL = 'audio/guzheng-a3.wav';
+  // —— 采样集：双锚点（A3 57 / A5 81），就近选样让变调倍速 ≤2，音准更稳 ——
+  var SAMPLE_SET = [
+    { midi: 57, url: 'audio/guzheng-a3.wav', buf: null, actualAtk: 219.4 },
+    { midi: 81, url: 'audio/guzheng-a5.wav', buf: null, actualAtk: 877.6 }
+  ];
+  // 实测：CC0 采样基频 219.4Hz（A3=220Hz，低 4.7 音分）。统一 +5 音分修正。
+  var PITCH_CORR_CENTS = 5;
 
   var Tone = window.Tone;
   var ctx = null;
   var master = null, dryBus = null, wetBus = null, conv = null, comp = null;
-  var sampleBuffer = null;            // AudioBuffer
   var voiceChains = {};               // voiceId -> {gain, panner}
   var started = false;
   var loadState = 'waiting';          // waiting | loading | ready | error
@@ -69,17 +73,21 @@
   function loadSample() {
     if (loadState === 'loading' || loadState === 'ready') return Promise.resolve(loadState);
     loadState = 'loading'; notify();
-    return fetch(SAMPLE_URL)
-      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
-      .then(function (buf) {
-        var ac = ensureContext();
-        return new Promise(function (resolve, reject) {
-          ac.decodeAudioData(buf, function (ab) {
-            sampleBuffer = ab; loadState = 'ready'; notify(); resolve('ready');
-          }, function (e) { loadState = 'error'; notify(); reject(e); });
+    var ac = null;
+    function fetchOne(item) {
+      return fetch(item.url).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+        .then(function (buf) {
+          if (!ac) ac = ensureContext();
+          return new Promise(function (resolve, reject) {
+            ac.decodeAudioData(buf, function (ab) { item.buf = ab; resolve(); }, reject);
+          });
         });
-      })
-      .catch(function (e) { loadState = 'error'; notify(); throw e; });
+    }
+    var chain = Promise.resolve();
+    SAMPLE_SET.forEach(function (item) { chain = chain.then(function () { return fetchOne(item); }); });
+    return chain.then(function () {
+      loadState = anySample() ? 'ready' : 'error'; notify(); return loadState;
+    }).catch(function (e) { loadState = 'error'; notify(); throw e; });
   }
 
   /** 每声部链：gain -> panner -> master */
@@ -105,6 +113,25 @@
 
   function velGain(vel) { return 0.12 + (vel / 100) * 0.75; }
 
+  /* 音准核心：就近选锚点 + 基音偏差修正，倍速天然 ≤2.03（无钳位失真） */
+  function pitchRate(midi) {
+    var best = SAMPLE_SET[0], bestD = 1e9;
+    for (var i = 0; i < SAMPLE_SET.length; i++) {
+      var d = Math.abs(midi - SAMPLE_SET[i].midi);
+      if (d < bestD || (d === bestD && SAMPLE_SET[i].midi < best.midi)) { bestD = d; best = SAMPLE_SET[i]; }
+    }
+    var rate = Math.pow(2, (midi - best.midi) / 12) * Math.pow(2, PITCH_CORR_CENTS / 1200);
+    return { anchor: best.midi, rate: rate };
+  }
+  function sampleOf(anchorMidi) {
+    for (var i = 0; i < SAMPLE_SET.length; i++) if (SAMPLE_SET[i].midi === anchorMidi) return SAMPLE_SET[i];
+    return null;
+  }
+  function anySample() {
+    for (var i = 0; i < SAMPLE_SET.length; i++) if (SAMPLE_SET[i].buf) return SAMPLE_SET[i];
+    return null;
+  }
+
   /* ---------------- 单音符触发 ---------------- */
   /**
    * trigger(voiceId, volume, pan, opts, midi, whenSec, vel, durSec)
@@ -118,15 +145,16 @@
     var vg = velGain(vel);
 
     if (opts.timbre === 'sample') {
-      if (!sampleBuffer) return;               // 采样未就绪 → 静音（不会报错）
+      var pr = pitchRate(midi);
+      var item = sampleOf(pr.anchor) || anySample();
+      if (!item || !item.buf) return;          // 采样未就绪 → 静音（不会报错）
       var t0 = now + 0.004;
       var src = ac.createBufferSource();
-      src.buffer = sampleBuffer;
-      var rate = Math.pow(2, (midi - SAMPLE_MIDI) / 12);
-      src.playbackRate.value = Math.max(0.35, Math.min(2.6, rate));
+      src.buffer = item.buf;
+      src.playbackRate.value = pr.rate;
       var g = ac.createGain();
       var peak = Math.min(vg * 0.95, 0.92);
-      var ringSec = sampleBuffer.duration / src.playbackRate.value;
+      var ringSec = item.buf.duration / pr.rate;
       var hold = Math.min(durSec * sustain * 1.15, ringSec - 0.05);
       hold = Math.max(hold, 0.12);
       g.gain.setValueAtTime(0.0001, t0);
@@ -182,17 +210,48 @@
     if (master) master.gain.setTargetAtTime(Math.max(0, Math.min(1.4, v)), ctx.currentTime, 0.05);
   }
 
-  /* ---------------- 素材试听 ---------------- */
+  /* ---------------- 素材试听（可停止：再点即停） ---------------- */
+  var previewSession = null;   // {id, endTimer}
+  var previewGate = null;      // 试听专用增益门（stop 时淡出即可立刻止音）
+
   function preview(notes, bpm, timbre) {
     ensureContext(); resume();
-    var t0 = ctx.currentTime + 0.07;
+    stopPreview();              // 已有试听 → 先停（切换素材/重按都覆盖）
+    var ac = ctx;
+    if (!previewGate) {
+      previewGate = ac.createGain(); previewGate.connect(master);
+    }
+    previewGate.gain.cancelScheduledValues(ac.currentTime);
+    previewGate.gain.setTargetAtTime(1, ac.currentTime, 0.005); // 恢复门（上次可能被 stop 淡出）
+    var sessionId = Math.random().toString(36).slice(2, 9);
+    var t0 = ac.currentTime + 0.07;
     var beatSec = 60 / (bpm || 90);
     for (var i = 0; i < notes.length; i++) {
       var n = notes[i];
-      trigger('__preview__', 0.85, 0, { timbre: timbre || 'sample', ring: 0.8 },
+      trigger('__preview__', 0.5, 0, { timbre: timbre || 'sample', ring: 0.8 },
         n.midi, t0 + n.t * beatSec, n.vel, Math.max(n.dur * beatSec * 0.85, 0.22));
     }
+    // 自动结束：所有音符播完 + 尾韵
+    var maxT = 0;
+    for (var j = 0; j < notes.length; j++) maxT = Math.max(maxT, notes[j].t * beatSec + Math.max(notes[j].dur * beatSec, 0.4));
+    previewSession = {
+      id: sessionId,
+      endTimer: setTimeout(function () { if (previewSession && previewSession.id === sessionId) stopPreview(); }, (maxT + 0.6) * 1000)
+    };
+    return sessionId;
   }
+
+  function stopPreview() {
+    if (!previewSession) return false;
+    var s = previewSession; previewSession = null;
+    clearTimeout(s.endTimer);
+    if (previewGate && ctx) {
+      previewGate.gain.cancelScheduledValues(ctx.currentTime);
+      previewGate.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.015);
+    }
+    return true;
+  }
+  function isPreviewing() { return !!previewSession; }
 
   /* ---------------- 录音 → WAV ---------------- */
   function beginRecord() {
@@ -258,11 +317,16 @@
     onChange: onChange, resume: resume, ensureContext: ensureContext,
     loadSample: loadSample, loadState: function () { return loadState; },
     getStarted: function () { return started; },
-    hasSample: function () { return !!sampleBuffer; },
+    hasSample: function () { return !!anySample(); },
+    pitchRate: pitchRate,
+    SAMPLE_SET: SAMPLE_SET,
+    PITCH_CORR_CENTS: PITCH_CORR_CENTS,
     voiceChain: voiceChain, setChainParams: setChainParams,
     trigger: trigger,
     setReverb: setReverb, setMasterVolume: setMasterVolume,
     preview: preview,
+    stopPreview: stopPreview,
+    isPreviewing: isPreviewing,
     beginRecord: beginRecord, endRecord: endRecord, wavFromBuffer: wavFromBuffer
   };
 })(window.GZS = window.GZS || {});

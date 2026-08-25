@@ -328,8 +328,7 @@ cases.push({ name: 'B8 素材 pointer 拖拽（鼠标）→ 声部 v0 生成块'
     var card = document.querySelector('#motif-palette .pal-card');
     var lane = document.querySelector('.voice-track');
     var rect = lane.getBoundingClientRect();
-    var tl = document.querySelector('#timeline');
-    var pxPerBar = (tl.clientWidth - 8) / app.project().totalBars;
+    var pxPerBar = app._pxPerBar();
     var barX = rect.left + 2 * pxPerBar;
     var barY = rect.top + rect.height / 2;
     if (barY > window.innerHeight - 30 || barY < 30) return {skip:'lane 不在视口: y=' + Math.round(barY) + ' vh=' + window.innerHeight};
@@ -359,8 +358,7 @@ cases.push({ name: 'B9 素材 pointer 拖拽（触摸）→ 同样生效', fn: a
     var card = document.querySelector('#prog-palette .pal-card');
     var lane = document.querySelectorAll('.voice-track')[1] || document.querySelector('.voice-track');
     var rect = lane.getBoundingClientRect();
-    var tl = document.querySelector('#timeline');
-    var pxPerBar = (tl.clientWidth - 8) / app.project().totalBars;
+    var pxPerBar = app._pxPerBar();
     var x = rect.left + 1 * pxPerBar, y = rect.top + rect.height/2;
     if (y > window.innerHeight - 30 || y < 30) return {skip:'lane 不在视口: y=' + Math.round(y)};
     card.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true, clientX:rect.left+20, clientY:rect.top+8, pointerId:7, pointerType:'touch', isPrimary:true}));
@@ -385,10 +383,9 @@ cases.push({ name: 'B10 时间轴块拖动移动 (pointer)', fn: async (c) => {
     var start0 = blk0.startBar;
     var elB = document.querySelector('.tl-block');
     var rect = elB.getBoundingClientRect();
-    var tl = document.querySelector('#timeline');
-    var pxPerBar = (tl.clientWidth - 8) / app.project().totalBars;
-    elB.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:rect.left+rect.width/2, clientY:rect.top+10, button:0}));
-    document.dispatchEvent(new MouseEvent('mousemove', {bubbles:true, clientX:rect.left+rect.width/2 + pxPerBar*2, clientY:rect.top+10}));
+    var pxPerBar = app._pxPerBar();
+    elB.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:rect.left+Math.min(rect.width/2, pxPerBar*0.5), clientY:rect.top+10, button:0}));
+    document.dispatchEvent(new MouseEvent('mousemove', {bubbles:true, clientX:rect.left+Math.min(rect.width/2, pxPerBar*0.5) + pxPerBar*2, clientY:rect.top+10}));
     document.dispatchEvent(new MouseEvent('mouseup', {bubbles:true}));
     return {start0:start0, start1:blk0.startBar};
   })()`);
@@ -406,10 +403,9 @@ cases.push({ name: 'B11 手柄改长度 (resize-r)', fn: async (c) => {
     var elB = document.querySelector('.tl-block');
     var handle = elB.querySelector('.tl-block-handle--r');
     var rect = handle.getBoundingClientRect();
-    var tl = document.querySelector('#timeline');
-    var pxPerBar = (tl.clientWidth - 8) / app.project().totalBars;
-    handle.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:rect.left, clientY:rect.top+5, button:0}));
-    document.dispatchEvent(new MouseEvent('mousemove', {bubbles:true, clientX:rect.left + pxPerBar*1.5, clientY:rect.top+5}));
+    var pxPerBar = app._pxPerBar();
+    handle.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, clientX:rect.left + rect.width - 2, clientY:rect.top+5, button:0}));
+    document.dispatchEvent(new MouseEvent('mousemove', {bubbles:true, clientX:rect.left + rect.width - 2 + pxPerBar*1.5, clientY:rect.top+5}));
     document.dispatchEvent(new MouseEvent('mouseup', {bubbles:true}));
     return {b0:b0, b1:blk0.bars};
   })()`);
@@ -595,6 +591,56 @@ cases.push({ name: 'B19 全过程零控制台异常（汇总）', fn: async (c) 
     return true;
   })()`);
   return r.ok ? true : '交互异常';
+}});
+
+cases.push({ name: 'B21 试听：第一次播放、第二次停止', fn: async (c) => {
+  await c.evaluate(Q.unlock);
+  const r = await c.evaluate(`(function(){
+    var origPreview = GZS.audio.preview, origStop = GZS.audio.stopPreview;
+    var calls = 0, stops = 0;
+    GZS.audio.preview = function(){ calls++; return origPreview.apply(this, arguments); };
+    GZS.audio.stopPreview = function(){ stops++; return origStop.apply(this, arguments); };
+    var btn = document.querySelector('#motif-palette .pal-card .pal-card-preview');
+    btn.click();                                  // 第一次：播放
+    var label1 = btn.textContent;
+    var previewing1 = GZS.audio.isPreviewing();
+    var btn2 = document.querySelector('#motif-palette .pal-card:nth-child(1) .pal-card-preview');
+    btn2.click();                                 // 同一卡片第二次：停止
+    var label2 = btn2.textContent;
+    var previewing2 = GZS.audio.isPreviewing();
+    GZS.audio.preview = origPreview; GZS.audio.stopPreview = origStop;
+    return { calls: calls, stops: stops, label1: label1, label2: label2, previewing1: previewing1, previewing2: previewing2 };
+  })()`);
+  const v = r.val;
+  if (v.calls !== 1) return '首次点击未触发 preview: ' + v.calls;
+  if (!v.previewing1) return '播放后 isPreviewing 应为 true';
+  if (v.label1.indexOf('停止') < 0) return '按钮未变为停止: ' + v.label1;
+  if (v.stops < 1 || v.previewing2) return '第二次点击未停止';
+  if (v.label2.indexOf('试听') < 0) return '按钮未复位: ' + v.label2;
+  return true;
+}});
+
+cases.push({ name: 'B22 布局：无可见文本挤压 + 列对齐', fn: async (c) => {
+  const r = await c.evaluate(`(function(){
+    var crushed = [];
+    document.querySelectorAll('.tl-block-name, .tl-block-meta, .pal-card-name, .voice-name, .gz-playhead-readout').forEach(function(el){
+      var sw = el.scrollWidth, cw = el.clientWidth, rc = el.getBoundingClientRect();
+      if (cw > 0 && sw > cw + 4 && rc.height > 0) {
+        var block = el.closest('.tl-block');
+        if (block && block.classList.contains('tl-block--narrow')) return; // 窄块省略号属正常
+        crushed.push(el.className + ':' + el.textContent.trim().slice(0,12));
+      }
+    });
+    var vh = document.querySelector('.voice-head'), tr = document.querySelector('.voice-track');
+    var vb = vh.getBoundingClientRect(), tb = tr.getBoundingClientRect();
+    return { crushed: crushed, headAligned: Math.abs(vb.top - tb.top) < 4,
+      colRight: Math.round(document.querySelector('.gz-inspector').getBoundingClientRect().right) <= window.innerWidth };
+  })()`);
+  const v = r.val;
+  if (v.crushed.length) return '文本挤压: ' + v.crushed.join('; ');
+  if (!v.headAligned) return '声部头与轨道错位';
+  if (!v.colRight) return 'inspector 超出右缘';
+  return true;
 }});
 
 cases.push({ name: 'B20 移动端单列布局', fn: async (c) => {
