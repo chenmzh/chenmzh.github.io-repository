@@ -14,6 +14,16 @@
       if (bad) throw new Error(`HTTP ${bad.status}`);
       const parts = await Promise.all(responses.map(response => response.text()));
       host.innerHTML = parts.join('\n');
+
+      // Keep first-use terminology strict in the rendered page: do not surface
+      // “bandit” in the hero metadata before the full term is explained below.
+      const labPill = $$('.mrl-meta .mrl-pill', host)
+        .find(node => node.textContent.toLowerCase().includes('bandit'));
+      if (labPill) labPill.textContent = '实验：纯浏览器双动作实验';
+
+      // Default to a deterministic run that clearly exposes greedy lock-in.
+      const seedSelect = $('#banditSeed', host);
+      if (seedSelect) seedSelect.value = '31';
       return true;
     } catch (err) {
       host.innerHTML = `
