@@ -1,0 +1,2952 @@
+{
+  "title": "霓虹湾岸",
+  "title_en": "Neon Bayside",
+  "tempo_bpm": 108,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D major (Ionian)",
+  "bars": 28,
+  "sample_rate": 44100,
+  "seed": 20260828,
+  "description": "明亮紧致的古筝 City Pop：以 F#–A–B–C# 四音动机贯穿可唱上方线条，短反拍 guide-tone 和声、清晰低音根音/五音/经过音与受控尾韵在 D 大调湾岸夜行中融合。",
+  "form": [
+    {
+      "bars": "1-4",
+      "name": "motif_intro",
+      "layers": [
+        "motif"
+      ],
+      "note": "F#4–A4–B4–C#5 完整动机以十六分前置、反拍和留白出现。"
+    },
+    {
+      "bars": "5-8",
+      "name": "upper_melody_entry",
+      "layers": [
+        "upper_melody",
+        "harmony"
+      ],
+      "note": "上方进入四小节主题；动机音级被拉成可唱的级进句，和声只在短反拍出现。"
+    },
+    {
+      "bars": "9-20",
+      "name": "independent_bass_and_three_layers",
+      "layers": [
+        "upper_melody",
+        "lower_melody",
+        "harmony"
+      ],
+      "note": "低音以根音、五音和经过音形成独立切分线；每小节保留三层但不在同拍堆满。"
+    },
+    {
+      "bars": "21-28",
+      "name": "chorus_coda",
+      "layers": [
+        "upper_melody",
+        "lower_melody",
+        "harmony"
+      ],
+      "note": "副歌尾声提高到 A5/B5 邻域，保留 66–69–71–73 动机引用，最后以短 guide tones 和 D 色彩收束。"
+    }
+  ],
+  "harmony_plan": [
+    {
+      "bars": "5",
+      "chord": "IVmaj7 / Gmaj7",
+      "function": "bright subdominant; simplified guide tones",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "6",
+      "chord": "V13 / A13",
+      "function": "open dominant; 1-5-9/13 guide tones",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "7",
+      "chord": "iiim7 / F#m7",
+      "function": "relative-minor color; 3-1-11 guide tones",
+      "voicing_midi": [
+        57,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "8",
+      "chord": "vi7 / Bm7",
+      "function": "vi turnaround",
+      "voicing_midi": [
+        59,
+        62,
+        66
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "9",
+      "chord": "ii / Em9",
+      "function": "ii of D; 5-1/9 guide tones",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "10",
+      "chord": "V13 / A13",
+      "function": "dominant lift",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "11",
+      "chord": "I / Dmaj9",
+      "function": "tonic arrival",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "12",
+      "chord": "I color / D6/9",
+      "function": "sunlit tonic extension",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "13",
+      "chord": "V/ii / B7(b9)",
+      "function": "secondary dominant; 1-5-b7 guide tones",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "14",
+      "chord": "ii / Em9",
+      "function": "release from B7(b9)",
+      "voicing_midi": [
+        59,
+        64,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "15",
+      "chord": "V13 / A13",
+      "function": "dominant lift",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "16",
+      "chord": "I / Dmaj9",
+      "function": "tonic arrival",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "17",
+      "chord": "borrowed ivm6 / Gm6",
+      "function": "borrowed color; simplified non-clashing guide tones",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "18",
+      "chord": "D7(13) -> IV",
+      "function": "dominant seventh return; guide-tone shell",
+      "voicing_midi": [
+        62,
+        69,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "19",
+      "chord": "IVmaj7 / Gmaj7",
+      "function": "bright release",
+      "voicing_midi": [
+        62,
+        69,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "20",
+      "chord": "V13 / A13",
+      "function": "chorus preparation",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "21",
+      "chord": "I / Dmaj9",
+      "function": "chorus tonic",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "22",
+      "chord": "IVmaj7 / Gmaj7",
+      "function": "chorus lift",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "23",
+      "chord": "V13 / A13",
+      "function": "chorus dominant",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "24",
+      "chord": "I color / D6/9",
+      "function": "chorus response",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "25",
+      "chord": "IVmaj7 / Gmaj7",
+      "function": "final lift",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "26",
+      "chord": "V13 / A13",
+      "function": "final dominant",
+      "voicing_midi": [
+        57,
+        64,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "27",
+      "chord": "I / Dmaj9",
+      "function": "tonic coda",
+      "voicing_midi": [
+        62,
+        66,
+        71
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    },
+    {
+      "bars": "28",
+      "chord": "I color / D6/9",
+      "function": "bright final release",
+      "voicing_midi": [
+        64,
+        66,
+        69
+      ],
+      "comping_beats": [
+        1.75,
+        3.75
+      ]
+    }
+  ],
+  "motif": {
+    "name": "bayside_four_note_hook",
+    "pitch_midi": [
+      66,
+      69,
+      71,
+      73
+    ],
+    "pitch_names": [
+      "F#4",
+      "A4",
+      "B4",
+      "C#5"
+    ],
+    "contour": [
+      3,
+      2,
+      2
+    ],
+    "rhythmic_feel": "syncopated 16th anticipation with rests; accents on offbeats and held anticipations",
+    "opening_bars": "bars 1-4 state the hook alone; bars 9/13/17/21/25/28 quote its four-note contour in the upper line"
+  },
+  "style_notes": [
+    "D 大调、108 BPM、明亮紧致的古筝 City Pop；融合优先，不用持续阴暗铺底。",
+    "harmony 每次 2–3 个 guide tones，固定在 1.75 与 3.75 拍的短反拍，避免同拍堆满。",
+    "lower_melody 位于 42–55，以根音/五音/经过音切分推进；upper_melody 主体位于 69–83，仅在动机引用处下探 MIDI 66。",
+    "ring_scale 将短和声压到 0.12、bass 置于 0.27、upper/motif 置于 0.45，终止上方长音保留同一受控尾韵。",
+    "和声明确覆盖 Gmaj7–A13–F#m7–Bm7、Em9–A13–Dmaj9、B7(b9)、Gm6 与 D7(13)；过密扩展音简化为 guide-tone shell。"
+  ],
+  "events": [
+    {
+      "start": 0.5,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 1.25,
+      "dur": 0.34,
+      "midi": 69,
+      "velocity": 72,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 2.0,
+      "dur": 0.34,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 2.75,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 4.25,
+      "dur": 0.3,
+      "midi": 66,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 5.0,
+      "dur": 0.3,
+      "midi": 69,
+      "velocity": 72,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 5.75,
+      "dur": 0.3,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 6.5,
+      "dur": 0.62,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 8.5,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 9.25,
+      "dur": 0.34,
+      "midi": 69,
+      "velocity": 72,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 10.25,
+      "dur": 0.38,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 11.0,
+      "dur": 0.52,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 12.25,
+      "dur": 0.3,
+      "midi": 66,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 13.0,
+      "dur": 0.34,
+      "midi": 69,
+      "velocity": 72,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 14.0,
+      "dur": 0.4,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 14.75,
+      "dur": 0.8,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "motif",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 16.25,
+      "dur": 0.34,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 16.95,
+      "dur": 0.32,
+      "midi": 71,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 17.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 17.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 17.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 18.25,
+      "dur": 0.42,
+      "midi": 73,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 19.15,
+      "dur": 0.55,
+      "midi": 71,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 19.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 19.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 19.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 20.25,
+      "dur": 0.34,
+      "midi": 71,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 20.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 21.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 21.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 21.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 22.25,
+      "dur": 0.42,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 23.15,
+      "dur": 0.55,
+      "midi": 74,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 23.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 23.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 23.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 24.25,
+      "dur": 0.34,
+      "midi": 74,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 24.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 25.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 25.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 25.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 26.25,
+      "dur": 0.42,
+      "midi": 78,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 27.15,
+      "dur": 0.55,
+      "midi": 76,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 27.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 27.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 27.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 28.25,
+      "dur": 0.34,
+      "midi": 76,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 28.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 29.75,
+      "dur": 0.14,
+      "midi": 59,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 29.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 29.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 30.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 31.15,
+      "dur": 0.55,
+      "midi": 69,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 31.75,
+      "dur": 0.14,
+      "midi": 59,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 31.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 31.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 32.0,
+      "dur": 0.48,
+      "midi": 52,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 32.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 32.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 33.45,
+      "dur": 0.38,
+      "midi": 47,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 33.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 33.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 33.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 34.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 34.75,
+      "dur": 0.55,
+      "midi": 54,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 35.15,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 35.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 35.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 35.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 36.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 36.25,
+      "dur": 0.34,
+      "midi": 74,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 36.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 37.45,
+      "dur": 0.38,
+      "midi": 42,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 37.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 37.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 37.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 38.25,
+      "dur": 0.42,
+      "midi": 78,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 38.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 39.15,
+      "dur": 0.55,
+      "midi": 76,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 39.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 39.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 39.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 40.0,
+      "dur": 0.48,
+      "midi": 50,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 40.25,
+      "dur": 0.34,
+      "midi": 76,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 40.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 41.45,
+      "dur": 0.38,
+      "midi": 45,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 41.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 41.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 41.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 42.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 42.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 43.15,
+      "dur": 0.55,
+      "midi": 69,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 43.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 43.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 43.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 44.0,
+      "dur": 0.48,
+      "midi": 54,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 44.25,
+      "dur": 0.34,
+      "midi": 71,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 44.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 45.45,
+      "dur": 0.38,
+      "midi": 45,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 45.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 45.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 45.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 46.25,
+      "dur": 0.42,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 46.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 47.15,
+      "dur": 0.55,
+      "midi": 74,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 47.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 47.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 47.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 48.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 48.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 48.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 49.45,
+      "dur": 0.38,
+      "midi": 54,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 49.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 49.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 49.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 50.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 50.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 51.15,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 51.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 51.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 51.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 52.0,
+      "dur": 0.48,
+      "midi": 52,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 52.25,
+      "dur": 0.34,
+      "midi": 74,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 52.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 53.45,
+      "dur": 0.38,
+      "midi": 47,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 53.75,
+      "dur": 0.14,
+      "midi": 59,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 53.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 53.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 54.25,
+      "dur": 0.42,
+      "midi": 78,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 54.75,
+      "dur": 0.55,
+      "midi": 54,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 55.15,
+      "dur": 0.55,
+      "midi": 76,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 55.75,
+      "dur": 0.14,
+      "midi": 59,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 55.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 55.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 56.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 56.25,
+      "dur": 0.34,
+      "midi": 76,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 56.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 57.45,
+      "dur": 0.38,
+      "midi": 42,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 57.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 57.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 57.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 58.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 58.75,
+      "dur": 0.55,
+      "midi": 54,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 59.15,
+      "dur": 0.55,
+      "midi": 69,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 59.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 59.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 59.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 60.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 60.25,
+      "dur": 0.34,
+      "midi": 71,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 60.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 61.45,
+      "dur": 0.38,
+      "midi": 50,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 61.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 61.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 61.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 62.25,
+      "dur": 0.42,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 62.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 63.15,
+      "dur": 0.55,
+      "midi": 74,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 63.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 63.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 63.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 64.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 64.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 64.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 65.45,
+      "dur": 0.38,
+      "midi": 54,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 65.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 65.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 65.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 66.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 66.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 67.15,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 67.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 67.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 67.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 68.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 68.25,
+      "dur": 0.34,
+      "midi": 74,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 68.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 69.45,
+      "dur": 0.38,
+      "midi": 45,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 69.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 69.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 69.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 70.25,
+      "dur": 0.42,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 70.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 71.15,
+      "dur": 0.55,
+      "midi": 74,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 71.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 71.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 71.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 72.0,
+      "dur": 0.48,
+      "midi": 43,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 72.25,
+      "dur": 0.34,
+      "midi": 76,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 72.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 73.45,
+      "dur": 0.38,
+      "midi": 50,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 73.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 73.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 73.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 74.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 74.75,
+      "dur": 0.55,
+      "midi": 45,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 75.15,
+      "dur": 0.55,
+      "midi": 69,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 75.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 75.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 75.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 76.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 76.25,
+      "dur": 0.34,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 76.95,
+      "dur": 0.32,
+      "midi": 71,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 77.45,
+      "dur": 0.38,
+      "midi": 42,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 77.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 77.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 77.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 78.25,
+      "dur": 0.42,
+      "midi": 74,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 78.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 79.15,
+      "dur": 0.55,
+      "midi": 76,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 79.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 79.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 79.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 80.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 80.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 80.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 81.45,
+      "dur": 0.38,
+      "midi": 54,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 81.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 81.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 81.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 82.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 82.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 83.15,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 83.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 83.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 83.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 84.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 84.25,
+      "dur": 0.34,
+      "midi": 71,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 84.95,
+      "dur": 0.32,
+      "midi": 74,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 85.45,
+      "dur": 0.38,
+      "midi": 50,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 85.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 85.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 85.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 86.25,
+      "dur": 0.42,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 86.75,
+      "dur": 0.55,
+      "midi": 45,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 87.15,
+      "dur": 0.55,
+      "midi": 78,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 87.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 87.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 87.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 88.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 88.25,
+      "dur": 0.34,
+      "midi": 78,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 88.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 89.45,
+      "dur": 0.38,
+      "midi": 42,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 89.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 89.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 89.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 90.25,
+      "dur": 0.42,
+      "midi": 81,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 90.75,
+      "dur": 0.55,
+      "midi": 54,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 91.15,
+      "dur": 0.55,
+      "midi": 78,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 91.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 91.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 91.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 92.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 92.25,
+      "dur": 0.34,
+      "midi": 78,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 92.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 93.45,
+      "dur": 0.38,
+      "midi": 50,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 93.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 93.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 93.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 94.25,
+      "dur": 0.42,
+      "midi": 74,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 94.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 95.15,
+      "dur": 0.55,
+      "midi": 71,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 95.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 95.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 95.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 96.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 96.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 96.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 97.45,
+      "dur": 0.38,
+      "midi": 54,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 97.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 97.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 97.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 98.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 98.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 99.15,
+      "dur": 0.55,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 99.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 99.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 99.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 100.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 100.25,
+      "dur": 0.34,
+      "midi": 76,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 100.95,
+      "dur": 0.32,
+      "midi": 78,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 101.45,
+      "dur": 0.38,
+      "midi": 42,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 101.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 101.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 101.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 102.25,
+      "dur": 0.42,
+      "midi": 81,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 102.75,
+      "dur": 0.55,
+      "midi": 54,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 103.15,
+      "dur": 0.55,
+      "midi": 78,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 103.75,
+      "dur": 0.14,
+      "midi": 57,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 103.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 103.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 104.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 104.25,
+      "dur": 0.34,
+      "midi": 78,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 104.95,
+      "dur": 0.32,
+      "midi": 76,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 105.45,
+      "dur": 0.38,
+      "midi": 50,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 105.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 105.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 105.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 106.25,
+      "dur": 0.42,
+      "midi": 74,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 106.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 107.15,
+      "dur": 0.55,
+      "midi": 71,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 107.75,
+      "dur": 0.14,
+      "midi": 62,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 107.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 107.75,
+      "dur": 0.14,
+      "midi": 71,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 108.0,
+      "dur": 0.48,
+      "midi": 45,
+      "velocity": 62,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 108.25,
+      "dur": 0.34,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 108.95,
+      "dur": 0.32,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 109.45,
+      "dur": 0.38,
+      "midi": 54,
+      "velocity": 56,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 109.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 109.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 109.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 110.25,
+      "dur": 0.42,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "upper_melody",
+      "ring_scale": 0.45
+    },
+    {
+      "start": 110.75,
+      "dur": 0.55,
+      "midi": 52,
+      "velocity": 60,
+      "layer": "lower_melody",
+      "ring_scale": 0.27
+    },
+    {
+      "start": 111.15,
+      "dur": 0.85,
+      "midi": 73,
+      "velocity": 82,
+      "layer": "upper_melody",
+      "ring_scale": 0.55
+    },
+    {
+      "start": 111.75,
+      "dur": 0.14,
+      "midi": 64,
+      "velocity": 44,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 111.75,
+      "dur": 0.14,
+      "midi": 66,
+      "velocity": 42,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    },
+    {
+      "start": 111.75,
+      "dur": 0.14,
+      "midi": 69,
+      "velocity": 46,
+      "layer": "harmony",
+      "ring_scale": 0.12
+    }
+  ]
+}
+

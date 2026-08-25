@@ -73,6 +73,9 @@ class GuzhengTimbre:
     # a musical gesture rather than disappearing into the drone.
     additive_layer_gains: tuple[tuple[str, float], ...] = (
         ("melody", 0.155),
+        ("motif", 0.130),
+        ("upper_melody", 0.140),
+        ("lower_melody", 0.070),
         ("drone", 0.058),
         ("harmony", 0.095),
         ("arpeggio", 0.125),
@@ -81,6 +84,9 @@ class GuzhengTimbre:
     )
     sample_layer_gains: tuple[tuple[str, float], ...] = (
         ("melody", 0.205),
+        ("motif", 0.160),
+        ("upper_melody", 0.170),
+        ("lower_melody", 0.085),
         ("drone", 0.075),
         ("harmony", 0.110),
         ("arpeggio", 0.145),
@@ -171,11 +177,14 @@ class VoicePool:
         age_seconds = max(0.0, (frame - voice.start_frame) / self.sample_rate)
         layer_priority = {
             "harmony": 0,
+            "lower_melody": 1,
             "drone": 1,
             "arpeggio": 2,
             "grace": 3,
             "tremolo": 4,
+            "motif": 5,
             "melody": 5,
+            "upper_melody": 6,
         }
         # Keep a newly started melody/arpeggio alive; old quiet support voices
         # are the first victims when a real strum exceeds the pool size.
@@ -333,7 +342,17 @@ def render_attack_detail(
         partial_frequency = min(sample_rate * 0.42, frequency * partial)
         detail += gain * np.sin(2.0 * math.pi * partial_frequency * t + rng.uniform(0, 2 * math.pi))
     detail *= np.exp(-t / 0.032)
-    detail_layer_gain = {"melody": 0.040, "drone": 0.012, "harmony": 0.026, "arpeggio": 0.036, "grace": 0.028, "tremolo": 0.032}.get(layer, 0.032)
+    detail_layer_gain = {
+        "melody": 0.040,
+        "motif": 0.034,
+        "upper_melody": 0.036,
+        "lower_melody": 0.018,
+        "drone": 0.012,
+        "harmony": 0.026,
+        "arpeggio": 0.036,
+        "grace": 0.028,
+        "tremolo": 0.032,
+    }.get(layer, 0.032)
     return detail * (max(1, min(127, velocity)) / 127.0) * detail_layer_gain
 
 
@@ -590,11 +609,21 @@ def render_wav(
         start_frame = max(0, int(round(start_seconds * sample_rate)))
         note_seconds = float(event["dur"]) * beat_seconds
         # Guzheng tails are allowed to ring beyond note-off, with a bounded render.
+        # ``ring_scale`` is deliberately optional so old compositions retain the
+        # original tail length.  New arrangements can shorten dense support voices
+        # without changing the timbre's global ring controls.
+        try:
+            ring_scale = float(event.get("ring_scale", 1.0))
+        except (TypeError, ValueError):
+            ring_scale = 1.0
+        if not math.isfinite(ring_scale):
+            ring_scale = 1.0
+        ring_scale = min(1.5, max(0.05, ring_scale))
         ring_seconds = min(
             TIMBRE_CONFIG.max_ring_seconds,
             TIMBRE_CONFIG.ring_base_seconds
             + max(0.0, 72.0 - int(event["midi"])) * TIMBRE_CONFIG.ring_register_scale,
-        )
+        ) * ring_scale
         midi = int(event["midi"])
         velocity = int(event["velocity"])
         layer = str(event.get("layer", "melody"))
@@ -788,7 +817,7 @@ def main() -> None:
         "title": composition["title"],
         "title_en": composition.get("title_en"),
         "renderer": "src/create_guzheng.py",
-        "renderer_version": "1.3.0",
+        "renderer_version": "1.4.0",
         "engine": args.engine,
         "polyphony": "voice-pool",
         "timbre": asdict(TIMBRE_CONFIG),
