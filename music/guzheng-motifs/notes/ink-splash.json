@@ -2,7 +2,7 @@
   "title": "丹青泼墨",
   "title_en": "Ink Wash Splash",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.815804988662132,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.11423225866180514,
-    "normalization_gain": 7.528521365808823,
-    "rms_normalized": 0.06641300222459989,
+    "peak_before_safety": 0.11422598675916228,
+    "normalization_gain": 7.528934740684285,
+    "rms_normalized": 0.06630645335705113,
     "expanded_note_count": 27,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 27
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 27
   },
   "source_sha256": "e0637156a43ffeb95c9d865c3c5d0d26820964980a114ee36260d256d16026ef",
-  "wav_sha256": "0614f4820f05f7fb554c3d255b7921df7109bd97d9693e84dc39bc7644863063",
+  "wav_sha256": "47fd1ab07e20951640d60f4ea304c2d60daf3639d5d19ba9d10b2573a67679a8",
   "midi_sha256": "d58724ad17456028c670813f8a27cb90a6d5012b8d01d0097fb3de99f801058d",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

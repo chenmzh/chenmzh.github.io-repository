@@ -2,7 +2,7 @@
   "title": "檐下双燕",
   "title_en": "Swallows Under the Eaves",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 9.115396825396825,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.10132777719627155,
-    "normalization_gain": 8.48730746687735,
-    "rms_normalized": 0.06852072490688658,
+    "peak_normalized": 0.8600000000000001,
+    "peak_before_safety": 0.10120329752422745,
+    "normalization_gain": 8.497746822865345,
+    "rms_normalized": 0.06847080809428631,
     "expanded_note_count": 14,
     "source_event_count": 13,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 14
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 14
   },
   "source_sha256": "a067e23782d86c98a8d725f81dcec90ce1a19c3ae6504b0a624b221b46a928fd",
-  "wav_sha256": "f03a9cc3a1595c32c0c322362f05d32e61a606e72022b69ce2722b2ac43c5cd0",
+  "wav_sha256": "ff4f35d60376ea78c120c599a9aef50366ad1b84542751c44d20236472da39e6",
   "midi_sha256": "e2574225749fdd8680d4bac0bf0933f160c0026ad98a4fb2f9d456cc644dc879",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

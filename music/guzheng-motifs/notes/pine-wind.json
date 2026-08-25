@@ -2,7 +2,7 @@
   "title": "松风入琴",
   "title_en": "Pine Wind into the Qin",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 12.0,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08285783074092996,
-    "normalization_gain": 10.379224176034079,
-    "rms_normalized": 0.06908415136373304,
+    "peak_before_safety": 0.08300014307586141,
+    "normalization_gain": 10.361427922045477,
+    "rms_normalized": 0.06884891313994665,
     "expanded_note_count": 17,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 17
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 17
   },
   "source_sha256": "ccf55399d54f341b37e738501110cacbdbf9b82b632ded3cf0dcc6c2ac30d066",
-  "wav_sha256": "e9f256c4ff17ac2376fec5fe9988501afb3ff550c87b19a00c5c9d1e0a9493a6",
+  "wav_sha256": "53ffbbe0394ede4bff182917c37d2a07858c897d2e34b85a1a835e2838219328",
   "midi_sha256": "a505a9f58cb4ea9b40554d2d0ab5cebb394d2fd9373ebf3b60ee32198c7badaa",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

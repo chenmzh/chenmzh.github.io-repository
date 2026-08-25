@@ -2,7 +2,7 @@
   "title": "花间醉",
   "title_en": "Drunk Among Flowers",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.353673469387756,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.09102904995165785,
-    "normalization_gain": 9.447533512177861,
-    "rms_normalized": 0.06143028482100457,
+    "peak_before_safety": 0.09132866645464062,
+    "normalization_gain": 9.416539553078096,
+    "rms_normalized": 0.06112444270913679,
     "expanded_note_count": 11,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 11
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 11
   },
   "source_sha256": "b546e6c125a67a4dd2ea9708f49c08619f08d86d8bf007aff7fc8ea63bf90e10",
-  "wav_sha256": "8b03dd51d906934d3bb9fb1e57034ec1b57a3eab686ed5a5a8142a1cf2e2f3e5",
+  "wav_sha256": "7cc7b34989b5d86618c9be09543f72ae2d6f806fa91967272757d88f45f92642",
   "midi_sha256": "a552c08d80bf9272eccfd27ec5320f7df9cf73642c7d60e89703f65041eae795",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

@@ -2,7 +2,7 @@
   "title": "花灯夜游",
   "title_en": "Lantern Festival Stroll",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 8.785714285714286,
-    "peak_normalized": 0.8599999999999999,
-    "peak_before_safety": 0.10512195414390331,
-    "normalization_gain": 8.180974250371436,
-    "rms_normalized": 0.061718591822135495,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.10481721995470783,
+    "normalization_gain": 8.204758725442359,
+    "rms_normalized": 0.06183920204938402,
     "expanded_note_count": 11,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 11
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 11
   },
   "source_sha256": "822e6bda668e179658aa08eb899693e51b2d54410f1c011013012963b90fdaa4",
-  "wav_sha256": "6e5e2399adc713b6a31a2c90a8f815b3a2266c0ebea143929c6f691bbe176c88",
+  "wav_sha256": "74f3025d53fc28c60f163589c0b154663874d0576a594b0de6508c2ef0698d93",
   "midi_sha256": "3acae21d72a53d90d36b8b546c2cdabb98b1792e56d36d09d9d158bbd0631cb5",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

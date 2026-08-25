@@ -2,7 +2,7 @@
   "title": "寒江独钓",
   "title_en": "Angling the Cold River",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 14.1,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.08158927892532644,
-    "normalization_gain": 10.540600570659585,
-    "rms_normalized": 0.0503153428636651,
+    "peak_normalized": 0.8599999999999999,
+    "peak_before_safety": 0.08160735895075535,
+    "normalization_gain": 10.538265311575064,
+    "rms_normalized": 0.050257215172688934,
     "expanded_note_count": 6,
     "source_event_count": 6,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 6
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 6
   },
   "source_sha256": "03d0ea11c98d99542a0781ca2d727d435e6bcc6462532a695a18e08b0dd9255e",
-  "wav_sha256": "689adee4f8006903b29abf93ea80432cec5ca887267eb2ea5b89c7cdc4d2bea4",
+  "wav_sha256": "43ef9867014170ecc05e8b82a8fb18c0edd90b9342f5e0bf19249158bdd5e1a6",
   "midi_sha256": "f9c8bca49eb762a13d9a16ef536c01b1fcac28e2dd97b2728ebba111e6fee5d6",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

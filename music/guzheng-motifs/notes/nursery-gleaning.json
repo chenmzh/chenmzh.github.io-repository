@@ -2,7 +2,7 @@
   "title": "童谣拾穗",
   "title_en": "Gleaning a Nursery Rhyme",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 9.300022675736962,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.1077617283651852,
-    "normalization_gain": 7.980569846519295,
-    "rms_normalized": 0.06936550476972565,
+    "peak_before_safety": 0.10826228877727749,
+    "normalization_gain": 7.943670965327865,
+    "rms_normalized": 0.06895584449528476,
     "expanded_note_count": 16,
     "source_event_count": 16,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 16
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 16
   },
   "source_sha256": "72f0270d696201799f4f10838eb3da1fe23cd50a64b582c8ece3a4f0cdd005a3",
-  "wav_sha256": "4035030b04303e33867e11c4ba74f989122cc5da4c782eb7333b6f925deedd4b",
+  "wav_sha256": "18546cc9cbee2db47c6d80c53b4ec5319399d90be888057f535ca55be979d6a9",
   "midi_sha256": "38c66746e59530c0ee59f5be587d42131718e08aa3e107ba14a58a9339218371",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

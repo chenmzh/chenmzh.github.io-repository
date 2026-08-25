@@ -2,7 +2,7 @@
   "title": "山泉吐珠",
   "title_en": "Spring Bubbles",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -145,10 +145,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 9.954557823129251,
-    "peak_normalized": 0.86,
-    "peak_before_safety": 0.10009632501619108,
-    "normalization_gain": 8.591724020446213,
-    "rms_normalized": 0.07916869639461062,
+    "peak_normalized": 0.8599999999999999,
+    "peak_before_safety": 0.09995698729457736,
+    "normalization_gain": 8.603700684430839,
+    "rms_normalized": 0.07918226960576273,
     "expanded_note_count": 25,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 25
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 25
   },
   "source_sha256": "ade25f06fc9ba3999cca80d503e15c110773351cc57dedaafdad6bab15b4ee06",
-  "wav_sha256": "6110f7ed6b6493910f7391506105646bcedd6e762a12951db3db935ec4841895",
+  "wav_sha256": "a7787aa46250f6377e8850a94dc7caa03eed56109652b86239885eaf6312310b",
   "midi_sha256": "6363e79fce2914a924fafc0bd68ab2aa79015b139af2e172630369487c41813a",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

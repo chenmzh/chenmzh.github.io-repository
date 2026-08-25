@@ -2,7 +2,7 @@
   "title": "竹林侠影",
   "title_en": "Swordplay in the Bamboo Grove",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 8.136371882086168,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.12761638553353155,
-    "normalization_gain": 6.7389465420491215,
-    "rms_normalized": 0.061536837336093456,
+    "peak_before_safety": 0.1270379729220173,
+    "normalization_gain": 6.769629428264839,
+    "rms_normalized": 0.061730985048890595,
     "expanded_note_count": 14,
     "source_event_count": 14,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 14
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 14
   },
   "source_sha256": "d456a494e32c58ff33e69fef6e0e133202dbb818b6f13d522a40f3ca1fee392d",
-  "wav_sha256": "550e34fde94d0e88e4df4b734fc4575d45fa25b2a4a5adf13839914d00e89808",
+  "wav_sha256": "5d935009cb63ba7626bcbf9d27117f280919c6679faa8a4590a9ee6cb9d15416",
   "midi_sha256": "d0bfa5264819b2432344a406feedcf5e4ed3b3c5a3427b4b98da8c66982907a2",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

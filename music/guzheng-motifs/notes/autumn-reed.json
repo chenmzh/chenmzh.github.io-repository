@@ -2,7 +2,7 @@
   "title": "秋岸芦花",
   "title_en": "Reed Flowers on the Autumn Bank",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -146,9 +146,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 17.833356009070293,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.07858384076133092,
-    "normalization_gain": 10.943725728702024,
-    "rms_normalized": 0.05318306864234293,
+    "peak_before_safety": 0.07862068393483915,
+    "normalization_gain": 10.938597287105367,
+    "rms_normalized": 0.05311360551581152,
     "expanded_note_count": 8,
     "source_event_count": 8,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 8
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 8
   },
   "source_sha256": "17b88ae3d3c39b6b167d4e3b6bbb5853a81325cc955947f0f189c902fb1105da",
-  "wav_sha256": "41a29fce3c520698a45b6dc67a47cc4637740ecfc9121ac38de3942bd9aefb09",
+  "wav_sha256": "59b7dea4df77cc422c2786078fa64f844fce46de5df877e7924808021b3eb1c2",
   "midi_sha256": "0801e18310152b739fce8d4d4f2497a8d8741a4a6ada9f95f5e6a68dbb7c4044",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"

@@ -2,7 +2,7 @@
   "title": "塞外孤烟",
   "title_en": "Lone Smoke Beyond the Pass",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.6.0",
+  "renderer_version": "1.6.1",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -148,7 +148,7 @@
     "peak_normalized": 0.86,
     "peak_before_safety": 0.0796817219345594,
     "normalization_gain": 10.79293944860148,
-    "rms_normalized": 0.06695635621990716,
+    "rms_normalized": 0.06686775907050604,
     "expanded_note_count": 14,
     "source_event_count": 8,
     "tail_seconds": 4.5,
@@ -162,7 +162,32 @@
       "voice_steals": 0,
       "rendered_voices": 14
     },
-    "master_gain": 0.76
+    "master_gain": 0.76,
+    "reverb": {
+      "taps": [
+        [
+          0.17,
+          0.135
+        ],
+        [
+          0.31,
+          0.095
+        ],
+        [
+          0.53,
+          0.068
+        ],
+        [
+          0.79,
+          0.02
+        ],
+        [
+          1.07,
+          0.012
+        ]
+      ],
+      "wet_scale": 0.5
+    }
   },
   "midi": {
     "format": "SMF type 0",
@@ -171,7 +196,7 @@
     "note_event_count": 14
   },
   "source_sha256": "b4300d6b6c9fda80e78c38f47c5878168140aa212ea10f8387bc5e9d3b7ba5c7",
-  "wav_sha256": "93db9f168ab145d99aa1616e7f141e6b5764a0ab12e136355801063bac8ed5e4",
+  "wav_sha256": "31a2e29e08a21b146330c5324fb40806d70104157b6f958f007c293340b14d29",
   "midi_sha256": "2de09ded44b596a7d0afc1752bc56dd4471a77ec3a33262ea1f24630a9cff311",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
