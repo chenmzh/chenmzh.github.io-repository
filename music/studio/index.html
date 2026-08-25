@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>古筝工坊 · 可视化音乐生成器</title>
+  <meta name="description" content="拖拽式的古筝交互音乐生成系统：选择五声调式、动机与和声进行，任意分配到不同声部，实时生成演奏并可录制导出。">
+  <meta name="theme-color" content="#f4f5f1">
+  <link rel="stylesheet" href="../../assets/site-shell.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="ss-page guzheng-studio">
+  <a class="ss-skip" href="#studio">跳到古筝工坊</a>
+
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="主导航">
+      <a class="ss-brand" href="../../" aria-label="返回首页">
+        <span class="ss-brand-mark" aria-hidden="true"></span>
+        <span>Mingzhe Chen</span>
+      </a>
+      <div class="ss-nav-links">
+        <a href="../../#briefs">Briefs</a>
+        <a href="../../lecture/">Learning</a>
+        <a href="../../gaming/">Play</a>
+        <a href="../" aria-current="page">Music</a>
+        <a href="../../tools/">Tools</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="ss-shell gz-main" id="studio">
+
+    <!-- ===== 顶栏：标题 + 全局控制 ===== -->
+    <section class="gz-topbar">
+      <div class="gz-topbar-left">
+        <p class="ss-kicker">Guzheng Studio / 拖拽无声系统</p>
+        <h1 class="gz-title">古筝工坊</h1>
+        <div class="gz-titleline">
+          <input id="title-input" class="gz-title-input" maxlength="24" aria-label="作品名" />
+          <span id="stat-bars" class="gz-stat"></span>
+          <span id="stat-mode" class="gz-stat"></span>
+          <span id="stat-voices" class="gz-stat"></span>
+        </div>
+      </div>
+      <div class="gz-topbar-actions">
+        <button id="btn-new" class="ss-button ss-button--ghost">新建</button>
+        <button id="btn-demo" class="ss-button ss-button--ghost">载入演示《秋山行》</button>
+      </div>
+    </section>
+
+    <!-- ===== 传输条 ===== -->
+    <section class="gz-transport" aria-label="播放控制">
+      <button id="play-btn" class="gz-play">▶ 播放</button>
+      <button id="rec-btn" class="gz-rec">● 录制 WAV</button>
+      <div class="gz-tseg">
+        <label>速度</label>
+        <input id="bpm-input" type="number" min="40" max="200" step="1" value="76" class="gz-num" /> BPM
+      </div>
+      <div class="gz-tseg">
+        <label>主音</label>
+        <select id="key-select" class="gz-select">
+          <option value="C">C</option><option value="C#">C#</option><option value="D">D</option>
+          <option value="D#">D#</option><option value="E">E</option><option value="F">F</option>
+          <option value="F#">F#</option><option value="G">G</option><option value="G#">G#</option>
+          <option value="A">A</option><option value="A#">A#</option><option value="B">B</option>
+        </select>
+      </div>
+      <div class="gz-tseg">
+        <label>调式</label>
+        <select id="mode-select" class="gz-select">
+          <option value="gong">宫</option>
+          <option value="shang">商</option>
+          <option value="jue">角</option>
+          <option value="zhi">徵</option>
+          <option value="yu">羽</option>
+          <option value="chrom">自由十二音</option>
+        </select>
+        <span id="mode-hint" class="gz-hint"></span>
+      </div>
+      <div class="gz-tseg">
+        <label>循环</label>
+        <input id="loop-input" type="number" min="1" max="128" value="16" class="gz-num gz-num--sm" /> 小节
+      </div>
+      <div class="gz-tseg">
+        <label>总长</label>
+        <input id="bars-input" type="number" min="8" max="128" value="32" class="gz-num gz-num--sm" />
+      </div>
+      <div class="gz-tseg gz-tseg--grow">
+        <label>混响 <span class="gz-fader-val" id="reverb-val"></span></label>
+        <input id="reverb-input" type="range" min="0" max="90" value="28" />
+      </div>
+      <div class="gz-tseg gz-tseg--grow">
+        <label>总音量 <span class="gz-fader-val" id="vol-val"></span></label>
+        <input id="vol-input" type="range" min="0" max="130" value="80" />
+      </div>
+      <button id="download-midi" class="ss-button ss-button--ghost">导出 MIDI</button>
+    </section>
+
+    <div class="gz-layout">
+      <!-- ===== 素材面板 ===== -->
+      <aside class="gz-palette" aria-label="素材库">
+        <div class="gz-pal-head">
+          <span class="gz-pal-title">动机</span>
+          <span class="gz-pal-sub">拖到时间轴 / 点试听</span>
+        </div>
+        <div id="motif-palette" class="gz-pal-cards"></div>
+
+        <div class="gz-pal-head gz-pal-head--prog">
+          <span class="gz-pal-title">和声进行</span>
+          <span class="gz-pal-sub">可放到任何声部</span>
+        </div>
+        <div id="prog-palette" class="gz-pal-cards"></div>
+
+        <div class="gz-help">
+          <strong>使用提示</strong>
+          <ul>
+            <li>从左侧把<b>动机</b>或<b>和声</b>拖进下方某一声部，或点 ▶ 试听。</li>
+            <li>时间轴上：<b>拖动</b>移动块，<b>◀/▶ 手柄</b>改长度，右上<b>+/-</b> 复制/删除。</li>
+            <li>点选块后在右侧<b>属性</b>里改声部、八度、重复、密度、织体。</li>
+            <li>右上声部头：<b>M</b> 静音、<b>S</b> 独奏、<b>滑块</b>调音量。</li>
+            <li>和中声音放不同声部，调式=安全模式，不调和的音会被吸附。</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- ===== 时间轴 ===== -->
+      <div class="gz-stage">
+        <div class="gz-stage-inner">
+          <div id="voice-heads" class="gz-voice-heads"></div>
+          <div class="gz-stage-scroll">
+            <div id="timeline" class="gz-timeline" aria-label="拖拽时间轴">
+              <div id="playhead" class="gz-playhead" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+        <div class="gz-playhead-readout">播放头 <span id="playhead-bar">0.0</span> <span class="gz-looptag">循环区</span></div>
+      </div>
+
+      <!-- ===== 属性面板 ===== -->
+      <aside class="gz-inspector" aria-label="选中块属性">
+        <div class="gz-insp-head">属性</div>
+        <div id="inspector" class="gz-insp-body"></div>
+      </aside>
+    </div>
+
+    <footer class="ss-footer"><span>Guzheng Studio</span><span>Drag · Drop · Compose</span></footer>
+  </main>
+
+  <!-- 首次交互前不初始化音频 -->
+  <div id="gate" class="gz-gate" aria-hidden="true">
+    <div class="gz-gate-box">
+      <h2>进入古筝工坊</h2>
+      <p>浏览器需要一次点击来解锁音频。接下来就可以拖拽作曲、实时播放了。</p>
+      <button id="gate-btn" class="ss-button">点击开始</button>
+    </div>
+  </div>
+
+  <script src="vendor/tone.js"></script>
+  <script src="lib/theory.js"></script>
+  <script src="lib/content.js"></script>
+  <script src="lib/audio.js"></script>
+  <script src="lib/midi.js"></script>
+  <script src="lib/app.js"></script>
+</body>
+</html>
