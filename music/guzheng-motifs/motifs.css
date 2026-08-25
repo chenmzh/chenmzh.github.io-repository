@@ -105,10 +105,17 @@
 }
 
 .motif-jianpu {
-  margin: 10px 0 8px;
+  margin: 10px 0 4px;
   color: var(--ss-ink);
   font: 700 1.02rem/1.7 var(--ss-mono, ui-monospace, "SFMono-Regular", consolas, monospace);
   letter-spacing: .04em;
+}
+
+.motif-jianpu-note {
+  margin: 0 0 10px;
+  color: var(--ss-faint);
+  font-size: .72rem;
+  line-height: 1.6;
 }
 
 .motif-pitches,

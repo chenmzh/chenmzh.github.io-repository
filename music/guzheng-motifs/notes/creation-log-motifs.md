@@ -72,3 +72,10 @@ sha256sum -c notes/SHA256SUMS.txt
 - 子页：`music/guzheng-motifs/`（即 <https://chenmzh.github.io/chenmzh.github.io-repository/music/guzheng-motifs/>）
 - 入口：`music/index.html` 01 区新增「古筝动机 · 二十品」两张导览卡片，相对路径链接。
 - 每张动机卡：简谱、音列、音程轮廓、调式速度节拍时长、可试听 `<audio>`、MP3/WAV/MIDI/JSON 下载。
+
+## 4. 谱面一致性修正（v1.0.1）
+
+- 复核发现：初版卡片上的简谱为手写标注，个别动机的**八度点**（如秋岸芦花的低音 6,、铁马冰河的双低八度 6,,）与实际演奏不符。
+- 修正：`src/build_motifs.py` 增加 `derive_jianpu()`／`derive_melody_skeleton()`——简谱、音列、音程轮廓全部**由事件表自动推导**（与渲染器相同的 grace/arpeggio/tremolo 展开规则），再写入 JSON 与页面。
+- 记谱规则：1=D 固定首调；′ 高八度、, 低八度、| 分句、~ 摇指反复、（）内为按音滑动的变化音（倚音）。
+- 验收：`audit` 脚本逐条核对 20 题「页面简谱 == JSON == 音频实际音序」全部一致；WAV/MP3/MIDI 时长互差 <0.1s，20/20 完整。

@@ -22,23 +22,33 @@
     "name": "ink_splash_cell",
     "pitch_midi": [
       50,
+      81,
+      78,
       74,
       81,
-      69
+      69,
+      57
     ],
     "pitch_names": [
       "D3",
+      "A5",
+      "F#5",
       "D5",
       "A5",
-      "A4"
+      "A4",
+      "A3"
     ],
     "contour": [
-      24,
+      31,
+      -3,
+      -4,
       7,
+      -12,
       -12
     ],
     "rhythmic_feel": "two big sweeping glissandos framing a held high fifth",
-    "jianpu": "1 2 3 5 6 1′ 2′ 3′ 5′ - | 3′ 2′ 1′ 6 5 3 2 1 5 -"
+    "jianpu": "1, 2, 3, 5, 6, 1 2 3 5 6 1′ 5′ 3′ | 1′ 5′ 3′ 2′ 1′ 6 5 3 2 1 6, 5, 5 5,",
+    "jianpu_note": "1=D 固定首调；′ 高八度，, 低八度，| 分句，~ 摇指反复，（）内为按音滑动的变化音"
   },
   "events": [
     {

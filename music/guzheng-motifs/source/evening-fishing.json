@@ -56,7 +56,8 @@
       -2
     ],
     "rhythmic_feel": "undulating call-and-answer folk line, cadence onto the tonic",
-    "jianpu": "5 1 2 3 | 5 6 5 3 2 1 -"
+    "jianpu": "5 1 2 3 5 | 6 5 3 2 1",
+    "jianpu_note": "1=D 固定首调；′ 高八度，, 低八度，| 分句，~ 摇指反复，（）内为按音滑动的变化音"
   },
   "events": [
     {
