@@ -2,7 +2,7 @@
   "title": "月下听泉",
   "title_en": "Listening to the Spring by Moonlight",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082520,
   "tempo_bpm": 76,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.815804988662132,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08906043400506077,
-    "normalization_gain": 9.65636435087585,
-    "rms_normalized": 0.06844421051922803,
+    "peak_before_safety": 0.09008341862192482,
+    "normalization_gain": 9.546706965122771,
+    "rms_normalized": 0.06871822833542504,
     "expanded_note_count": 17,
     "source_event_count": 10,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 17
   },
   "source_sha256": "dbb94d5101ecb54d7ad2a7ea4e7a8d75abad429ca6eb15cd79200d597d06fca0",
-  "wav_sha256": "179fb45eb19a6becd10692b9e3594964870f20ff3d0713f2dc1ec9769f70f1c7",
-  "midi_sha256": "daa4b7f412a6d3638731d070d01466f3cbeede50bf0ccf2bdf30101c09a47deb",
+  "wav_sha256": "68a6ab84092dcec200a77e0788ac352e6d3fdf6f5cfd63b15b1f5a6c2e3ca7b2",
+  "midi_sha256": "986805e1c76c45505fe403c8b7db9a7fe7aed23b8b3f1a0a01dd98ddba605b30",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

@@ -2,7 +2,7 @@
   "title": "小桥流水",
   "title_en": "Beneath the Little Bridge",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082515,
   "tempo_bpm": 96,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 9.5,
     "peak_normalized": 0.8600000000000001,
-    "peak_before_safety": 0.10693599941294156,
-    "normalization_gain": 8.042193505659812,
-    "rms_normalized": 0.08402327633662275,
+    "peak_before_safety": 0.10172439027044267,
+    "normalization_gain": 8.45421631639786,
+    "rms_normalized": 0.08715248463909278,
     "expanded_note_count": 23,
     "source_event_count": 23,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 23
   },
   "source_sha256": "93e7c63f64f8cf15e4f80eef00ee00f7917e30d71d4ff8b389759018cffab03e",
-  "wav_sha256": "6f1fd19d8e78e73331a038eb92747eaa268c31c77eeb5a922dc8c0bb1e970a0f",
-  "midi_sha256": "971284557da98094aeea09b9ff38757baa1787427aa1cebe3d77a7367cbcc061",
+  "wav_sha256": "1f859c6170ed13a793492f0eff03506806d4f2b3b3c677fb871416b9c55249c8",
+  "midi_sha256": "80ea1b988ada4985adf8d06e194e2c400a80358603ad99ce1f7113330cd4733a",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

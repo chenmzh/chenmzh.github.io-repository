@@ -2,7 +2,7 @@
   "title": "花间醉",
   "title_en": "Drunk Among Flowers",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082507,
   "tempo_bpm": 82,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.353673469387756,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08839295745420087,
-    "normalization_gain": 9.72928188815939,
-    "rms_normalized": 0.06526033635758646,
+    "peak_before_safety": 0.08974500967825887,
+    "normalization_gain": 9.58270552405254,
+    "rms_normalized": 0.06349931381857454,
     "expanded_note_count": 12,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 12
   },
   "source_sha256": "2a48175830e58e02337875e5ecf01b23a1ea9307e44ffde022892ceceb5b7c47",
-  "wav_sha256": "a71e7f173b15a5d29547eb7a559166ee1c4f69fbf7766dd7ab2306d64bffc189",
-  "midi_sha256": "f376b5ea2e73b7a9a93c3084f4a0b93d4cc717bee79442f1cad65eb3ce905f3d",
+  "wav_sha256": "034e612a455848d77e1a4ff04fd2609a705a427b38ace83766ec61e190fa68c6",
+  "midi_sha256": "12b7203060495686b46607999cc9fa361c6fd46ef0ba44d553d816157f86f340",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

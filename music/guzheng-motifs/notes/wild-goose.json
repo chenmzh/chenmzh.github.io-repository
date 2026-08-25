@@ -2,7 +2,7 @@
   "title": "孤雁南飞",
   "title_en": "A Lone Goose Flying South",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082508,
   "tempo_bpm": 58,
   "time_signature": [
@@ -128,10 +149,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 12.775873015873016,
-    "peak_normalized": 0.8600000000000001,
-    "peak_before_safety": 0.09750768833124727,
-    "normalization_gain": 8.819817336643851,
-    "rms_normalized": 0.03323698152105374,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.08891539997158417,
+    "normalization_gain": 9.672115294705318,
+    "rms_normalized": 0.03566112182618789,
     "expanded_note_count": 8,
     "source_event_count": 7,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 8
   },
   "source_sha256": "2b6b1823de93d639018ef63e607ab7eeeac61af87dae8951c6cc0800e1c81f47",
-  "wav_sha256": "290fea0858b13f5e14e97a13277bfbdbf05a7aab6fc1e49cd806403839a5b4b2",
-  "midi_sha256": "fc48d083fe71d6c06d15898bfd84f8c79e34cafd82174ea2bc231c094840e1dd",
+  "wav_sha256": "eca847487f038385d5dc44a289924a7ffa1386e38b6fdb1578bfc2d7ffd7cacb",
+  "midi_sha256": "6cd883baa6eaeb247012b4dec8713e063df415d8e2a2907dc283d96c34f0c37f",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

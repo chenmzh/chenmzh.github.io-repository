@@ -2,7 +2,7 @@
   "title": "将军令引",
   "title_en": "The General's Command",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082517,
   "tempo_bpm": 116,
   "time_signature": [
@@ -128,10 +149,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 8.637936507936509,
-    "peak_normalized": 0.8599999999999999,
-    "peak_before_safety": 0.1363741258754207,
-    "normalization_gain": 6.306181575716347,
-    "rms_normalized": 0.07687149927295552,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.15205442073963688,
+    "normalization_gain": 5.655869759108023,
+    "rms_normalized": 0.0677516112164444,
     "expanded_note_count": 19,
     "source_event_count": 18,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 19
   },
   "source_sha256": "a0063e91b9b784d97cd4ac125e240bd11aa45bed0e5229f9c1b7acb5c9c6de16",
-  "wav_sha256": "ad57b0ae9c96c88467d0a889578a079ac994f1cde91af7cc78fa8d74777afc2d",
-  "midi_sha256": "25591eaa16d36981f1c38ef0b69d7a67203817933895cb5414dce222bc8efe87",
+  "wav_sha256": "d45dda50b734eff67838cf57c5ffa646fe451dbb62459c8eb991bf6a77854956",
+  "midi_sha256": "6e476783dd31986d9db7a80853b2b4b5b6c218ab7cda6a84209c58c9b0b47543",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

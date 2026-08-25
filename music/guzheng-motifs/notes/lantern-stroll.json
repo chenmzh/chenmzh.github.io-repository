@@ -2,7 +2,7 @@
   "title": "花灯夜游",
   "title_en": "Lantern Festival Stroll",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082512,
   "tempo_bpm": 112,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 8.785714285714286,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.11304480592045066,
-    "normalization_gain": 7.607602958823069,
-    "rms_normalized": 0.058821502204903155,
+    "peak_before_safety": 0.11572909368854037,
+    "normalization_gain": 7.431147800349172,
+    "rms_normalized": 0.05749562043776247,
     "expanded_note_count": 12,
     "source_event_count": 11,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 12
   },
   "source_sha256": "7b1bef2974b939f4a16ddfec0bfb53c33ae818f58ddf6870b780d2c1440498e5",
-  "wav_sha256": "e2a4a62dd2d17462bc2be9b08e7f10d1dd75f1fef2a1f3cd6d4a917b86dfaa2b",
-  "midi_sha256": "dd1c2d8146689434010065e6487e71b3496accd740085aed2fe8af0fba4c7336",
+  "wav_sha256": "511483a82bd575846e0b0bf7e9038f29662fe6ec7ef620b03b20e0d6e5fbe505",
+  "midi_sha256": "481765c7d0250d11ff69bf6f3314ddabfd56d6d011b22b3575e8d433c4e3439e",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

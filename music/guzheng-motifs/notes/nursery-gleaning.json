@@ -2,7 +2,7 @@
   "title": "童谣拾穗",
   "title_en": "Gleaning a Nursery Rhyme",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082519,
   "tempo_bpm": 100,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 9.300022675736962,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.10109990450858689,
-    "normalization_gain": 8.506437312479916,
-    "rms_normalized": 0.07433125606249356,
+    "peak_before_safety": 0.09242065705211817,
+    "normalization_gain": 9.305279008296012,
+    "rms_normalized": 0.0813614315018819,
     "expanded_note_count": 16,
     "source_event_count": 16,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 16
   },
   "source_sha256": "229d8ed97e3bdc0033d7b6e92395af507e4a3cec170741098d9315b2837a6be0",
-  "wav_sha256": "975cfe506cbeebfa7378b06cf8326f24834bff3ff7bfe59645ee0e5f531d2aff",
-  "midi_sha256": "c7f2040f39d1617346241c57ab4927a1270f944d703ceb002188ff99258b5a3e",
+  "wav_sha256": "bc6f81d4fb948ba7cba51a534f25785a8c91c0c161b58a3112ce804b653ae570",
+  "midi_sha256": "79d7cd025a578414e1cdced1616ce8f7ac808b8179e7817c63bcdb32ea45449b",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

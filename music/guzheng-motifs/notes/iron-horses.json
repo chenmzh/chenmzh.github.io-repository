@@ -2,7 +2,7 @@
   "title": "铁马冰河",
   "title_en": "Iron Horses on the Icy River",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082505,
   "tempo_bpm": 120,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 10.5,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.15314513030580734,
-    "normalization_gain": 5.615588287284825,
-    "rms_normalized": 0.07013352743089243,
+    "peak_before_safety": 0.12373719311872147,
+    "normalization_gain": 6.950214226815864,
+    "rms_normalized": 0.08473722279195472,
     "expanded_note_count": 19,
     "source_event_count": 19,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 19
   },
   "source_sha256": "f5039b5e5fc9fdc4b47a94d9d0805dd966cdca0be6f2940992ae703836dcf975",
-  "wav_sha256": "124ee95e1eebb6363a1843cdb3c9b17712ec3124ae57e9cb38f88708c7b9fbd2",
-  "midi_sha256": "1341f199d0ef081f119786786cd20750e8ea1c63f04ad3e13de98b99e29c0f1b",
+  "wav_sha256": "af9b82051562fa7cd11499ba56bd1e10715048f2c5ebb71bbe6fde34e6c70b34",
+  "midi_sha256": "30700eacb3050d76bd227d23d56d78c3b4cd86a480b70ec6a887fa05936df296",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

@@ -2,7 +2,7 @@
   "title": "空谷回音",
   "title_en": "Echo in the Empty Valley",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082511,
   "tempo_bpm": 66,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 11.772743764172336,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08490238213190167,
-    "normalization_gain": 10.129279984911744,
-    "rms_normalized": 0.03933617097439877,
+    "peak_before_safety": 0.08455258757652034,
+    "normalization_gain": 10.171184876177769,
+    "rms_normalized": 0.03873422451758027,
     "expanded_note_count": 6,
     "source_event_count": 6,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 6
   },
   "source_sha256": "77e4e72680ab63de4ed6f50b1651cba1e3d1e52893c3cfd5fc62545ccdd44288",
-  "wav_sha256": "8e430a03c8e5779492d29f59aac22a1b08a7aa0e3f80118b94389437584abe04",
-  "midi_sha256": "15811e6f4231df145a7dc596db3e97d65cfcf434a0087a93905f1b5cf4670d73",
+  "wav_sha256": "370e531dff2652b8400e45b2c6600e14398c7aaafb57373a7340c31cd1a2a2a0",
+  "midi_sha256": "ba3c480926412aa92485c6a6ea46d15f4d47178c89b31ae7cc54bdbf1e02c88f",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

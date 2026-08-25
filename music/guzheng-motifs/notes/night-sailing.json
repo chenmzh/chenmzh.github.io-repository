@@ -2,7 +2,7 @@
   "title": "星夜行舟",
   "title_en": "Boating Under the Stars",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082516,
   "tempo_bpm": 68,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 15.088253968253968,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.09062489532118734,
-    "normalization_gain": 9.489666133704645,
-    "rms_normalized": 0.06529243825593802,
+    "peak_before_safety": 0.08611666145438673,
+    "normalization_gain": 9.986453091374365,
+    "rms_normalized": 0.0678005492889337,
     "expanded_note_count": 16,
     "source_event_count": 9,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 16
   },
   "source_sha256": "8c487f41a1f134dd36127aa1281aeae813a5d40ebf0dbf773240a6b3d8d8d599",
-  "wav_sha256": "00c3b33cf5e7ebc1a1dbee9637cf99e196c77cbb2e1c2bccc0982021052bbee0",
-  "midi_sha256": "9a3aba63b577ebe6236fe10cc042d0328179fe6b3b261895ab858ed7003b7219",
+  "wav_sha256": "9bfaed0b6c76307f042049f542e05146a31220e9a23be21cdb81594a55112b5a",
+  "midi_sha256": "24c4ef0c27824628b646f84ff51748ace77c582499c2c9923874d53e9ea9b3e4",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

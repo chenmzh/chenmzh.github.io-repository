@@ -2,7 +2,7 @@
   "title": "秋岸芦花",
   "title_en": "Reed Flowers on the Autumn Bank",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082518,
   "tempo_bpm": 54,
   "time_signature": [
@@ -129,9 +150,9 @@
     "sample_width_bits": 16,
     "duration_seconds": 17.833356009070293,
     "peak_normalized": 0.86,
-    "peak_before_safety": 0.08038545554798558,
-    "normalization_gain": 10.698452775286302,
-    "rms_normalized": 0.051976108240822265,
+    "peak_before_safety": 0.08563812664498903,
+    "normalization_gain": 10.042256103582357,
+    "rms_normalized": 0.0493259708258824,
     "expanded_note_count": 8,
     "source_event_count": 8,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 8
   },
   "source_sha256": "17b88ae3d3c39b6b167d4e3b6bbb5853a81325cc955947f0f189c902fb1105da",
-  "wav_sha256": "49995234ea06165e725fb2503308cb7059749374cf90470e2888b71c1bd8076a",
-  "midi_sha256": "e781ef2938efcf0ddc9f3b5ea1213d351a8457f733113df1fc92a8a8c1d6fa2e",
+  "wav_sha256": "6d429539551cf10ec885a9c29b416d34e8ecabf8270905c45465d1e8efc831d2",
+  "midi_sha256": "cfc488be5d6cb3e3308793a0de1759449f3d9fa64262d24ece627f178c6d9b52",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }

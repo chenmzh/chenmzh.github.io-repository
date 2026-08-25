@@ -2,7 +2,7 @@
   "title": "檐下双燕",
   "title_en": "Swallows Under the Eaves",
   "renderer": "src/create_guzheng.py",
-  "renderer_version": "1.4.0",
+  "renderer_version": "1.5.0",
   "engine": "hybrid",
   "polyphony": "voice-pool",
   "timbre": {
@@ -115,6 +115,27 @@
     ],
     "master_gain": 0.76
   },
+  "expression": {
+    "humanized_layers": [
+      "motif",
+      "melody",
+      "upper_melody",
+      "lower_melody"
+    ],
+    "timing_jitter_ms": 10.0,
+    "duration_jitter": 0.02,
+    "phrase_walk_step": 0.02,
+    "phrase_ema": 0.35,
+    "phrase_max_delta": 0.1,
+    "velocity_jitter": 0.035,
+    "vibrato_probability": 0.55,
+    "vibrato_rate_min_hz": 3.8,
+    "vibrato_rate_max_hz": 5.2,
+    "vibrato_depth_min_cents": 4.0,
+    "vibrato_depth_max_cents": 10.0,
+    "vibrato_min_seconds": 0.9,
+    "vibrato_ramp_seconds": 0.35
+  },
   "seed": 2026082503,
   "tempo_bpm": 104,
   "time_signature": [
@@ -128,10 +149,10 @@
     "channels": 2,
     "sample_width_bits": 16,
     "duration_seconds": 9.115396825396825,
-    "peak_normalized": 0.8600000000000001,
-    "peak_before_safety": 0.10357416451371886,
-    "normalization_gain": 8.303228937811893,
-    "rms_normalized": 0.06670877281113387,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.1021643321796534,
+    "normalization_gain": 8.4178106160153,
+    "rms_normalized": 0.06896365954251803,
     "expanded_note_count": 14,
     "source_event_count": 13,
     "tail_seconds": 4.5,
@@ -154,8 +175,8 @@
     "note_event_count": 14
   },
   "source_sha256": "879ca0d393f266374b23892eade5eff59febc4d54701de2cc7833e25871ad204",
-  "wav_sha256": "d1e2636b1d8c43470cc89b5533a8d309ca680363c0e16fe26b72aaa16b30352c",
-  "midi_sha256": "d64ac3b1bf800496337581c9585f3098fcfa3959892ead59284dcf45186539f9",
+  "wav_sha256": "ceaa5c93bfe530c51ad7bed2b9fdb174554502e4b4e6a359ac58cf53dbdb6d9a",
+  "midi_sha256": "5a5c1d361aecdf6d9e1cd3dcf3d7e3faa2e5631b805b3cc928351e0505275c31",
   "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
   "reference_sample_license": "CC0 1.0"
 }
