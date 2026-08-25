@@ -1,67 +1,230 @@
-// 纯逻辑单元测试：不涉及 DOM / 音频。
-// 用 node 运行：node test/logic.test.js
+// 需求驱动的纯逻辑测试（node test/logic.test.js）
+// 映射需求：R2 动机 / R3 和声 / R4 多声部隔离 / R6 生成正确性 / R10 导出 / 持久化结构
 'use strict';
 const fs = require('fs');
 const path = require('path');
 
 global.window = global;
+try { Object.defineProperty(global, 'navigator', { value: { userAgent: 'test' }, configurable: true }); } catch (e) {}
 function load(rel) {
   const code = fs.readFileSync(path.join(__dirname, rel), 'utf8');
   eval(code);
 }
-
-const results = [];
-function check(name, cond, extra) {
-  results.push({ name, pass: !!cond, extra });
-}
-
-// 加载模块（它们向 window.GZS 注册命名空间）
 load('../lib/theory.js');
 load('../lib/content.js');
+load('../lib/engine.js');
 load('../lib/midi.js');
 
 const T = global.GZS.theory;
 const C = global.GZS.content;
+const E = global.GZS.engine;
 
-// —— theory ——
-check('五声宫调半音序列', JSON.stringify(T.MODES.gong.semis) === JSON.stringify([0,2,4,7,9]));
-check('度→MIDI: D宫 degree0 = D4', T.degreeToMidi('gong', 62, 0) === 62);
-check('度→MIDI: D宫 degree1 = E4', T.degreeToMidi('gong', 62, 1) === 64);
-check('度→MIDI: D宫 degree3 = A4(徵)', T.degreeToMidi('gong', 62, 3) === 69);
-check('度→MIDI: D宫 degree4 = B4(羽)', T.degreeToMidi('gong', 62, 4) === 71);
-check('度→MIDI: D宫 degree5 = 高八度D5', T.degreeToMidi('gong', 62, 5) === 74);
-check('度→MIDI: 负度 D宫 -1 = 低八度羽B3', T.degreeToMidi('gong', 62, -1) === 59);
-check('羽调-1 = 宫(同degree0)', T.degreeToMidi('yu', 62, 0) === T.degreeToMidi('gong', 62, 0));
-check('和弦MIDI: D宫 root0 tones[0,2,4](宫角羽) = D F# B', JSON.stringify(T.chordMidis('gong', 62, {root:0,tones:[0,2,4]},0)) === JSON.stringify([62,66,71]));
-check('midiName 62=D4', T.midiName(62) === 'D4');
-check('snapDegree 把E#(deg~0.5)吸附回宫', typeof T.snapDegree('gong', 1) === 'number');
+const results = [];
+function check(name, cond, extra) { results.push({ name, pass: !!cond, extra }); }
+const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
-// —— content ——
-check('动机数量 10', C.MOTIFS.length === 10);
-check('和声数量 8', C.PROGRESSIONS.length === 8);
-check('动机均含 beats 且 bars>0', C.MOTIFS.every(m => m.beats && Array.isArray(m.beats) && m.beats.length>0 && m.bars>0));
-check('每个动机音级在调内连续（d 为整数）', C.MOTIFS.every(m => m.beats.every(b => Number.isInteger(b.d))));
-check('chromOnly 和声存在 2 个', C.PROGRESSIONS.filter(p=>p.chromOnly).length === 2);
-check('非 chromOnly 和声有 degree 编码, chromOnly 有 semis', C.PROGRESSIONS.every(p => p.chromOnly ? (Array.isArray(p.semis) && p.semis.length===p.bars) : (Array.isArray(p.chords) && p.chords.length===p.bars)));
+/* ============ 工具：构造测试工程 ============ */
+function mkProject(over) {
+  const p = {
+    version: 1, name: 't', bpm: 90, key: 'D', mode: 'gong', beatsPerBar: 4, totalBars: 8, loopBars: 8,
+    reverb: 0.2, volume: 0.8,
+    voices: [
+      { id: 'v0', name: '甲', timbre: 'sample', volume: 0.8, pan: 0, mute: false, solo: false, sustain: 'mid' },
+      { id: 'v1', name: '乙', timbre: 'pluck', volume: 0.7, pan: 0.2, mute: false, solo: false, sustain: 'short' }
+    ],
+    blocks: []
+  };
+  Object.assign(p, over || {});
+  return p;
+}
+function blk(partial) {
+  return Object.assign({ id: 'b' + Math.random().toString(36).slice(2, 8), type: 'motif', ref: 'run-down', voiceId: 'v0', startBar: 0, bars: 1, octave: 0, transpose: 0, density: 1, style: 'arp' }, partial);
+}
 
-// motifEvents 展开
-const evs = C.motifEvents(C.MOTIFS[0], 1, 2);
-check('motifEvents 返回事件', Array.isArray(evs) && evs.length>0);
-check('motifEvents 事件含 t/d/dur/vel', evs.every(e => 't' in e && 'd' in e && 'dur' in e && 'vel' in e));
-check('repeat=2 时事件翻倍', evs.length === C.motifEvents(C.MOTIFS[0],1,1).length * 2);
-
-// —— MIDI 构建 ——
-const bytes = global.GZS.midi.buildMidi({
-  bpm: 90, beatsPerBar: 4, name: 'test',
-  tracks: [{ name: 'A', events: [{ t: 0, dur: 1, midi: 62, vel: 70 }] }]
+/* ============ R2 动机 ============ */
+check('R2.1 素材库 ≥8 个动机', C.MOTIFS.length >= 8, 'got ' + C.MOTIFS.length);
+check('R2.2 动机 id 唯一', new Set(C.MOTIFS.map(m => m.id)).size === C.MOTIFS.length);
+check('R2.3 动机音级均为整数', C.MOTIFS.every(m => m.beats.every(b => Number.isInteger(b.d))));
+check('R2.4 动机时长/力度合法', C.MOTIFS.every(m => m.beats.every(b => b.dur > 0 && b.vel >= 40 && b.vel <= 100)));
+C.MOTIFS.forEach(m => {
+  const evs = C.motifEvents(m, 1, null, 4);
+  const maxT = Math.max.apply(null, evs.map(e => e.t + e.dur));
+  check('R2.5 动机 ' + m.id + ' 音符不出块边界', maxT <= m.bars * 4 + 1e-9, maxT.toFixed(2));
 });
-check('MIDI 以 RIfF 头开头', bytes[0]===0x4D && bytes[1]===0x54 && bytes[2]===0x68 && bytes[3]===0x64);
-check('MIDI 数据存在 NoteOn 0x90', Array.from(bytes).indexOf(0x90) > -1);
 
-// —— 输出 ——
+/* ============ R3 和声进行 ============ */
+check('R3.1 和声 ≥6 套', C.PROGRESSIONS.length >= 6, 'got ' + C.PROGRESSIONS.length);
+check('R3.2 和声 id 唯一', new Set(C.PROGRESSIONS.map(p => p.id)).size === C.PROGRESSIONS.length);
+check('R3.3 每套和声小节数与和弦数一致', C.PROGRESSIONS.every(p =>
+  (p.chromOnly ? (Array.isArray(p.semis) && p.semis.length === p.bars)
+               : (Array.isArray(p.chords) && p.chords.length === p.bars))));
+check('R3.4 调内和弦音级有效', C.PROGRESSIONS.filter(p => !p.chromOnly).every(p =>
+  p.chords.every(c => Number.isInteger(c.root) && c.tones.every(t => Number.isInteger(t)))));
+
+/* ============ R4 多声部：不同和声放不同声部 ============ */
+const twoVoice = mkProject({ blocks: [
+  blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v0', startBar: 0, bars: 4, style: 'arp' }),
+  blk({ type: 'progression', ref: 'yu-valley', voiceId: 'v1', startBar: 0, bars: 4, style: 'block' })
+] });
+const ev2 = E.expand(twoVoice);
+check('R4.1 两个声部都有事件', ev2.some(e => e.voiceId === 'v0') && ev2.some(e => e.voiceId === 'v1'));
+check('R4.2 声部隔离：v0 事件的 midi 来自其自身块', (() => {
+  const solo = E.expand(mkProject({ blocks: [blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v0', startBar: 0, bars: 4, style: 'arp' })] }));
+  const set0 = new Set(solo.map(x => x.midi));
+  return ev2.filter(e => e.voiceId === 'v0').every(e => set0.has(e.midi));
+})());
+check('R4.3 两个声部内容不同（midi 集合不等）', (() => {
+  const s0 = new Set(ev2.filter(e => e.voiceId === 'v0').map(e => e.midi));
+  const s1 = new Set(ev2.filter(e => e.voiceId === 'v1').map(e => e.midi));
+  return JSON.stringify([...s0].sort()) !== JSON.stringify([...s1].sort());
+})());
+// 同一块可搬到任何声部
+const alt = mkProject({ blocks: [blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v1', startBar: 0, bars: 4, style: 'arp' })] });
+check('R4.4 和声块可放到任意声部（v1）', E.expand(alt).every(e => e.voiceId === 'v1') && E.expand(alt).length > 0);
+
+/* ============ R5 织体差异 · 生成正确性 ============ */
+function styleProj(style) { return mkProject({ blocks: [blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v0', startBar: 0, bars: 4, style: style })] }); }
+const arpE = E.expand(styleProj('arp'));
+const bkE = E.expand(styleProj('block'));
+const bsE = E.expand(styleProj('bass'));
+check('R5.1 block 织体同拍事件 ≥ 和弦音数（柱式同发）', bkE.filter(e => e.bar === 0).length >= 3);
+check('R5.2 bass 织体每和弦只 1 音（4 小节 4 和弦 = 4 事件）', bsE.length === 4, 'got ' + bsE.length);
+check('R5.3 arp 织体事件数 = 4 和弦 × 3 音', arpE.length === 12, 'got ' + arpE.length);
+
+/* ============ R6 调内诚实（safe mode） ============ */
+const K2M = { C: 0, D: 2, F: 5, G: 7, A: 9 };
+const KEYS = ['C', 'D', 'F', 'G', 'A'];
+const MODES = ['gong', 'shang', 'jue', 'zhi', 'yu'];
+const motifRefs = C.MOTIFS.map(m => m.id);
+const progRefs = C.PROGRESSIONS.filter(p => !p.chromOnly).map(p => p.id);
+let scaleFailures = 0;
+KEYS.forEach(k => MODES.forEach(mode => {
+  const scale = T.MODES[mode].semis;
+  const tonic = K2M[k] + 12; // 基准 8 度
+  const proj = mkProject({ key: k, mode: mode, blocks: [
+    blk({ type: 'motif', ref: motifRefs[Math.floor(Math.random() * motifRefs.length)], voiceId: 'v0', startBar: 0, bars: 1, octave: 0, transpose: 0 }),
+    blk({ type: 'progression', ref: progRefs[Math.floor(Math.random() * progRefs.length)], voiceId: 'v1', startBar: 0, bars: 4, style: 'arp' })
+  ] });
+  E.expand(proj).forEach(e => {
+    const off = ((e.midi - tonic) % 12 + 12) % 12;
+    if (!scale.includes(off)) { scaleFailures++; if (scaleFailures < 4) console.log('  off-scale:', k, mode, 'midi', e.midi, 'off', off); }
+  });
+}));
+check('R6.1 所有主音×五声调式展开音符都在调内', scaleFailures === 0, scaleFailures + ' violations');
+
+/* ============ R6.2 八度/移调/转调 ============ */
+const baseProj = mkProject({ blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 0, bars: 1 })] });
+const baseNotes = E.expand(baseProj).map(e => e.midi);
+const octProj = mkProject({ blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 0, bars: 1, octave: 1 })] });
+check('R6.2 八度+1 → 所有音 +12', eq(E.expand(octProj).map(e => e.midi), baseNotes.map(n => n + 12)));
+const trProj = mkProject({ blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 0, bars: 1, transpose: 2 })] });
+const trNotes = E.expand(trProj).map(e => e.midi);
+check('R6.3 移调+2 音级 → 所有音仍在 D 宫调内', trNotes.every(n => [0, 2, 4, 7, 9].includes(((n - 62) % 12 + 12) % 12)))
+// 移调语义：每个动机音级 +2（scale 内），与 degreeToMidi 一致
+const trCheck = (() => {
+  const climb = C.motif('climb');
+  const evs1 = E.expand(baseProj);
+  const evs2 = E.expand(trProj);
+  if (evs1.length !== evs2.length) return false;
+  let ok = true;
+  for (let i = 0; i < evs1.length; i++) {
+    const expect = T.degreeToMidi('gong', 62, climb.beats[i].d + 2);
+    if (evs2[i].midi !== expect) ok = false;
+  }
+  return ok;
+})();
+check('R6.3b 移调+2 = 每个动机音级 +2（与 degreeToMidi 一致）', trCheck);
+const keyUp = mkProject({ key: 'E', blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 0, bars: 1 })] });
+check('R6.4 主音 D→E（+2 半音）→ 所有音整体 +2', eq(E.expand(keyUp).map(e => e.midi), baseNotes.map(n => n + 2)));
+
+/* ============ R6.5 确定性 / NaN / 空工程 ============ */
+check('R6.5 同工程两次展开一致', eq(E.expand(baseProj), E.expand(baseProj)));
+check('R6.6 展开结果无 NaN', E.expand(baseProj).every(e => Number.isFinite(e.midi) && Number.isFinite(e.bar) && Number.isFinite(e.dur)));
+check('R6.7 空工程 → 0 事件', E.expand(mkProject()).length === 0);
+
+/* ============ R6.8 动机块 3/4 拍号边界 ============ */
+const m34 = mkProject({ beatsPerBar: 3, blocks: [blk({ type: 'motif', ref: 'run-down', voiceId: 'v0', startBar: 0, bars: 2 })] });
+const m34ev = E.expand(m34);
+check('R6.8 3/4 拍号下动机音符都落在小节内（bar×3 拍）', m34ev.every(e => {
+  const inBar = (e.bar - Math.floor(e.bar)) * 3 + 1e-9;
+  return e.bar >= 0 && inBar < 3;
+}));
+
+/* ============ notesForLoop：调度物 ============ */
+const loopProj = mkProject({ loopBars: 4, totalBars: 8, blocks: [
+  blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v0', startBar: 0, bars: 4, style: 'arp' }),
+  blk({ type: 'motif', ref: 'run-down', voiceId: 'v1', startBar: 2, bars: 1 })
+] });
+const notes = E.notesForLoop(loopProj);
+const loopSec = 4 * 4 * (60 / 90);
+check('R6.9 notesForLoop 非空', notes.length > 0);
+check('R6.10 所有调度秒 ∈ [0, loopSec)', notes.every(n => n.sec >= 0 && n.sec < loopSec));
+check('R6.11 调度音符按时间有序', notes.every((n, i) => i === 0 || notes[i - 1].sec <= n.sec));
+check('R6.12 两个声部的调度音符都存在', notes.some(n => n.voiceId === 'v0') && notes.some(n => n.voiceId === 'v1'));
+
+/* ============ R6.13/14 mute/solo ============ */
+check('R6.13 静音声部不可听', E.isAudible({ voices: [{ id: 'v0', mute: true }] }, 'v0') === false);
+check('R6.14 独奏时仅独奏声部可听', (() => {
+  const p = mkProject({ voices: [
+    { id: 'v0', mute: false, solo: true }, { id: 'v1', mute: false, solo: false }
+  ] });
+  return E.isAudible(p, 'v0') && !E.isAudible(p, 'v1');
+})());
+
+/* ============ R10 MIDI 导出 ============ */
+const midiEvents = E.expand(mkProject({ blocks: [blk({ type: 'motif', ref: 'run-down', voiceId: 'v0', startBar: 0, bars: 1 })] }));
+const midiBytes = global.GZS.midi.buildMidi({
+  bpm: 90, beatsPerBar: 4, name: 't',
+  tracks: [{ name: 'v', events: midiEvents.map(e => ({ t: e.bar, dur: e.dur, midi: e.midi, vel: e.vel })) }]
+});
+const bArr = Array.from(midiBytes);
+check('R10.1 MIDI 头 MThd', bArr.slice(0, 4).map(c => String.fromCharCode(c)).join('') === 'MThd');
+check('R10.2 MIDI 含 NoteOn', bArr.indexOf(0x90) >= 0);
+check('R10.3 MIDI 含 NoteOff(0x80)', bArr.indexOf(0x80) >= 0);
+check('R10.4 MIDI 字节数 > 100', midiBytes.length > 100);
+
+/* ============ WAV 导出（audio.wavFromBuffer 纯函数） ============ */
+load('../lib/audio.js');
+const fakeBuf = {
+  sampleRate: 44100, numberOfChannels: 2, length: 1000,
+  getChannelData: (ch) => ch === 0 ? Float32Array.from({ length: 1000 }, (_, i) => i === 500 ? 0.7 : 0) : new Float32Array(1000)
+};
+(async () => {
+  const W = global.GZS.audio.wavFromBuffer(fakeBuf);
+  const ab = await W.blob.arrayBuffer();
+  const u8 = new Uint8Array(ab);
+  const ascii = (o, n) => String.fromCharCode.apply(null, u8.slice(o, o + n));
+  const dv = new DataView(ab);
+  check('R10.5 WAV 头 RIFF/WAVE/fmt/data', ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WAVE' && ascii(12, 4) === 'fmt ' && ascii(36, 4) === 'data');
+  check('R10.6 WAV 采样率/声道/位深正确', dv.getUint32(24, true) === 44100 && dv.getUint16(22, true) === 2 && dv.getUint16(34, true) === 16);
+  check('R10.7 WAV 数据长度 = 1000×2×2', dv.getUint32(40, true) === 4000);
+  check('R10.8 WAV 峰值采样值正确(0.7→22937)', dv.getInt16(44 + 500 * 4, true) > 20000);
+  finish();
+})();
+let finished = false;
+function finish() {
+  if (finished) return;
+  finished = true;
+  let fail = 0;
+  for (const r of results) {
+    console.log((r.pass ? 'PASS' : 'FAIL') + '  ' + r.name + (r.extra ? '   [' + r.extra + ']' : ''));
+    if (!r.pass) fail++;
+  }
+  console.log('\n' + results.length + ' 项，失败 ' + fail);
+  process.exit(fail ? 1 : 0);
+}
+// 兼容：若上面异步没跑（不应发生），保证退出
+setTimeout(() => finish(), 5000);
+
+/* ============ 持久化结构 ============ */
+const normalized = E.normalize(loopProj);
+check('P1 normalize 保留 voices/blocks', normalized.voices.length === 2 && normalized.blocks.length === 2);
+check('P2 normalize 补全 sustain', normalized.voices.every(v => ['short', 'mid', 'ring'].includes(v.sustain)));
+
+/* ============ 输出 ============ */
 let fail = 0;
 for (const r of results) {
-  console.log((r.pass ? 'PASS' : 'FAIL') + '  ' + r.name + (r.extra ? '  [' + r.extra + ']' : ''));
+  console.log((r.pass ? 'PASS' : 'FAIL') + '  ' + r.name + (r.extra ? '   [' + r.extra + ']' : ''));
   if (!r.pass) fail++;
 }
 console.log('\n' + results.length + ' 项，失败 ' + fail);

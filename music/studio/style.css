@@ -114,7 +114,7 @@
   padding: 10px 12px 10px; overflow: hidden;
 }
 .gz-stage-inner { display: flex; gap: 8px; }
-.gz-voice-heads { display: flex; flex-direction: column; width: 66px; flex: 0 0 66px; }
+.gz-voice-heads { display: flex; flex-direction: column; width: 118px; flex: 0 0 118px; }
 .gz-stage-scroll { flex: 1; overflow-x: auto; min-width: 0; position: relative; }
 .gz-timeline { position: relative; }
 .gz-playhead {
@@ -135,12 +135,12 @@
 }
 
 .voice-track {
-  position: relative; height: 56px; border-top: 1px solid var(--gz-line);
+  position: relative; height: 64px; border-top: 1px solid var(--gz-line);
 }
 .voice-drop { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--ss-faint); font-size: .8rem; pointer-events: none; }
 
 .tl-block {
-  position: absolute; top: 9px; height: 38px; border-radius: 8px; z-index: 6;
+  position: absolute; top: 13px; height: 38px; border-radius: 8px; z-index: 6;
   background: var(--gz-motif); border: 1px solid var(--gz-motif-b); box-shadow: 0 2px 6px rgba(40,84,215,.16);
   cursor: grab; display: flex; flex-direction: column; justify-content: center; padding: 0 22px 0 8px; overflow: hidden;
 }
@@ -167,18 +167,21 @@
 
 /* ---------- 声部头 ---------- */
 .voice-head {
-  height: 56px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border-top: 1px solid var(--gz-line); gap: 1px; background: #fbfcfa;
+  height: 64px; position: relative; display: flex; flex-direction: column; align-items: stretch; justify-content: center;
+  border-top: 1px solid var(--gz-line); gap: 2px; background: #fbfcfa; padding: 3px 4px;
 }
-.voice-name { width: 46px; border: 0; font-size: .7rem; font-weight: 700; text-align: center; background: transparent; color: var(--gz-ink); }
-.voice-meta { font-size: .6rem; color: var(--ss-faint); }
-.voice-idx { position: absolute; top: 4px; right: 4px; font-size: .6rem; color: #b7beb6; }
-.voice-controls { position: absolute; right: -6px; top: 6px; display: none; z-index: 20; }
-.voice-head:hover .voice-controls { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-.vbtn { width: 22px; height: 18px; border-radius: 4px; border: 1px solid var(--gz-line); background: #fff; font-size: .62rem; font-weight: 800; cursor: pointer; color: var(--ss-muted); }
+.voice-head-top { display: flex; align-items: center; gap: 3px; }
+.voice-name { flex: 1; min-width: 0; border: 0; font-size: .72rem; font-weight: 700; text-align: left; background: transparent; color: var(--gz-ink); padding: 0; }
+.voice-idx { font-size: .6rem; color: #b7beb6; }
+.voice-timbre, .voice-sustain { font-size: .62rem; border: 1px solid var(--gz-line); border-radius: 5px; background: #fff; color: var(--gz-ink); padding: 1px 2px; max-width: 100%; }
+.voice-controls { display: flex; gap: 3px; align-items: center; }
+.vbtn { width: 20px; height: 18px; border-radius: 4px; border: 1px solid var(--gz-line); background: #fff; font-size: .6rem; font-weight: 800; cursor: pointer; color: var(--ss-muted); line-height: 1; }
 .vbtn--mute.is-mute { background: var(--gz-warn); color: #fff; border-color: var(--gz-warn); }
 .vbtn--solo.is-solo { background: var(--gz-accent); color: #fff; border-color: var(--gz-accent); }
-.vbtn--vol { width: 46px; accent-color: var(--gz-accent); }
+.vbtn--del { color: var(--gz-warn); border: 0; background: transparent; }
+.vbtn--vol { width: 34px; padding: 0; accent-color: var(--gz-accent); }
+.vbtn--add { width: auto; padding: 0 8px; margin-top: 2px; }
+.voice-add-row { border-top: 1px dashed var(--gz-line); padding-top: 3px; }
 
 /* ---------- 属性面板 ---------- */
 .gz-inspector {
@@ -228,3 +231,14 @@
 @keyframes gzToastIn { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
 
 @media print { .gz-gate { display: none !important; } }
+
+.insp-hint { font-size: .72rem; color: var(--ss-faint); margin: 0; line-height: 1.5; }
+
+.pal-ghost {
+  position: fixed; z-index: 950; pointer-events: none; padding: 8px 12px; border-radius: 10px;
+  background: var(--gz-surface); border: 1px solid var(--gz-motif-b); color: var(--gz-ink);
+  font-weight: 800; font-size: .84rem; box-shadow: var(--ss-shadow); opacity: .92;
+}
+.pal-ghost--prog { border-color: var(--gz-prog-b); }
+.pal-card.is-dragging { opacity: .45; }
+.voice-track.is-hover { background: var(--gz-accent-soft); outline: 2px dashed var(--gz-accent); outline-offset: -2px; }

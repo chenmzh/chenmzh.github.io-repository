@@ -296,18 +296,27 @@
   function progression(id) { return byId(PROGRESSIONS, id); }
 
   /* ---------- 每个素材自带的试听事件展开（不依赖 project） ---------- */
-  function motifEvents(m, density, repeat) {
+  /**
+   * motifEvents(m, density, repeat, bpb, bars)
+   *  - density: 疏密（>1 更密，<1 更疏）
+   *  - repeat:  重复次数（缺省时由 bars 推导）
+   *  - bpb:     每小节拍数（4/4→4，3/4→3）
+   *  - bars:    块长度（小节）；有效长度 = bars，音符按此重排/重复
+   */
+  function motifEvents(m, density, repeat, bpb, bars) {
+    var beatsPerBar = bpb || 4;
+    var effectiveBars = bars || (m.bars * (repeat || 1));
+    var reps = Math.max(1, Math.round(effectiveBars / m.bars));
     var evs = [];
-    var beatsPerBar = 4;
     var maxT = 0, i;
     for (i = 0; i < m.beats.length; i++) maxT = Math.max(maxT, m.beats[i].t + m.beats[i].dur);
-    var blockBeats = m.bars * beatsPerBar;
+    var blockBeats = effectiveBars * beatsPerBar;
     var stretch = density ? 1 / Math.max(0.6, Math.min(1.5, density)) : 1;
     var scale = Math.min(stretch, blockBeats / maxT);
-    for (var r = 0; r < (repeat || 1); r++) {
+    for (var r = 0; r < reps; r++) {
       for (i = 0; i < m.beats.length; i++) {
         var b = m.beats[i];
-        evs.push({ t: r * blockBeats + b.t * scale, d: b.d, dur: Math.max(0.08, b.dur * scale), vel: b.vel, art: b.art });
+        evs.push({ t: r * m.bars * beatsPerBar + b.t * scale, d: b.d, dur: Math.max(0.08, b.dur * scale), vel: b.vel, art: b.art });
       }
     }
     return evs;

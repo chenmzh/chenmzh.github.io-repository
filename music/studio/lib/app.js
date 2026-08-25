@@ -11,7 +11,7 @@
   var $ = function (s, root) { var r = typeof root === 'string' ? document.querySelector(root) : (root || document); return r.querySelector(s); };
   var $$ = function (s, root) { var r = typeof root === 'string' ? document.querySelector(root) : (root || document); return Array.prototype.slice.call(r.querySelectorAll(s)); };
 
-  var theory = G.theory, content = G.content, audio = G.audio, midi = G.midi;
+  var theory = G.theory, content = G.content, audio = G.audio, midi = G.midi, engine = G.engine;
   var Tone = window.Tone;
 
   var KEY_MIDI = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
@@ -24,10 +24,10 @@
       bpm: 76, key: 'D', mode: 'gong', beatsPerBar: 4, totalBars: 32,
       reverb: 0.28, volume: 0.8, loopBars: 16,
       voices: [
-        { id: 'v0', name: '主旋律', timbre: 'sample', volume: 0.9, pan: 0, mute: false, solo: false },
-        { id: 'v1', name: '和声', timbre: 'sample', volume: 0.72, pan: -0.18, mute: false, solo: false },
-        { id: 'v2', name: '低音', timbre: 'sample', volume: 0.8, pan: 0.16, mute: false, solo: false },
-        { id: 'v3', name: '装饰', timbre: 'pluck', volume: 0.6, pan: 0.22, mute: false, solo: false }
+        { id: 'v0', name: '主旋律', timbre: 'sample', volume: 0.9, pan: 0, mute: false, solo: false, sustain: 'ring' },
+        { id: 'v1', name: '和声', timbre: 'sample', volume: 0.72, pan: -0.18, mute: false, solo: false, sustain: 'mid' },
+        { id: 'v2', name: '低音', timbre: 'sample', volume: 0.8, pan: 0.16, mute: false, solo: false, sustain: 'ring' },
+        { id: 'v3', name: '装饰', timbre: 'pluck', volume: 0.6, pan: 0.22, mute: false, solo: false, sustain: 'short' }
       ],
       blocks: [
         { id: uid(), type: 'motif', ref: 'run-down', voiceId: 'v0', startBar: 0, bars: 1, octave: 0, repeat: 1, density: 1 },
@@ -53,93 +53,10 @@
 
   var $fn = {}; // 由 UI 设置的回调（渲染）
 
-  /* ================= 事件展开 ================= */
-  /** 把 blocks 全部展开成 {bar, beats, midi, vel, dur, art, voiceId} 事件（以拍为单位的时间） */
-  function expand(proj) {
-    proj = proj || project;
-    var out = [];
-    var tonic = KEY_MIDI[proj.key] || 0;
-    var mode = proj.mode;
-    for (var i = 0; i < proj.blocks.length; i++) {
-      var blk = proj.blocks[i];
-      var voice = voiceOf(proj, blk.voiceId);
-      if (!voice) continue;
-      if (blk.type === 'motif') {
-        var mot = content.motif(blk.ref);
-        if (!mot) continue;
-        var evs = content.motifEvents(mot, blk.density, blk.repeat);
-        var blockBeats = blk.bars * proj.beatsPerBar;
-        for (var e = 0; e < evs.length; e++) {
-          var ev = evs[e];
-          var midi = theory.degreeToMidi(mode, tonic, ev.d) + 12 * (blk.octave || 0);
-          out.push({
-            bar: blk.startBar + ev.t / proj.beatsPerBar,
-            t: blk.startBar * proj.beatsPerBar + ev.t,
-            midi: midi, vel: ev.vel, dur: ev.dur * (blk.density > 0 ? 1 + (blk.density - 1) * 0 : 1),
-            art: ev.art, voiceId: blk.voiceId
-          });
-        }
-      } else if (blk.type === 'progression') {
-        var prog = content.progression(blk.ref);
-        if (!prog) continue;
-        var chords = prog.semis ? prog.semis : prog.chords;
-        var style = blk.style || 'arp';
-        var bb = proj.beatsPerBar;
-        var barPerChord = blk.bars / chords.length;
-        var oct = blk.octave || 0;
-        // 取和弦全部音的 MIDI（含根音）
-        function chordTones(ch) {
-          if (prog.semis) {
-            var arr = [];
-            arr.push(tonic + ch.root + 12 * oct);
-            for (var t = 0; t < ch.tones.length; t++) arr.push(tonic + ch.root + ch.tones[t] + 12 * oct);
-            return arr;
-          }
-          // 五声音级：根音+tones
-          var degs = [ch.root].concat(ch.tones);
-          var out2 = [];
-          for (var i2 = 0; i2 < degs.length; i2++) out2.push(theory.degreeToMidi(mode, tonic, degs[i2]) + 12 * oct);
-          return out2;
-        }
-        for (var cI = 0; cI < chords.length; cI++) {
-          var chord = chords[cI];
-          var cb = blk.startBar + cI * barPerChord;
-          var tones = chordTones(chord);
-          tones.sort(function (a, b) { return a - b; });
-          var rootM = tones[0];
-          var fifthM = tones.length > 1 ? tones[tones.length > 2 ? 2 : 1] : tones[0];
-          var sub = Math.max(1, Math.round(barPerChord));
-          if (style === 'bass' || style === 'bassarp') {
-            out.push(makeNote(cb, 0, proj, rootM, 0.85, blk, voice));
-            if (style === 'bassarp') {
-              out.push(makeNote(cb + barPerChord * 0.55, 0, proj, fifthM, 0.45, blk, voice));
-            }
-          } else if (style === 'block') {
-            var chordM = tones;
-            for (var n2 = 0; n2 < chordM.length; n2++) {
-              out.push(makeNote(cb, 0, proj, chordM[n2], 0.5, blk, voice));
-            }
-          } else { // arp
-            var step = Math.max(barPerChord / Math.max(tones.length, 1), 0.4) * (blk.density > 0 ? blk.density : 1);
-            for (var a = 0; a < tones.length; a++) {
-              out.push(makeNote(cb + a * step, 0, proj, tones[a], 0.55, blk, voice));
-            }
-          }
-        }
-      }
-    }
-    return out;
-  }
+  /* ================= 事件展开（逻辑在 engine.js，便于纯逻辑测试） ================= */
+  function expand(proj) { return engine.expand(proj || project); }
 
-  /** 构造一个和声音符：bar 为绝对小节（可为小数），mb 为该小节内偏移拍 */
-  function makeNote(bar, mb, proj, midi, vel, blk, voice) {
-    return { bar: bar + mb / proj.beatsPerBar, t: 0, midi: midi, vel: vel, dur: 1, art: null, voiceId: blk.voiceId };
-  }
-
-  function voiceOf(proj, id) {
-    for (var i = 0; i < proj.voices.length; i++) if (proj.voices[i].id === id) return proj.voices[i];
-    return null;
-  }
+  function voiceOf(proj, id) { return engine.voiceOf(proj, id); }
   function blockById(id) {
     for (var i = 0; i < project.blocks.length; i++) if (project.blocks[i].id === id) return project.blocks[i];
     return null;
@@ -152,13 +69,12 @@
   function fireEventAt(e, when) {
     var voice = voiceOf(project, e.voiceId);
     if (!voice) return;
-    if (voice.mute) return;
-    var anySolo = project.voices.some(function (v) { return v.solo; });
-    if (anySolo && !voice.solo) return;
+    if (!engine.isAudible(project, e.voiceId)) return;
     var vg = voice.volume * project.volume;
-    var durSec = e.durBeat * (60 / project.bpm);
-    audio.trigger(voice.id, vg * (e.voiceId === 'v2' ? 1.1 : 1), voice.pan,
-      { timbre: voice.timbre, ring: 1 }, e.midi, when, e.vel, durSec);
+    var durSec = Math.max(0.12, (e.dur || e.durBeat || 1) * (60 / project.bpm));
+    var ring = voice.sustain === 'short' ? 0.55 : (voice.sustain === 'ring' ? 1.9 : 1);
+    audio.trigger(voice.id, vg, voice.pan,
+      { timbre: voice.timbre, ring: ring }, e.midi, when, e.vel, durSec);
   }
 
   // 基于 Tone.Transport + Tone.Loop 的循环调度
@@ -170,15 +86,7 @@
     }
     var secPerBeat = 60 / project.bpm;
     var loopBeats = project.loopBars * project.beatsPerBar;
-    var evs = expand();
-    var cols = {};
-    evs.forEach(function (e) {
-      var local = (((e.bar % project.loopBars) + project.loopBars) % project.loopBars);
-      cols[local + '|' + e.midi + '|' + e.dur + '|' + e.vel + '|' + e.voiceId] = {
-        bar: local, midi: e.midi, vel: e.vel, dur: e.dur, voiceId: e.voiceId, sec: local * project.beatsPerBar * secPerBeat
-      };
-    });
-    var notes = Object.keys(cols).map(function (k) { return cols[k]; });
+    var notes = engine.notesForLoop(project);
     var loopLenSec = loopBeats * secPerBeat;
     var loop = new Tone.Loop(function (time) {
       for (var i = 0; i < notes.length; i++) {
@@ -303,7 +211,6 @@
   function mkCard(item, type) {
     var div = document.createElement('div');
     div.className = 'pal-card ' + (type === 'progression' ? 'pal-card--prog' : 'pal-card--motif');
-    div.setAttribute('draggable', 'true');
     div.dataset.type = type;
     div.dataset.ref = item.id;
     var badge = type === 'motif' ? '动机' : '和声';
@@ -319,21 +226,16 @@
       ev.stopPropagation();
       previewItem(item, type);
     });
-    // HTML5 DnD 起点（桌面）：dragstart 存数据
-    div.addEventListener('dragstart', function (e) {
-      e.dataTransfer.setData('text/plain', type + ':' + item.id);
-      e.dataTransfer.effectAllowed = 'copy';
-    });
     return div;
   }
 
   function previewItem(item, type) {
-    var tonic = KEY_MIDI[project.key] || 0;
+    var tonic = (KEY_MIDI[project.key] != null ? KEY_MIDI[project.key] : 0) + 60;
     var mode = project.mode;
     if (type === 'motif') {
       var evs = content.motifEvents(item, 1, 1);
       var notes = evs.map(function (ev) {
-        return { t: Math.max(0, ev.t), midi: theory.degreeToMidi(mode, tonic, ev.d) + 0 * 0, vel: ev.vel, dur: ev.dur };
+        return { t: Math.max(0, ev.t), midi: theory.degreeToMidi(mode, tonic, ev.d), vel: ev.vel, dur: ev.dur };
       });
       audio.preview(notes, project.bpm, 'sample');
     } else {
@@ -381,37 +283,95 @@
   function renderVoices() {
     var wrap = $('#voice-heads');
     wrap.innerHTML = '';
+    if (!project.voices.length) {
+      // 空状态：自动补一条
+      addVoice();
+    }
     project.voices.forEach(function (v, idx) {
       var el = document.createElement('div');
       el.className = 'voice-head';
       el.dataset.voiceId = v.id;
-      var timbreName = (content.TIMBRES[v.timbre] || {}).name || v.timbre;
       var muted = v.mute ? ' is-mute' : '';
       var solod = v.solo ? ' is-solo' : '';
+      var timbreOpts = Object.keys(content.TIMBRES).map(function (k) {
+        var t = content.TIMBRES[k];
+        return '<option value="' + k + '"' + (v.timbre === k ? ' selected' : '') + '>' + t.name + '</option>';
+      }).join('');
+      var sustainOpts = [
+        { id: 'short', name: '短' }, { id: 'mid', name: '中' }, { id: 'ring', name: '延' }
+      ].map(function (s) {
+        return '<option value="' + s.id + '"' + ((v.sustain || 'mid') === s.id ? ' selected' : '') + '>' + s.name + '</option>';
+      }).join('');
       el.innerHTML =
+        '<div class="voice-head-top">' +
         '<input class="voice-name" value="' + v.name + '" maxlength="8" />' +
-        '<span class="voice-meta">' + timbreName + '</span>' +
+        '<span class="voice-idx">' + (idx + 1) + '</span>' +
+        (project.voices.length > 1 ? '<button class="vbtn vbtn--del" title="删除声部">✕</button>' : '') +
+        '</div>' +
+        '<select class="voice-timbre" title="音色">' + timbreOpts + '</select>' +
+        '<select class="voice-sustain" title="延音">' + sustainOpts + '</select>' +
         '<div class="voice-controls">' +
         '<button class="vbtn vbtn--mute' + muted + '" title="静音">M</button>' +
         '<button class="vbtn vbtn--solo' + solod + '" title="独奏">S</button>' +
         '<input type="range" class="vbtn--vol" min="0" max="1.2" step="0.02" value="' + v.volume + '" title="音量" />' +
-        '</div><span class="voice-idx">' + (idx + 1) + '</span>';
+        '</div>';
       $('.voice-name', el).addEventListener('input', function () { v.name = this.value; state.dirty = true; renderHeader(); });
-      $('.vbtn--mute', el).addEventListener('click', function () { v.mute = !v.mute; state.dirty = true; renderVoices(); renderTimeline(); });
-      $('.vbtn--solo', el).addEventListener('click', function () { v.solo = !v.solo; state.dirty = true; renderVoices(); renderTimeline(); });
+      $('.vbtn--mute', el).addEventListener('click', function () { v.mute = !v.mute; state.dirty = true; renderVoices(); });
+      $('.vbtn--solo', el).addEventListener('click', function () { v.solo = !v.solo; state.dirty = true; renderVoices(); });
+      $('.vbtn--del', el).addEventListener('click', function () { removeVoice(v.id); });
       $('.vbtn--vol', el).addEventListener('input', function () {
         v.volume = parseFloat(this.value);
         audio.setChainParams(v.id, v.volume * project.volume, v.pan);
         state.dirty = true;
       });
+      $('.voice-timbre', el).addEventListener('change', function () {
+        v.timbre = this.value;
+        state.dirty = true;
+        renderVoices();
+      });
+      $('.voice-sustain', el).addEventListener('change', function () {
+        v.sustain = this.value;
+        state.dirty = true;
+      });
       wrap.appendChild(el);
     });
+    var plus = document.createElement('div');
+    plus.className = 'voice-add-row';
+    plus.innerHTML = '<button id="voice-add-btn" class="vbtn vbtn--add">＋ 声部</button>';
+    plus.querySelector('#voice-add-btn').addEventListener('click', function () { addVoice(); });
+    wrap.appendChild(plus);
+  }
+
+  function addVoice() {
+    var id = 'v' + (project.voices.length);
+    while (engine.voiceOf(project, id)) id = 'v' + (Math.random() * 1000 | 0);
+    project.voices.push({
+      id: id, name: '声部' + (project.voices.length + 1),
+      timbre: 'sample', volume: 0.75, pan: 0, mute: false, solo: false, sustain: 'mid'
+    });
+    state.dirty = true;
+    render();
+  }
+
+  function removeVoice(id) {
+    var proxy = project.voices.find(function (v) { return v.id !== id; });
+    // 把该声部上的块移到代理声部
+    project.blocks.forEach(function (b) { if (b.voiceId === id && proxy) b.voiceId = proxy.id; });
+    project.voices = project.voices.filter(function (v) { return v.id !== id; });
+    state.dirty = true;
+    render();
   }
 
   /* ---------- 时间轴 ---------- */
   function renderTimeline() {
     var tl = $('#timeline');
     tl.innerHTML = '';
+    // 播放头（先重建，避免被清空）
+    var ph = document.createElement('div');
+    ph.id = 'playhead';
+    ph.className = 'gz-playhead';
+    ph.setAttribute('aria-hidden', 'true');
+    tl.appendChild(ph);
     // 标尺
     var ruler = document.createElement('div');
     ruler.className = 'tl-ruler';
@@ -448,9 +408,10 @@
         var refObj = blk.type === 'motif' ? content.motif(blk.ref) : content.progression(blk.ref);
         var nm = refObj ? refObj.name : blk.ref;
         var octText = blk.octave ? (blk.octave > 0 ? '+' + blk.octave : '' + blk.octave) : '';
+        var trText = blk.transpose ? (blk.transpose > 0 ? '+' + blk.transpose : '' + blk.transpose) + '级' : '';
         var extra = blk.type === 'motif'
-          ? (', ×' + (blk.repeat || 1) + (octText ? ' ' + octText : ''))
-          : (', ' + ((content.STYLES[blk.style] || {}).name || blk.style) + (octText ? ' ' + octText : ''));
+          ? (octText ? ' ' + octText : '') + (trText ? ' ' + trText : '')
+          : (', ' + ((content.STYLES[blk.style] || {}).name || blk.style) + (octText ? ' ' + octText : '') + (trText ? ' ' + trText : ''));
         bEl.innerHTML =
           '<span class="tl-block-name">' + nm + '</span>' +
           '<span class="tl-block-meta">' + blk.bars + '小节' + extra + '</span>' +
@@ -562,24 +523,75 @@
     if (blk.id === selectedId) renderTimeline();
   }
 
-  /* ---------- HTML5 拖放（从面板拖块到声部 lane） ---------- */
-  function setupDropZones() {
+  /* ---------- 素材卡 pointer 拖拽（鼠标 + 触摸通用） ---------- */
+  // 事件代理：palette 容器上监听 pointerdown，卡片本身 不设 draggable
+  var palDrag = null; // {type, ref, card, ghost, moved, pointerId, lastX, lastY, startX, startY}
+  function initPaletteDrag() {
     var tl = $('#timeline');
-    tl.addEventListener('dragover', function (e) {
-      var payload = e.dataTransfer && e.dataTransfer.types.indexOf('text/plain') !== -1;
-      if (payload) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }
+    var palette = $('#motif-palette').parentElement;
+
+    [tl, palette].forEach(function (root) {
+      root.addEventListener('pointerdown', function (e) {
+        var card = e.target.closest ? e.target.closest('.pal-card') : null;
+        if (!card) return;
+        // 不拦截试听按钮
+        if (e.target.closest('.pal-card-preview')) return;
+        e.preventDefault();
+        var type = card.dataset.type, ref = card.dataset.ref;
+        if (type !== 'motif' && type !== 'progression') return;
+        palDrag = {
+          type: type, ref: ref, card: card, pointerId: e.pointerId,
+          startX: e.clientX, startY: e.clientY, moved: false, ghost: null
+        };
+        try { card.setPointerCapture(e.pointerId); } catch (err) {}
+      });
     });
-    tl.addEventListener('drop', function (e) {
-      var data = e.dataTransfer && e.dataTransfer.getData('text/plain');
-      if (!data || data.indexOf(':') === -1) return;
-      var parts = data.split(':');
-      var type = parts[0], ref = parts[1];
-      if (type !== 'motif' && type !== 'progression') return;
-      e.preventDefault();
-      var voiceId = pointToVoice(e.clientX, e.clientY);
-      if (!voiceId) return;
-      var bar = pxToBar(e.clientX);
-      addBlock(type, ref, voiceId, Math.max(0, bar));
+
+    // 全局移动/抬起
+    document.addEventListener('pointermove', function (e) {
+      if (!palDrag || e.pointerId !== palDrag.pointerId) return;
+      var dx = e.clientX - palDrag.startX, dy = e.clientY - palDrag.startY;
+      if (!palDrag.moved && Math.abs(dx) + Math.abs(dy) < 8) return;
+      palDrag.moved = true;
+      if (!palDrag.ghost) {
+        palDrag.ghost = document.createElement('div');
+        palDrag.ghost.className = 'pal-ghost ' + (palDrag.type === 'progression' ? 'pal-ghost--prog' : 'pal-ghost--motif');
+        palDrag.ghost.textContent = palDrag.card.querySelector('.pal-card-name').textContent;
+        document.body.appendChild(palDrag.ghost);
+        palDrag.card.classList.add('is-dragging');
+      }
+      palDrag.ghost.style.left = (e.clientX + 10) + 'px';
+      palDrag.ghost.style.top = (e.clientY + 12) + 'px';
+      // 高亮悬停 lane
+      var el = document.elementFromPoint(e.clientX, e.clientY);
+      var track = el && el.closest ? el.closest('.voice-track') : null;
+      var lanes = $$('.voice-track');
+      for (var i = 0; i < lanes.length; i++) lanes[i].classList.toggle('is-hover', lanes[i] === track);
+    });
+
+    document.addEventListener('pointerup', function (e) {
+      if (!palDrag || e.pointerId !== palDrag.pointerId) return;
+      if (palDrag.moved) {
+        var el = document.elementFromPoint(e.clientX, e.clientY);
+        var track = el && el.closest ? el.closest('.voice-track') : null;
+        if (track) {
+          var voiceId = track.dataset.voiceId;
+          var bar = pxToBar(e.clientX);
+          addBlock(palDrag.type, palDrag.ref, voiceId, Math.max(0, Math.min(bar, project.totalBars - 1)));
+        } else {
+          toast('拖到某一声部轨道上放置');
+        }
+      }
+      if (palDrag.ghost) { palDrag.ghost.remove(); palDrag.card.classList.remove('is-dragging'); }
+      var lanes = $$('.voice-track');
+      for (var j = 0; j < lanes.length; j++) lanes[j].classList.remove('is-hover');
+      palDrag = null;
+    });
+
+    // 触摸：pointercancel 兜底
+    document.addEventListener('pointercancel', function () {
+      if (palDrag && palDrag.ghost) { palDrag.ghost.remove(); palDrag.card.classList.remove('is-dragging'); }
+      palDrag = null;
     });
   }
 
@@ -590,7 +602,7 @@
       id: uid(), type: type, ref: ref, voiceId: voiceId,
       startBar: bar,
       bars: refObj.bars,
-      octave: type === 'progression' ? 0 : 0,
+      octave: 0, transpose: 0,
       repeat: 1, density: 1,
       style: type === 'progression' ? 'arp' : undefined
     };
@@ -646,12 +658,13 @@
       '<h3>' + name + '</h3></div>';
     html += '<label class="insp-row">声部 <select class="insp-select" data-f="voiceId">' + voiceSel + '</select></label>';
     html += '<label class="insp-row">起始小节 <input type="number" class="insp-num" data-f="startBar" min="0" max="128" value="' + blk.startBar + '"></label>';
-    html += '<label class="insp-row">长度 <input type="number" class="insp-num" data-f="bars" min="1" max="32" value="' + blk.bars + '" step="1"></label>';
+    html += '<label class="insp-row">长度 <input type="number" class="insp-num" data-f="bars" min="1" max="32" value="' + blk.bars + '" step="1">小节</label>';
     var octMin = blk.type === 'progression' ? -2 : -1, octMax = blk.type === 'progression' ? 1 : 2;
     html += '<label class="insp-row">八度 <input type="number" class="insp-num" data-f="octave" min="' + octMin + '" max="' + octMax + '" value="' + blk.octave + '"></label>';
+    html += '<label class="insp-row">移调 <input type="number" class="insp-num" data-f="transpose" min="-4" max="4" step="1" value="' + (blk.transpose || 0) + '">音级</label>';
 
     if (blk.type === 'motif') {
-      html += '<label class="insp-row">重复 <input type="number" class="insp-num" data-f="repeat" min="1" max="8" value="' + (blk.repeat || 1) + '"></label>';
+      html += '<p class="insp-hint">长度 = 动机原始长度 × 重复次数（改长度即改重复）。</p>';
       html += '<label class="insp-row">密度 ' + (blk.density || 1).toFixed(2) +
         ' <input type="range" class="insp-range" data-f="density" min="0.5" max="1.5" step="0.05" value="' + (blk.density || 1) + '"></label>';
     } else {
@@ -703,6 +716,8 @@
     $('#bpm-input').value = project.bpm;
     $('#key-select').value = project.key;
     $('#mode-select').value = project.mode;
+    var meterSel = $('#meter-select');
+    if (meterSel) meterSel.value = String(project.beatsPerBar || 4);
     $('#reverb-input').value = Math.round(project.reverb * 100);
     $('#vol-input').value = Math.round(project.volume * 100);
     $('#loop-input').value = project.loopBars;
@@ -761,16 +776,27 @@
       beatsPerBar: p.beatsPerBar || d.beatsPerBar,
       totalBars: p.totalBars || d.totalBars, reverb: p.reverb != null ? p.reverb : d.reverb,
       volume: p.volume != null ? p.volume : d.volume, loopBars: p.loopBars || d.loopBars,
-      voices: p.voices || d.voices, blocks: p.blocks || []
+      voices: (p.voices || []).map(function (v) {
+        return {
+          id: v.id, name: v.name || '声部',
+          timbre: content.TIMBRES[v.timbre] ? v.timbre : 'sample',
+          volume: v.volume != null ? v.volume : 0.75, pan: v.pan != null ? v.pan : 0,
+          mute: !!v.mute, solo: !!v.solo,
+          sustain: v.sustain || 'mid'
+        };
+      }),
+      blocks: p.blocks || []
     };
     out.blocks = out.blocks.map(function (blk) {
       return {
         id: blk.id || uid(), type: blk.type, ref: blk.ref, voiceId: blk.voiceId,
         startBar: blk.startBar || 0, bars: blk.bars || 1, octave: blk.octave || 0,
+        transpose: blk.transpose || 0,
         repeat: blk.repeat || 1, density: blk.density != null ? blk.density : 1,
         style: blk.style || (blk.type === 'progression' ? 'arp' : undefined)
       };
     });
+    if (!out.voices.length) out.voices = d.voices.map(function () { return null; }).filter(Boolean);
     return out;
   }
 
@@ -824,20 +850,30 @@
       project.bpm = clamp(parseInt(this.value, 10), 40, 200);
       if (Tone.Transport) Tone.Transport.bpm.value = project.bpm;
       state.dirty = true;
+      updateHash();
       renderTransport();
     });
-    $('#key-select').addEventListener('change', function () { project.key = this.value; state.dirty = true; computePlan(); render(); });
-    $('#mode-select').addEventListener('change', function () { project.mode = this.value; state.dirty = true; swapChromaticBlocks(); computePlan(); render(); });
+    // 调式/主音/拍号：播放中实时重建调度
+    function rebuildOnPlay() { if (isPlaying) buildToneSchedule(); }
+    $('#key-select').addEventListener('change', function () { project.key = this.value; state.dirty = true; computePlan(); rebuildOnPlay(); updateHash(); render(); });
+    $('#mode-select').addEventListener('change', function () { project.mode = this.value; state.dirty = true; swapChromaticBlocks(); computePlan(); rebuildOnPlay(); updateHash(); render(); });
+    var meterSel = $('#meter-select');
+    if (meterSel) meterSel.addEventListener('change', function () {
+      project.beatsPerBar = parseInt(this.value, 10) === 3 ? 3 : 4;
+      state.dirty = true; computePlan(); rebuildOnPlay(); updateHash(); render();
+    });
     $('#reverb-input').addEventListener('input', function () {
       project.reverb = clamp(parseInt(this.value, 10) / 100, 0, 0.9);
       audio.setReverb(project.reverb);
       state.dirty = true;
+      updateHash();
       renderTransport();
     });
     $('#vol-input').addEventListener('input', function () {
       project.volume = clamp(parseInt(this.value, 10) / 100, 0, 1.3);
       audio.setMasterVolume(project.volume);
       state.dirty = true;
+      updateHash();
       renderTransport();
     });
     $('#loop-input').addEventListener('input', function () {
@@ -846,9 +882,9 @@
     });
     $('#bars-input').addEventListener('input', function () {
       var v = parseInt(this.value, 10);
-      if (v >= 4 && v <= 128) { project.totalBars = v; if (project.loopBars > v) project.loopBars = v; state.dirty = true; render(); }
+      if (v >= 4 && v <= 128) { project.totalBars = v; if (project.loopBars > v) project.loopBars = v; state.dirty = true; updateHash(); render(); }
     });
-    $('#title-input').addEventListener('input', function () { project.name = this.value || '我的古筝小品'; state.dirty = true; });
+    $('#title-input').addEventListener('input', function () { project.name = this.value || '我的古筝小品'; state.dirty = true; updateHash(); });
 
     // 新建 / 载入演示
     $('#btn-new').addEventListener('click', function () {
@@ -870,8 +906,8 @@
       }
     });
 
-    // 区块拖放
-    setupDropZones();
+    // 素材卡拖拽（pointer 统一）
+    initPaletteDrag();
 
     // 全局 mousemove 记录
 
@@ -976,6 +1012,11 @@
     addBlock: addBlock, deleteBlock: deleteBlock, duplicateBlock: duplicateBlock,
     getState: function () { return state; },
     loadDemo: loadDemo,
-    _theory: theory, _content: content
+    render: function () { render(); },
+    _notes: function () { return engine.notesForLoop(project); },
+    _fireNote: function (n, when) { fireEventAt(n, when); },
+    _buildSchedule: function () { return buildToneSchedule(); },
+    _schedulerRunning: function () { return !!toneScheduled; },
+    _theory: theory, _content: content, _engine: engine
   };
 })(window.GZS = window.GZS || {});

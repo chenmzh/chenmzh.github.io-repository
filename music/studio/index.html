@@ -78,6 +78,13 @@
         <span id="mode-hint" class="gz-hint"></span>
       </div>
       <div class="gz-tseg">
+        <label>拍号</label>
+        <select id="meter-select" class="gz-select">
+          <option value="4">4/4</option>
+          <option value="3">3/4</option>
+        </select>
+      </div>
+      <div class="gz-tseg">
         <label>循环</label>
         <input id="loop-input" type="number" min="1" max="128" value="16" class="gz-num gz-num--sm" /> 小节
       </div>
@@ -160,6 +167,7 @@
   <script src="lib/content.js"></script>
   <script src="lib/audio.js"></script>
   <script src="lib/midi.js"></script>
+  <script src="lib/engine.js"></script>
   <script src="lib/app.js"></script>
 </body>
 </html>
