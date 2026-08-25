@@ -225,6 +225,12 @@
 
 .motif-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .motif-actions .ss-button { padding: 6px 12px; font-size: .74rem; }
+.motif-actions .ss-button--accent {
+  border-color: var(--motif-accent-strong);
+  background: var(--motif-accent-strong);
+  color: #fff;
+}
+.motif-actions .ss-button--accent:hover { background: var(--motif-accent); }
 .motif-actions .ss-button--ghost {
   border-color: var(--motif-line);
   color: var(--motif-accent-strong);

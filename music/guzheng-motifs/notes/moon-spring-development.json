@@ -1,0 +1,123 @@
+{
+  "schema_version": "0.1",
+  "kind": "motif_development_render_manifest",
+  "plan": "composition/developments/moon-spring.json",
+  "source_motif_id": "moon-spring",
+  "renderer": "src/create_guzheng.py",
+  "engine": "hybrid",
+  "tempo_bpm": 76,
+  "time_signature": [
+    4,
+    4
+  ],
+  "assets": [
+    {
+      "id": "moon-spring-sequence",
+      "section": false,
+      "stage_ids": [
+        "sequence"
+      ],
+      "wav": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.wav",
+        "bytes": 1907952,
+        "sha256": "9e0195d1bd728106202f380eaf9ff37a698819d82895c2bfad9fe4d370e8b13b"
+      },
+      "mid": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.mid",
+        "bytes": 308,
+        "sha256": "7acb8feac7c640da219a25f92e2132c0eaf5a38a544732b813dedc880a3bc940"
+      },
+      "mp3": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.mp3",
+        "bytes": 261477,
+        "sha256": "01514626ddded568e633d0a5ecfadecf8b8631a3bb9d55586effb9e219df3df0"
+      },
+      "duration_seconds": 10.815804988662132,
+      "source_event_count": 11,
+      "expanded_note_count": 18
+    },
+    {
+      "id": "moon-spring-fragment",
+      "section": false,
+      "stage_ids": [
+        "fragment"
+      ],
+      "wav": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-fragment.wav",
+        "bytes": 1907952,
+        "sha256": "107f82c17ccaf3b48aac6dffb247b24c958b215cad78a71d277b023eadcbbc88"
+      },
+      "mid": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-fragment.mid",
+        "bytes": 298,
+        "sha256": "835ce2c39dd1965efcfbac5b8c36d0fa05b38a935f53369649e0f26ca80336a7"
+      },
+      "mp3": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-fragment.mp3",
+        "bytes": 261477,
+        "sha256": "0259aedef14fc77a437920431fb8b55b12de986ff04d7ff918e3b1c523d7ca3f"
+      },
+      "duration_seconds": 10.815804988662132,
+      "source_event_count": 11,
+      "expanded_note_count": 16
+    },
+    {
+      "id": "moon-spring-return",
+      "section": false,
+      "stage_ids": [
+        "return"
+      ],
+      "wav": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-return.wav",
+        "bytes": 1907952,
+        "sha256": "8df1ccba0f9e458fe777ea33852f1ff2332a2c8c951b0dc76478fe0406f2984d"
+      },
+      "mid": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-return.mid",
+        "bytes": 300,
+        "sha256": "ada8a879f8ea6c4b0718788f8c55c87f7b534962d32bae32eec8c0d908556568"
+      },
+      "mp3": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-return.mp3",
+        "bytes": 261477,
+        "sha256": "eca55b6aba612210118cbfc0605ba4dbe656ba8f6d6e1a136b44ec5809f75d05"
+      },
+      "duration_seconds": 10.815804988662132,
+      "source_event_count": 10,
+      "expanded_note_count": 17
+    },
+    {
+      "id": "moon-spring-section",
+      "section": true,
+      "stage_ids": [
+        "source",
+        "sequence",
+        "fragment",
+        "return"
+      ],
+      "wav": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.wav",
+        "bytes": 5250268,
+        "sha256": "5d1ce526fc3ffafb967d62cdd8f4934fe5dfdf6d27db3c6dee4dd9318c5572c3"
+      },
+      "mid": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.mid",
+        "bytes": 724,
+        "sha256": "80dcbf87fa819a5d4e8bb5e060c3f98e287c71c22776c7e283cf04bb6f40688b"
+      },
+      "mp3": {
+        "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.mp3",
+        "bytes": 716008,
+        "sha256": "56dbdda3b3ee7c8220b38112480cb54adcbe2be7bac6d78ea23ca54f486a2add"
+      },
+      "duration_seconds": 29.763174603174605,
+      "source_event_count": 42,
+      "expanded_note_count": 68
+    }
+  ],
+  "manual_review": [
+    "tremolo and grace articulation",
+    "right-hand arpeggio plus left-hand drone feasibility",
+    "final D sustain in a live performance"
+  ]
+}
