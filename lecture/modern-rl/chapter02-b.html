@@ -1,0 +1,217 @@
+<section id="lab">
+  <h2 class="mrl-sec-title"><span class="num">03</span>互动实验：纯贪心为什么会被早期运气锁住？</h2>
+  <p class="mrl-sec-lead">现在让 agent 真正在线行动。环境仍然是 A=60%、B=40%，但策略只能看到已经发生的 0/1 奖励。</p>
+
+  <div class="mrl-viz" id="banditLab">
+    <div class="mrl-viz-head"><div><h3>Two-Arm Bandit · 单次运行</h3><p id="banditStatus">等待开始。纯贪心会一直选当前样本均值最高的动作。</p></div></div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>如果策略永远选择当前估计最好的动作，一次早期坏运气能不能造成长期错误？</dd>
+      <dt>Prediction</dt><dd>纯贪心在一些随机种子下会很快找到 A；在另一些种子下，它会因为 B 早期中奖而长期不再尝试 A。</dd>
+      <dt>Experiment</dt><dd>固定同一个环境，只改变随机种子；对比“纯贪心”和“不看历史的均匀随机”。</dd>
+      <dt>Observation</dt><dd>看每个动作被选了多少次、当前样本均值、累计奖励，以及页面用真实均值计算的机会损失。</dd>
+      <dt>Interpretation</dt><dd>利用本身不会修正“从未再采样”的动作估计；错误可能因为缺数据而自我维持。</dd>
+      <dt>Limitation</dt><dd>单次轨迹只能展示一种可能性。后面会做数百次重复实验比较平均表现。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">策略
+        <select id="banditStrategy">
+          <option value="greedy" selected>纯贪心：总选当前估计最高</option>
+          <option value="random">均匀随机：A / B 各一半</option>
+        </select>
+      </label>
+      <label class="mrl-control">随机种子
+        <select id="banditSeed">
+          <option value="3">seed 3</option>
+          <option value="8" selected>seed 8</option>
+          <option value="17">seed 17</option>
+          <option value="31">seed 31</option>
+        </select>
+      </label>
+      <div class="mrl-control"><span>运行</span><div class="mrl-actions"><button class="mrl-btn" id="banditStep">走一步</button><button class="mrl-btn primary" id="banditRun">跑到 80 步</button><button class="mrl-btn" id="banditReset">重置</button></div></div>
+    </div>
+
+    <div class="mrl-score-strip">
+      <div><span>step</span><strong id="banditStepCount">0 / 80</strong></div>
+      <div><span>累计奖励</span><strong id="banditReward">0</strong></div>
+      <div><span>平均奖励</span><strong id="banditAvgReward">—</strong></div>
+      <div><span>累计期望差距</span><strong id="banditRegretPlain">0.00</strong></div>
+    </div>
+
+    <div class="mrl-arm-grid">
+      <div class="mrl-arm" id="armABox">
+        <div class="mrl-arm-head"><span class="mrl-arm-name">动作 A</span><span class="mrl-arm-truth">真实均值 0.60 · 仅评估可见</span></div>
+        <div class="mrl-arm-metrics"><div><span>样本均值 $\hat\mu_A$</span><strong id="armAEstimate">0.000</strong></div><div><span>选择次数 $N_A$</span><strong id="armACount">0</strong></div></div>
+        <div class="mrl-estimate-track"><div class="mrl-estimate-fill" id="armAFill"></div></div>
+      </div>
+      <div class="mrl-arm" id="armBBox">
+        <div class="mrl-arm-head"><span class="mrl-arm-name">动作 B</span><span class="mrl-arm-truth">真实均值 0.40 · 仅评估可见</span></div>
+        <div class="mrl-arm-metrics"><div><span>样本均值 $\hat\mu_B$</span><strong id="armBEstimate">0.000</strong></div><div><span>选择次数 $N_B$</span><strong id="armBCount">0</strong></div></div>
+        <div class="mrl-estimate-track"><div class="mrl-estimate-fill" id="armBFill"></div></div>
+      </div>
+    </div>
+
+    <div class="mrl-bandit-timeline" id="banditTimeline" aria-label="最近的动作与奖励"></div>
+    <div class="mrl-timeline-key"><span>A 实心 = A 得到 1</span><span>A 空心 = A 得到 0</span><span>B 实心 = B 得到 1</span><span>B 空心 = B 得到 0</span></div>
+    <p class="mrl-caption">如果某个 seed 下纯贪心表现不错，不代表问题消失了；换几个 seed。我们真正关心的是：一个策略面对随机环境时，是否会系统性地给错误估计第二次被纠正的机会。</p>
+  </div>
+
+  <h3>这里真正的死结：想知道一个动作好不好，必须先选择它</h3>
+  <p>监督学习里，我们通常可以先拿到数据再决定怎样拟合；bandit 里，数据的获得本身就消耗行动机会。你不选 B，就不会得到新的 B 样本；但为了判断 B 值不值得选，你又需要 B 的样本。</p>
+
+  <div class="mrl-flow" style="grid-template-columns:repeat(7,auto)">
+    <div class="box">当前估计</div><div class="arrow">→</div><div class="box">选择动作</div><div class="arrow">→</div><div class="box">得到样本</div><div class="arrow">→</div><div class="box">改变估计</div>
+  </div>
+  <p>这就是 exploration / exploitation 不是“调一个随机参数”那么简单的原因：<strong>行动规则决定了未来还有没有证据推翻自己。</strong></p>
+</section>
+
+<section id="epsilon">
+  <h2 class="mrl-sec-title"><span class="num">04</span>最简单的修补：给探索留一点固定概率</h2>
+  <p class="mrl-sec-lead">纯贪心的问题不是它会利用，而是它可能永远不给被低估的动作第二次机会。最朴素的办法，是强制保留少量随机试错。</p>
+
+  <p><strong>epsilon-greedy policy（$\epsilon$-greedy，$\epsilon$-贪心策略）</strong>是一条非常简单的行动规则：大多数时候选择当前估计最好的动作，少数时候随机选一个动作。$\epsilon$（epsilon）就是进入随机探索分支的概率。</p>
+
+  <div class="mrl-equation">$$A_t=\begin{cases}\arg\max_a\hat\mu_a,&\text{概率 }1-\epsilon\\[4pt]\text{从所有动作中随机选择},&\text{概率 }\epsilon\end{cases}$$</div>
+  <table>
+    <thead><tr><th>符号</th><th>意思</th><th>在两臂例子里</th></tr></thead>
+    <tbody>
+      <tr><td>$A_t$</td><td>第 $t$ 轮实际选择的动作</td><td>A 或 B</td></tr>
+      <tr><td>$\arg\max_a\hat\mu_a$</td><td>让当前估计值最大的那个动作；$\arg\max$ 返回“哪个选项最好”</td><td>若 $\hat\mu_A&gt;\hat\mu_B$，就是 A</td></tr>
+      <tr><td>$1-\epsilon$</td><td>利用当前经验的概率</td><td>$\epsilon=0.1$ 时为 90%</td></tr>
+      <tr><td>$\epsilon$</td><td>进入随机探索分支的概率</td><td>10% 的轮次随机抽 A/B</td></tr>
+    </tbody>
+  </table>
+  <p>注意一个容易忽略的小细节：如果 $\epsilon=0.1$，并不意味着“有 10% 概率一定选非贪心动作”。探索分支是从<strong>所有</strong>动作随机抽，两臂时其中一半仍可能抽回当前最好动作。所以当 A 是贪心动作时，B 的实际选择概率是 $0.1\times0.5=0.05$。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“$\epsilon$ 越小越好，因为探索会浪费奖励。”</strong> 如果太小，早期误判可能长时间得不到纠正；如果太大，又会在已经非常确定时继续随机浪费机会。$\epsilon$ 控制的不是“算法高级程度”，而是一笔探索预算。</p>
+  </div>
+
+  <h3>为什么训练里常让 $\epsilon$ 逐渐减小？</h3>
+  <p>早期几乎没有数据，不确定性大，多探索通常更值；后期估计逐渐稳定，继续大量随机尝试的边际信息价值变小。因此常见做法是从较大的 $\epsilon$ 开始，再慢慢衰减。以后学习用神经网络估计动作好坏的算法时，还会再次看到这种“早期多试、后期多用”的节奏。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>探索不是“喜欢随机”，而是在购买未来决策所需的信息</h3>
+      <p>今天选择一个当前看起来次优的动作，短期可能少拿奖励；但它也可能告诉你“我们之前低估它了”，从而改善未来几百次选择。</p>
+      <p class="mrl-insight-key">所以探索值不值得，天然依赖剩余时间。如果只剩最后 1 次行动，信息几乎没有未来可用；如果还有 10 万次，花几次机会弄清真相可能非常划算。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="uncertainty">
+  <h2 class="mrl-sec-title"><span class="num">05</span>随机探索太粗了：能不能专门试“还不确定”的动作？</h2>
+  <p class="mrl-sec-lead">$\epsilon$-贪心只问“这次要不要随机”。一旦决定探索，它甚至可能去试一个已经被证明很差很多次的动作。更精细的思路是把不确定性直接写进选择分数。</p>
+
+  <p><strong>Upper Confidence Bound（UCB，上置信界）</strong>是一类“乐观面对不确定性”的选择方法：给每个动作的当前平均奖励估计加一个<strong>不确定性奖金</strong>。试得越少，奖金越大；试得越多，奖金越小。</p>
+  <div class="mrl-equation">$$A_t=\arg\max_a\left[\hat\mu_a+c\sqrt{\frac{\ln t}{N_a}}\right]$$</div>
+
+  <div class="mrl-decomp" aria-label="上置信界分数由当前估计与不确定性奖金组成">
+    <div class="term"><span>当前证据</span><strong>$\hat\mu_a$<br>这个动作目前看起来多好</strong></div>
+    <div class="op">+</div>
+    <div class="term"><span>不确定性奖金</span><strong>$c\sqrt{\ln t/N_a}$<br>这个动作还有多值得再确认</strong></div>
+    <div class="op">→</div>
+    <div class="term"><span>选择分数</span><strong>均值高，或证据还太少，都可能被选中</strong></div>
+  </div>
+
+  <p>逐个解释公式里的新量：</p>
+  <table>
+    <thead><tr><th>量</th><th>直觉</th></tr></thead>
+    <tbody>
+      <tr><td>$N_a$</td><td>动作 $a$ 已经试过多少次。越小，说明我们对它越没把握。</td></tr>
+      <tr><td>$t$</td><td>总共已经走到第几轮。时间变长后，即使某个动作长期没试，它的不确定性奖金也会慢慢抬高。</td></tr>
+      <tr><td>$c$</td><td>探索强度。越大，越重视不确定性；越小，越接近纯粹按均值选择。</td></tr>
+      <tr><td>$\ln t$</td><td>让“久未检查的动作”逐渐重新获得一次被选择的机会，但增长得很慢。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>一个数值例子：均值更低，为什么反而值得选？</h3>
+  <p>假设到 $t=85$ 时，A 已经试了 80 次，估计均值 0.62；B 只试了 5 次，估计均值 0.55。取 $c=0.5$：</p>
+  <div class="mrl-equation">$$\text{score}_A\approx0.62+0.5\sqrt{\frac{\ln85}{80}}=0.738$$</div>
+  <div class="mrl-equation">$$\text{score}_B\approx0.55+0.5\sqrt{\frac{\ln85}{5}}=1.021$$</div>
+  <p>UCB 会选 B，不是因为它相信 B 的真实平均奖励超过 1——这个 score <strong>不是概率</strong>。它只是在说：B 的证据太少，我们还不能放心把它排除。</p>
+
+  <p class="mrl-inline-note">上游课程还介绍了 Thompson sampling（汤普森采样）：它为每个动作维护“真实奖励水平可能是多少”的概率分布，每轮从这些分布中采样，再选择采样值最高的动作。本章先不展开贝叶斯推导；这里需要带走的共同思想只有一个：<strong>更聪明的探索会把机会优先给仍然有信息价值的动作。</strong></p>
+</section>
+
+<section id="regret">
+  <h2 class="mrl-sec-title"><span class="num">06</span>探索到底花了多少钱？用 regret 计算机会成本</h2>
+  <p class="mrl-sec-lead">只看累计奖励有时不够直观。我们还想知道：和一个“事先知道最优动作”的 oracle 相比，学习过程因为选错或探索少拿了多少。</p>
+
+  <p><strong>regret（遗憾）</strong>在 bandit 里不是情绪，而是一个机会成本指标：如果每轮都能选择真实期望最高的动作，本来可以得到多少期望奖励；实际策略又得到多少；两者之间的差就是 regret。这里的 <strong>oracle（先知基准）</strong>只是评估工具，agent 自己并不知道真相。</p>
+
+  <div class="mrl-equation">$$\operatorname{Regret}(T)=T\mu^*-\mathbb{E}\left[\sum_{t=1}^{T}R_t\right]=\sum_{t=1}^{T}\mathbb{E}[\mu^*-\mu_{A_t}]$$</div>
+  <table>
+    <thead><tr><th>符号</th><th>意思</th></tr></thead>
+    <tbody>
+      <tr><td>$T$</td><td>总共允许行动多少轮，也就是时间 horizon（时间范围）</td></tr>
+      <tr><td>$\mu^*$</td><td>所有动作里最大的真实期望奖励；两臂例子里是 0.60</td></tr>
+      <tr><td>$\mu_{A_t}$</td><td>第 $t$ 轮实际选中的那个动作的真实期望奖励</td></tr>
+      <tr><td>$\mu^*-\mu_{A_t}$</td><td>这一轮因为没选最优动作而付出的期望机会成本</td></tr>
+    </tbody>
+  </table>
+
+  <p>比如 A 的真实均值是 0.60，B 是 0.40。100 轮里如果有 20 轮选了 B，那么这些轮次每次平均少 $0.60-0.40=0.20$，因此对应的期望 regret 是：</p>
+  <div class="mrl-equation">$$20\times(0.60-0.40)=4$$</div>
+  <p>这个量很有用，因为它把两种损失放到了同一把尺子上：<strong>探索差动作会产生 regret；因为探索不够而长期误判，也会产生 regret。</strong>好的策略不是完全不付学费，而是让前期付出的信息成本换来后面更长时间的正确选择。</p>
+
+  <div class="mrl-viz" id="compareLab">
+    <div class="mrl-viz-head"><div><h3>实验：同一个环境，跑 400 个平行世界</h3><p>比较均匀随机、纯贪心、$\epsilon$-贪心和 UCB；曲线展示平均累计 regret。</p></div><button class="mrl-btn primary" id="runComparison">运行比较</button></div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>保留探索以后，平均长期表现是否真的比纯贪心更稳？按不确定性探索又会发生什么？</dd>
+      <dt>Prediction</dt><dd>均匀随机会持续线性付出机会成本；纯贪心平均上会被一部分“锁死”运行拖累；两种探索策略应更常找到 A。</dd>
+      <dt>Experiment</dt><dd>每种策略运行 400 次，每次 300 轮；环境始终是 A=0.60、B=0.40。UCB 使用 $c=0.5$。</dd>
+      <dt>Observation</dt><dd>看最终平均奖励、最后 50 轮选择最优动作 A 的比例，以及累计 regret 曲线。</dd>
+      <dt>Interpretation</dt><dd>如果探索策略的 regret 曲线逐渐变平，说明它们正在把越来越多轮次用于已确认的优动作。</dd>
+      <dt>Limitation</dt><dd>这里只比较一个两臂、平稳、奖励独立的环境；不能据此宣称某个策略对所有 RL 问题都最好。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">$\epsilon$-贪心的 $\epsilon$ = <span id="epsilonValue">0.10</span>
+        <input id="epsilonSlider" type="range" min="0.01" max="0.40" value="0.10" step="0.01">
+      </label>
+      <div class="mrl-control"><span>固定设置</span><div class="mrl-actions"><span class="mrl-small">400 runs × 300 steps · A 0.60 / B 0.40</span></div></div>
+    </div>
+
+    <div class="mrl-compare-chart">
+      <svg id="regretChart" viewBox="0 0 760 330" role="img" aria-label="四种 bandit 策略的平均累计 regret 曲线">
+        <line class="mrl-chart-axis" x1="58" y1="275" x2="735" y2="275"></line>
+        <line class="mrl-chart-axis" x1="58" y1="28" x2="58" y2="275"></line>
+        <g id="regretGrid"></g>
+        <polyline id="lineRandom" class="mrl-chart-line random" points=""></polyline>
+        <polyline id="lineGreedy" class="mrl-chart-line greedy" points=""></polyline>
+        <polyline id="lineEpsilon" class="mrl-chart-line epsilon" points=""></polyline>
+        <polyline id="lineUcb" class="mrl-chart-line ucb" points=""></polyline>
+        <text class="mrl-chart-label" x="58" y="300">0</text>
+        <text class="mrl-chart-label" x="378" y="300">150 steps</text>
+        <text class="mrl-chart-label" x="695" y="300">300</text>
+        <text class="mrl-chart-label" x="8" y="20">cumulative regret</text>
+      </svg>
+    </div>
+    <div class="mrl-chart-legend"><span class="random">均匀随机</span><span class="greedy">纯贪心</span><span class="epsilon">$\epsilon$-贪心</span><span class="ucb">UCB</span></div>
+
+    <table>
+      <thead><tr><th>策略</th><th>平均奖励 / step</th><th>最后 50 步选 A</th><th>300 步累计 regret</th></tr></thead>
+      <tbody>
+        <tr><td>均匀随机</td><td id="cmpRandomReward">—</td><td id="cmpRandomOptimal">—</td><td id="cmpRandomRegret">—</td></tr>
+        <tr><td>纯贪心</td><td id="cmpGreedyReward">—</td><td id="cmpGreedyOptimal">—</td><td id="cmpGreedyRegret">—</td></tr>
+        <tr><td>$\epsilon$-贪心</td><td id="cmpEpsilonReward">—</td><td id="cmpEpsilonOptimal">—</td><td id="cmpEpsilonRegret">—</td></tr>
+        <tr><td>UCB</td><td id="cmpUcbReward">—</td><td id="cmpUcbOptimal">—</td><td id="cmpUcbRegret">—</td></tr>
+      </tbody>
+    </table>
+    <p class="mrl-caption">曲线不是“谁在每一个随机种子下都赢”，而是 400 次重复后的平均学习代价。尤其比较纯贪心与探索策略：差别来自后者愿意用少量短期 regret 换取纠错机会。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>Regret 把“探索”从性格问题变成了资源分配问题</h3>
+      <p>“大胆一点还是保守一点”听起来像策略风格；regret 把它变成了可以计算的权衡：为了减少未来错误，我们现在愿意承担多少机会成本？</p>
+      <p class="mrl-insight-key">这也是为什么 horizon 很重要。探索的价值来自它能改善未来选择；未来越长，一条信息能被重复利用的次数越多。</p>
+    </div>
+  </aside>
+</section>
