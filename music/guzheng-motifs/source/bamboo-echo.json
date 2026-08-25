@@ -1,0 +1,173 @@
+{
+  "title": "竹林侠影",
+  "title_en": "Swordplay in the Bamboo Grove",
+  "tempo_bpm": 132,
+  "time_signature": [
+    2,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082510,
+  "description": "二四拍的武侠动机：高音区 1′3′2′1′ 的急促走句如剑光连闪，转 6—5 缓势后再次起势，末句 2—1 一击收势，干脆利落。",
+  "tags": [
+    "D 宫",
+    "快速单音",
+    "切分",
+    "武侠"
+  ],
+  "motif": {
+    "name": "bamboo_sword_cell",
+    "pitch_midi": [
+      74,
+      78,
+      76,
+      74,
+      71,
+      69,
+      66,
+      62,
+      74,
+      71,
+      69,
+      66,
+      64,
+      62
+    ],
+    "pitch_names": [
+      "D5",
+      "F#5",
+      "E5",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "D4",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4"
+    ],
+    "contour": [
+      4,
+      -2,
+      -2,
+      -3,
+      -2,
+      -3,
+      -4,
+      12,
+      -3,
+      -2,
+      -3,
+      -2,
+      -2
+    ],
+    "rhythmic_feel": "fast sixteenth bursts with a compressed eighth-note settle",
+    "jianpu": "1′ 3′ 2′ 1′ 6 5 | 3 - 1 - 1′ 6 5 3 2 1"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.056818,
+      "midi": 74,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.056818,
+      "dur": 0.056818,
+      "midi": 78,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 0.113636,
+      "dur": 0.056818,
+      "midi": 76,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 0.170455,
+      "dur": 0.056818,
+      "midi": 74,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 0.227273,
+      "dur": 0.113636,
+      "midi": 71,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 0.340909,
+      "dur": 0.113636,
+      "midi": 69,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 0.454545,
+      "dur": 0.227273,
+      "midi": 66,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.681818,
+      "dur": 0.227273,
+      "midi": 62,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 0.909091,
+      "dur": 0.113636,
+      "midi": 74,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 1.022727,
+      "dur": 0.113636,
+      "midi": 71,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.136364,
+      "dur": 0.113636,
+      "midi": 69,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 1.25,
+      "dur": 0.113636,
+      "midi": 66,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 1.363636,
+      "dur": 0.227273,
+      "midi": 64,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 1.590909,
+      "dur": 0.227273,
+      "midi": 62,
+      "velocity": 94,
+      "layer": "motif"
+    }
+  ]
+}

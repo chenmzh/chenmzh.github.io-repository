@@ -1,0 +1,74 @@
+# 古筝动机 · 二十品 — 创作记录
+
+> 项目：二十个可复用的古筝短动机（Guzheng motif library）
+> 记录状态：完成 v1.0（20 个动机，全部通过渲染验收）
+>
+> 依据：`18_music/1_guzheng_simulator/`（README、`docs/creation-log.md`、`docs/reproducibility.md`、
+> `docs/acceptance.md`）定义的确定性创作管线——JSON 音符合集 → `create_guzheng.py` 混合渲染
+> → WAV/MIDI/metadata → FFmpeg 转 MP3 → 相对路径页面发布。
+
+## 0. 动机的定义与限制
+
+二十个动机共用一套框架，让它们可直接拼接成更大的作品：
+
+- **定弦**：21 弦古筝的 D 宫五声定弦（D, E, F♯, A, B）。
+- **音域**：MIDI 38–86，全部落在可演奏弦位；禁用半音（fa/si 仅按音临时借用，本库不使用），全部音符均属五声音阶。
+- **形态**：每题 2–3 小节、4–20 秒，是「一句」而不是「一段」——可被反复、变化、拼接。
+
+**五种调式**（同一根弦、不同中心音）：
+
+| 调式 | 中心音 | 例句 |
+|---|---|---|
+| 宫（01–03, 07, 09–10, 13, 15, 17, 19–20） | D | 山泉、双燕、渔歌 |
+| 商（02, 11, 18） | E | 松风、空谷、芦花 |
+| 角（16） | F♯ | 星夜行舟 |
+| 徵（04, 06, 12） | A | 寒江、泼墨、灯会 |
+| 羽（05, 08, 14） | B | 铁马、孤雁、孤烟 |
+
+**七种技法**（每个动机以一到两种技法为骨架）：
+
+| 技法 | 动机 |
+|---|---|
+| 琶音 | 01 山泉吐珠 · 16 星夜行舟 · 20 月下听泉 |
+| 摇指 | 02 松风入琴 · 08 孤雁南飞（滑音）· 14 塞外孤烟 |
+| 刮奏 | 06 丹青泼墨 |
+| 跳音/断奏 | 03 檐下双燕 · 12 花灯夜游 · 19 童谣拾穗 |
+| 双音/五度 | 07 花间醉（低音双音托底）· 17 将军令引 |
+| 同音反复（重拨/点弦） | 05 铁马冰河 · 17 将军令引 · 10 竹林侠影 |
+| 大跳/问答 | 11 空谷回音 · 04 寒江独钓 · 09 渔歌晚唱 · 15 小桥流水 |
+
+**十一种情绪**：山泉(明快) · 松风(苍劲) · 双燕(童趣) · 寒江(孤寂) · 铁马(武侠) · 泼墨(写意) · 花间醉(温婉) · 孤雁(哀愁) · 渔歌(黄昏) · 竹林侠影(武侠疾速) · 空谷(空灵) · 灯会(欢庆) · 桃花源(舒展) · 孤烟(苍茫) · 小桥(流水) · 星夜(梦幻) · 将军令(庄严) · 芦花(清冷) · 童谣(天真) · 泉(静谧)。
+
+## 1. 生成流程
+
+1. `src/build_motifs.py`：把 beat 单位的音高表写成库内规范的 `composition/motifs/*.json`
+   ——校验每个音符在 D 五声集合内、落在 38–86、事件不超小节容量。
+2. `src/create_guzheng.py --engine hybrid`：逐条渲染 → `outputs/motifs/*.wav/.mid/.metadata.json`。
+3. `src/assemble_motifs_release.sh`：FFmpeg 转 MP3（192 kbps），把 JSON/WAV/MIDI/metadata 拷入站点 `music/guzheng-motifs/`。
+4. `src/build_motifs_page.py`：读取 JSON + 渲染 metadata，生成 `index.html` 卡片页。
+5. `sha256sum` 生成 `notes/SHA256SUMS.txt`，source 哈希与 metadata 记录一致。
+
+## 2. 渲染结果（节选）
+
+| 项 | 统计 |
+|---|---|
+| 渲染器 | `1.4.0` / `hybrid`（CC0 实录 A3 + 加性模型） |
+| 动机数 | 20 / 20 全部渲染成功 |
+| 音色引擎 | `hybrid-cc0-sample`，24 voice 池、全 0 偷音 |
+| 电平 | 全部归一化到峰值 0.86，无削波 |
+| 时长 | 各题约 8–18 秒（含 4.5 秒尾响） |
+| 参考音 | `assets/samples/guzheng-cc0-preview.wav`，CC0 1.0，SHA-256 与主库一致 |
+
+验收命令：
+
+```bash
+python3 -m py_compile src/build_motifs.py src/build_motifs_page.py src/create_guzheng.py
+cd /media/mingzhchen/新加卷/deepseek_workspace/18_music/chenmzh.github.io-repository/music/guzheng-motifs
+sha256sum -c notes/SHA256SUMS.txt
+```
+
+## 3. 目标页面
+
+- 子页：`music/guzheng-motifs/`（即 <https://chenmzh.github.io/chenmzh.github.io-repository/music/guzheng-motifs/>）
+- 入口：`music/index.html` 01 区新增「古筝动机 · 二十品」两张导览卡片，相对路径链接。
+- 每张动机卡：简谱、音列、音程轮廓、调式速度节拍时长、可试听 `<audio>`、MP3/WAV/MIDI/JSON 下载。

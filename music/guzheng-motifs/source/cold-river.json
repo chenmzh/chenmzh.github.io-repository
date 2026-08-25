@@ -1,0 +1,91 @@
+{
+  "title": "寒江独钓",
+  "title_en": "Angling the Cold River",
+  "tempo_bpm": 50,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "A",
+  "mode": "D pentatonic centering A, A 徵调式 (A B D E F#)",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082504,
+  "description": "极慢板徵调式动机：每句只奏两三音，长音 5 悬在寒江之上，末尾下行收至徵音 5，留白多于音符，是「千山鸟飞绝」的孤独感。",
+  "tags": [
+    "A 徵",
+    "长音",
+    "疏朗",
+    "孤寂"
+  ],
+  "motif": {
+    "name": "cold_river_cell",
+    "pitch_midi": [
+      57,
+      66,
+      64,
+      62,
+      57
+    ],
+    "pitch_names": [
+      "A3",
+      "F#4",
+      "E4",
+      "D4",
+      "A3"
+    ],
+    "contour": [
+      9,
+      -2,
+      -2,
+      -5
+    ],
+    "rhythmic_feel": "very sparse long tones with a soft slide into the final fifth",
+    "jianpu": "5, - - 3 2 | 1 - 5, - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 2.4,
+      "midi": 57,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 2.7,
+      "dur": 0.9,
+      "midi": 66,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 3.9,
+      "dur": 0.9,
+      "midi": 64,
+      "velocity": 66,
+      "layer": "motif"
+    },
+    {
+      "start": 5.1,
+      "dur": 1.8,
+      "midi": 62,
+      "velocity": 80,
+      "layer": "motif",
+      "ornament": "grace"
+    },
+    {
+      "start": 7.2,
+      "dur": 2.4,
+      "midi": 57,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 9.6,
+      "midi": 45,
+      "velocity": 20,
+      "layer": "drone"
+    }
+  ]
+}

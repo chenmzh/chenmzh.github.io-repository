@@ -1,0 +1,110 @@
+{
+  "title": "秋岸芦花",
+  "title_en": "Reed Flowers on the Autumn Bank",
+  "tempo_bpm": 54,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "E",
+  "mode": "D pentatonic centering E, E 商调式",
+  "bars": 3,
+  "sample_rate": 44100,
+  "seed": 2026082518,
+  "description": "慢板商调动机：6—2—3—2 的音型像秋风里飘落的芦花，一音一顿，中段以 1 过渡，最终落在商音 2 的长音上，清冷而从容。",
+  "tags": [
+    "E 商",
+    "疏音",
+    "高音",
+    "清冷"
+  ],
+  "motif": {
+    "name": "reed_flutter_cell",
+    "pitch_midi": [
+      59,
+      64,
+      66,
+      64,
+      62,
+      59,
+      64
+    ],
+    "pitch_names": [
+      "B3",
+      "E4",
+      "F#4",
+      "E4",
+      "D4",
+      "B3",
+      "E4"
+    ],
+    "contour": [
+      5,
+      2,
+      -2,
+      -2,
+      -3,
+      5
+    ],
+    "rhythmic_feel": "widely spaced single tones drifting down, ending on the shang degree",
+    "jianpu": "6 - 2 3 2 | 1 - 6 - 2 - - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 1.666667,
+      "midi": 59,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 1.944444,
+      "dur": 0.833333,
+      "midi": 64,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 3.055556,
+      "dur": 0.833333,
+      "midi": 66,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 4.166667,
+      "dur": 0.555556,
+      "midi": 64,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 4.722222,
+      "dur": 1.666667,
+      "midi": 62,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 6.666667,
+      "dur": 1.111111,
+      "midi": 59,
+      "velocity": 66,
+      "layer": "motif"
+    },
+    {
+      "start": 8.055556,
+      "dur": 1.944444,
+      "midi": 64,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 10.0,
+      "midi": 52,
+      "velocity": 16,
+      "layer": "drone"
+    }
+  ]
+}

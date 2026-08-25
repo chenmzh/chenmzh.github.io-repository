@@ -1,0 +1,164 @@
+{
+  "title": "檐下双燕",
+  "title_en": "Swallows Under the Eaves",
+  "tempo_bpm": 104,
+  "time_signature": [
+    6,
+    8
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082503,
+  "description": "六八拍的轻巧动机：双燕在檐下追逐，先低后高、再扬到 1′ 长音，第二句以级进回环应答，句尾落在高音 1′。",
+  "tags": [
+    "D 宫",
+    "跳音",
+    "装饰音",
+    "童趣"
+  ],
+  "motif": {
+    "name": "swallow_flight_cell",
+    "pitch_midi": [
+      69,
+      71,
+      74,
+      71,
+      69,
+      66,
+      64,
+      62,
+      64,
+      66,
+      69,
+      71,
+      74
+    ],
+    "pitch_names": [
+      "A4",
+      "B4",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4",
+      "E4",
+      "F#4",
+      "A4",
+      "B4",
+      "D5"
+    ],
+    "contour": [
+      2,
+      3,
+      -3,
+      -2,
+      -3,
+      -2,
+      -2,
+      2,
+      2,
+      3,
+      2,
+      3
+    ],
+    "rhythmic_feel": "light skipping six-eight motion, soft grace on the peak",
+    "jianpu": "5 6 1′ 6 5 3 2 | 2 3 5 6 1′ - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.144231,
+      "midi": 69,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 0.288462,
+      "dur": 0.144231,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 0.576923,
+      "dur": 0.288462,
+      "midi": 74,
+      "velocity": 90,
+      "layer": "motif",
+      "ornament": "grace"
+    },
+    {
+      "start": 1.009615,
+      "dur": 0.144231,
+      "midi": 71,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 1.298077,
+      "dur": 0.144231,
+      "midi": 69,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 1.586538,
+      "dur": 0.144231,
+      "midi": 66,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 1.875,
+      "dur": 0.432692,
+      "midi": 64,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 2.307692,
+      "dur": 0.144231,
+      "midi": 62,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 2.596154,
+      "dur": 0.144231,
+      "midi": 64,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 2.884615,
+      "dur": 0.144231,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 3.173077,
+      "dur": 0.144231,
+      "midi": 69,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 3.605769,
+      "dur": 0.288462,
+      "midi": 71,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 4.038462,
+      "dur": 0.288462,
+      "midi": 74,
+      "velocity": 88,
+      "layer": "motif"
+    }
+  ]
+}

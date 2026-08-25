@@ -1,0 +1,263 @@
+{
+  "title": "小桥流水",
+  "title_en": "Beneath the Little Bridge",
+  "tempo_bpm": 96,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082515,
+  "description": "宫调式的流水动机：小桥下石间水声——四连音在 1—2—3—5 间细密滚动，掀起 6 与 1′ 两道水花，末句逐级回落，汇入桥下。",
+  "tags": [
+    "D 宫",
+    "滚动",
+    "琶音",
+    "明快"
+  ],
+  "motif": {
+    "name": "bridge_stream_cell",
+    "pitch_midi": [
+      62,
+      64,
+      66,
+      64,
+      66,
+      69,
+      66,
+      64,
+      62,
+      64,
+      66,
+      69,
+      71,
+      69,
+      66,
+      69,
+      71,
+      74,
+      71,
+      69,
+      66,
+      64,
+      62
+    ],
+    "pitch_names": [
+      "D4",
+      "E4",
+      "F#4",
+      "E4",
+      "F#4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4",
+      "E4",
+      "F#4",
+      "A4",
+      "B4",
+      "A4",
+      "F#4",
+      "A4",
+      "B4",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4"
+    ],
+    "contour": [
+      2,
+      2,
+      -2,
+      2,
+      3,
+      -3,
+      -2,
+      -2,
+      2,
+      2,
+      3,
+      2,
+      -2,
+      -3,
+      3,
+      2,
+      3,
+      -3,
+      -2,
+      -3,
+      -2,
+      -2
+    ],
+    "rhythmic_feel": "continuous sixteenth ripple with two brief splashes on 6 and 1′",
+    "jianpu": "1 2 3 2 3 5 3 2 1 2 3 5 | 6 - 5 3 5 6 1′ - 6 5 3 2 1 -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.15625,
+      "midi": 62,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 0.15625,
+      "dur": 0.15625,
+      "midi": 64,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 0.3125,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 0.46875,
+      "dur": 0.15625,
+      "midi": 64,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 0.625,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 0.78125,
+      "dur": 0.15625,
+      "midi": 69,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 0.9375,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 1.09375,
+      "dur": 0.15625,
+      "midi": 64,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 1.25,
+      "dur": 0.15625,
+      "midi": 62,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 1.40625,
+      "dur": 0.15625,
+      "midi": 64,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 1.5625,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 1.71875,
+      "dur": 0.15625,
+      "midi": 69,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.875,
+      "dur": 0.625,
+      "midi": 71,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 2.5,
+      "dur": 0.15625,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 2.65625,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 2.8125,
+      "dur": 0.15625,
+      "midi": 69,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 2.96875,
+      "dur": 0.15625,
+      "midi": 71,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 3.125,
+      "dur": 0.46875,
+      "midi": 74,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 3.75,
+      "dur": 0.15625,
+      "midi": 71,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 3.90625,
+      "dur": 0.15625,
+      "midi": 69,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 4.0625,
+      "dur": 0.15625,
+      "midi": 66,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 4.21875,
+      "dur": 0.15625,
+      "midi": 64,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 4.375,
+      "dur": 0.625,
+      "midi": 62,
+      "velocity": 88,
+      "layer": "motif"
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "title": "松风入琴",
+  "title_en": "Pine Wind into the Qin",
+  "renderer": "src/create_guzheng.py",
+  "renderer_version": "1.4.0",
+  "engine": "hybrid",
+  "polyphony": "voice-pool",
+  "timbre": {
+    "max_voices": 24,
+    "retrigger_fade_seconds": 0.008,
+    "steal_fade_seconds": 0.045,
+    "release_fade_seconds": 0.12,
+    "recent_voice_protection_seconds": 0.18,
+    "attack_seconds": 0.008,
+    "base_decay_seconds": 2.05,
+    "low_register_decay_scale": 0.02,
+    "ring_base_seconds": 1.65,
+    "ring_register_scale": 0.018,
+    "max_ring_seconds": 4.0,
+    "partial_amplitudes": [
+      1.0,
+      0.38,
+      0.17,
+      0.078,
+      0.036,
+      0.017,
+      0.008,
+      0.004
+    ],
+    "partial_decay_step": 0.26,
+    "inharmonicity": 0.00025,
+    "pluck_noise_gain": 0.032,
+    "pluck_noise_decay_seconds": 0.006,
+    "soundboard_resonance_gain": 0.058,
+    "soundboard_decay_multiplier": 1.35,
+    "sample_body_cutoff_hz": 7600.0,
+    "sample_brightness_decay_seconds": 0.18,
+    "sample_sustain_decay_seconds": 2.4,
+    "sample_sustain_crossfade_seconds": 0.06,
+    "additive_layer_gains": [
+      [
+        "melody",
+        0.155
+      ],
+      [
+        "motif",
+        0.13
+      ],
+      [
+        "upper_melody",
+        0.14
+      ],
+      [
+        "lower_melody",
+        0.07
+      ],
+      [
+        "drone",
+        0.058
+      ],
+      [
+        "harmony",
+        0.095
+      ],
+      [
+        "arpeggio",
+        0.125
+      ],
+      [
+        "grace",
+        0.095
+      ],
+      [
+        "tremolo",
+        0.115
+      ]
+    ],
+    "sample_layer_gains": [
+      [
+        "melody",
+        0.205
+      ],
+      [
+        "motif",
+        0.16
+      ],
+      [
+        "upper_melody",
+        0.17
+      ],
+      [
+        "lower_melody",
+        0.085
+      ],
+      [
+        "drone",
+        0.075
+      ],
+      [
+        "harmony",
+        0.11
+      ],
+      [
+        "arpeggio",
+        0.145
+      ],
+      [
+        "grace",
+        0.118
+      ],
+      [
+        "tremolo",
+        0.145
+      ]
+    ],
+    "master_gain": 0.76
+  },
+  "seed": 2026082502,
+  "tempo_bpm": 64,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "E",
+  "mode": "D pentatonic centering E, E 商调式 (E F# A B D)",
+  "wav": {
+    "sample_rate_hz": 44100,
+    "channels": 2,
+    "sample_width_bits": 16,
+    "duration_seconds": 12.0,
+    "peak_normalized": 0.86,
+    "peak_before_safety": 0.0834700915956026,
+    "normalization_gain": 10.303091605152938,
+    "rms_normalized": 0.06865057556215155,
+    "expanded_note_count": 17,
+    "source_event_count": 7,
+    "tail_seconds": 4.5,
+    "engine": "hybrid-cc0-sample",
+    "reference_sample": "assets/samples/guzheng-cc0-preview.wav",
+    "reference_sample_base_midi": 57,
+    "voice_pool": {
+      "max_voices": 24,
+      "peak_active_voices": 5,
+      "same_pitch_retriggers": 10,
+      "voice_steals": 0,
+      "rendered_voices": 17
+    },
+    "master_gain": 0.76
+  },
+  "midi": {
+    "format": "SMF type 0",
+    "ppq": 480,
+    "track_count": 1,
+    "note_event_count": 17
+  },
+  "source_sha256": "3a6073f92f9f70e86b4f60bda52da4d858fc205e50c40e11e4eeba99c0a3ba71",
+  "wav_sha256": "79f94e21b029d029f99fb4ebb66e4e904880fa340e0059bfaf1c0d4eacd19f80",
+  "midi_sha256": "fef709b7ad37b5c87317b6c0f302217b16128c0e696006ae7eb1aae9143761cd",
+  "reference_sample_sha256": "b2e728b7ac983298da9bd377447ddd410a0f130703ff2409fff0fbd4847882b5",
+  "reference_sample_license": "CC0 1.0"
+}

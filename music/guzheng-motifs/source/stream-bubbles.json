@@ -1,0 +1,161 @@
+{
+  "title": "山泉吐珠",
+  "title_en": "Spring Bubbles",
+  "tempo_bpm": 88,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082501,
+  "description": "两小节弹跳动机：一泓上行琶音如泉水翻涌，随即 1′2′3′─5′3′2′1′ 的珠线在高音区滚落，最后以回落琶音沉入泉底。适合段落的起始句。",
+  "tags": [
+    "D 宫",
+    "琶音",
+    "弹跳",
+    "山泉"
+  ],
+  "motif": {
+    "name": "spring_bubble_cell",
+    "pitch_midi": [
+      57,
+      74,
+      76,
+      78,
+      81,
+      78,
+      76,
+      74,
+      50
+    ],
+    "pitch_names": [
+      "A3",
+      "D5",
+      "E5",
+      "F#5",
+      "A5",
+      "F#5",
+      "E5",
+      "D5",
+      "D3"
+    ],
+    "contour": [
+      17,
+      2,
+      2,
+      3,
+      -3,
+      -2,
+      -2,
+      -24
+    ],
+    "rhythmic_feel": "bubbling eighth-note pearls over one rising arpeggio",
+    "jianpu": "5, 6, 1 2 3 5 6 1′ | 2′ 3′ 5′ 3′ 2′ 1′ 6 5 3 2 1"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.340909,
+      "midi": 57,
+      "velocity": 72,
+      "layer": "motif",
+      "ornament": "arpeggio",
+      "pattern": [
+        0,
+        2,
+        5,
+        7,
+        9,
+        12,
+        14,
+        17
+      ],
+      "step": 0.1
+    },
+    {
+      "start": 1.022727,
+      "dur": 0.170455,
+      "midi": 74,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 1.193182,
+      "dur": 0.170455,
+      "midi": 76,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 1.363636,
+      "dur": 0.170455,
+      "midi": 78,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 1.704545,
+      "dur": 0.170455,
+      "midi": 81,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.875,
+      "dur": 0.170455,
+      "midi": 78,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 2.045455,
+      "dur": 0.170455,
+      "midi": 76,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 2.386364,
+      "dur": 0.681818,
+      "midi": 74,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 3.238636,
+      "dur": 0.170455,
+      "midi": 71,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 3.75,
+      "dur": 0.340909,
+      "midi": 74,
+      "velocity": 70,
+      "layer": "motif",
+      "ornament": "arpeggio",
+      "pattern": [
+        0,
+        -3,
+        -5,
+        -8,
+        -10,
+        -12,
+        -15,
+        -17
+      ],
+      "step": 0.1
+    },
+    {
+      "start": 5.113636,
+      "dur": 0.340909,
+      "midi": 50,
+      "velocity": 78,
+      "layer": "motif"
+    }
+  ]
+}

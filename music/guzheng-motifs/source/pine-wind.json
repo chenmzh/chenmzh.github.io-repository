@@ -1,0 +1,99 @@
+{
+  "title": "松风入琴",
+  "title_en": "Pine Wind into the Qin",
+  "tempo_bpm": 64,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "E",
+  "mode": "D pentatonic centering E, E 商调式 (E F# A B D)",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082502,
+  "description": "商调式的两个长音句：低音 6 与 5 作摇指颤动，如风过松林掀起阵阵松涛，句尾停在商音 2 上，苍劲而不失空寂。",
+  "tags": [
+    "E 商",
+    "摇指",
+    "长音",
+    "苍劲"
+  ],
+  "motif": {
+    "name": "pine_wind_cell",
+    "pitch_midi": [
+      59,
+      64,
+      69,
+      66,
+      64
+    ],
+    "pitch_names": [
+      "B3",
+      "E4",
+      "A4",
+      "F#4",
+      "E4"
+    ],
+    "contour": [
+      5,
+      5,
+      -3,
+      -2
+    ],
+    "rhythmic_feel": "slow shaken long tones alternating with quiet steps",
+    "jianpu": "6 - - 2 - 5 - - | 3 - 2 - - - - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 1.40625,
+      "midi": 59,
+      "velocity": 80,
+      "layer": "motif",
+      "ornament": "tremolo"
+    },
+    {
+      "start": 1.640625,
+      "dur": 0.9375,
+      "midi": 64,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 2.8125,
+      "dur": 1.40625,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "motif",
+      "ornament": "tremolo"
+    },
+    {
+      "start": 4.453125,
+      "dur": 0.9375,
+      "midi": 66,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 5.625,
+      "dur": 1.875,
+      "midi": 64,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 3.75,
+      "midi": 38,
+      "velocity": 22,
+      "layer": "drone"
+    },
+    {
+      "start": 3.75,
+      "dur": 3.75,
+      "midi": 40,
+      "velocity": 20,
+      "layer": "drone"
+    }
+  ]
+}

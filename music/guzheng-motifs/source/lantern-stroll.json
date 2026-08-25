@@ -1,0 +1,144 @@
+{
+  "title": "花灯夜游",
+  "title_en": "Lantern Festival Stroll",
+  "tempo_bpm": 112,
+  "time_signature": [
+    2,
+    4
+  ],
+  "key_center": "A",
+  "mode": "D pentatonic centering A, A 徵调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082512,
+  "description": "徵调式的赶集动机：5—6 的切分跳跃如游人脚步穿梭花灯之间，第二句抬到 1′ 再回落长音 5，张灯结彩的喜气。",
+  "tags": [
+    "A 徵",
+    "跳音",
+    "装饰音",
+    "欢庆"
+  ],
+  "motif": {
+    "name": "lantern_step_cell",
+    "pitch_midi": [
+      69,
+      71,
+      69,
+      66,
+      69,
+      64,
+      66,
+      69,
+      71,
+      74,
+      69
+    ],
+    "pitch_names": [
+      "A4",
+      "B4",
+      "A4",
+      "F#4",
+      "A4",
+      "E4",
+      "F#4",
+      "A4",
+      "B4",
+      "D5",
+      "A4"
+    ],
+    "contour": [
+      2,
+      -2,
+      -3,
+      3,
+      -5,
+      2,
+      3,
+      2,
+      3,
+      -5
+    ],
+    "rhythmic_feel": "bouncy off-beat steps with a grace note into the final held fifth",
+    "jianpu": "5 6 5 3 5 - 2 | 3 5 6 1′ 5 - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.133929,
+      "midi": 69,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 0.133929,
+      "dur": 0.133929,
+      "midi": 71,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 0.267857,
+      "dur": 0.133929,
+      "midi": 69,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 0.401786,
+      "dur": 0.133929,
+      "midi": 66,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 0.535714,
+      "dur": 0.267857,
+      "midi": 69,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.803571,
+      "dur": 0.267857,
+      "midi": 64,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 1.071429,
+      "dur": 0.133929,
+      "midi": 66,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 1.205357,
+      "dur": 0.133929,
+      "midi": 69,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.339286,
+      "dur": 0.133929,
+      "midi": 71,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 1.473214,
+      "dur": 0.133929,
+      "midi": 74,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 1.607143,
+      "dur": 0.535714,
+      "midi": 69,
+      "velocity": 90,
+      "layer": "motif",
+      "ornament": "grace"
+    }
+  ]
+}

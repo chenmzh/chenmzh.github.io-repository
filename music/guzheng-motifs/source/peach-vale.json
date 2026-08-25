@@ -1,0 +1,164 @@
+{
+  "title": "武陵桃花",
+  "title_en": "Peach Blossom Vale",
+  "tempo_bpm": 84,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 3,
+  "sample_rate": 44100,
+  "seed": 2026082513,
+  "description": "宫调式的大线条动机：1—2—3—5—6 级进上行如入桃花源，1′ 长音是豁然开朗处，随后 6—5—3—2—1 徐缓归来，归于一派安然。",
+  "tags": [
+    "D 宫",
+    "上行句",
+    "长音",
+    "舒展"
+  ],
+  "motif": {
+    "name": "peach_vale_ascent",
+    "pitch_midi": [
+      62,
+      64,
+      66,
+      69,
+      71,
+      74,
+      71,
+      69,
+      66,
+      64,
+      62
+    ],
+    "pitch_names": [
+      "D4",
+      "E4",
+      "F#4",
+      "A4",
+      "B4",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4"
+    ],
+    "contour": [
+      2,
+      2,
+      3,
+      2,
+      3,
+      -3,
+      -2,
+      -3,
+      -2,
+      -2
+    ],
+    "rhythmic_feel": "one long rising breath, a held peak, and a calm descent to the tonic",
+    "jianpu": "1 2 3 5 | 6 - 1′ - | 6 5 3 2 1 - - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.535714,
+      "midi": 62,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 0.535714,
+      "midi": 57,
+      "velocity": 30,
+      "layer": "harmony"
+    },
+    {
+      "start": 0.535714,
+      "dur": 0.357143,
+      "midi": 64,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 0.892857,
+      "dur": 0.714286,
+      "midi": 66,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.785714,
+      "dur": 0.357143,
+      "midi": 69,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 2.142857,
+      "dur": 1.071429,
+      "midi": 71,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 3.392857,
+      "dur": 1.071429,
+      "midi": 74,
+      "velocity": 94,
+      "layer": "motif"
+    },
+    {
+      "start": 3.392857,
+      "dur": 1.071429,
+      "midi": 69,
+      "velocity": 34,
+      "layer": "harmony"
+    },
+    {
+      "start": 4.642857,
+      "dur": 0.357143,
+      "midi": 71,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 5.0,
+      "dur": 0.357143,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 5.714286,
+      "dur": 0.357143,
+      "midi": 66,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 6.071429,
+      "dur": 0.357143,
+      "midi": 64,
+      "velocity": 68,
+      "layer": "motif"
+    },
+    {
+      "start": 6.428571,
+      "dur": 1.785714,
+      "midi": 62,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 6.428571,
+      "dur": 1.785714,
+      "midi": 57,
+      "velocity": 36,
+      "layer": "harmony"
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "title": "铁马冰河",
+  "title_en": "Iron Horses on the Icy River",
+  "tempo_bpm": 120,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "B",
+  "mode": "D pentatonic centering B, B 羽调式 (B D E F# A)",
+  "bars": 3,
+  "sample_rate": 44100,
+  "seed": 2026082505,
+  "description": "羽调式的战阵动机：低音区三次同音重拨如马蹄踏冰，随后 6—1—6 的音型层层加力，收在低八度 6 上，肃杀而果决。",
+  "tags": [
+    "B 羽",
+    "重音",
+    "同音反复",
+    "武侠"
+  ],
+  "motif": {
+    "name": "iron_horse_cell",
+    "pitch_midi": [
+      47,
+      47,
+      47,
+      54,
+      62,
+      59,
+      57,
+      62,
+      71,
+      66,
+      59,
+      54,
+      62,
+      47
+    ],
+    "pitch_names": [
+      "B2",
+      "B2",
+      "B2",
+      "F#3",
+      "D4",
+      "B3",
+      "A3",
+      "D4",
+      "B4",
+      "F#4",
+      "B3",
+      "F#3",
+      "D4",
+      "B2"
+    ],
+    "contour": [
+      0,
+      0,
+      7,
+      8,
+      -3,
+      -2,
+      5,
+      9,
+      -5,
+      -7,
+      -5,
+      8,
+      -15
+    ],
+    "rhythmic_feel": "stamped repeated low notes, marching accents, decisive low close",
+    "jianpu": "6, 6, 6, 3 1 6 5 1 6′ 3 6 3 1 6,"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.25,
+      "midi": 47,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 0.25,
+      "dur": 0.25,
+      "midi": 47,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 0.5,
+      "dur": 0.25,
+      "midi": 47,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.75,
+      "dur": 0.25,
+      "midi": 54,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 1.0,
+      "dur": 0.25,
+      "midi": 62,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.25,
+      "dur": 0.25,
+      "midi": 59,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 1.5,
+      "dur": 0.25,
+      "midi": 57,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.75,
+      "dur": 0.125,
+      "midi": 62,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 1.875,
+      "dur": 0.125,
+      "midi": 71,
+      "velocity": 96,
+      "layer": "motif"
+    },
+    {
+      "start": 2.0,
+      "dur": 0.125,
+      "midi": 66,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 2.125,
+      "dur": 0.25,
+      "midi": 59,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 2.375,
+      "dur": 0.25,
+      "midi": 54,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 2.625,
+      "dur": 0.125,
+      "midi": 62,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 2.75,
+      "dur": 0.125,
+      "midi": 59,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 2.875,
+      "dur": 0.25,
+      "midi": 54,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 3.125,
+      "dur": 0.375,
+      "midi": 62,
+      "velocity": 94,
+      "layer": "motif"
+    },
+    {
+      "start": 3.5,
+      "dur": 0.125,
+      "midi": 59,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 3.625,
+      "dur": 0.5,
+      "midi": 47,
+      "velocity": 96,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 4.0,
+      "midi": 47,
+      "velocity": 18,
+      "layer": "drone"
+    }
+  ]
+}

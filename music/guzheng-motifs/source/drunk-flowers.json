@@ -1,0 +1,138 @@
+{
+  "title": "花间醉",
+  "title_en": "Drunk Among Flowers",
+  "tempo_bpm": 82,
+  "time_signature": [
+    3,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082507,
+  "description": "三拍子圆舞动机：旋律在 1—3—5—1′ 的宫调上行中轻轻摇晃，低音以纯五度双音托底，收句 3—2—1 微醺般落定。",
+  "tags": [
+    "D 宫",
+    "双音",
+    "装饰音",
+    "温婉"
+  ],
+  "motif": {
+    "name": "drunk_flower_waltz",
+    "pitch_midi": [
+      62,
+      66,
+      69,
+      74,
+      71,
+      69,
+      66,
+      64,
+      62
+    ],
+    "pitch_names": [
+      "D4",
+      "F#4",
+      "A4",
+      "D5",
+      "B4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4"
+    ],
+    "contour": [
+      4,
+      3,
+      5,
+      -3,
+      -2,
+      -3,
+      -2,
+      -2
+    ],
+    "rhythmic_feel": "rocking three-four waltz with a fifth dyad underneath",
+    "jianpu": "1 - 3 5 1′ - | 6 5 3 - 2 1"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.731707,
+      "midi": 62,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 0.731707,
+      "midi": 57,
+      "velocity": 30,
+      "layer": "harmony"
+    },
+    {
+      "start": 0.731707,
+      "dur": 0.365854,
+      "midi": 66,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 1.097561,
+      "dur": 0.365854,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 1.463415,
+      "dur": 0.731707,
+      "midi": 74,
+      "velocity": 88,
+      "layer": "motif",
+      "ornament": "grace"
+    },
+    {
+      "start": 2.195122,
+      "dur": 0.365854,
+      "midi": 71,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 2.560976,
+      "dur": 0.365854,
+      "midi": 69,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 2.926829,
+      "dur": 0.731707,
+      "midi": 66,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 2.926829,
+      "dur": 0.731707,
+      "midi": 62,
+      "velocity": 32,
+      "layer": "harmony"
+    },
+    {
+      "start": 3.658537,
+      "dur": 0.365854,
+      "midi": 64,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 4.02439,
+      "dur": 0.365854,
+      "midi": 62,
+      "velocity": 84,
+      "layer": "motif"
+    }
+  ]
+}

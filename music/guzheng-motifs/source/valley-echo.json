@@ -1,0 +1,90 @@
+{
+  "title": "空谷回音",
+  "title_en": "Echo in the Empty Valley",
+  "tempo_bpm": 66,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "E",
+  "mode": "D pentatonic centering E, E 商调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082511,
+  "description": "商调式的问答动机：高音 6′ 与 3′ 两次呼喊，隔八度以弱音回响，最后停在前音 2 的长音上——空谷答应的不是人，是山。",
+  "tags": [
+    "E 商",
+    "大跳",
+    "回声",
+    "空灵"
+  ],
+  "motif": {
+    "name": "valley_call_echo",
+    "pitch_midi": [
+      83,
+      71,
+      78,
+      66,
+      64
+    ],
+    "pitch_names": [
+      "B5",
+      "B4",
+      "F#5",
+      "F#4",
+      "E4"
+    ],
+    "contour": [
+      -12,
+      7,
+      -12,
+      -2
+    ],
+    "rhythmic_feel": "loud high call, soft octave echo, resolution onto the shang degree",
+    "jianpu": "6′ - - 6 - 3′ - 3 - | 2 - - - - - - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 1.590909,
+      "midi": 83,
+      "velocity": 94,
+      "layer": "motif"
+    },
+    {
+      "start": 1.818182,
+      "dur": 1.136364,
+      "midi": 71,
+      "velocity": 60,
+      "layer": "motif"
+    },
+    {
+      "start": 3.181818,
+      "dur": 0.909091,
+      "midi": 78,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 4.318182,
+      "dur": 0.909091,
+      "midi": 66,
+      "velocity": 56,
+      "layer": "motif"
+    },
+    {
+      "start": 5.454545,
+      "dur": 1.818182,
+      "midi": 64,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 7.272727,
+      "midi": 52,
+      "velocity": 18,
+      "layer": "drone"
+    }
+  ]
+}

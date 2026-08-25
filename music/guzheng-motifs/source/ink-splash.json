@@ -1,0 +1,124 @@
+{
+  "title": "丹青泼墨",
+  "title_en": "Ink Wash Splash",
+  "tempo_bpm": 76,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "A",
+  "mode": "D pentatonic centering A, A 徵调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082506,
+  "description": "徵调式的泼墨动机：一记大字刮奏从 D3 直扫到 D5，掷下一个长音 5′，再一把下行刮奏将墨色收回到安静的 5 上，写意而痛快。",
+  "tags": [
+    "A 徵",
+    "刮奏",
+    "强音",
+    "写意"
+  ],
+  "motif": {
+    "name": "ink_splash_cell",
+    "pitch_midi": [
+      50,
+      74,
+      81,
+      69
+    ],
+    "pitch_names": [
+      "D3",
+      "D5",
+      "A5",
+      "A4"
+    ],
+    "contour": [
+      24,
+      7,
+      -12
+    ],
+    "rhythmic_feel": "two big sweeping glissandos framing a held high fifth",
+    "jianpu": "1 2 3 5 6 1′ 2′ 3′ 5′ - | 3′ 2′ 1′ 6 5 3 2 1 5 -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.394737,
+      "midi": 50,
+      "velocity": 72,
+      "layer": "motif",
+      "ornament": "arpeggio",
+      "pattern": [
+        0,
+        2,
+        4,
+        7,
+        9,
+        12,
+        14,
+        16,
+        19,
+        21,
+        24
+      ],
+      "step": 0.07
+    },
+    {
+      "start": 1.184211,
+      "dur": 0.789474,
+      "midi": 81,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 2.171053,
+      "dur": 0.197368,
+      "midi": 78,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 2.368421,
+      "dur": 0.197368,
+      "midi": 74,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 3.157895,
+      "dur": 0.394737,
+      "midi": 81,
+      "velocity": 66,
+      "layer": "motif",
+      "ornament": "arpeggio",
+      "pattern": [
+        0,
+        -3,
+        -5,
+        -7,
+        -10,
+        -12,
+        -15,
+        -17,
+        -19,
+        -22,
+        -24
+      ],
+      "step": 0.08
+    },
+    {
+      "start": 4.342105,
+      "dur": 0.789474,
+      "midi": 69,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 5.328947,
+      "dur": 0.986842,
+      "midi": 57,
+      "velocity": 70,
+      "layer": "motif"
+    }
+  ]
+}

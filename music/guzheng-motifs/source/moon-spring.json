@@ -1,0 +1,142 @@
+{
+  "title": "月下听泉",
+  "title_en": "Listening to the Spring by Moonlight",
+  "tempo_bpm": 76,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082520,
+  "description": "宫调式的收束动机——向《月下流水》致意：一组极轻的 8 音琶音像月光落在水面，随后 5—3—2—1 的旋律句慢慢沉淀，最后一句 6 的长音留白，归于静夜。",
+  "tags": [
+    "D 宫",
+    "琶音",
+    "装饰音",
+    "静谧"
+  ],
+  "motif": {
+    "name": "moonlit_spring_cell",
+    "pitch_midi": [
+      62,
+      69,
+      66,
+      64,
+      62,
+      66,
+      69,
+      71,
+      62
+    ],
+    "pitch_names": [
+      "D4",
+      "A4",
+      "F#4",
+      "E4",
+      "D4",
+      "F#4",
+      "A4",
+      "B4",
+      "D4"
+    ],
+    "contour": [
+      7,
+      -3,
+      -2,
+      -2,
+      4,
+      3,
+      2,
+      -9
+    ],
+    "rhythmic_feel": "one quiet eight-note arpeggio then a meditative descent and a held sixth",
+    "jianpu": "1 2 3 5 6 5 3 2 | 5 3 2 1 3 5 6 - 1 -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.394737,
+      "midi": 62,
+      "velocity": 60,
+      "layer": "motif",
+      "ornament": "arpeggio",
+      "pattern": [
+        0,
+        2,
+        4,
+        7,
+        9,
+        7,
+        4,
+        2
+      ],
+      "step": 0.16
+    },
+    {
+      "start": 1.578947,
+      "dur": 0.592105,
+      "midi": 69,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 2.171053,
+      "dur": 0.394737,
+      "midi": 66,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 2.763158,
+      "dur": 0.394737,
+      "midi": 64,
+      "velocity": 76,
+      "layer": "motif"
+    },
+    {
+      "start": 3.157895,
+      "dur": 0.789474,
+      "midi": 62,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 4.144737,
+      "dur": 0.394737,
+      "midi": 66,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 4.539474,
+      "dur": 0.394737,
+      "midi": 69,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 4.934211,
+      "dur": 0.789474,
+      "midi": 71,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 5.921053,
+      "dur": 0.394737,
+      "midi": 62,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 6.315789,
+      "midi": 38,
+      "velocity": 16,
+      "layer": "drone"
+    }
+  ]
+}

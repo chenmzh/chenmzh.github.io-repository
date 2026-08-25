@@ -1,0 +1,111 @@
+{
+  "title": "塞外孤烟",
+  "title_en": "Lone Smoke Beyond the Pass",
+  "tempo_bpm": 72,
+  "time_signature": [
+    3,
+    4
+  ],
+  "key_center": "B",
+  "mode": "D pentatonic centering B, B 羽调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082514,
+  "description": "三拍子羽调动机：6 音摇指拉成长长的孤烟，低八度 6 持续作黄沙般的地平线，句末 6—3—6 沉回大地，苍茫寂寥。",
+  "tags": [
+    "B 羽",
+    "摇指",
+    "低音支撑",
+    "苍茫"
+  ],
+  "motif": {
+    "name": "lone_smoke_cell",
+    "pitch_midi": [
+      71,
+      66,
+      71,
+      74,
+      71,
+      66,
+      59
+    ],
+    "pitch_names": [
+      "B4",
+      "F#4",
+      "B4",
+      "D5",
+      "B4",
+      "F#4",
+      "B3"
+    ],
+    "contour": [
+      -5,
+      5,
+      3,
+      -3,
+      -5,
+      -7
+    ],
+    "rhythmic_feel": "tremolo smoke column over a low drone, settling onto the low sixth",
+    "jianpu": "6 - - 3 6 1′ | 6 3 6 - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 1.666667,
+      "midi": 71,
+      "velocity": 88,
+      "layer": "motif",
+      "ornament": "tremolo"
+    },
+    {
+      "start": 1.875,
+      "dur": 0.416667,
+      "midi": 66,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 2.291667,
+      "dur": 0.416667,
+      "midi": 71,
+      "velocity": 78,
+      "layer": "motif"
+    },
+    {
+      "start": 2.916667,
+      "dur": 0.833333,
+      "midi": 74,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 3.958333,
+      "dur": 0.416667,
+      "midi": 71,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 4.375,
+      "dur": 0.208333,
+      "midi": 66,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 4.583333,
+      "dur": 0.416667,
+      "midi": 59,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 5.0,
+      "midi": 47,
+      "velocity": 20,
+      "layer": "drone"
+    }
+  ]
+}

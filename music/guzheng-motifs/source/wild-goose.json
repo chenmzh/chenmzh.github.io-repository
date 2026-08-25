@@ -1,0 +1,104 @@
+{
+  "title": "孤雁南飞",
+  "title_en": "A Lone Goose Flying South",
+  "tempo_bpm": 58,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "B",
+  "mode": "D pentatonic centering B, B 羽调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082508,
+  "description": "羽调式的下行哀句：高音 6′ 加滑音如雁鸣破空，随后沿五声音阶逐级盘旋而下，句尾落在低八度 6 上，余音凄清。",
+  "tags": [
+    "B 羽",
+    "长音",
+    "滑音",
+    "哀愁"
+  ],
+  "motif": {
+    "name": "lone_goose_descent",
+    "pitch_midi": [
+      83,
+      78,
+      76,
+      74,
+      71,
+      66,
+      59
+    ],
+    "pitch_names": [
+      "B5",
+      "F#5",
+      "E5",
+      "D5",
+      "B4",
+      "F#4",
+      "B3"
+    ],
+    "contour": [
+      -5,
+      -2,
+      -2,
+      -3,
+      -5,
+      -7
+    ],
+    "rhythmic_feel": "a long sliding cry answered by a stepped descent into the low sixth",
+    "jianpu": "6′ - - 3′ 2′ | 1′ - 6 3 6 -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 2.068966,
+      "midi": 83,
+      "velocity": 88,
+      "layer": "motif",
+      "ornament": "grace"
+    },
+    {
+      "start": 2.327586,
+      "dur": 0.517241,
+      "midi": 78,
+      "velocity": 74,
+      "layer": "motif"
+    },
+    {
+      "start": 3.103448,
+      "dur": 0.517241,
+      "midi": 76,
+      "velocity": 70,
+      "layer": "motif"
+    },
+    {
+      "start": 4.137931,
+      "dur": 1.293103,
+      "midi": 74,
+      "velocity": 82,
+      "layer": "motif"
+    },
+    {
+      "start": 5.689655,
+      "dur": 0.775862,
+      "midi": 71,
+      "velocity": 72,
+      "layer": "motif"
+    },
+    {
+      "start": 6.724138,
+      "dur": 1.551724,
+      "midi": 66,
+      "velocity": 68,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 8.275862,
+      "midi": 47,
+      "velocity": 16,
+      "layer": "drone"
+    }
+  ]
+}

@@ -1,0 +1,205 @@
+{
+  "title": "将军令引",
+  "title_en": "The General's Command",
+  "tempo_bpm": 116,
+  "time_signature": [
+    4,
+    4
+  ],
+  "key_center": "D",
+  "mode": "D pentatonic (D E F# A B), D 宫调式",
+  "bars": 2,
+  "sample_rate": 44100,
+  "seed": 2026082517,
+  "description": "宫调式的点将动机：低音 1 与上方八度双音先声夺人，1—3—5—1 的号令音型加上 5—1—5 的切分催促，最后将军令沉入低音 1——庄重而不可违抗。",
+  "tags": [
+    "D 宫",
+    "低音重拨",
+    "切分",
+    "庄严"
+  ],
+  "motif": {
+    "name": "general_fanfare",
+    "pitch_midi": [
+      50,
+      62,
+      66,
+      69,
+      62,
+      57,
+      50,
+      57,
+      62,
+      71,
+      74,
+      69,
+      66,
+      62,
+      50
+    ],
+    "pitch_names": [
+      "D3",
+      "D4",
+      "F#4",
+      "A4",
+      "D4",
+      "A3",
+      "D3",
+      "A3",
+      "D4",
+      "B4",
+      "D5",
+      "A4",
+      "F#4",
+      "D4",
+      "D3"
+    ],
+    "contour": [
+      12,
+      4,
+      3,
+      -7,
+      -5,
+      -7,
+      7,
+      5,
+      9,
+      3,
+      -5,
+      -3,
+      -4,
+      -12
+    ],
+    "rhythmic_feel": "fanfare calls with a syncopated double-command and a low decisive close",
+    "jianpu": "1, - 1 3 5 1 5 1 5 1 | 6 1′ 5 3 1 1, - -"
+  },
+  "events": [
+    {
+      "start": 0.0,
+      "dur": 0.258621,
+      "midi": 50,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 0.0,
+      "dur": 0.258621,
+      "midi": 45,
+      "velocity": 38,
+      "layer": "harmony"
+    },
+    {
+      "start": 0.258621,
+      "dur": 0.12931,
+      "midi": 62,
+      "velocity": 92,
+      "layer": "motif"
+    },
+    {
+      "start": 0.387931,
+      "dur": 0.12931,
+      "midi": 66,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 0.517241,
+      "dur": 0.258621,
+      "midi": 69,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 0.517241,
+      "dur": 0.258621,
+      "midi": 62,
+      "velocity": 34,
+      "layer": "harmony"
+    },
+    {
+      "start": 0.775862,
+      "dur": 0.258621,
+      "midi": 62,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 1.034483,
+      "dur": 0.258621,
+      "midi": 57,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 1.293103,
+      "dur": 0.12931,
+      "midi": 50,
+      "velocity": 80,
+      "layer": "motif"
+    },
+    {
+      "start": 1.422414,
+      "dur": 0.12931,
+      "midi": 57,
+      "velocity": 88,
+      "layer": "motif"
+    },
+    {
+      "start": 1.551724,
+      "dur": 0.517241,
+      "midi": 62,
+      "velocity": 94,
+      "layer": "motif"
+    },
+    {
+      "start": 2.068966,
+      "dur": 0.258621,
+      "midi": 71,
+      "velocity": 90,
+      "layer": "motif"
+    },
+    {
+      "start": 2.327586,
+      "dur": 0.258621,
+      "midi": 74,
+      "velocity": 96,
+      "layer": "motif"
+    },
+    {
+      "start": 2.327586,
+      "dur": 0.258621,
+      "midi": 66,
+      "velocity": 36,
+      "layer": "harmony"
+    },
+    {
+      "start": 2.586207,
+      "dur": 0.258621,
+      "midi": 69,
+      "velocity": 86,
+      "layer": "motif"
+    },
+    {
+      "start": 2.844828,
+      "dur": 0.258621,
+      "midi": 66,
+      "velocity": 84,
+      "layer": "motif"
+    },
+    {
+      "start": 3.103448,
+      "dur": 0.258621,
+      "midi": 62,
+      "velocity": 88,
+      "layer": "motif",
+      "ornament": "grace"
+    },
+    {
+      "start": 3.362069,
+      "dur": 0.775862,
+      "midi": 50,
+      "velocity": 92,
+      "layer": "motif"
+    }
+  ]
+}
