@@ -85,8 +85,9 @@
         </select>
       </div>
       <div class="gz-tseg">
-        <label>循环</label>
-        <input id="loop-input" type="number" min="1" max="128" value="16" class="gz-num gz-num--sm" /> 小节
+        <label>循环截止</label>
+        <input id="loop-input" type="number" min="1" max="128" value="32" class="gz-num gz-num--sm" /> 小节
+        <span class="gz-hint">（之外灰显静音）</span>
       </div>
       <div class="gz-tseg">
         <label>总长</label>
@@ -124,7 +125,7 @@
             <li>从左侧把<b>动机</b>或<b>和声</b>拖进下方某一声部，或点 ▶ 试听。</li>
             <li>时间轴上：<b>拖动</b>移动块，<b>◀/▶ 手柄</b>改长度，右上<b>+/-</b> 复制/删除。</li>
             <li>点选块后在右侧<b>属性</b>里改声部、八度、重复、密度、织体。</li>
-            <li>右上声部头：<b>M</b> 静音、<b>S</b> 独奏、<b>滑块</b>调音量。</li>
+            <li>声部头：<b>M</b> 静音、<b>S</b> 独奏、<b>滑块</b>音量、下拉选音色/延音；<b>标尺点击/拖拽跳转播放位置</b>；循环截止之外的内容灰显静音。</li>
             <li>和中声音放不同声部，调式=安全模式，不调和的音会被吸附。</li>
           </ul>
         </div>

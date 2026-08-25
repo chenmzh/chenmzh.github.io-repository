@@ -245,6 +245,28 @@ const MEASURED = { 57: 219.4, 81: 877.6 };   // 锚点：A3 / A5(由 A3 ×4 生�
   })());
 })();
 
+/* ============ R13 所见即所闻：块按绝对小节播放，窗口外静音 ============ */
+(function () {
+  var spb = 60 / 90;
+  // 单块在第 6 小节，窗口 8 小节 → 首音应在 6*4*spb 秒（不折叠到 0）
+  var p1 = mkProject({ loopBars: 8, totalBars: 8, blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 6, bars: 1 })] });
+  var n1 = E.notesForLoop(p1);
+  check('R13.1 块在第6小节 → 首音 sec = 6×4×spb（不折叠）', Math.abs((n1[0].sec) - 6 * 4 * spb) < 1e-6, 'got ' + (n1[0] ? n1[0].sec : 'empty'));
+  // 窗口 4 小节 → 第6小节块静音（无折叠重放）
+  var p2 = mkProject({ loopBars: 4, totalBars: 8, blocks: [blk({ type: 'motif', ref: 'climb', voiceId: 'v0', startBar: 6, bars: 1 })] });
+  check('R13.2 块超出窗口 → 无事件（静音不折叠）', E.notesForLoop(p2).length === 0);
+  // 块部分在窗口内（0..7 与 6..7 重叠）→ 只播窗口内部分？折中：块 startBar<窗口即整块按原位置播
+  // 两块 0 和 6、窗口 8：事件时间覆盖两个区段且有序
+  var p3 = mkProject({ loopBars: 8, totalBars: 8, blocks: [
+    blk({ type: 'motif', ref: 'arp-out', voiceId: 'v0', startBar: 0, bars: 1 }),
+    blk({ type: 'progression', ref: 'night-cycle', voiceId: 'v1', startBar: 6, bars: 4 })
+  ] });
+  var n3 = E.notesForLoop(p3);
+  check('R13.3 窗口=8，块覆盖 0 和 6..9 → 第6小节块在窗口内正常播出', n3.length > 0 &&
+    n3.some(function (x) { return x.voiceId === 'v1' && x.sec >= 6 * 4 * spb - 1e-6; }));
+  check('R13.4 窗口=8 时第 6 小节起事件不超过 8×4×spb', n3.every(function (x) { return x.sec < 8 * 4 * spb + 1e-6; }));
+})();
+
 /* ============ 持久化结构 ============ */
 const normalized = E.normalize(loopProj);
 check('P1 normalize 保留 voices/blocks', normalized.voices.length === 2 && normalized.blocks.length === 2);

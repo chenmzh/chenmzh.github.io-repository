@@ -132,15 +132,12 @@
     return null;
   }
 
-  /* ---------------- 单音符触发 ---------------- */
-  /**
-   * trigger(voiceId, volume, pan, opts, midi, whenSec, vel, durSec)
-   * opts: {timbre:'sample'|'pluck', ring: 延音系数 0.5-2}
+  /* ---------------- 单音符 DSP（与 ctx 无关，可离线渲染验证） ----------------
+   * renderNote(ac, chainGain, opts, midi, whenSec, vel, durSec)
+   * ac: 任意 AudioContext（实时或 OfflineAudioContext）
    */
-  function trigger(voiceId, volume, pan, opts, midi, whenSec, vel, durSec) {
-    var ac = ensureContext();
-    var now = whenSec || ac.currentTime;
-    var chain = voiceChain(voiceId, volume, pan);
+  function renderNote(ac, chainGain, opts, midi, whenSec, vel, durSec) {
+    var now = whenSec != null ? whenSec : (ac.currentTime || 0);
     var sustain = opts.ring != null ? opts.ring : 1;
     var vg = velGain(vel);
 
@@ -161,44 +158,52 @@
       g.gain.exponentialRampToValueAtTime(peak, t0 + 0.007);
       g.gain.setValueAtTime(peak, t0 + Math.min(hold, ringSec * 0.75));
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + hold + 0.24);
-      src.connect(g); g.connect(chain.gain);
+      src.connect(g); g.connect(chainGain);
       src.start(t0);
       src.stop(Math.min(t0 + hold + 0.32, now + ringSec + 0.02));
       return;
     }
 
     if (opts.timbre === 'pluck') {
-      // Karplus-Strong 拨弦合成
+      // 合成古筝：预计算 Karplus-Strong 琴弦波形（JS 内闭式计算，无反馈节点 → 数值绝对稳定，
+      // 杜绝旧实现 Delay+双二阶反馈环的自激爆炸（"很响的正反馈音 → 全 NaN → 静音"））
       var freq = 440 * Math.pow(2, (midi - 69) / 12);
       var sr = ac.sampleRate;
       var period = Math.max(2, Math.round(sr / freq));
+      var holdSec = Math.min(Math.max(durSec * sustain * 1.15, 0.16), 4.2);
+      var frames = Math.max(period * 4, Math.ceil(holdSec * sr));
+      var buf = ac.createBuffer(1, frames, sr);
+      var d = buf.getChannelData(0);
+      // 激励：一个周期的带通噪声
+      var bpLo = Math.max(0, Math.min(0.9, freq * 2.2 / (sr / 2)));
+      var noiseAmp = 0.75;
+      for (var i = 0; i < period; i++) d[i] = (Math.random() * 2 - 1) * noiseAmp;
+      // KS 递归：高速平坦衰减 + 平均滤波（稳定收敛，无环路增益）
+      var damp = 0.9965;
+      for (var n = period + 1; n < frames; n++) {   // 从 period+1 开始，避免 d[-1]（否则 NaN 污染整段）
+        d[n] = damp * 0.5 * (d[n - period] + d[n - period - 1]);
+      }
       var t = now + 0.004;
-      var noise = ac.createBuffer(1, period, sr);
-      var nd = noise.getChannelData(0);
-      for (var i = 0; i < period; i++) nd[i] = (Math.random() * 2 - 1) * 0.85;
-      var srcn = ac.createBufferSource();
-      srcn.buffer = noise;
-      var bp = ac.createBiquadFilter();
-      bp.type = 'bandpass'; bp.frequency.value = freq * 2.1; bp.Q.value = 0.85;
-      var delay = ac.createDelay(1.2);
-      delay.delayTime.value = period / sr;
-      var lp = ac.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = Math.min(freq * 3.2, sr / 2 - 50); lp.Q.value = 0.4;
-      var fb = ac.createGain();
-      fb.gain.value = 0.982;
-      srcn.connect(bp); bp.connect(delay);
-      delay.connect(lp); lp.connect(fb); fb.connect(delay);
+      var src = ac.createBufferSource();
+      src.buffer = buf;
       var out = ac.createGain();
-      var hold = Math.min(Math.max(durSec * sustain * 1.15, 0.16), 4.6);
-      var peak = Math.min(vg * 0.82, 0.9);
+      var peak = Math.min(vg * 0.8, 0.85);
       out.gain.setValueAtTime(0.0001, t);
       out.gain.exponentialRampToValueAtTime(peak, t + 0.006);
-      out.gain.setValueAtTime(peak, t + hold * 0.45);
-      out.gain.exponentialRampToValueAtTime(0.0001, t + hold + 0.34);
-      delay.connect(out); out.connect(chain.gain);
-      srcn.start(t); srcn.stop(t + period / sr + 0.02);
+      out.gain.setValueAtTime(peak, Math.min(t + holdSec * 0.5, t + frames / sr - 0.1));
+      out.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(holdSec, frames / sr - 0.05));
+      src.connect(out); out.connect(chainGain);
+      src.start(t);
+      src.stop(t + frames / sr);
       return;
     }
+  }
+
+  /* ---------------- 单音符触发（实时 ctx 包装） ---------------- */
+  function trigger(voiceId, volume, pan, opts, midi, whenSec, vel, durSec) {
+    var ac = ensureContext();
+    var chain = voiceChain(voiceId, volume, pan);
+    renderNote(ac, chain.gain, opts, midi, whenSec, vel, durSec);
   }
 
   /* ---------------- 全局 ---------------- */
@@ -323,6 +328,7 @@
     PITCH_CORR_CENTS: PITCH_CORR_CENTS,
     voiceChain: voiceChain, setChainParams: setChainParams,
     trigger: trigger,
+    renderNote: renderNote,
     setReverb: setReverb, setMasterVolume: setMasterVolume,
     preview: preview,
     stopPreview: stopPreview,

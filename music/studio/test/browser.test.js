@@ -643,6 +643,69 @@ cases.push({ name: 'B22 布局：无可见文本挤压 + 列对齐', fn: async (
   return true;
 }});
 
+cases.push({ name: 'B23 离线渲染：无 NaN/无自激爆音/音量正常', fn: async (c) => {
+  await c.evaluate(Q.unlock);
+  await sleep(2200); // 等双采样
+  const r = await c.evaluate(`(async function(){
+    const A = GZS.audio;
+    if (!A.hasSample()) return {skip:'采样未就绪'};
+    const notes = GZS.app._notes();
+    if (!notes.length) return {skip:'无音符'};
+    const proj = GZS.app.project();
+    const sr = 44100;
+    const loopSec = proj.loopBars * proj.beatsPerBar * (60 / proj.bpm);
+    const off = new OfflineAudioContext(2, Math.ceil(sr * loopSec) + sr, sr);
+    const mg = off.createGain(); mg.gain.value = 0.8; mg.connect(off.destination);
+    const vt = {}; proj.voices.forEach(v => vt[v.id] = v.timbre);
+    notes.forEach(n => A.renderNote(off, mg, { timbre: vt[n.voiceId] || 'sample', ring: 1 }, n.midi, n.sec, n.vel, n.dur * (60 / proj.bpm)));
+    const buf = await off.startRendering();
+    const ch = buf.getChannelData(0);
+    let nan = 0, peak = 0;
+    for (let i = 0; i < ch.length; i++) { if (Number.isNaN(ch[i])) nan++; const a = Math.abs(ch[i]); if (a > peak) peak = a; }
+    // 活动区 RMS 与尾部 RMS：尾部应有静音
+    const win = Math.floor(sr * 0.5); const rms = [];
+    for (let st = 0; st + win <= ch.length; st += win) { let sq = 0; for (let i = st; i < st + win; i++) sq += ch[i] * ch[i]; rms.push(Math.sqrt(sq / win)); }
+    const tail = rms.slice(-3);
+    const active = rms.slice(0, Math.max(1, Math.floor(rms.length * 0.6)));
+    return { nan, peak: +peak.toFixed(3), tailMax: +Math.max.apply(null, tail).toFixed(4), activeMax: +Math.max.apply(null, active).toFixed(4), notes: notes.length };
+  })()`);
+  const v = r.val;
+  if (v.skip) return v.skip;
+  if (v.nan > 0) return '音频含 NaN（爆音/静音元凶）: ' + v.nan;
+  if (v.peak > 1.5) return '峰值过大（自激）: ' + v.peak;
+  if (v.activeMax < 0.01) return '活动区无声音量: ' + v.activeMax;
+  if (v.tailMax > 0.02) return '尾部仍有能量（未结束/振荡）: ' + v.tailMax;
+  return true;
+}});
+
+cases.push({ name: 'B24 点击/拖拽标尺跳转播放位置', fn: async (c) => {
+  const r = await c.evaluate(`(function(){
+    var app = GZS.app;
+    var strip = document.querySelector('.tl-seek');
+    if (!strip) return {skip:'无 seek strip'};
+    var rect = strip.getBoundingClientRect();
+    var pb = app._pxPerBar();
+    // 点击第 3 小节
+    var x3 = rect.left + 3 * pb;
+    strip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x3, clientY: rect.top + 4, pointerId: 9, pointerType: 'mouse' }));
+    strip.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: x3, clientY: rect.top + 4, pointerId: 9, pointerType: 'mouse' }));
+    var stop3 = app._transportStop();
+    // 播放中再拖到第 6 小节（拖拽 = down + move + up）
+    var x6 = rect.left + 6 * pb;
+    strip.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: x3, clientY: rect.top + 4, pointerId: 8, pointerType: 'mouse' }));
+    strip.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: x6, clientY: rect.top + 4, pointerId: 8, pointerType: 'mouse' }));
+    strip.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: x6, clientY: rect.top + 4, pointerId: 8, pointerType: 'mouse' }));
+    var stop6 = app._transportStop();
+    var b1 = document.querySelector('#play-btn');
+    return { stop3: stop3, stop6: stop6, btnBefore: b1.textContent };
+  })()`);
+  const v = r.val;
+  if (v.skip) return v.skip;
+  if (Math.abs(v.stop3 - 3) > 0.5) return '点击跳转未生效: ' + v.stop3;
+  if (Math.abs(v.stop6 - 6) > 0.5) return '拖拽跳转未生效: ' + v.stop6;
+  return true;
+}});
+
 cases.push({ name: 'B20 移动端单列布局', fn: async (c) => {
   await c.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await sleep(600);

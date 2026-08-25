@@ -99,19 +99,21 @@
     return { bar: bar + mb / bpb, t: 0, midi: midi, vel: vel, dur: 1, art: null, voiceId: blk.voiceId };
   }
 
-  /** 循环区内的调度音符（可闻秒），去重+排序；返回 [{sec,midi,vel,dur,voiceId}] */
+  /** 循环区内的调度音符（可闻秒），去重+排序；返回 [{sec,midi,vel,dur,voiceId}]
+   * 语义：所见即所闻 —— 块按【绝对小节】播放，不折叠；
+   * 只播 [0, loopBars) 窗口内的块，窗口之外静音（视觉上灰显）。 */
   function notesForLoop(proj) {
-    proj = normalize(proj);
-    var evs = expand(proj);
-    var bpb = proj.beatsPerBar || 4;
-    var secPerBeat = 60 / (proj.bpm || 90);
-    var loopBars = Math.max(1, proj.loopBars || proj.totalBars || 16);
+    var p = normalize(proj);
+    var evs = expand(p);
+    var bpb = p.beatsPerBar || 4;
+    var secPerBeat = 60 / (p.bpm || 90);
+    var loopBars = Math.max(1, Math.min(p.loopBars || p.totalBars || 16, p.totalBars || 16));
     var loopSec = loopBars * bpb * secPerBeat;
     var cols = {};
     evs.forEach(function (e) {
-      var local = (((e.bar % loopBars) + loopBars) % loopBars);
-      var sec = local * bpb * secPerBeat;
-      if (sec < 0 || sec >= loopSec - 0.005) return;
+      if (e.bar < 0 || e.bar >= loopBars) return;      // 窗口外：不播（不折叠）
+      var sec = e.bar * bpb * secPerBeat;
+      if (sec >= loopSec - 0.005) return;
       var key = sec.toFixed(4) + '|' + e.midi + '|' + e.voiceId;
       if (!(key in cols) || e.vel > cols[key].vel) {
         cols[key] = { sec: sec, midi: e.midi, vel: e.vel, dur: e.dur, voiceId: e.voiceId };

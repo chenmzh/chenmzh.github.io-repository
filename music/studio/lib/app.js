@@ -22,7 +22,7 @@
       version: 1,
       name: '我的古筝小品',
       bpm: 76, key: 'D', mode: 'gong', beatsPerBar: 4, totalBars: 32,
-      reverb: 0.28, volume: 0.8, loopBars: 16,
+      reverb: 0.28, volume: 0.8, loopBars: 32,
       voices: [
         { id: 'v0', name: '主旋律', timbre: 'sample', volume: 0.9, pan: 0, mute: false, solo: false, sustain: 'ring' },
         { id: 'v1', name: '和声', timbre: 'sample', volume: 0.72, pan: -0.18, mute: false, solo: false, sustain: 'mid' },
@@ -138,8 +138,40 @@
     Tone.Transport.position = [0, 0, 0];
     transportStop = fromBar != null ? fromBar : 0;
     Tone.Transport.start(undefined, startSec);
+    // 补调度当前部分循环（startSec → loopEnd）的事件，Tone.Loop 覆盖后续循环
+    prepatchPartialLoop(startSec);
     render();
     startTicker();
+  }
+
+  /** 启动后立即注册 [startSec, loopEnd) 内事件（否则 seek/中途启动要等循环边界才响） */
+  function prepatchPartialLoop(startSec) {
+    var notes = engine.notesForLoop(project);
+    for (var i = 0; i < notes.length; i++) {
+      var n = notes[i];
+      if (n.sec >= startSec) scheduleTrigger(n, n.sec);
+    }
+  }
+
+  /** 跳转播放头（点击/拖拽 ruler 触发） */
+  function seekToBar(bar) {
+    bar = clamp(bar, 0, Math.max(0, project.totalBars - 0.25));
+    var bpb = project.beatsPerBar, spb = 60 / project.bpm;
+    var sec = bar * bpb * spb;
+    if (isPlaying) {
+      if (Tone.Transport.state === 'started') Tone.Transport.stop();
+      Tone.Transport.bpm.value = project.bpm;
+      Tone.Transport.loop = true;
+      Tone.Transport.loopStart = 0;
+      Tone.Transport.loopEnd = project.loopBars * bpb * spb;
+      Tone.Transport.position = [0, 0, 0];
+      Tone.Transport.start(undefined, sec);
+      prepatchPartialLoop(sec);
+    }
+    transportStop = bar;
+    state.playheadBar = bar;
+    renderPlayhead();
+    renderTransport();
   }
 
   // start 后由 Tone.Loop 的首周期回调自动覆盖 0..loop 的事件，无需额外补齐。
@@ -428,6 +460,14 @@
     ruler.appendChild(loop);
     tl.appendChild(ruler);
 
+    // ruler seek 交互（点击/拖拽进度条）
+    var seekStrip = document.createElement('div');
+    seekStrip.className = 'tl-seek';
+    seekStrip.style.left = '0px';
+    seekStrip.style.width = (project.totalBars * timelinePxPerBar()) + 'px';
+    ruler.appendChild(seekStrip);
+    bindSeekStrip(seekStrip);
+
     // 每声部一条 lane
     project.voices.forEach(function (voice) {
       var lane = document.createElement('div');
@@ -444,6 +484,8 @@
         bEl.style.left = x + 'px';
         bEl.style.width = Math.max(w, 14) + 'px';
         if (Math.max(w, 14) < 96) bEl.classList.add('tl-block--narrow');
+        var outOfWindow = blk.startBar >= project.loopBars;
+        if (outOfWindow) bEl.classList.add('tl-block--muted');
         var refObj = blk.type === 'motif' ? content.motif(blk.ref) : content.progression(blk.ref);
         var nm = refObj ? refObj.name : blk.ref;
         var octText = blk.octave ? (blk.octave > 0 ? '+' + blk.octave : '' + blk.octave) : '';
@@ -451,7 +493,7 @@
         var extra = blk.type === 'motif'
           ? (octText ? ' ' + octText : '') + (trText ? ' ' + trText : '')
           : (', ' + ((content.STYLES[blk.style] || {}).name || blk.style) + (octText ? ' ' + octText : '') + (trText ? ' ' + trText : ''));
-        bEl.title = nm + ' · ' + blk.bars + ' 小节';
+        bEl.title = nm + ' · ' + blk.bars + ' 小节' + ((blk.startBar >= project.loopBars) ? '（超出播放窗口，静音）' : '');
         bEl.innerHTML =
           '<span class="tl-block-name">' + nm + '</span>' +
           '<span class="tl-block-meta">' + blk.bars + '小节' + extra + '</span>' +
@@ -561,6 +603,29 @@
     }
     // 渲染（轻量：仅位置）
     if (blk.id === selectedId) renderTimeline();
+  }
+
+  /* ---------- ruler seek：点击/拖拽进度条 ---------- */
+  var seekDrag = null;
+  function bindSeekStrip(strip) {
+    strip.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      seekToBar(pxToBar(e.clientX));
+      seekDrag = { pointerId: e.pointerId };
+      try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    strip.addEventListener('pointermove', function (e) {
+      if (!seekDrag || e.pointerId !== seekDrag.pointerId) return;
+      seekToBar(pxToBar(e.clientX));
+    });
+    function done(e) {
+      if (seekDrag && e.pointerId === seekDrag.pointerId) {
+        seekToBar(pxToBar(e.clientX));
+        seekDrag = null;
+      }
+    }
+    strip.addEventListener('pointerup', done);
+    strip.addEventListener('pointercancel', function () { seekDrag = null; });
   }
 
   /* ---------- 素材卡 pointer 拖拽（鼠标 + 触摸通用） ---------- */
@@ -1065,6 +1130,8 @@
     _fireNote: function (n, when) { fireEventAt(n, when); },
     _buildSchedule: function () { return buildToneSchedule(); },
     _schedulerRunning: function () { return !!toneScheduled; },
+    seekToBar: seekToBar,
+    _transportStop: function () { return transportStop; },
     _pxPerBar: function () { return timelinePxPerBar(); },
     _theory: theory, _content: content, _engine: engine
   };

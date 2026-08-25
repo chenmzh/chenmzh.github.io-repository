@@ -262,3 +262,8 @@
 .tl-block--narrow .tl-block-meta { display: none; }
 .tl-block--narrow { justify-content: center; }
 .tl-block--narrow .tl-block-name { font-size: .76rem; text-align: center; }
+
+/* —— 播放窗口 —— */
+.tl-seek { position: absolute; top: 0; bottom: 0; z-index: 3; cursor: pointer; }
+.tl-ruler { cursor: pointer; }
+.tl-block--muted { opacity: .35; border-style: dashed; }
