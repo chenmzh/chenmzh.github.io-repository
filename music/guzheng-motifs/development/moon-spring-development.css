@@ -20,6 +20,15 @@
   text-decoration: none;
 }
 .demo-back:hover { text-decoration: underline; }
+.demo-complete-link {
+  display: inline-flex;
+  margin: 0 0 18px 12px;
+  color: var(--demo-blue);
+  font-size: .82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.demo-complete-link:hover { text-decoration: underline; }
 
 .demo-whole-card {
   display: grid;
