@@ -1,0 +1,139 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 02 · Learning under uncertain rewards</div>
+  <h1>探索还是利用？先学会不被早期运气骗</h1>
+  <p class="lead">上一章里，我们已经把强化学习看成“观察 → 策略 → 动作 → 环境反馈”的闭环，也知道策略会决定自己接下来收集到什么数据。现在先把 CartPole 的动力学全部拿走，只留下一个更尖锐的问题：<strong>奖励有噪声，而且我们不知道哪个动作真正更好时，应该怎样一边学习、一边行动？</strong></p>
+  <p class="mrl-term-opening"><strong>exploration（探索）</strong>是主动尝试仍然不确定的动作，以获得新信息；<strong>exploitation（利用）</strong>是使用当前已有信息，选择目前看起来最好的动作。两者不是“学习阶段”和“使用阶段”的简单二分，而是在有限行动机会里不断竞争的两种需求。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>如果 A 看起来比 B 好，是因为 A 真的更好，还是因为 A 只是刚好运气不错？在不知道答案时，我们愿意花多少次行动去换信息？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 50–75 min</span>
+    <span class="mrl-pill">先修：Chapter 01</span>
+    <span class="mrl-pill">数学：期望 + 样本均值</span>
+    <span class="mrl-pill">实验：纯浏览器 bandit</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从误判现象到探索原则</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>压缩问题</span><small>只保留动作与奖励</small></a>
+      <a class="mrl-roadmap-step" href="#noise"><b>02</b><span>有限样本</span><small>估计为什么会骗你</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#lab"><b>03</b><span>策略实验</span><small>贪心怎样被锁死</small></a>
+      <a class="mrl-roadmap-step" href="#epsilon"><b>04</b><span>保留试错</span><small>给未知动作机会</small></a>
+      <a class="mrl-roadmap-step" href="#uncertainty"><b>05</b><span>看不确定性</span><small>探索更值得试的动作</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#regret"><b>06</b><span>计算代价</span><small>信息到底花了多少奖励</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>把世界压缩到只剩“选哪个动作”</h2>
+  <p class="mrl-sec-lead">CartPole 同时有状态变化、连续时间后果和长期回报。为了只看清探索问题，我们先故意删掉这些复杂性。</p>
+
+  <p><strong>Multi-Armed Bandit Problem（多臂老虎机问题）</strong>是一类最小决策问题：面前有多个可选动作，每个动作都会产生一个随机奖励，但它们的真实平均奖励事先未知。每一轮你选择一个动作、看到奖励，然后立刻进入下一轮；这里没有“走到新状态”这件事。</p>
+
+  <div class="mrl-viz">
+    <div class="mrl-viz-head"><div><h3>先看一个只有两种动作的世界</h3><p>页面知道真实概率，用它来生成奖励；学习者扮演的 agent 不知道。</p></div></div>
+    <svg class="mrl-diagram" viewBox="0 0 860 300" role="img" aria-label="两臂老虎机中同一决策局面反复选择动作 A 或 B">
+      <defs><marker id="banditArrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="#244f45"/></marker></defs>
+      <rect x="62" y="92" width="210" height="112" rx="4" fill="#f7f7f3" stroke="#c9ccc5"/>
+      <text x="167" y="130" text-anchor="middle" font-size="14" font-weight="700" fill="#161815">同一个决策局面</text>
+      <text x="167" y="158" text-anchor="middle" font-size="12" fill="#777d77">根据已有经验选动作</text>
+      <text x="167" y="182" text-anchor="middle" font-size="12" fill="#777d77">然后更新自己的估计</text>
+      <path d="M278 124 C360 82 420 82 500 112" fill="none" stroke="#244f45" stroke-width="2" marker-end="url(#banditArrow)"/>
+      <path d="M278 174 C360 218 420 218 500 188" fill="none" stroke="#8d513b" stroke-width="2" marker-end="url(#banditArrow)"/>
+      <rect x="510" y="65" width="270" height="92" rx="4" fill="#f7f7f3" stroke="#244f45"/>
+      <text x="645" y="98" text-anchor="middle" font-size="14" font-weight="700" fill="#161815">动作 A</text>
+      <text x="645" y="124" text-anchor="middle" font-size="12" fill="#777d77">奖励 1 的概率 0.60</text>
+      <text x="645" y="143" text-anchor="middle" font-size="11" fill="#a0a59f">agent 看不到 0.60</text>
+      <rect x="510" y="171" width="270" height="92" rx="4" fill="#f7f7f3" stroke="#8d513b"/>
+      <text x="645" y="204" text-anchor="middle" font-size="14" font-weight="700" fill="#161815">动作 B</text>
+      <text x="645" y="230" text-anchor="middle" font-size="12" fill="#777d77">奖励 1 的概率 0.40</text>
+      <text x="645" y="249" text-anchor="middle" font-size="11" fill="#a0a59f">agent 看不到 0.40</text>
+    </svg>
+    <p class="mrl-caption">真正要看的是“同一个局面”会回来很多次。动作不会改变下一轮的状态，因此我们可以把所有注意力放到：怎样从随机奖励中估计哪个动作更好。</p>
+  </div>
+
+  <h3>奖励为什么必须用“平均”来比较？</h3>
+  <p>假设 A 有 60% 概率给奖励 1、否则给 0；B 有 40% 概率给 1、否则给 0。一次拉 A 完全可能得到 0，一次拉 B 也完全可能得到 1。单次奖励因此不是动作质量本身，而是从这个动作的<strong>奖励分布（reward distribution）</strong>里随机抽到的一次结果。</p>
+
+  <p>把选择动作 $a$ 后得到的随机奖励记为 $R_a$。我们真正想知道的是它长期平均能给多少，也就是<strong>期望奖励（expected reward）</strong>：</p>
+  <div class="mrl-equation">$$\mu_a=\mathbb{E}[R_a]=\sum_r r\,P(R_a=r)$$</div>
+  <p>这里逐个翻译：</p>
+  <table>
+    <thead><tr><th>符号</th><th>它是什么</th><th>人话</th></tr></thead>
+    <tbody>
+      <tr><td>$R_a$</td><td>选择动作 $a$ 后的随机奖励</td><td>这一次到底中没中，要到动作发生后才知道</td></tr>
+      <tr><td>$P(R_a=r)$</td><td>奖励等于 $r$ 的概率</td><td>环境内部产生各种结果的规律</td></tr>
+      <tr><td>$\mathbb{E}[R_a]$</td><td>随机奖励的期望</td><td>如果重复选择很多次，平均每次大约得到多少</td></tr>
+      <tr><td>$\mu_a$</td><td>我们给真实期望奖励起的简写</td><td>动作 $a$ 的“真实长期平均水平”</td></tr>
+    </tbody>
+  </table>
+
+  <p>对只有 0/1 两种奖励的 A 来说，这个公式非常具体：</p>
+  <div class="mrl-equation">$$\mu_A=1\times0.60+0\times0.40=0.60$$</div>
+  <p>B 同理得到 $\mu_B=0.40$。如果我们像上帝一样提前知道这两个数，当然每一轮都选 A。可强化学习真正麻烦的地方是：<strong>agent 看不到 $\mu_A$ 和 $\mu_B$，它只能看到自己实际试过的奖励。</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>Bandit 把“学习”变成了在线实验设计</h3>
+      <p>每一次动作同时做两件事：它可能给你奖励，也会给你一条关于这个动作的新数据。选择 A，不只是“去赚钱”，也是“再测一次 A”。</p>
+      <p class="mrl-insight-key">所以策略不只是消费数据的规则，它也是决定下一批数据从哪里来的实验设计。Chapter 01 里“policy 会制造自己的训练数据”，在 bandit 里被压缩到了最清楚的形状。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="noise">
+  <h2 class="mrl-sec-title"><span class="num">02</span>一次好运不等于更好：我们只有有限样本</h2>
+  <p class="mrl-sec-lead">真实期望藏在环境里。agent 手上真正能算的，只是自己已经观察到的那些奖励。</p>
+
+  <p>如果动作 $a$ 已经被选过 $N_a$ 次，得到奖励 $r_1,r_2,\ldots,r_{N_a}$，最直接的估计就是<strong>样本均值（sample mean）</strong>：</p>
+  <div class="mrl-equation">$$\hat\mu_a=\frac{1}{N_a}\sum_{i=1}^{N_a}r_i$$</div>
+  <p>$\hat\mu_a$ 上面的“帽子”是在提醒我们：这是从有限数据算出的<strong>估计值</strong>，不是环境里真正的 $\mu_a$。</p>
+
+  <p>例如 A 连续 5 次得到：</p>
+  <div class="mrl-code-line">1, 0, 1, 1, 0 → $\hat\mu_A=(1+0+1+1+0)/5=0.60$</div>
+  <p>这一次估计恰好等于真实值 0.60，但纯属巧合。另一组 5 次可能是 <code>0, 0, 1, 0, 1</code>，此时估计只有 0.40。环境没有变，变的是有限样本的运气。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“当前样本均值最高的动作，就是最好的动作。”</strong> 不对。样本均值是证据，不是真相。样本越少、两个动作真实差距越小，排序被噪声颠倒的概率越高。</p>
+  </div>
+
+  <div class="mrl-viz" id="sampleLab">
+    <div class="mrl-viz-head"><div><h3>实验：各试几次，真的看得出谁更好吗？</h3><p>页面会重复许多个“平行世界”，统计有限样本把 A、B 排错的频率。</p></div><button class="mrl-btn primary" id="runSampleLab">重新抽样</button></div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>当真实更好的动作只领先一点点时，少量试验会多容易误判？</dd>
+      <dt>Prediction</dt><dd>如果理解正确，<strong>样本数增加</strong>应该降低误判率；<strong>真实差距缩小</strong>应该提高误判率。</dd>
+      <dt>Experiment</dt><dd>改变每个动作的尝试次数 $N$ 和两臂的真实概率差距；每组设置重复 2000 次。</dd>
+      <dt>Observation</dt><dd>观察“B 的样本均值高于 A”的比例，以及样本均值打平的比例。</dd>
+      <dt>Interpretation</dt><dd>误判来自有限样本的不确定性，不是算法“算错平均数”。</dd>
+      <dt>Limitation</dt><dd>这里假设每次奖励独立、两臂的真实概率不会随时间改变；现实任务未必满足。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">每个动作尝试 <span id="sampleNValue">10</span> 次
+        <input id="sampleNSlider" type="range" min="2" max="100" value="10" step="1">
+      </label>
+      <label class="mrl-control">真实差距 <span id="gapValue">20</span> 个百分点
+        <input id="gapSlider" type="range" min="2" max="40" value="20" step="2">
+      </label>
+    </div>
+
+    <div class="mrl-sample-result">
+      <div><span>环境真相</span><strong id="sampleTruth">A 60% · B 40%</strong><small>这两个数只用于生成数据；agent 本身看不到。</small></div>
+      <div><span>一次示例样本</span><strong id="sampleObserved">—</strong><small id="sampleObservedNote">点击重新抽样</small></div>
+      <div><span>2000 次重复</span><strong id="sampleErrorRate">—</strong><small id="sampleTieRate">—</small></div>
+    </div>
+    <p class="mrl-caption">不要只盯某一次抽样。这里真正要看的，是“相同环境重复很多次时，有限样本会以多高频率把排序弄反”。这正是探索需求的统计来源。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>决策难度取决于“差距 / 不确定性”，而不只取决于谁更好</h3>
+      <p>60% 对 40% 很快就能分出来；51% 对 49% 即使 A 仍然更好，也可能需要大量样本。问题的困难程度不是由最优动作的绝对奖励决定，而是由<strong>候选动作有多接近，以及我们对它们有多不确定</strong>共同决定。</p>
+      <p class="mrl-insight-key">这个视角以后会反复出现：模型选择、A/B test、best-of-$N$、在线实验，都不是只看“谁的均值更高”，还要问证据够不够强。</p>
+    </div>
+  </aside>
+</section>
