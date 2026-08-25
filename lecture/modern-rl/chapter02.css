@@ -249,4 +249,25 @@
   .mrl-decomp .op{transform:rotate(90deg);padding:2px 0}
   .mrl-decomp .term{min-height:0}
   .mrl-chart-legend{font-size:.59rem}
+
+  /* Chapter 01's shared mobile table rule uses nowrap. Chapter 02 has
+     substantially longer cells, so keep the page width fixed and wrap here. */
+  .mrl-article table{
+    display:table!important;
+    width:100%!important;
+    table-layout:fixed;
+    white-space:normal!important;
+    overflow:visible!important;
+  }
+  .mrl-article th,.mrl-article td{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+  }
+
+  /* The regret chart is more useful as one complete comparison than as a
+     horizontally clipped figure on phones. */
+  .mrl-compare-chart{overflow:visible}
+  .mrl-compare-chart svg{width:100%;min-width:0}
+  .mrl-chart-label{font-size:18px}
+  #compareLab table{font-size:.72rem}
 }
