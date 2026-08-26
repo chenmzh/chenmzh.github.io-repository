@@ -1,0 +1,184 @@
+<section id="transition">
+  <h2 class="mrl-sec-title"><span class="num">04</span>有了 state，还要描述：动作之后会到哪里？</h2>
+  <p class="mrl-sec-lead">状态解决“现在是什么局面”。下一步要解决的是世界本身的规律：在这个局面执行这个动作，之后可能发生什么？</p>
+
+  <p>最简单的环境是<strong>确定性（deterministic）</strong>的：给定当前状态和动作，下一状态唯一确定。例如一个没有随机打滑的棋盘世界，站在 $(1,1)$ 向右走，就一定到 $(1,2)$。</p>
+
+  <p>但很多环境是<strong>随机性（stochastic）</strong>的。同样在 $(1,1)$ 选择“向右”，地面可能打滑：80% 正常到右边，10% 偏到上边，10% 偏到下边。这时动作不再对应一个结果，而对应一个<strong>下一状态的概率分布</strong>。</p>
+
+  <p>这个规律用 <strong>transition probability（状态转移概率）</strong>表示：</p>
+  <div class="mrl-equation">$$P(s'\mid s,a)=P(S_{t+1}=s'\mid S_t=s,A_t=a)$$</div>
+
+  <p>公式逐个翻译：</p>
+  <table>
+    <thead><tr><th>量</th><th>含义</th><th>在打滑棋盘里</th></tr></thead>
+    <tbody>
+      <tr><td>$s$</td><td>当前 state 的一个具体值</td><td>当前位置 $(1,1)$</td></tr>
+      <tr><td>$a$</td><td>当前 action 的一个具体值</td><td>选择“向右”</td></tr>
+      <tr><td>$s'$</td><td>某个候选下一 state</td><td>例如 $(1,2)$</td></tr>
+      <tr><td>$P(s'\mid s,a)$</td><td>已知当前 state 和 action 时，到达 $s'$ 的概率</td><td>$P((1,2)\mid(1,1),\rightarrow)=0.8$</td></tr>
+    </tbody>
+  </table>
+
+  <p>所以在这个具体数字里：</p>
+  <div class="mrl-equation">$$P((1,2)\mid(1,1),\rightarrow)=0.8,\quad P((0,1)\mid(1,1),\rightarrow)=0.1,\quad P((2,1)\mid(1,1),\rightarrow)=0.1$$</div>
+  <p>三个概率加起来是 1。注意：$P$ 不是在预测“这一回一定发生什么”，而是在描述<strong>重复许多次同样的 state–action 条件时，各种后果会以什么频率出现</strong>。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“既然动作是 agent 选的，下一状态也应该由 agent 决定。”</strong> 不对。Agent 控制的是 action，不是 outcome。动作进入环境以后，真正的后果由环境动力学决定；随机环境里，同一个 action 甚至会有多个可能结果。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>Action 是干预，transition 才是世界对干预的回答</h3>
+      <p>Policy 决定“我要做什么”；$P(s'\mid s,a)$ 决定“世界收到这个动作后可能变成什么”。这两者不能混成一个函数。</p>
+      <p class="mrl-insight-key">后面很多 RL 公式看起来复杂，实际上始终在交替处理这两个来源：agent 的选择规律，以及 environment 的后果规律。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="transition-lab">
+  <h2 class="mrl-sec-title"><span class="num">05</span>互动实验：动作不是结果，而是一份结果分布</h2>
+  <p class="mrl-sec-lead">下面固定同一个当前 state，只改变动作和“打滑概率”。先看理论分布，再真的从这个分布采样 100 次。</p>
+
+  <div class="mrl-viz" id="transitionLab">
+    <div class="mrl-viz-head"><div><h3>Slippery Grid · Transition Microscope</h3><p>黑框是当前 state；标着概率的格子是下一步可能到达的位置。</p></div><button class="mrl-btn primary" id="sampleTransitions">重新采样 100 次</button></div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>同一个 state 和 action，为什么可以对应多个不同的 $s_{t+1}$？</dd>
+      <dt>Prediction</dt><dd>打滑概率为 0 时，下一状态唯一；打滑概率增大后，概率质量会从“预期方向”分散到两个侧向结果。</dd>
+      <dt>Experiment</dt><dd>改变 action 和总打滑概率；页面先计算 $P(s'\mid s,a)$，再从该分布独立采样 100 次。</dd>
+      <dt>Observation</dt><dd>比较理论概率条与 100 次样本的经验频率。样本不会恰好等于理论值，但应该大致靠近。</dd>
+      <dt>Interpretation</dt><dd>$P$ 描述的是条件分布。一次 transition 是从这个分布里抽到的一条实际经验。</dd>
+      <dt>Limitation</dt><dd>这个环境的 $P$ 是页面预先知道的；真实 model-free RL 往往只能看到采样结果，而不会直接拿到完整转移表。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">动作 $a_t$
+        <select id="transitionAction">
+          <option value="up">向上 ↑</option>
+          <option value="down">向下 ↓</option>
+          <option value="left">向左 ←</option>
+          <option value="right" selected>向右 →</option>
+        </select>
+      </label>
+      <label class="mrl-control">总打滑概率 = <span id="slipValue">0.20</span>
+        <input id="slipSlider" type="range" min="0" max="0.60" step="0.05" value="0.20">
+      </label>
+    </div>
+
+    <div class="mrl-transition-layout">
+      <div>
+        <div class="mrl-mini-grid" id="transitionGrid" aria-label="4 乘 4 随机转移棋盘"></div>
+        <p class="mrl-caption">当前 state 固定为 $(1,1)$。Goal 与 Trap 暂时只是后面 reward 例子的地图元素；本实验只研究“会到哪里”，先不研究“到那里好不好”。</p>
+      </div>
+      <div class="mrl-prob-list">
+        <div id="transitionProbRows"></div>
+        <div class="mrl-sample-counts" id="transitionSamples">等待采样。</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>为什么这个区分后面很重要？</h3>
+  <p>假设某个动作平均来说很好，但有 5% 概率掉进陷阱。一个只看“最可能结果”的算法会把这 5% 完全丢掉；而价值计算必须把所有可能后果按概率加权。后面 Bellman equation（贝尔曼方程）里出现的 expectation（期望），正是从这里来的。</p>
+</section>
+
+<section id="reward">
+  <h2 class="mrl-sec-title"><span class="num">06</span>把“世界会怎样”和“我们想要什么”分开</h2>
+  <p class="mrl-sec-lead">Transition 只负责描述后果；它并没有说哪种后果值得追求。要把任务目标加入环境，还需要 reward。</p>
+
+  <p><strong>reward function（奖励函数）</strong>描述某个 transition 发生时环境给多少即时反馈。为了把“同一个动作到不同下一状态时奖励可能不同”写清楚，本章用三参数形式：</p>
+  <div class="mrl-equation">$$R(s,a,s')=\mathbb{E}[r_t\mid S_t=s,A_t=a,S_{t+1}=s']$$</div>
+  <p>它读作：已经知道“从 $s$ 做了 $a$ 并到了 $s'$”以后，这一步 reward 的期望是多少。很多环境里 reward 是确定值，此时这个期望就等于那一个固定分数。</p>
+
+  <p>例如沿用上面的 4×4 棋盘：</p>
+  <table>
+    <thead><tr><th>transition 的结果</th><th>即时 reward</th><th>为什么这样设计</th></tr></thead>
+    <tbody>
+      <tr><td>进入普通格</td><td>$-0.02$</td><td>轻微惩罚绕远路，让更短路径更有吸引力</td></tr>
+      <tr><td>进入 Goal</td><td>$+1.00$</td><td>完成任务</td></tr>
+      <tr><td>进入 Trap</td><td>$-1.00$</td><td>失败</td></tr>
+    </tbody>
+  </table>
+
+  <p>这里有一个非常重要的分工：</p>
+  <div class="mrl-decomp">
+    <div class="term"><span>DYNAMICS</span><strong>$P(s'\mid s,a)$<br>这个动作可能把世界变成什么</strong></div>
+    <div class="op">≠</div>
+    <div class="term"><span>OBJECTIVE</span><strong>$R(s,a,s')$<br>这些后果里我们更喜欢什么</strong></div>
+    <div class="op">+</div>
+    <div class="term"><span>TIME SCALE</span><strong>$\gamma$<br>未来的 reward 今天还算多重要</strong></div>
+  </div>
+
+  <div class="mrl-objective-compare">
+    <div>
+      <span class="label">SAME WORLD · TASK A</span>
+      <h4>尽快到达目标</h4>
+      <p>普通步 $-0.02$，Goal $+1$，Trap $-1$。绕路有成本，但偶尔承担一点风险也许值得。</p>
+    </div>
+    <div>
+      <span class="label">SAME WORLD · TASK B</span>
+      <h4>极度厌恶陷阱</h4>
+      <p>保持完全相同的 $P$，只把 Trap 改成 $-10$。地图和打滑规律没变，最合理的行为却可能改成绕远路。</p>
+    </div>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>MDP 把“事实”和“偏好”拆开了</h3>
+      <p>$P$ 是关于世界的陈述：动作会造成什么后果；$R$ 是关于任务的陈述：哪些后果值得追求。改变 reward 不需要改变物理规律。</p>
+      <p class="mrl-insight-key">这个分离会一路延伸到现代对齐：模型能力和环境规则是一回事，“什么样的回答应该得高分”是另一回事。Reward design 不是动力学问题，而是目标规格问题。</p>
+    </div>
+  </aside>
+
+  <h3>即时 reward 还不够：我们关心的是未来一整串后果</h3>
+  <p>Chapter 01 已经见过 <strong>return（回报）</strong>：从当前时刻开始，未来 reward 的折扣和。现在把它放回完整的序贯决策里：</p>
+  <div class="mrl-equation">$$G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots=\sum_{k=0}^{\infty}\gamma^k r_{t+k}$$</div>
+  <p><strong>discount factor（折扣因子）</strong> $\gamma\in[0,1]$ 控制未来 reward 的权重。若任务会在有限步自然结束，求和实际上在终止处停止。</p>
+
+  <p>一个具体数值例子：路线 A 立刻得到 $+1$ 然后结束；路线 B 先连续三步各付 $-0.1$，第 4 步得到 $+2$。当 $\gamma=0.9$ 时：</p>
+  <div class="mrl-equation">$$G_B=-0.1-0.9(0.1)-0.9^2(0.1)+0.9^3(2)\approx1.19$$</div>
+  <p>于是 B 的长期回报高于 A 的 1.0；但如果 $\gamma=0.5$，同一路线 B 的回报只有约 $0.075$。这说明“哪条路径更好”不仅取决于奖励本身，也取决于我们把问题放在多长的时间尺度上。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“Reward function 就是在告诉 agent 正确动作。”</strong> 不对。Reward 通常只评价 transition 的结果；agent 仍要自己学会哪些当前动作会通过状态转移带来更大的长期 return。</p>
+  </div>
+</section>
+
+<section id="mdp">
+  <h2 class="mrl-sec-title"><span class="num">07</span>现在五个对象终于有理由放到一起</h2>
+  <p class="mrl-sec-lead">到这里才适合写定义：前面每个符号都已经回答了一个真实问题，不再是一张需要背诵的名词表。</p>
+
+  <p>一个 Markov Decision Process 通常写成：</p>
+  <div class="mrl-equation">$$\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,\gamma)$$</div>
+
+  <div class="mrl-factor-strip">
+    <div><span>$\mathcal{S}$</span><strong>State space<br>所有可能局面的集合</strong></div>
+    <div><span>$\mathcal{A}$</span><strong>Action space<br>agent 可以采取的操作</strong></div>
+    <div><span>$P$</span><strong>Transition<br>动作如何改变世界</strong></div>
+    <div><span>$R$</span><strong>Reward<br>环境怎样评价一步后果</strong></div>
+    <div><span>$\gamma$</span><strong>Discount<br>未来 reward 的时间权重</strong></div>
+  </div>
+
+  <table>
+    <thead><tr><th>对象</th><th>4×4 GridWorld</th><th>CartPole</th><th>大语言模型生成</th></tr></thead>
+    <tbody>
+      <tr><td>$\mathcal{S}$</td><td>16 个格子位置</td><td>位置、速度、角度、角速度</td><td>当前上下文与任务所需的环境信息</td></tr>
+      <tr><td>$\mathcal{A}$</td><td>上 / 下 / 左 / 右</td><td>向左推 / 向右推</td><td>下一 token，或更高层的工具调用动作</td></tr>
+      <tr><td>$P$</td><td>移动 + 打滑规则</td><td>物理动力学</td><td>生成动作后上下文怎样更新、工具/环境怎样响应</td></tr>
+      <tr><td>$R$</td><td>Goal +1，Trap −1</td><td>存活一步 +1</td><td>偏好模型、规则 verifier 或环境结果给出的分数</td></tr>
+      <tr><td>$\gamma$</td><td>未来路径奖励的折扣</td><td>长期保持平衡的时间尺度</td><td>长回答或多步 agent 轨迹中未来结果的权重</td></tr>
+    </tbody>
+  </table>
+
+  <p>这里最值得记住的不是五个字母，而是五个问题：<strong>现在是什么局面？能做什么？做完世界会怎样？这些后果好不好？未来还算多重要？</strong> 只要能回答这五个问题，你已经开始把一个任务写成 RL 可以处理的形式。</p>
+
+  <h3>Bandit 原来也是这个框架的一种极端简化</h3>
+  <p>Chapter 02 的两臂老虎机可以看成只有一个 state 的特殊情况：$\mathcal{S}=\{s\}$，无论选 A 还是 B，下一轮都回到同一个 $s$。于是状态转移被压成了一个几乎看不见的自环，问题才退化成“估计每个动作平均 reward”。</p>
+
+  <div class="mrl-inline-note"><strong>这也是为什么课程先讲 bandit 再讲 MDP：</strong>不是因为老虎机更“初级”，而是因为删掉 state transition 后，我们能先孤立出 exploration；现在把 transition 加回来，才开始面对真正的长期决策。</div>
+</section>
