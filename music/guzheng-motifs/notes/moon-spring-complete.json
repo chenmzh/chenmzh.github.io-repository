@@ -43,17 +43,17 @@
       "wav": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-theme.wav",
         "bytes": 5250268,
-        "sha256": "8d268a599f6f5cd8a6cb680af876f97aa188498293902eec15ad0d9d543acffd"
+        "sha256": "62bf6035f162f854b296c7155ffbe80c8f74df8d712c0314d2dc3c0fcab7aeb0"
       },
       "mid": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-theme.mid",
         "bytes": 710,
-        "sha256": "f75207c5527204e810bd0d019a85ba087e9e14996e60ea43acecaf155907249a"
+        "sha256": "c56fb7e26a2272dcf38d8ae0c1dc3fe210dbed96d1d482e6a68317fb3b9d994e"
       },
       "mp3": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-theme.mp3",
         "bytes": 716008,
-        "sha256": "355a36cf212e3d72c471e493e9eb5f85c17966f59c0cff2c3478694229bb50c5"
+        "sha256": "fbea35cc9b653c6e2c9092d7e71f16b5ab83b1794b3c4d51aa237cc79230f782"
       },
       "duration_seconds": 29.763174603174605,
       "expanded_note_count": 68,
@@ -91,17 +91,17 @@
       "wav": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-climax.wav",
         "bytes": 9706688,
-        "sha256": "d73e96148223050b619814b932c2e11b52fd2a9cd332587614ad5f7fe7382812"
+        "sha256": "f64ec7232c14a9da7b968424cfc2ee9af2e9ed43f37d0ca24bda523b6b9eb2c8"
       },
       "mid": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-climax.mid",
         "bytes": 844,
-        "sha256": "7f231724e92d4adb6e9c2429c38a60a218671f8d38f5318a3094606dcebeae9c"
+        "sha256": "74f5d0bfa8865d302a23a6741fe4c7373f0f5998a50ce8d3a08653d644a12439"
       },
       "mp3": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-climax.mp3",
         "bytes": 1322257,
-        "sha256": "9fb731c3a3cbb8673cf6eef84a410a32adb28109433b9a7169839bb74073ec25"
+        "sha256": "b24f98e4fae270293f95a60d626f6e1ceb118fdeaf3afd5ab86b7c6a086f7d43"
       },
       "duration_seconds": 55.026326530612245,
       "expanded_note_count": 88,
@@ -139,17 +139,17 @@
       "wav": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-complete.wav",
         "bytes": 31988792,
-        "sha256": "e4dd52fcee07f2d134668173b981080102655bb74bab6cd27e928065fa21a6a4"
+        "sha256": "bec1aa2a079799de95c54682d7d7d4cd4ff4c8407c55d1a26ba0120611690663"
       },
       "mid": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-complete.mid",
         "bytes": 2114,
-        "sha256": "9aafce7a51be54a1e39997b0d9536b79cfc12cac8f955d1aab3882de2d4a5b27"
+        "sha256": "ba59621a118425ee5d2f685e8ad29ce143b4d290e6961953cb1d0c510d30e021"
       },
       "mp3": {
         "path": "site-repository/music/guzheng-motifs/audio/works/moon-spring/moon-spring-complete.mp3",
         "bytes": 4354133,
-        "sha256": "f1f21420ee9ffa66ecca6d0e9080200d5b53cdafbef4260899f7a74744799f76"
+        "sha256": "6805133f96c7cb7ebeea1dd03aca6bec2fb4fb160506fd64ac50ad89bcb33394"
       },
       "duration_seconds": 181.3421088435374,
       "expanded_note_count": 233,

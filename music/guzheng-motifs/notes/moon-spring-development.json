@@ -20,17 +20,17 @@
       "wav": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.wav",
         "bytes": 1907952,
-        "sha256": "9e0195d1bd728106202f380eaf9ff37a698819d82895c2bfad9fe4d370e8b13b"
+        "sha256": "b82391558d81b652862d00704d8384a01ca6c41160e8971844a0f51319c355b0"
       },
       "mid": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.mid",
         "bytes": 308,
-        "sha256": "7acb8feac7c640da219a25f92e2132c0eaf5a38a544732b813dedc880a3bc940"
+        "sha256": "d0aa94bfb7b00862ab18eb0c6a33de8c21996cf1825eecd5e8cec73ccb1cd584"
       },
       "mp3": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-sequence.mp3",
         "bytes": 261477,
-        "sha256": "01514626ddded568e633d0a5ecfadecf8b8631a3bb9d55586effb9e219df3df0"
+        "sha256": "5c44f46e9950885148700e33322c98f0b4fbba7d4de821aa9fdd962c20d1c050"
       },
       "duration_seconds": 10.815804988662132,
       "source_event_count": 11,
@@ -98,17 +98,17 @@
       "wav": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.wav",
         "bytes": 5250268,
-        "sha256": "5d1ce526fc3ffafb967d62cdd8f4934fe5dfdf6d27db3c6dee4dd9318c5572c3"
+        "sha256": "5390ad2e01aa6e352d2cd7f258643dadf3bd8fb4d7fc98231dfc51a707a2e886"
       },
       "mid": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.mid",
         "bytes": 724,
-        "sha256": "80dcbf87fa819a5d4e8bb5e060c3f98e287c71c22776c7e283cf04bb6f40688b"
+        "sha256": "a8589d52ae74779ea990510c958c974ec8548850fa7e99b16c3cf77b76a62570"
       },
       "mp3": {
         "path": "site-repository/music/guzheng-motifs/audio/development/moon-spring-section.mp3",
         "bytes": 716008,
-        "sha256": "56dbdda3b3ee7c8220b38112480cb54adcbe2be7bac6d78ea23ca54f486a2add"
+        "sha256": "1bb98404fb9149c00c96543753b043b354d8ce99ecf0cc1aa440fb358ab48ec6"
       },
       "duration_seconds": 29.763174603174605,
       "source_event_count": 42,
