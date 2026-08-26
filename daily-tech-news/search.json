@@ -1,6 +1,50 @@
 {
-  "updated": "2026-08-23",
+  "updated": "2026-08-26",
   "briefs": [
+    {
+      "date": "2026-08-26",
+      "title": "每日科技新闻简报｜2026-08-26",
+      "categories": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "公司",
+        "科研",
+        "硬件",
+        "机器人",
+        "消费电子"
+      ],
+      "items": [
+        "OpenAI 公布 Jalapeño 首轮结果：自研推理芯片把竞争推进到软硬件协同",
+        "Apple 发布 M6 与 M5 Ultra：2nm 芯片、高统一内存和本地 AI 计算继续下沉",
+        "Boston Scientific 披露网络安全事件：部分 IT 系统受影响并扰动全球运营",
+        "Anthropic 让 Claude Chat 与 Claude Cowork 共享可编辑记忆",
+        "AMD 为部分 Versal 自适应 SoC 引入 UCIe 1.1 连接能力",
+        "OpenAI 启动 WebMCP Challenge，试验让网站直接暴露可调用工具",
+        "Google Chat 的 Ask Gemini 从 8 月 26 日开始分阶段上线",
+        "北京世界人形机器人运动会的百米成绩刷新到 8.86 秒",
+        "Nature 论文提出由 LLM 自适应重定义材料探索空间"
+      ],
+      "summary": "OpenAI 定制推理芯片、Apple 本地统一内存和 AMD UCIe chiplet 共同推动 AI 基础设施向系统级整合。WebMCP、Ask Gemini 和 Claude Cowork 让代理进入网站与协作工作流，权限、记忆、审计和数据边界成为关键指标。AI for Science 开始自动设计材料搜索空间，但公开数据演示仍需真实实验验证。人形机器人竞技纪录刷新，通用操作能力仍需单独衡量。Boston Scientific 事件提醒企业关注 IT 可用性、供应链连续性和网络事件透明度。",
+      "markdown": "briefs/2026-08-26.md",
+      "url": "reader.html?date=2026-08-26",
+      "tags": [
+        "AI",
+        "芯片",
+        "软件",
+        "云",
+        "开发者工具",
+        "网络安全",
+        "公司",
+        "科研",
+        "硬件",
+        "机器人",
+        "消费电子"
+      ]
+    },
     {
       "date": "2026-08-23",
       "title": "每日科技新闻简报｜2026-08-23",
