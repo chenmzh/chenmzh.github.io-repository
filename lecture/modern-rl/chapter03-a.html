@@ -1,0 +1,174 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 03 · Sequential decisions need state</div>
+  <h1>动作之后，世界变了：把交互写成一个数学问题</h1>
+  <p class="lead">上一章里，多臂老虎机故意让每一轮都回到同一种决策局面。这样我们可以专心研究探索与利用。但 CartPole、游戏、机器人和语言模型都多了一件关键的事：<strong>你刚才做了什么，会改变下一刻你面对的局面。</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>如果动作不仅影响眼前奖励，还会改变未来状态，我们需要保存哪些信息，才能把“现在做什么会导致以后怎样”写成一个可以推理、计算和学习的问题？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 60–85 min</span>
+    <span class="mrl-pill">先修：Chapter 01–02</span>
+    <span class="mrl-pill">数学：条件概率 + 期望</span>
+    <span class="mrl-pill">实验：状态充分性 + 随机转移</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从“局面会变”到完整环境模型</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>补回状态</span><small>老虎机到底省略了什么</small></a>
+      <a class="mrl-roadmap-step" href="#state"><b>02</b><span>表示当前</span><small>什么信息才够用</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#markov-lab"><b>03</b><span>状态实验</span><small>隐藏速度会怎样</small></a>
+      <a class="mrl-roadmap-step" href="#transition"><b>04</b><span>描述后果</span><small>动作 → 下一状态分布</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#transition-lab"><b>05</b><span>随机转移</span><small>同一动作未必同一结果</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#mdp"><b>06</b><span>完整模型</span><small>五个对象放到一起</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>老虎机少了哪根箭头？</h2>
+  <p class="mrl-sec-lead">Chapter 02 的简化非常有用，但它删掉的恰好是序贯决策最核心的困难：动作会改变下一次决策的问题本身。</p>
+
+  <div class="mrl-bridge-compare">
+    <div class="mrl-bridge-panel">
+      <span class="label">Chapter 02 · Bandit</span>
+      <h3>同一个局面反复选动作</h3>
+      <p>选 A 或 B 会产生随机 reward，但下一轮仍面对同一个选择。一个动作的后果基本在这一轮就结束。</p>
+      <div class="mrl-flow" style="justify-content:flex-start"><div class="box">同一局面</div><div class="arrow">→</div><div class="box">动作</div><div class="arrow">→</div><div class="box">reward</div></div>
+    </div>
+    <div class="mrl-bridge-arrow">→</div>
+    <div class="mrl-bridge-panel">
+      <span class="label">Sequential decision</span>
+      <h3>动作把你带到新的局面</h3>
+      <p>现在动作不仅给 reward，还会产生新的 state；新的 state 再决定下一步哪些动作合理。</p>
+      <div class="mrl-flow" style="justify-content:flex-start"><div class="box">state</div><div class="arrow">→</div><div class="box">action</div><div class="arrow">→</div><div class="box">new state</div></div>
+    </div>
+  </div>
+
+  <p>回到 CartPole。假设当前杆子向右微倾，你向右推车。这个动作的价值不能只用“这一刻有没有拿到 +1”评价，因为它还会改变小车速度、杆角度和角速度。下一步你面对的是一个由刚才动作造成的新局面。</p>
+
+  <p>于是，一个时间步至少要写成：</p>
+  <div class="mrl-equation">$$s_t \xrightarrow{\ a_t\ } (r_t,\ s_{t+1})$$</div>
+  <p>这里 $s_t$ 是当前状态，$a_t$ 是当前动作，$r_t$ 是执行动作后得到的即时奖励，$s_{t+1}$ 是下一状态。我们继续沿用前两章的索引习惯：<strong>$r_t$ 表示动作 $a_t$ 之后环境返回的奖励</strong>。有些教材会把同一份奖励写成 $R_{t+1}$；只是下标习惯不同，不要把它误解成两种奖励。</p>
+
+  <p>现在真正的问题出现了：如果我们想研究“动作如何改变未来”，就必须先回答<strong>什么叫当前状态</strong>，以及<strong>动作之后的变化规律怎样表示</strong>。</p>
+
+  <p>这套标准形式叫 <strong>Markov Decision Process（MDP，马尔可夫决策过程）</strong>：一种用状态、动作、状态转移、奖励和长期目标来描述序贯决策问题的数学框架。先别背五元组；本章会让它的每一项都从一个已经出现的问题里长出来。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>从 bandit 到 MDP，真正新增的不是“更多符号”，而是一个因果链</h3>
+      <p>Bandit 里动作主要决定当前 reward；MDP 里动作还决定你接下来会看到什么，而接下来看到什么又会影响以后能做什么。</p>
+      <p class="mrl-insight-key">因此一个动作可能“眼前吃亏、未来赚回来”。只要这个链条存在，单步平均奖励就不再足够，我们最终必须学会给未来状态定价。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="state">
+  <h2 class="mrl-sec-title"><span class="num">02</span>State 不是“传感器读数”，而是对未来足够有用的信息</h2>
+  <p class="mrl-sec-lead">Chapter 01 已经见过 CartPole 的四维状态。现在把问题问得更严格一点：为什么这些量能叫 state？少一个会怎样？</p>
+
+  <p>先看一个更小的玩具世界。一个小车在一条直线上，当前位置都是 $x=2$。只看这一帧，两种情况完全一样：</p>
+
+  <div class="mrl-state-pair">
+    <div class="mrl-state-case">
+      <span class="case-label">HISTORY A</span>
+      <h4>小车刚从右边来到 $x=2$</h4>
+      <dl><dt>当前位置</dt><dd>x = 2</dd><dt>隐藏速度</dt><dd>v = -1</dd><dt>趋势</dt><dd>正在向左</dd></dl>
+    </div>
+    <div class="mrl-state-case">
+      <span class="case-label">HISTORY B</span>
+      <h4>小车刚从左边来到 $x=2$</h4>
+      <dl><dt>当前位置</dt><dd>x = 2</dd><dt>隐藏速度</dt><dd>v = +1</dd><dt>趋势</dt><dd>正在向右</dd></dl>
+    </div>
+  </div>
+
+  <p>如果下一步都选择“不给额外加速度”，左边的小车会继续向左，右边的小车会继续向右。也就是说，<strong>相同的 $x=2$ 加上相同动作，并不能确定甚至不能稳定预测下一状态</strong>；更早的历史还藏着有用信息。</p>
+
+  <p>这就是为什么 state 不能简单理解成“当前能看到的任何数字”。一个好的状态表示，应该把<strong>预测未来所需的信息</strong>压缩进当前表示里。对这个玩具世界，$[x,v]$ 比单独的 $x$ 更接近合格的 state；对 CartPole，$[x,\dot x,\theta,\dot\theta]$ 比一张只给位置和角度的静态截图更有用。</p>
+
+  <h3>把“历史不再额外有用”写成条件概率</h3>
+  <p>当状态表示足够完整时，我们希望预测下一状态只需要当前状态和当前动作。这个性质叫 <strong>Markov property（马尔可夫性）</strong>：</p>
+  <div class="mrl-equation">$$P(S_{t+1}\mid S_t,A_t,S_{t-1},A_{t-1},\ldots)=P(S_{t+1}\mid S_t,A_t)$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>它在问什么</th><th>直觉</th></tr></thead>
+    <tbody>
+      <tr><td>$S_t$</td><td>当前状态随机变量</td><td>现在我们认为“足够描述局面”的信息</td></tr>
+      <tr><td>$A_t$</td><td>当前动作</td><td>agent 现在施加的选择或控制</td></tr>
+      <tr><td>$S_{t+1}$</td><td>下一状态</td><td>世界推进一步以后会变成什么</td></tr>
+      <tr><td>左边条件</td><td>当前 + 完整历史都知道时的预测</td><td>把过去全部翻出来</td></tr>
+      <tr><td>右边条件</td><td>只知道当前 state 与 action 时的预测</td><td>如果 state 够好，过去不再增加预测信息</td></tr>
+    </tbody>
+  </table>
+
+  <p>注意这个定义的重点不是“过去不存在”，也不是“系统没有记忆”。它说的是：<strong>过去对未来有用的影响，已经被当前 state 吸收了。</strong> 一个 state 完全可以包含历史摘要、速度、计数器、记忆向量，甚至整个对话上下文。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“Markov 就是无记忆。”</strong> 更准确的说法是：一旦给定当前 state 与 action，更早历史不再为下一步提供额外预测信息。state 自己可以携带大量“过去留下来的记忆”。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>马尔可夫性不是世界天然贴着的标签，它依赖你怎样表示世界</h3>
+      <p>同一套物理系统，用 $x$ 表示时可能不是 Markov；加入速度 $v$ 后就可能变成 Markov。问题不是动力学突然变了，而是我们的表示是否丢掉了预测未来所需的信息。</p>
+      <p class="mrl-insight-key">这也是为什么“换一个更大的神经网络”不能自动修复缺失信息：网络可以学习复杂函数，却不能凭空恢复从 observation 中被删掉的变量。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="markov-lab">
+  <h2 class="mrl-sec-title"><span class="num">03</span>互动实验：当前信息到底够不够？</h2>
+  <p class="mrl-sec-lead">我们固定两个真实局面：位置都相同，但速度相反。然后用同一个动作推进一步，看不同的“状态表示”会不会把它们错误地混在一起。</p>
+
+  <div class="mrl-viz" id="stateLab">
+    <div class="mrl-viz-head"><div><h3>State Sufficiency Lab</h3><p>同样显示 $x=2$，背后可能是两个完全不同的动力学局面。</p></div></div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>只记录位置 $x$，能不能让“当前 state + action”足以预测下一步？</dd>
+      <dt>Prediction</dt><dd>如果速度被隐藏，同一个表示 $x=2$ 和同一个动作会对应不同下一状态；加入速度以后，两种局面会被当前 state 区分开。</dd>
+      <dt>Experiment</dt><dd>切换状态表示，并选择相同的加速度动作；页面同时推进“向左运动”和“向右运动”的两个真实局面。</dd>
+      <dt>Observation</dt><dd>比较页面显示给 agent 的当前 state，以及两个世界实际得到的 $s_{t+1}$。</dd>
+      <dt>Interpretation</dt><dd>如果两个真实局面被压成同一个 state，却产生不同未来，那么更早历史仍含预测信息，当前表示并不充分。</dd>
+      <dt>Limitation</dt><dd>这个实验只能证明这个玩具动力学里“位置 alone 不够”；它不能证明任意真实系统加入速度后就一定完整 Markov。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">给 agent 的状态表示
+        <select id="stateRepresentation">
+          <option value="position" selected>只给位置：state = [x]</option>
+          <option value="full">位置 + 速度：state = [x, v]</option>
+        </select>
+      </label>
+      <label class="mrl-control">两边执行同一个动作
+        <select id="stateAction">
+          <option value="-1">向左加速 a = −1</option>
+          <option value="0" selected>不加速 a = 0</option>
+          <option value="1">向右加速 a = +1</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="mrl-state-pair">
+      <div class="mrl-state-case">
+        <span class="case-label">REAL WORLD A</span>
+        <h4>隐藏速度 $v=-1$</h4>
+        <dl><dt>agent 看到</dt><dd id="stateObsA">[2]</dd><dt>执行动作</dt><dd id="stateActA">a = 0</dd><dt>真实下一速度</dt><dd id="stateNextVA">−1</dd></dl>
+        <div class="next-state">下一位置：<strong id="stateNextXA">x′ = 1</strong></div>
+      </div>
+      <div class="mrl-state-case">
+        <span class="case-label">REAL WORLD B</span>
+        <h4>隐藏速度 $v=+1$</h4>
+        <dl><dt>agent 看到</dt><dd id="stateObsB">[2]</dd><dt>执行动作</dt><dd id="stateActB">a = 0</dd><dt>真实下一速度</dt><dd id="stateNextVB">+1</dd></dl>
+        <div class="next-state">下一位置：<strong id="stateNextXB">x′ = 3</strong></div>
+      </div>
+    </div>
+
+    <div class="mrl-state-verdict bad" id="stateVerdict">
+      <span>Interpretation</span>
+      <strong>两个世界对 agent 看起来都是 [2]，同一个动作却得到不同下一位置。位置 alone 发生了 state aliasing：不同真实局面被压成同一个表示。</strong>
+    </div>
+    <p class="mrl-caption">这里真正要看的是“当前表示是否把会影响未来的差异保留下来”。Markov property 首先是一个表示问题，然后才是一个公式。</p>
+  </div>
+</section>
