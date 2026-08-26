@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-23",
+  "updated": "2026-08-26",
   "briefs": [
+    {
+      "date": "2026-08-26",
+      "title": "每日合成与发育生物学简报 - 2026-08-26",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Transferable genetic toolsets for nonmodel gut Clostridia enable in vivo reversible control of metabolite production",
+        "Predictive design of tissue-specific mammalian enhancers that function in the mouse embryo",
+        "Alcohol dehydrogenase-mediated methanol dissimilation increases carbon efficiency in synthetic autotrophic yeast",
+        "Initiation of rotational collective migration in Drosophila through tissue geometry and mechanochemical feedback",
+        "Morphogenesis of bacterial colonies in liquid crystalline environments",
+        "Regulatory stochasticity drives opposing phenotypic outcomes in cell-fate decision networks",
+        "Synthetic transcriptional control in the malaria parasite Plasmodium falciparum",
+        "Ecologically inspired assembly of a Bacillales synthetic community for lignin degradation",
+        "Unobserved Sequence Space Has Many Functional Proteins",
+        "Distributed delay stabilizes bistable genetic networks"
+      ],
+      "summary": "今天最清晰的主线是“可编程控制”从元件层向系统层推进：组织特异性增强子、非模式肠道菌遗传工具和合成自养酵母分别把控制能力带入哺乳动物胚胎、微生物群落和一碳生物制造。 发育与形态发生方向继续显示几何—力学—信号反馈的耦合：果蝇卵室的旋转迁移由 Fat2 极性与组织运动的正反馈启动，细菌在液晶环境中的链状生长与屈曲则由环境弹性和生长应力共同塑形。 预印本中，调控随机性对细胞命运网络的影响值得注意：加性与乘性噪声可把系统推向不同的表型占据区，提示“噪声”本身可能是可设计的状态转换旋钮。 合成生物学工具链仍在扩展：疟原虫的可诱导转录抑制、木质素降解 SynCom 和远离天然序列的功能蛋白，分别对应难工程化底盘、群落级分工和蛋白设计空间三个瓶颈。",
+      "markdown": "briefs/2026-08-26.md",
+      "url": "reader.html?date=2026-08-26",
+      "tags": [
+        "synthetic biology",
+        "developmental synthetic biology",
+        "cybernetics and biology"
+      ],
+      "items": [
+        "Transferable genetic toolsets for nonmodel gut Clostridia enable in vivo reversible control of metabolite production",
+        "Predictive design of tissue-specific mammalian enhancers that function in the mouse embryo",
+        "Alcohol dehydrogenase-mediated methanol dissimilation increases carbon efficiency in synthetic autotrophic yeast",
+        "Initiation of rotational collective migration in Drosophila through tissue geometry and mechanochemical feedback",
+        "Morphogenesis of bacterial colonies in liquid crystalline environments",
+        "Regulatory stochasticity drives opposing phenotypic outcomes in cell-fate decision networks",
+        "Synthetic transcriptional control in the malaria parasite Plasmodium falciparum",
+        "Ecologically inspired assembly of a Bacillales synthetic community for lignin degradation",
+        "Unobserved Sequence Space Has Many Functional Proteins",
+        "Distributed delay stabilizes bistable genetic networks"
+      ]
+    },
     {
       "date": "2026-08-23",
       "title": "每日合成与发育生物学简报 - 2026-08-23",
