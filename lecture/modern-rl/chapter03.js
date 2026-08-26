@@ -4,6 +4,75 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
+  function polishFirstUse(host) {
+    const stateInsight = [...host.querySelectorAll('[data-insight-id="02"] p')]
+      .find(p => p.textContent.includes('observation'));
+    if (stateInsight) {
+      stateInsight.innerHTML = '这也是为什么“换一个更大的神经网络”不能自动修复缺失信息：网络可以学习复杂函数，却不能凭空恢复从<strong>当前输入</strong>中被删掉的变量。';
+    }
+
+    const stateLimit = [...host.querySelectorAll('#markov-lab dd')]
+      .find(dd => dd.textContent.includes('alone'));
+    if (stateLimit) {
+      stateLimit.innerHTML = '这个实验只能证明这个玩具动力学里“<strong>只记录位置</strong>不够”；它不能证明任意真实系统加入速度后就一定完整满足 Markov property。';
+    }
+
+    const initialVerdict = host.querySelector('#stateVerdict strong');
+    if (initialVerdict) {
+      initialVerdict.textContent = '两个世界对 agent 看起来都是 [2]，同一个动作却得到不同下一位置。这种“不同真实局面被压成同一个表示”的现象叫 state aliasing（状态混叠）。';
+    }
+
+    const modelFreeLimit = [...host.querySelectorAll('#transition-lab dd')]
+      .find(dd => dd.textContent.includes('model-free'));
+    if (modelFreeLimit) {
+      modelFreeLimit.innerHTML = '这个环境的 $P$ 是页面预先知道的；真实的许多 RL 算法只会看到一条条采样 transition，而不会直接拿到完整转移表。';
+    }
+
+    const mdpTable = host.querySelector('#mdp table');
+    if (mdpTable) {
+      const headCells = mdpTable.querySelectorAll('thead th');
+      if (headCells[1]) headCells[1].textContent = '4×4 网格世界';
+      const rows = mdpTable.querySelectorAll('tbody tr');
+      if (rows[1]?.children[3]) {
+        rows[1].children[3].innerHTML = '下一 <strong>token（语言模型一次读取或生成的离散文本单元）</strong>，或更高层的工具调用动作';
+      }
+      if (rows[3]?.children[3]) {
+        rows[3].children[3].innerHTML = '<strong>偏好模型</strong>（学习给不同回答打分的模型）、<strong>rule-based verifier（规则验证器）</strong>（按明确规则检查答案是否满足条件），或环境结果给出的分数';
+      }
+    }
+
+    const conceptualCode = [...host.querySelectorAll('#code pre code')]
+      .find(code => code.textContent.includes('replay_or_rollout_buffer'));
+    if (conceptualCode) {
+      conceptualCode.textContent = conceptualCode.textContent
+        .replace('state = env.reset()\n\nwhile True:', 'state = env.reset()\nexperience = []\n\nwhile True:')
+        .replace('replay_or_rollout_buffer.append(transition)', 'experience.append(transition)');
+    }
+
+    const agentParagraph = [...host.querySelectorAll('#caveats p')]
+      .find(p => p.textContent.includes('当前 prompt'));
+    if (agentParagraph) {
+      agentParagraph.innerHTML = '但一旦进入工具调用与长期 Agent，事情会变复杂：网页可能在后台变化，工具有隐藏状态，早先结果可能被 <strong>context window（上下文窗口）</strong>截掉，外部文件也不一定全部放进当前模型输入。此时“给模型什么<strong>记忆（memory）</strong>”本质上就是 state representation 设计。';
+    }
+
+    const gridQuestion = [...host.querySelectorAll('.mrl-quiz summary')]
+      .find(summary => summary.textContent.includes('GridWorld'));
+    if (gridQuestion) {
+      gridQuestion.textContent = '4. 在打滑网格世界里选择“向右”，为什么不能把 action 直接写成 next_state？';
+    }
+
+    const takeawayCopy = [...host.querySelectorAll('.mrl-takeaway p')]
+      .find(p => p.textContent.includes('value learning'));
+    if (takeawayCopy) {
+      takeawayCopy.innerHTML = 'MDP 的价值不是给 RL 增加一套符号，而是把“当前信息、可控动作、世界动力学、任务目标和时间尺度”拆成可独立思考的对象。以后所有 <strong>value learning（价值学习）</strong>和 <strong>policy optimization（策略优化）</strong>都是在这个骨架上做计算。';
+    }
+
+    const sourceNote = host.querySelector('.mrl-source-note');
+    if (sourceNote && sourceNote.textContent.includes('GridWorld')) {
+      sourceNote.textContent = sourceNote.textContent.replace('GridWorld 代码', '网格世界代码');
+    }
+  }
+
   async function loadChapter() {
     const host = $('#chapterContent');
     if (!host) return false;
@@ -14,6 +83,7 @@
       if (bad) throw new Error(`HTTP ${bad.status}`);
       const parts = await Promise.all(responses.map(response => response.text()));
       host.innerHTML = parts.join('\n');
+      polishFirstUse(host);
       return true;
     } catch (err) {
       host.innerHTML = `
@@ -129,7 +199,7 @@
       if (full) {
         strong.textContent = '当前表示已经把两种局面区分成 [x=2, v=−1] 与 [x=2, v=+1]。在这个玩具动力学里，预测下一步不再需要回头查“刚才从哪边来”。';
       } else {
-        strong.textContent = '两个真实世界对 agent 看起来都是 [x=2]，同一个动作却产生不同下一位置。说明位置 alone 丢掉了会影响未来的速度信息。';
+        strong.textContent = '两个真实世界对 agent 看起来都是 [x=2]，同一个动作却产生不同下一位置。说明只记录位置丢掉了会影响未来的速度信息。';
       }
     }
 
