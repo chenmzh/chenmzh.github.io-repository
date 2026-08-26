@@ -1,0 +1,164 @@
+<section id="trajectory">
+  <h2 class="mrl-sec-title"><span class="num">08</span>一条 trajectory 里，policy 和 environment 各负责什么？</h2>
+  <p class="mrl-sec-lead">把 MDP 写出来以后，我们终于能更精确地拆开 Chapter 01 那条交互链：动作是谁生成的，下一状态又是谁生成的？</p>
+
+  <p>Chapter 01 已经把 <strong>policy（策略）</strong>写成 $\pi(a\mid s)$：在当前 state 下，agent 选择各个 action 的概率。现在又有了 environment 的 transition probability $P(s'\mid s,a)$。</p>
+
+  <div class="mrl-two-sources">
+    <div class="mrl-source-box">
+      <span>AGENT SIDE</span>
+      <h4>$\pi(a_t\mid s_t)$</h4>
+      <p>给定当前 state，policy 决定 action 怎样被选择。随机 policy 的不确定性来自 agent 自己的选择规则。</p>
+    </div>
+    <div class="mrl-source-mid">action<br>↓<br>outcome</div>
+    <div class="mrl-source-box">
+      <span>ENVIRONMENT SIDE</span>
+      <h4>$P(s_{t+1}\mid s_t,a_t)$</h4>
+      <p>action 确定以后，environment 决定下一 state 怎样产生。随机 transition 的不确定性来自世界本身。</p>
+    </div>
+  </div>
+
+  <p>如果只看“一步里同时发生 action $a_t$ 且随后到达 $s_{t+1}$”的概率，这两个机制会乘在一起：</p>
+  <div class="mrl-equation">$$P(a_t,s_{t+1}\mid s_t)=\pi(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t)$$</div>
+  <p>例如 policy 在当前 state 有 70% 概率选择“向右”，而向右以后有 80% 概率正常走到右边，那么“选择向右并正常走到右边”这一组合事件的概率就是：</p>
+  <div class="mrl-equation">$$0.70\times0.80=0.56$$</div>
+
+  <p>这条式子值得理解，而不是背诵。它告诉我们：<strong>训练数据的分布既受 policy 控制，也受 environment 控制。</strong> Policy 改了，action 分布会变；环境动力学改了，即使 policy 不变，trajectory 分布也会变。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>RL 数据分布是“策略 × 世界”的共同产物</h3>
+      <p>监督学习里我们常把数据分布当成外部给定；在 RL 里，policy 通过选择 action 主动改变自己会访问哪些 state，而 environment 再把这些 action 变成真实后果。</p>
+      <p class="mrl-insight-key">以后看到 rollout 数据“过期”、策略更新后状态分布变化，或者 agent 因为一种行为模式而再也看不到另一类经验，都可以回到这两个概率的组合来理解。</p>
+    </div>
+  </aside>
+
+  <h3>很多步连起来，就是一条 trajectory</h3>
+  <p>一串按时间排列的交互仍然写成 <strong>trajectory（轨迹）</strong>：</p>
+  <div class="mrl-equation">$$\tau=(s_0,a_0,r_0,s_1,a_1,r_1,\ldots)$$</div>
+  <p>如果任务从一次 reset 开始，并在某个自然结束条件到来时停止，这一整段也常叫一个 <strong>episode（回合）</strong>。自然结束时到达的 state 叫 <strong>terminal state（终止状态）</strong>；例如 CartPole 杆倒了、棋盘游戏分出胜负、迷宫到达终点。</p>
+
+  <div class="mrl-inline-note"><strong>终止 ≠ 时间用完。</strong> 如果环境只是因为最大步数到了而停止采样，这通常叫 truncation（截断）：任务的物理状态本身未必终止。Chapter 01 的 Gymnasium 代码里已经见过 <code>terminated</code> 与 <code>truncated</code> 的区别；后面做 value target 时，这个区别会真正影响公式。</div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把公式落到 <code>step()</code>：环境其实在采样一个 transition</h2>
+  <p class="mrl-sec-lead">先看最小 conceptual code。目标不是学框架 API，而是把 $s_t,a_t,r_t,s_{t+1}$ 和 $P,R$ 对回程序变量。</p>
+
+  <pre class="mrl-code"><code># 概念代码：一个环境时间步
+state = env.reset()
+
+while True:
+    action = policy(state)  # a_t ~ pi(. | s_t)
+
+    # 环境内部：从 P(. | state, action) 采样 next_state
+    # 再根据这次 transition 产生 reward
+    next_state, reward, terminated = env.step(action)
+
+    transition = (state, action, reward, next_state)
+    replay_or_rollout_buffer.append(transition)
+
+    if terminated:
+        break
+    state = next_state</code></pre>
+
+  <table>
+    <thead><tr><th>数学对象</th><th>代码</th><th>这一章该怎么读</th></tr></thead>
+    <tbody>
+      <tr><td>$s_t$</td><td><code>state</code></td><td>当前用于决策的信息表示</td></tr>
+      <tr><td>$a_t$</td><td><code>action</code></td><td>policy 在当前 state 下选出的动作</td></tr>
+      <tr><td>$P(s'\mid s,a)$</td><td><code>env.step</code> 内部的动力学</td><td>决定 next_state 怎样被产生</td></tr>
+      <tr><td>$r_t$ / $R$</td><td><code>reward</code></td><td>环境对这一步 transition 的即时反馈</td></tr>
+      <tr><td>$s_{t+1}$</td><td><code>next_state</code></td><td>动作发生后进入的新局面</td></tr>
+      <tr><td>终止状态</td><td><code>terminated</code></td><td>任务本身是否自然结束</td></tr>
+    </tbody>
+  </table>
+
+  <h3>写成 MDP，不等于 agent 必须提前知道 $P$</h3>
+  <p>这是一个很常见的误会。我们用 $P(s'\mid s,a)$ 来<strong>定义环境的转移规律</strong>，但学习算法未必能直接读取这个概率表。现实中更常见的情况是：</p>
+
+  <pre class="mrl-code"><code># agent 不知道完整 P
+# 它只通过交互看到一条条样本：
+(s_t, a_t, r_t, s_next)
+(s_t, a_t, r_t, s_next)
+(s_t, a_t, r_t, s_next)
+...</code></pre>
+
+  <p><strong>model-free reinforcement learning（无模型强化学习）</strong>指算法不需要先显式学习或使用完整的环境 transition model，就可以直接从这些交互样本学习 value 或 policy。后面的 Q-learning、Actor-Critic 和 PPO 都可以从这个角度理解。</p>
+
+  <p>相对地，如果算法显式学习或使用一个环境模型去预测“做这个动作以后会发生什么”，就进入 <strong>model-based reinforcement learning（基于模型的强化学习）</strong>的路线。这里只需要知道这个区别存在；世界模型怎么学、怎么规划，会留到后面的专门章节。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“既然 MDP 里写了 $P$，RL 就假设我们知道环境方程。”</strong> 不对。$P$ 是问题的真实结构，不等于 agent 拥有它。一个模拟器的 <code>step()</code> 可以不断给你 transition 样本，却从来不把完整概率表交给你。</p>
+  </div>
+</section>
+
+<section id="caveats">
+  <h2 class="mrl-sec-title"><span class="num">10</span>真实世界哪里更麻烦：你看到的 observation 未必就是完整 state</h2>
+  <p class="mrl-sec-lead">MDP 是非常强的建模语言，但“我们给 agent 的当前输入真的包含所有相关信息吗？”在真实系统里经常没有这么干净。</p>
+
+  <p><strong>observation（观测）</strong>是 agent 当前实际收到的信息；<strong>state（状态）</strong>在理论里更强调“对预测未来足够充分的内部局面表示”。在 CartPole 这种经典环境里，observation 常常被设计得接近 Markov state，所以两者看起来几乎是同义词。</p>
+
+  <p>但想象一个机器人只看到单张相机照片。门的另一边有没有人、目标物刚才向哪个方向移动、电池内部温度是多少，都可能影响未来，却没有出现在当前图像里。此时单张 observation 就不一定是 Markov state。</p>
+
+  <p>这类问题可以用 <strong>Partially Observable Markov Decision Process（POMDP，部分可观测马尔可夫决策过程）</strong>描述：环境内部仍有真实 state，但 agent 只能得到它的不完整 observation。常见应对方式包括保留历史、使用循环网络或显式记忆、维护对隐藏 state 的概率信念。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“只要把最近一帧叫做 state，问题就满足 Markov property。”</strong> 名字不会改变信息量。如果当前输入丢掉了影响未来的隐藏变量，更早历史仍然有预测价值，算法实际面对的就是部分可观测问题。</p>
+  </div>
+
+  <h3>和大语言模型、Agent 有什么关系？</h3>
+  <p>对大语言模型，<strong>token（模型一次读取或生成的离散文本单元）</strong>生成以后会被加入后续上下文，因此“动作改变下一 state”非常直观。对于一个只做文本续写的模型，当前 context（上下文）常常可以近似看作决策 state。</p>
+
+  <p>但一旦进入工具调用与长期 Agent，事情会变复杂：网页可能在后台变化，工具有隐藏状态，早先结果可能被 context window（上下文窗口）截掉，外部文件也不一定全部放进当前 prompt。此时“给模型什么 memory”本质上就是 state representation 设计。</p>
+
+  <aside class="mrl-insight" data-insight-id="06">
+    <div class="mrl-insight-index">Insight 06</div>
+    <div class="mrl-insight-body">
+      <h3>Agent memory 可以从“让当前 state 更接近 Markov”来理解</h3>
+      <p>记忆模块不只是为了“让模型记得更多”。更结构化地看，它是在把过去仍然会影响未来决策的信息重新压回当前输入。</p>
+      <p class="mrl-insight-key">一个好的 memory system 不是无限保存历史，而是保留那些一旦丢掉，就会让相同当前 observation 对应不同未来的关键信息。</p>
+    </div>
+  </aside>
+
+  <h3>还有两个问题，我们故意留到后面</h3>
+  <p>第一，MDP 告诉我们世界怎样运转、reward 怎样累积，却还没有告诉我们<strong>怎样快速判断“这个 state 对未来到底有多好”</strong>。如果每次决策都从头枚举所有可能 trajectory，计算会很快爆炸。</p>
+  <p>第二，即使我们知道一个 state 很好，还要回答具体哪个 action 更值得做。下一章会引入 value function（价值函数）和 Bellman equation（贝尔曼方程）：把“未来一整串回报”压缩成当前 state / action 的可递归估计。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：能不能把一个真实任务写成序贯决策问题？</h2>
+  <p class="mrl-sec-lead">不要只回答“五元组是哪五个”。真正的检查是：为什么需要它们，以及删掉任何一项会失去什么。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么 Chapter 02 的 bandit 不需要认真区分不同 state，而 CartPole 必须区分？</summary><div class="inner">Bandit 每一轮回到同一种决策局面，动作不会改变下一轮面对的 state；CartPole 的动作会改变位置、速度、杆角度和角速度，所以同一个动作在不同 state 下会有不同后果，未来可获得的 reward 也不同。</div></details>
+    <details><summary>2. 两辆车当前位置都一样。为什么只用位置作为 state 可能违反 Markov property？</summary><div class="inner">因为隐藏速度可能不同。给定相同位置和相同动作，下一位置仍会因为速度不同而不同；更早历史可以帮助推断速度，因此历史在知道“位置”之后仍提供额外预测信息。把速度加入当前 state 后，这个具体信息缺口才被补上。</div></details>
+    <details><summary>3. “Markov means memoryless” 这句话为什么容易误导？</summary><div class="inner">真正的条件是：给定当前 state 与 action 后，更早历史不再增加对下一 state 的预测信息。当前 state 本身完全可以包含速度、历史摘要、计数器或记忆向量；它不是要求系统真的没有过去。</div></details>
+    <details><summary>4. 在打滑 GridWorld 里选择“向右”，为什么不能把 action 直接写成 next_state？</summary><div class="inner">因为 action 是 agent 的选择，而 next_state 是 environment 对这个选择的响应。随机动力学下，同一个 $(s,a)$ 会对应一个 $P(s'\mid s,a)$ 分布，实际 transition 只是从这个分布中采样到的一种结果。</div></details>
+    <details><summary>5. $P$ 和 $R$ 分别回答什么？为什么不能合成一句“这个动作好不好”？</summary><div class="inner">$P$ 描述事实：动作可能把世界带到哪些后果；$R$ 描述目标：这些后果即时得到多少反馈。同一套动力学可以配不同 reward 形成不同任务，所以“会发生什么”和“我们喜欢什么”需要分开。</div></details>
+    <details><summary>6. 为什么即时 reward 更大的动作不一定长期更好？</summary><div class="inner">动作还会改变下一 state，从而改变未来 reward 的机会。我们优化的是 return $G_t$，不是只看当前 $r_t$。一个动作可以暂时付出小代价，却进入更有利的未来状态并获得更大长期回报。</div></details>
+    <details><summary>7. 如果环境已经用 MDP 定义，为什么 model-free 算法仍然可以不知道完整 $P$？</summary><div class="inner">MDP 中的 $P$ 描述环境真实存在的 transition law，不代表 agent 能直接读取它。Model-free 算法可以只通过一条条 $(s,a,r,s')$ 样本学习 value 或 policy，而不显式构造完整 transition model。</div></details>
+    <details><summary>8. 为什么一个长期工具调用 Agent 可能比纯文本续写更容易出现部分可观测问题？</summary><div class="inner">工具和外部环境可能有当前 prompt 中看不到的隐藏状态，旧结果也可能因为上下文窗口限制被丢掉。于是当前 observation 未必包含所有影响未来的信息，需要 memory、history summary 或其他 state representation 来补充。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第三章真正建立起来的链条</h3>
+    <div class="mrl-flow" style="grid-template-columns:repeat(11,auto)">
+      <div class="box">state</div><div class="arrow">→</div><div class="box">action</div><div class="arrow">→</div><div class="box">transition</div><div class="arrow">→</div><div class="box">new state + reward</div><div class="arrow">→</div><div class="box">未来继续</div><div class="arrow">→</div><div class="box">return</div>
+    </div>
+    <p>MDP 的价值不是给 RL 增加一套符号，而是把“当前信息、可控动作、世界动力学、任务目标和时间尺度”拆成可独立思考的对象。以后所有 value learning 和 policy optimization 都是在这个骨架上做计算。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 4 章：怎样给未来的局面定价？</h3>
+    <p>现在我们已经会写环境了，但还有一个计算难题：从当前 state 出发，未来可能分叉出大量 trajectory，难道每次都要全部展开？下一章会引入 <strong>value function（价值函数）</strong>，把未来 return 压缩成一个当前估计；再用 <strong>Bellman equation（贝尔曼方程）</strong>解释为什么这个估计可以递归地从“一步 reward + 下一状态价值”构造出来。</p>
+  </div>
+
+  <p class="mrl-source-note">本页以 walkinglabs/hands-on-modern-rl 中 “MDP 与马尔可夫性” 的主题和 GridWorld 代码为知识来源重新组织，不是原项目官方译本。讲解顺序刻意先制造 state representation 与 stochastic transition 的问题，再引入形式化定义；value 与 Bellman 的完整内容留到下一章。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 03</span><span><a href="./chapter02.html">← Chapter 02</a> · <a href="./">课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
