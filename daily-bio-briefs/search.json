@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-26",
+  "updated": "2026-08-27",
   "briefs": [
+    {
+      "date": "2026-08-27",
+      "title": "每日合成与发育生物学简报 - 2026-08-27",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Automated prototyping of genetic codes",
+        "ORB-TXTL: cell-free expression of membrane proteins on lipid bilayer-coated beads",
+        "Programmable Recruitment of RNA-Binding Proteins Enables Small Molecule-Directed Destabilization of Nuclear Pre-mRNA",
+        "Dark CO2 Fixation via the Ethylmalonyl-CoA Pathway Establishes Metabolic Parity: A Stoichiometric Basis for Compounding Ecosystem Shifts",
+        "An Intronic SINE at Pou5f1 Links Hormone Signaling to Blastocyst Hatching",
+        "An entropy-based diagnostic framework for characterizing methylation state dynamics during preimplantation development",
+        "Circadian temperature compensation is intrinsically linked with metabolism and redox signaling",
+        "Developmental and MAPK-responsive transcription factors regulate distinct malignant cell states and associated genetic dependencies in pancreatic cancer",
+        "Bacterial ribonucleoprotein bodies maintain an acidic pH environment as a mechanism of enzyme regulation",
+        "Genetically encoded tools for tracking metabolites in live cells"
+      ],
+      "summary": "今天最清晰的主线是“可编程控制”继续向系统层推进：遗传密码原型、膜蛋白无细胞底盘、RNA 命运调控和活细胞代谢传感器，分别覆盖了翻译、膜生物学、转录后调控和测量层。 发育方向的重点不只在“哪些基因被打开”，还在于何时、何地以及如何完成状态切换：胚胎着床前的 SINE 顺式元件、表观遗传状态重置和肿瘤中的发育谱系可塑性形成了相互呼应的三条线索。 控制论与生物学方向出现了多个可抽象为反馈或稳态的问题：代谢—氧化还原—生物钟耦合、群落中碳流与固体停留时间的联动，以及细菌 RNA 蛋白体内的局部酸性环境。 方法学上，自动化实验、单细胞/多组学、化学诱导邻近和可调微环境正在合并成新的工程接口；但其中若干条目仍是“系统生物学邻近”，并非已经完成的合成系统设计。",
+      "markdown": "briefs/2026-08-27.md",
+      "url": "reader.html?date=2026-08-27",
+      "tags": [
+        "synthetic biology",
+        "developmental synthetic biology",
+        "cybernetics and biology"
+      ],
+      "items": [
+        "Automated prototyping of genetic codes",
+        "ORB-TXTL: cell-free expression of membrane proteins on lipid bilayer-coated beads",
+        "Programmable Recruitment of RNA-Binding Proteins Enables Small Molecule-Directed Destabilization of Nuclear Pre-mRNA",
+        "Dark CO2 Fixation via the Ethylmalonyl-CoA Pathway Establishes Metabolic Parity: A Stoichiometric Basis for Compounding Ecosystem Shifts",
+        "An Intronic SINE at Pou5f1 Links Hormone Signaling to Blastocyst Hatching",
+        "An entropy-based diagnostic framework for characterizing methylation state dynamics during preimplantation development",
+        "Circadian temperature compensation is intrinsically linked with metabolism and redox signaling",
+        "Developmental and MAPK-responsive transcription factors regulate distinct malignant cell states and associated genetic dependencies in pancreatic cancer",
+        "Bacterial ribonucleoprotein bodies maintain an acidic pH environment as a mechanism of enzyme regulation",
+        "Genetically encoded tools for tracking metabolites in live cells"
+      ]
+    },
     {
       "date": "2026-08-26",
       "title": "每日合成与发育生物学简报 - 2026-08-26",
