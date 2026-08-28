@@ -31,40 +31,40 @@
   <div class="controls">
     <input id="q" type="search" placeholder="搜索日期、标题、摘要、条目或标签">
     <select id="date"><option value="">全部日期</option></select>
-    <select id="tag"><option value="">全部标签</option></select>
+    <select id="topic"><option value="">全部主题</option></select>
   </div>
   <div id="list" class="grid"></div>
 </main>
 <script>
 const q = document.getElementById('q');
 const date = document.getElementById('date');
-const tag = document.getElementById('tag');
+const topic = document.getElementById('topic');
 const list = document.getElementById('list');
 let briefs = [];
 function esc(s) { return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-function searchable(b) { return [b.date,b.title,b.summary,(b.articles||b.items||[]).join(' '),(b.tags||b.topics||[]).join(' ')].join(' ').toLowerCase(); }
+function searchable(b) { return [b.date,b.title,b.summary,(b.articles||b.items||[]).join(' '),(b.topics||b.tags||[]).join(' ')].join(' ').toLowerCase(); }
 function render() {
   const needle = q.value.trim().toLowerCase();
   const selectedDate = date.value;
-  const selected = tag.value;
-  const rows = briefs.filter(b => (!needle || searchable(b).includes(needle)) && (!selectedDate || b.date === selectedDate) && (!selected || (b.tags||b.topics||[]).includes(selected)));
+  const selectedTopic = topic.value;
+  const rows = briefs.filter(b => (!needle || searchable(b).includes(needle)) && (!selectedDate || b.date === selectedDate) && (!selectedTopic || (b.topics||b.tags||[]).includes(selectedTopic)));
   list.innerHTML = rows.map(b => `<a class="card" href="${esc(b.url)}">
     <div class="meta">${esc(b.date)}</div>
     <strong>${esc(b.title)}</strong>
     <p>${esc(b.summary || '')}</p>
-    <div class="tags">${(b.tags || []).map(esc).join(' / ')}</div>
+    <div class="tags">${(b.topics || b.tags || []).map(esc).join(' / ')}</div>
   </a>`).join('') || '<p>没有匹配结果。</p>';
 }
 fetch('search.json').then(r => r.json()).then(data => {
   briefs = data.briefs || [];
   date.innerHTML += briefs.map(b => `<option value="${esc(b.date)}">${esc(b.date)}</option>`).join('');
-  const tags = [...new Set(briefs.flatMap(b => b.tags || []))].sort();
-  tag.innerHTML += tags.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  const topics = [...new Set(briefs.flatMap(b => b.topics || b.tags || []))].sort();
+  topic.innerHTML += topics.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
   render();
 });
 q.addEventListener('input', render);
 date.addEventListener('change', render);
-tag.addEventListener('change', render);
+topic.addEventListener('change', render);
 </script>
 </body>
 </html>
