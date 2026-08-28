@@ -1,6 +1,49 @@
 {
-  "updated": "2026-08-27",
+  "updated": "2026-08-28",
   "briefs": [
+    {
+      "date": "2026-08-28",
+      "title": "每日合成与发育生物学简报 - 2026-08-28",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "DIPTAR: A synthetic biology platform for functional interrogation of protein degradation",
+        "In vivo spatial coordination with synthetic paracrine signaling",
+        "Timing of metabolomics-driven supplementation strategies affects protein expression in *E. coli*-based cell-free expression systems",
+        "Directed Evolution in Codon Space",
+        "Promoter selection reduces phenotypic heterogeneity and improves bioproduction",
+        "Carbon substrate type shapes spatial self-organization in a multi-species biofilm community",
+        "A reaction-diffusion framework for de novo Polycomb spreading",
+        "Nuclear size is genetically controlled and influences cell fate",
+        "A peroxiredoxin 1–reactive oxygen species feedback loop modulates nuclear factor kappa B activity in osteoclastogenesis",
+        "A Structural Theory of Admissible Transitions in Biological Reaction Networks"
+      ],
+      "summary": "合成生物学的控制对象正在从单一基因元件扩展到“可选择的细胞状态”和“可协调的细胞群”：DIPTAR 把蛋白降解转成可筛选的焦亡输出，合成旁分泌系统则把传感、信号扩散和效应细胞拆成可组合模块。 工程优化越来越强调动态和异质性，而不是只追求平均产量：无细胞表达中的补料时机、酵母启动子的细胞间表达异质性、以及密码子空间中的同义替换，都成为可以迭代调节的设计变量。 微生物系统的空间结构仍是一个核心“涌现控制”问题。四成员合成菌群的结果显示，碳源的物理/化学形态可以改变生物膜的混合程度、物种定位和潜在代谢交换网络。 发育系统生物学继续把形态和命运连接到可量化的动力学：Polycomb 状态的反应—扩散模型、核大小对 PRC2 和细胞命运的影响，以及活体形态动力学读出，形成了从染色质到组织尺度的连续链条。 控制论方向的强信",
+      "markdown": "briefs/2026-08-28.md",
+      "url": "reader.html?date=2026-08-28",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "合成生物学的控制对象正在从单一基因元件扩展到“可选择的细胞状态”和“可协调的细胞群”：DIPTAR 把蛋白降解转成可筛选的焦亡输出，合成旁分泌系统则把传感、信号扩散和效应细胞拆成可组合模块。",
+        "工程优化越来越强调动态和异质性，而不是只追求平均产量：无细胞表达中的补料时机、酵母启动子的细胞间表达异质性、以及密码子空间中的同义替换，都成为可以迭代调节的设计变量。",
+        "微生物系统的空间结构仍是一个核心“涌现控制”问题。四成员合成菌群的结果显示，碳源的物理/化学形态可以改变生物膜的混合程度、物种定位和潜在代谢交换网络。",
+        "发育系统生物学继续把形态和命运连接到可量化的动力学：Polycomb 状态的反应—扩散模型、核大小对 PRC2 和细胞命运的影响，以及活体形态动力学读出，形成了从染色质到组织尺度的连续链条。",
+        "控制论方向的强信号更接近生物网络中的反馈、稳态和瞬态可达性，而不是通用工程控制器：PRDX1–ROS–NF κB 回路和生物反应网络的结构性转移理论分别代表实验机制与数学框架两端。",
+        "1. DIPTAR: A synthetic biology platform for functional interrogation of protein degradation",
+        "作者/来源/发布日期：Patrick M. Exconder、William Yoo、Madhura Kulkarni、Ashutosh B. Mahale 等；bioRxiv；2026 08 27（v1，新结果）",
+        "方向标签：合成生物学；蛋白降解；功能基因组学；细胞状态选择",
+        "中文总结：作者构建了 DIPTAR，将目标蛋白降解与 CARD8 介导的焦亡连接起来，把原本难以直接筛选的降解事件转化为可选择表型。以 HIF 1 为模型底物时，系统能够报告氧依赖的 VHL 介导降解，并支持 pooled CRISPR 筛选 HIF 1 稳定性的调节因子。摘要还报告了 BRD4、IκB 和 p53 等不同底物的可编程接入，以及对病原体扰动宿主降解通路的检测能力。",
+        "为什么值得看：它把“测量蛋白降解”升级为“用细胞命运放大降解信号”，同时兼具报告器、筛选平台和降解剂表征接口。对构建可选择的合成细胞回路，以及把隐性的分子状态转成群体层输出，很有启发。",
+        "2. In vivo spatial coordination with synthetic paracrine signaling",
+        "作者/来源/发布日期：Kaiwen Luo、Yitong Ma、Hongyi R. Li、Hengyu Li、Margaret B. Swift 等；bioRxiv；2026 08 27（v2，版本更新）"
+      ]
+    },
     {
       "date": "2026-08-27",
       "title": "每日合成与发育生物学简报 - 2026-08-27",
