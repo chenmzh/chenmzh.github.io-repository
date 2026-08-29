@@ -1,6 +1,47 @@
 {
-  "updated": "2026-08-28",
+  "updated": "2026-08-29",
   "briefs": [
+    {
+      "date": "2026-08-29",
+      "title": "每日合成与发育生物学简报 - 2026-08-29",
+      "topics": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "articles": [
+        "Chimeric Induced Cooperativity Opens the Design Space of Eukaryotic Gene Regulation",
+        "Establishing Design Principles for CRISPR-Cas Antifungals in Candida albicans",
+        "Dynamic Control of Prokaryotic Chromosome Ploidy Rewires Metabolic Networks to Enhance Product Biosynthesis",
+        "Metabolic engineering of Rhodococcus aromaticivorans RHA1 for muconic acid production from lignin",
+        "Progressive oxygenation of developing leaves directs morphogenesis",
+        "Tissue-wide metabolic buffering confers resilience to mosaic mitochondrial dysfunction",
+        "Connexin-43 links Neuromesodermal progenitor states to segmentation clock robustness during vertebrate axis elongation",
+        "Botulinum toxin dysregulates calcium activity and prevents Dpp/BMP secretion from epithelial cells in the developing fly wing",
+        "Genome-scale perturb-seq in primary human CD4+ T cells maps context-specific regulators of T cell programs and human immune traits",
+        "Host-derived stimuli alter intracellular calcium levels in Pseudomonas aeruginosa, revealing its potential role as a second messenger"
+      ],
+      "summary": "过去 24 小时的强相关结果集中在 8 月 28 日：CIC 将真核转录控制变成可预测的模块化设计空间，CRISPR 抗真菌和动态染色体倍性把宿主状态纳入工程目标；木质素代谢工程推进非模式菌细胞工厂；发育方向由氧梯度、组织代谢缓冲、Cx43 分割时钟和 Ca2+—BMP 分泌构成；Perturb-seq 与细菌 Ca2+ 信号则把控制问题推进到状态依赖的单细胞和微生物适应层面。arXiv q-bio 精确窗口无新提交，medRxiv 无强相关新稿。",
+      "markdown": "briefs/2026-08-29.md",
+      "url": "reader.html?date=2026-08-29",
+      "tags": [
+        "合成生物学",
+        "发育合成生物学",
+        "控制论与生物学"
+      ],
+      "items": [
+        "Chimeric Induced Cooperativity Opens the Design Space of Eukaryotic Gene Regulation",
+        "Establishing Design Principles for CRISPR-Cas Antifungals in Candida albicans",
+        "Dynamic Control of Prokaryotic Chromosome Ploidy Rewires Metabolic Networks to Enhance Product Biosynthesis",
+        "Metabolic engineering of Rhodococcus aromaticivorans RHA1 for muconic acid production from lignin",
+        "Progressive oxygenation of developing leaves directs morphogenesis",
+        "Tissue-wide metabolic buffering confers resilience to mosaic mitochondrial dysfunction",
+        "Connexin-43 links Neuromesodermal progenitor states to segmentation clock robustness during vertebrate axis elongation",
+        "Botulinum toxin dysregulates calcium activity and prevents Dpp/BMP secretion from epithelial cells in the developing fly wing",
+        "Genome-scale perturb-seq in primary human CD4+ T cells maps context-specific regulators of T cell programs and human immune traits",
+        "Host-derived stimuli alter intracellular calcium levels in Pseudomonas aeruginosa, revealing its potential role as a second messenger"
+      ]
+    },
     {
       "date": "2026-08-28",
       "title": "每日合成与发育生物学简报 - 2026-08-28",
