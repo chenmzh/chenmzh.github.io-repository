@@ -1462,8 +1462,9 @@ controls.maxPolarAngle = 1.5;
 controls.update();
 
 /* ---------------- 三渲二材质 ---------------- */
-const gradData = new Uint8Array([70,70,70,255, 125,125,125,255, 185,185,185,255, 255,255,255,255]);
-const gradMap = new THREE.DataTexture(gradData, 4, 1, THREE.RGBAFormat);
+/* 8px：左半 (dot<0 背光) 全黑，右半 (dot>0 受光) 四步——修复 toon 背光泄漏 */
+const gradData = new Uint8Array([0,0,0,255, 0,0,0,255, 0,0,0,255, 0,0,0,255, 125,125,125,255, 185,185,185,255, 215,215,215,255, 255,255,255,255]);
+const gradMap = new THREE.DataTexture(gradData, 8, 1, THREE.RGBAFormat);
 gradMap.minFilter = gradMap.magFilter = THREE.NearestFilter;
 gradMap.needsUpdate = true;
 
@@ -1634,9 +1635,9 @@ const skyTex = canvasTex(256, 256, (g, w, h) => {
     new THREE.MeshBasicMaterial({ map: skyTex, side: THREE.BackSide, fog: false })
   );
   scene.add(sky);
-  const moon = circle(scene, 1.0, basic(0xe8f0fb, { fog: false }), 17, 13, -20, { rx: 0 });
+  const moon = circle(scene, 1.0, basic(0xe8f0fb, { fog: false }), -28.6, 3.4, -14.2, { rx: -0.1, ry: 1.02 });
   moon.lookAt(0, 4, 0);
-  const halo = circle(scene, 2.2, basic(0x9fb4d8, { transparent: true, opacity: 0.14, fog: false }), 17, 13, -20);
+  const halo = circle(scene, 2.2, basic(0x9fb4d8, { transparent: true, opacity: 0.14, fog: false }), -28.6, 3.4, -14.2, { rx: -0.1, ry: 1.02 });
   halo.lookAt(0, 4, 0);
   const starPos = [];
   for (let i = 0; i < 90; i++) {
@@ -1649,8 +1650,8 @@ const skyTex = canvasTex(256, 256, (g, w, h) => {
 }
 
 /* ---------------- 灯光 ---------------- */
-scene.add(new THREE.HemisphereLight(0x2a3a5f, 0x10141c, 0.55));
-const moonLight = new THREE.DirectionalLight(0x93a7cf, 0.5);
+scene.add(new THREE.HemisphereLight(0x2a3a5f, 0x10141c, 0.9));
+const moonLight = new THREE.DirectionalLight(0x93a7cf, 0.55);
 moonLight.position.set(6, 9, -4);
 moonLight.castShadow = true;
 moonLight.shadow.mapSize.set(1024, 1024);
@@ -1661,14 +1662,21 @@ moonLight.shadow.bias = -0.002;
 scene.add(moonLight);
 /* 店内外暖光 */
 const pl = (x, y, z, c, i, d) => { const p = new THREE.PointLight(c, i, d, 2); p.position.set(x, y, z); scene.add(p); return p; };
-pl(-1.6, 2.35, -1.5, 0xffd9a8, 6, 4.5);   // 店内西
-pl(-0.4, 2.35, -0.4, 0xffd9a8, 5, 4);    // 店内东
+function spot(x, y, z, tx, ty, tz, c, i, d, angle, pen) {
+  const s = new THREE.SpotLight(c, i, d, angle, pen, 2);
+  s.position.set(x, y, z);
+  s.target.position.set(tx, ty, tz);
+  scene.add(s); scene.add(s.target);
+  return s;
+}
+pl(-1.6, 2.35, -1.5, 0xffd9a8, 5.5, 4.5);   // 店内西
+pl(-0.4, 2.35, -0.4, 0xffd9a8, 4.5, 4);    // 店内东
 pl(-0.02, 1.3, -1.35, 0xffb27a, 2.2, 2); // 关东煮
-const lampLight = pl(3.4, 2.3, 1.0, 0xffd9a8, 30, 7); // 路灯
-pl(0.72, 1.0, -1.5, 0xcfe8ff, 4, 2);   // 贩卖机
-pl(0.35, 2.35, 0.55, 0x59e6a0, 6, 2.5);  // 招牌角
+const lampLight = pl(3.4, 2.3, 1.0, 0xffd9a8, 26, 7); // 路灯
+pl(0.72, 1.0, -1.5, 0xcfe8ff, 3.5, 2);   // 贩卖机
+spot(0.35, 2.35, 0.55, 0.0, 0, 1.3, 0x59e6a0, 7, 3, 0.55, 0.5);  // 招牌角
 pl(3.55, 0.9, 3.0, 0xff9d5c, 12, 2.5);  // 小巷暖光
-pl(-0.9, 1.85, 0.55, 0xffd9a8, 10, 2.2); // 雨棚下暖光（洒向门口/雨伞架）
+spot(-0.9, 1.85, 0.55, -0.9, 0, 0.55, 0xffd9a8, 12, 2.6, 0.6, 0.6); // 雨棚下暖光（洒向门口/雨伞架）
 pl(3.55, 1.0, -1.3, 0xc98d4e, 8, 2);   // SE 建筑窗灯
 const tlLight = pl(-3.9, 2.45, 2.75, 0x59e6a0, 5, 2.5); // 交通灯（随相位变色）
 
@@ -1707,7 +1715,7 @@ for (const z of [1.06, 1.6, 2.14]) box(scene, 1.3, 0.008, 0.32, zebraMat, -1.15,
 for (const x of [1.06, 1.6, 2.14]) box(scene, 0.32, 0.008, 1.3, zebraMat, x, 0.011, 3.15, { cast: false });
 
 /* ---------------- 便利店（主体） ---------------- */
-const wallMat = toon(0xe9ecef);
+const wallMat = toon(0xdfe4e8);
 const frameMat = toon(0xcfd4dc);
 const glassMat = new THREE.MeshPhongMaterial({ color: 0x8fb2c6, transparent: true, opacity: 0.2, shininess: 90, specular: 0xbfd8e8 });
 const doorGlassMat = new THREE.MeshPhongMaterial({ color: 0x9fc0d4, transparent: true, opacity: 0.14, shininess: 90, specular: 0xbfd8e8 });
@@ -1741,7 +1749,15 @@ box(scene, 0.3, 1.75, 0.2, wallMat, 0.05, 1.225, 0.2);
 box(scene, 0.2, 1.75, 0.2, wallMat, 0.2, 1.225, 0.2); // 街角立柱
 plane(scene, 0.16, 0.09, basic(0xffffff, { map: openSignTex }), -0.45, 0.95, 0.263); // 営業中
 /* 屋顶 */
-box(scene, 3.1, 0.12, 3.1, toon(0x333a48), -1.2, 2.66, -1.2, { hull: 1.03 });
+{
+  const roofSide = toon(0x333a48);
+  const roofMesh = new THREE.Mesh(new THREE.BoxGeometry(3.1, 0.12, 3.1),
+    [roofSide, roofSide, toon(0x1c2029), roofSide, roofSide, roofSide]);
+  roofMesh.position.set(-1.2, 2.66, -1.2);
+  roofMesh.castShadow = roofMesh.receiveShadow = true;
+  scene.add(roofMesh);
+  hull(roofMesh, 1.03);
+} // 屋顶（顶面深色）
 /* 招牌（24h 绿带，转角包边） */
 const signMatE = basic(0xffffff, { map: signTex });
 const signMatN = basic(0xffffff, { map: signTex });
@@ -1749,7 +1765,15 @@ box(scene, 0.09, 0.5, 2.7, signMatE, 0.295, 2.37, -1.15, { hull: 1.05, cast: fal
 box(scene, 2.7, 0.5, 0.09, signMatN, -1.15, 2.37, 0.295, { hull: 1.05, cast: false });
 box(scene, 0.11, 0.5, 0.11, toon(0x245c43), 0.295, 2.37, 0.295, { cast: false });
 /* 屋檐雨棚（北立面） */
-box(scene, 2.9, 0.06, 0.55, toon(0x39404f), -1.15, 2.02, 0.575, { hull: 1.04 });
+{
+  const canSide = toon(0x39404f);
+  const canMesh = new THREE.Mesh(new THREE.BoxGeometry(2.9, 0.06, 0.55),
+    [canSide, canSide, toon(0x272c36), canSide, canSide, canSide]);
+  canMesh.position.set(-1.15, 2.02, 0.575);
+  canMesh.castShadow = canMesh.receiveShadow = true;
+  scene.add(canMesh);
+  hull(canMesh, 1.04);
+} // 雨棚（顶面深色）
 box(scene, 2.9, 0.02, 0.05, toon(0x2e9e68), -1.15, 1.99, 0.84, { cast: false }); // 棚前沿绿边
 plane(scene, 2.8, 0.5, basic(0xffd9a8, { transparent: true, opacity: 0.22 }), -1.15, 1.985, 0.575, { rx: Math.PI/2 });
 cyl(scene, 0.025, 0.025, 2.0, toon(0x565e6c), -0.2, 1.0, 0.8, {});
@@ -2255,7 +2279,7 @@ function animate() {
 
   /* 灯光微动 */
   poolMat1.opacity = 0.36 + 0.04 * Math.sin(t * 2.3);
-  lampLight.intensity = 30 + Math.sin(t * 9) * 0.8;
+  lampLight.intensity = 26 + Math.sin(t * 9) * 0.7;
 
   controls.update();
   renderer.render(scene, camera);
