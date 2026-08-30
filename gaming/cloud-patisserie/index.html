@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#181b38" />
+    <meta
+      name="description"
+      content="云朵甜品店是一款原创数字盲盒小游戏：挑一盒、摇出线索、撕开包装，把甜心店员收进自己的橱窗。"
+    />
+    <title>云朵甜品店 · 今夜开一盒</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="night-sky" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="grain" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="#case" aria-label="返回拆盒陈列箱">
+        <span class="brand__seal"><i></i></span>
+        <span>
+          <small>CLOUD PATISSERIE</small>
+          <strong>云朵甜品店</strong>
+        </span>
+      </a>
+
+      <nav class="main-nav" aria-label="主要区域">
+        <a href="#case">挑盒</a>
+        <a href="#cabinet">橱窗</a>
+        <a href="#packing">赚云朵币</a>
+      </nav>
+
+      <div class="topbar__actions">
+        <button class="sound-toggle" id="soundToggle" type="button" aria-label="关闭声音">
+          <span aria-hidden="true">♪</span>
+        </button>
+        <button class="coin-wallet" id="coinWallet" type="button" aria-label="前往打包台赚取云朵币">
+          <span class="coin-cloud" aria-hidden="true"></span>
+          <span><small>云朵币</small><strong id="coinCount">240</strong></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="case-section" id="case" aria-labelledby="caseTitle">
+        <div class="case-copy">
+          <p class="eyebrow"><span>TONIGHT'S CASE</span> 今夜到货</p>
+          <h1 id="caseTitle">别急着抽。<br /><em>先挑一盒。</em></h1>
+          <p class="case-intro">
+            每一箱的结果在送达时就已经决定。听声音、猜重量，再相信一次你的直觉。
+          </p>
+          <div class="case-promises" aria-label="整箱规则摘要">
+            <span><i>12</i> 个固定位置</span>
+            <span><i>25</i> 位系列角色</span>
+            <span><i>0</i> 常规款重复</span>
+            <button id="openOdds" type="button"><i>?</i> 隐藏规则</button>
+          </div>
+        </div>
+
+        <div class="case-game">
+          <div class="display-case-column">
+            <div class="display-case" aria-label="本箱盲盒陈列">
+              <div class="display-case__sign">
+                <span>CASE <b id="caseNumber">01</b></span>
+                <strong>云端夜间限定</strong>
+                <span><b id="remainingCount">12</b> BOXES LEFT</span>
+              </div>
+              <div class="display-case__glass">
+                <div class="case-box-grid" id="boxGrid" data-testid="box-grid"></div>
+                <span class="glass-glow" aria-hidden="true"></span>
+              </div>
+              <div class="display-case__base">
+                <span>每盒 ☁ <b>120</b></span>
+                <div class="case-progress" aria-label="本箱拆盒进度">
+                  <i id="caseProgress"></i>
+                </div>
+                <span>已拆 <b id="openedCount">0</b> / 12</span>
+              </div>
+              <button class="next-case-button" id="nextCaseButton" type="button" hidden>
+                送来下一整箱 <span>→</span>
+              </button>
+            </div>
+
+            <div class="case-utility-bar" aria-label="货架与游戏刷新">
+              <div>
+                <small>NOT FEELING THIS SHELF?</small>
+                <strong>不喜欢这批盒子，可以换。</strong>
+                <p>只替换未拆位置；空位、收藏和云朵币都会保留。</p>
+              </div>
+              <div class="case-utility-actions">
+                <button class="refresh-shelf-button" id="refreshShelfButton" type="button">
+                  <span aria-hidden="true">↻</span> 刷新未拆货架
+                </button>
+                <button class="restart-game-button" id="restartGameButton" type="button">
+                  重新开一局
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <aside class="box-inspector" id="boxInspector" aria-live="polite">
+            <div class="inspector-steps" aria-label="拆盒步骤">
+              <span class="is-active" data-step="pick"><b>1</b> 挑</span>
+              <i></i>
+              <span data-step="shake"><b>2</b> 摇</span>
+              <i></i>
+              <span data-step="open"><b>3</b> 拆</span>
+            </div>
+
+            <div class="selected-box-stage" id="selectedBoxStage" aria-hidden="true">
+              <div class="large-blind-box">
+                <span class="large-blind-box__lid"></span>
+                <span class="large-blind-box__front">
+                  <i class="large-blind-box__moon"></i>
+                  <b>?</b>
+                  <small id="selectedBoxNumber">PICK ONE</small>
+                </span>
+                <span class="large-blind-box__tape"></span>
+              </div>
+              <span class="selected-box-shadow"></span>
+            </div>
+
+            <div class="inspector-copy">
+              <p class="inspector-kicker" id="inspectorKicker">STEP 01 · PICK</p>
+              <h2 id="inspectorTitle">哪一盒在叫你？</h2>
+              <p id="inspectorText">从陈列箱中挑一个位置。选错也没关系，直觉本来就没有标准答案。</p>
+            </div>
+
+            <div class="clue-stack" id="clueStack" aria-label="摇盒线索">
+              <div class="clue-ticket is-locked">
+                <span>01 · 声音</span>
+                <p>摇一摇后记录</p>
+              </div>
+              <div class="clue-ticket is-locked">
+                <span>02 · 重心</span>
+                <p>再摇一次后记录</p>
+              </div>
+            </div>
+
+            <div class="inspector-actions">
+              <button class="action-button action-button--shake" id="shakeButton" type="button" disabled>
+                <span class="action-icon" aria-hidden="true">↝</span>
+                <span><b>摇一摇</b><small>最多两条模糊线索</small></span>
+              </button>
+              <button class="action-button action-button--open" id="openBoxButton" type="button" disabled>
+                <span><b>撕开封条</b><small>消耗 ☁ 120</small></span>
+                <span class="action-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="cabinet-section" id="cabinet" aria-labelledby="cabinetTitle">
+        <div class="section-heading section-heading--light">
+          <div>
+            <p class="eyebrow"><span>YOUR LITTLE WORLD</span> 收藏不是表格</p>
+            <h2 id="cabinetTitle">让他们住进你的橱窗</h2>
+            <p>点击店员听他说句话；重复获得会真的改变角色，而不是消失成一串数字。</p>
+          </div>
+          <div class="collection-count">
+            <strong><span id="collectionUnlocked">0</span>/<span id="collectionTotal">25</span></strong>
+            <small>已遇见</small>
+          </div>
+        </div>
+
+        <div class="shop-window">
+          <div class="shop-window__awning" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="shop-window__sign">
+            <span>OPEN AFTER CLOUDY</span>
+            <strong>今晚也在等一位新朋友</strong>
+          </div>
+          <div class="speech-bubble" id="speechBubble" aria-live="polite">
+            <small>橱窗留言</small>
+            <p>这里还空着。拆开第一盒，就会有人来点亮店里的灯。</p>
+          </div>
+          <div class="window-stage" id="shelfCharacters" data-testid="shelf-characters"></div>
+          <div class="window-counter" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div class="series-ledger">
+          <div class="series-ledger__heading">
+            <span>SERIES 01</span>
+            <strong>《云层下班以后》</strong>
+            <button id="showAllCharacters" type="button">查看全系列</button>
+          </div>
+          <div class="series-strip" id="seriesStrip"></div>
+        </div>
+      </section>
+
+      <section class="packing-section" id="packing" aria-labelledby="packingTitle">
+        <div class="packing-copy">
+          <p class="eyebrow"><span>EARN THE NEXT BOX</span> 今夜值班表</p>
+          <h2 id="packingTitle">四条路线，赚下一盒的钱</h2>
+          <p>
+            想轻松一点就听单打包，想赚得更多就解题。每条路线都能反复挑战，不扣云朵币，难度越高满分奖励越高。
+          </p>
+          <div class="packing-rules">
+            <span><b>4</b> 种赚钱方式</span>
+            <span><b>5</b> 题一轮</span>
+            <span><b>☁ 105</b> 最高收益</span>
+          </div>
+        </div>
+
+        <div class="packing-game" id="packingGame" data-mode="packing">
+          <div class="earning-mode-selector" id="earningModes" aria-label="选择赚钱路线">
+            <button class="earning-mode is-active" type="button" data-earning-mode="packing" aria-pressed="true">
+              <span class="earning-mode__icon" aria-hidden="true">▣</span>
+              <span><small>FAST / ☁ 45 MAX</small><b>听单打包</b></span>
+            </button>
+            <button class="earning-mode" type="button" data-earning-mode="math" aria-pressed="false">
+              <span class="earning-mode__icon" aria-hidden="true">∑</span>
+              <span><small>5 QUESTIONS / ☁ 80</small><b>数学挑战</b></span>
+            </button>
+            <button class="earning-mode" type="button" data-earning-mode="general" aria-pressed="false">
+              <span class="earning-mode__icon" aria-hidden="true">?</span>
+              <span><small>5 QUESTIONS / ☁ 65</small><b>常识问答</b></span>
+            </button>
+            <button class="earning-mode" type="button" data-earning-mode="rl" aria-pressed="false">
+              <span class="earning-mode__icon" aria-hidden="true">π</span>
+              <span><small>POLICY LAB / ☁ 105</small><b>RL 研修</b></span>
+            </button>
+          </div>
+
+          <div class="packing-idle" id="packingIdle">
+            <div class="customer-queue" aria-hidden="true">
+              <span class="queue-customer queue-customer--one"><i></i></span>
+              <span class="queue-customer queue-customer--two"><i></i></span>
+              <span class="queue-customer queue-customer--three"><i></i></span>
+            </div>
+            <p>夜间窗口即将营业</p>
+            <h3>准备好听订单了吗？</h3>
+            <button class="start-packing-button" id="startPackingButton" type="button">
+              开始 20 秒打包 <span>→</span>
+            </button>
+            <small>每单 ☁ 5 起 · 答错扣 2.5 秒 · 单班最多 ☁ 45 · 当前开局 <b id="shelfBonusValue">+0</b></small>
+          </div>
+
+          <div class="packing-live" id="packingLive" hidden>
+            <div class="packing-hud">
+              <div><small>剩余时间</small><strong id="packingTimer">20.0</strong></div>
+              <div class="packing-time-track"><i id="packingTimeBar"></i></div>
+              <div><small>本局小费</small><strong>☁ <span id="packingScore">0</span></strong></div>
+            </div>
+            <div class="order-bubble" id="orderBubble">
+              <span class="order-avatar" aria-hidden="true"><i></i></span>
+              <div>
+                <small>NEXT ORDER</small>
+                <p>请给我一份 <strong id="targetDessert">草莓云塔</strong>！</p>
+              </div>
+              <span class="combo-badge" id="comboBadge">COMBO ×0</span>
+            </div>
+            <div class="dessert-trays" id="dessertTrays"></div>
+            <p class="packing-feedback" id="packingFeedback" aria-live="polite">看准再打包！</p>
+          </div>
+
+          <div class="packing-result" id="packingResult" hidden>
+            <span class="result-stamp">SHIFT COMPLETE</span>
+            <p>这一班赚到了</p>
+            <strong>☁ <span id="packingEarned">0</span></strong>
+            <div class="result-stats">
+              <span>完成 <b id="packingCorrect">0</b> 单</span>
+              <span>最高 <b id="packingBestCombo">0</b> 连击</span>
+            </div>
+            <button id="packingAgainButton" type="button">再来一班</button>
+            <a href="#case">带着钱去挑盒 →</a>
+          </div>
+
+          <div class="quiz-intro" id="quizIntro" hidden>
+            <div class="quiz-intro__mark" id="quizModeIcon" aria-hidden="true">∑</div>
+            <p id="quizModeKicker">MATH COUNTER</p>
+            <h3 id="quizModeTitle">数学挑战</h3>
+            <p id="quizModeDescription">心算、比例、概率与逻辑。算得越稳，连对小费越高。</p>
+            <div class="quiz-reward-ticket">
+              <span>本轮题数 <b>5</b></span>
+              <span>满分可得 <b id="quizRewardHint">☁ 80</b></span>
+            </div>
+            <a class="quiz-source-link" id="quizSourceLink" href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noreferrer" hidden>
+              题目依据 Hands-On Modern RL · CC BY-NC-SA 4.0 ↗
+            </a>
+            <button class="start-quiz-button" id="startQuizButton" type="button">领取题签 <span>→</span></button>
+          </div>
+
+          <div class="quiz-live" id="quizLive" hidden>
+            <div class="quiz-hud">
+              <span class="quiz-mode-badge" id="quizModeBadge">数学挑战</span>
+              <span>题签 <b id="quizProgress">1 / 5</b></span>
+              <span>本轮 <b>☁ <i id="quizScore">0</i></b></span>
+            </div>
+            <div class="quiz-paper">
+              <p class="quiz-question-label">QUESTION <span id="quizQuestionNumber">01</span></p>
+              <h3 id="quizQuestion">题目加载中</h3>
+              <div class="quiz-options" id="quizOptions"></div>
+            </div>
+            <div class="quiz-feedback" id="quizFeedback" aria-live="polite" hidden>
+              <strong id="quizFeedbackTitle">回答正确</strong>
+              <p id="quizExplanation"></p>
+              <a id="quizQuestionSource" href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noreferrer" hidden>查看本题课程来源 ↗</a>
+            </div>
+            <button class="quiz-next-button" id="quizNextButton" type="button" hidden>下一题 <span>→</span></button>
+          </div>
+
+          <div class="quiz-result" id="quizResult" hidden>
+            <span class="result-stamp" id="quizResultStamp">QUIZ COMPLETE</span>
+            <p><span id="quizResultMode">数学挑战</span>赚到了</p>
+            <strong>☁ <span id="quizEarned">0</span></strong>
+            <div class="result-stats">
+              <span>答对 <b id="quizCorrect">0</b> / 5</span>
+              <span>最高 <b id="quizBestStreak">0</b> 连对</span>
+            </div>
+            <p class="perfect-bonus" id="quizPerfectBonus" hidden>满分印章 · 额外奖励已入账</p>
+            <button id="quizAgainButton" type="button">再做一轮</button>
+            <a href="#case">带着钱去挑盒 →</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>云朵甜品店 · 原创数字盲盒实验</span>
+      <button id="resetGame" type="button">刷新整场游戏</button>
+    </footer>
+
+    <dialog class="reveal-dialog" id="revealDialog" aria-labelledby="revealName">
+      <div class="reveal-card" id="revealCard">
+        <button class="dialog-close" id="revealClose" type="button" aria-label="关闭揭晓结果" hidden>×</button>
+        <div class="reveal-stage">
+          <span class="reveal-beam reveal-beam--one"></span>
+          <span class="reveal-beam reveal-beam--two"></span>
+          <div class="sealed-package" aria-hidden="true">
+            <span class="package-top"></span>
+            <span class="package-body"><b>?</b><small>CLOUD PATISSERIE</small></span>
+            <span class="package-tear"></span>
+          </div>
+          <div class="reveal-character" id="revealCharacter" aria-hidden="true"></div>
+          <div class="reveal-confetti" id="revealConfetti" aria-hidden="true"></div>
+        </div>
+        <div class="reveal-copy">
+          <p class="reveal-status" id="revealStatus">正在撕开封条…</p>
+          <div class="reveal-details" id="revealDetails" hidden>
+            <span class="rarity-badge" id="revealRarity"></span>
+            <p class="reveal-english" id="revealEnglish"></p>
+            <h2 id="revealName"></h2>
+            <p class="reveal-role" id="revealRole"></p>
+            <blockquote id="revealQuote"></blockquote>
+            <div class="unlock-ticket" id="unlockTicket"></div>
+            <button class="reveal-continue" id="revealContinue" type="button">
+              继续挑下一盒 <span>→</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="odds-dialog" id="oddsDialog" aria-labelledby="oddsTitle">
+      <div class="odds-paper">
+        <button id="closeOdds" type="button" aria-label="关闭隐藏规则">×</button>
+        <p>THE HONEST LITTLE PRINT</p>
+        <h2 id="oddsTitle">这一箱是怎么装的？</h2>
+        <ul>
+          <li><b>系列更加丰富：</b>从 24 位常规店员中随机挑选 12 位装箱，同一货架内不重复。</li>
+          <li><b>12% 隐藏箱：</b>约每 8.3 箱中有一箱，隐藏店长会随机替换一位常规店员。</li>
+          <li><b>位置预先确定：</b>整箱生成时，每个位置的内容已经锁定；选择以后不会偷偷换结果。</li>
+          <li><b>货架可以刷新：</b>只替换尚未拆开的盒子，重新决定未拆部分的隐藏机会；空位、收藏和余额全部保留。</li>
+          <li><b>线索保持模糊：</b>声音和重量可以帮助猜测，但不会直接告诉你答案。</li>
+        </ul>
+        <div class="rarity-key">
+          <span class="rarity-common">● 日常 13 位</span>
+          <span class="rarity-rare">★ 稀有 7 位</span>
+          <span class="rarity-epic">✦ 闪耀 4 位</span>
+          <span class="rarity-hidden">♛ 隐藏 1 位</span>
+        </div>
+        <small>本游戏不包含真实货币购买，所有云朵币都通过游戏内玩法获得。</small>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="quiz-data.js"></script>
+    <script src="game-logic.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
