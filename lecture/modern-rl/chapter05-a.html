@@ -1,0 +1,158 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 05 · Learning from different amounts of information</div>
+  <h1>等不到结局，能不能先学？</h1>
+  <p class="lead">上一章发现，价值可以拆成“眼前奖励 + 下一状态价值”。但那是一条关于正确答案的等式，不会自动告诉我们怎样拿到正确答案。现实里有时知道环境全部规则，有时只能看到一局结果，有时连终点都等不到。本章只追问一件事：<strong>手里的信息不同，一次更新应该相信什么？</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>我们怎样把一次模型计算、一条完整轨迹或仅仅一个 transition，变成对价值估计的可靠修正？更早更新的代价又是什么？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 70–95 min</span>
+    <span class="mrl-pill">先修：Chapter 03–04</span>
+    <span class="mrl-pill">数学：期望 + 增量更新</span>
+    <span class="mrl-pill">实验：同一轨迹比较两种更新依据</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从信息条件到动作价值更新</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#conditions"><b>01</b><span>先看信息</span><small>你到底知道多少</small></a>
+      <a class="mrl-roadmap-step" href="#dp"><b>02</b><span>枚举规则</span><small>对所有分支求期望</small></a>
+      <a class="mrl-roadmap-step" href="#mc"><b>03</b><span>等待终点</span><small>用完整回报监督</small></a>
+      <a class="mrl-roadmap-step" href="#td"><b>04</b><span>借用估计</span><small>走一步立即更新</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#target-lab"><b>05</b><span>比较依据</span><small>真实后续 vs 当前预测</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#control"><b>06</b><span>开始控制</span><small>比较下一动作</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>价值函数不是答案表，而是一张不断被修正的草稿</h2>
+  <p class="mrl-sec-lead">第四章把固定策略的真实状态价值写成 $V^\pi(s)$。算法运行时拿不到这个期望，只能维护一个暂时的估计 $\hat V(s)$；帽子提醒我们“这只是草稿”。</p>
+
+  <p>想象一条三格走廊：从起点 $S$ 向右到中间格 $M$，再向右到终点 $G$；向右每走一步奖励为 $-1$，到达 $G$ 后结束。固定策略会在 $S$ 和 $M$ 以 $0.8$ 概率向右、$0.2$ 概率向左。向左的代价是 $-2$：在 $S$ 会撞墙留在原地，在 $M$ 会退回 $S$。</p>
+
+  <div class="mrl-corridor" aria-label="三格走廊">
+    <div class="mrl-corridor-state"><span>START</span><strong>$S$</strong><small>$\hat V(S)$</small></div>
+    <div class="mrl-corridor-edge"><b>右：−1 →</b><small>← 左：−2</small></div>
+    <div class="mrl-corridor-state"><span>MIDDLE</span><strong>$M$</strong><small>$\hat V(M)$</small></div>
+    <div class="mrl-corridor-edge"><b>右：−1 →</b><small>← 左：−2 回到 $S$</small></div>
+    <div class="mrl-corridor-state terminal"><span>TERMINAL</span><strong>$G$</strong><small>$\hat V(G)=0$</small></div>
+  </div>
+
+  <p>开始学习时，可以把表初始化为全 0：</p>
+  <table class="mrl-value-table">
+    <thead><tr><th>状态</th><th>$S$</th><th>$M$</th><th>$G$</th></tr></thead>
+    <tbody><tr><td>当前估计 $\hat V$</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+  </table>
+
+  <p>现在需要一个本次更新相信的数，叫 <strong>update target（更新目标）</strong>。无论更新目标怎样得到，最小更新骨架都一样：</p>
+  <div class="mrl-equation">$$\hat V(s)\leftarrow \hat V(s)+\alpha\,[\text{target}-\hat V(s)]$$</div>
+  <p>$\hat V(s)$ 是旧草稿，$\text{target}-\hat V(s)$ 是这次观察认为它错了多少，<strong>learning rate（学习率）</strong> $\alpha\in(0,1]$ 决定实际改多少。$\alpha=1$ 是整格覆盖，$\alpha=0.1$ 则只向更新目标移动十分之一。</p>
+
+  <div class="mrl-update-example">
+    <span>一次最小更新</span>
+    <code>旧值 1.00</code><b>+</b><code>0.20 × (目标 4.00 − 旧值 1.00)</code><b>=</b><code>新值 1.60</code>
+  </div>
+
+  <p>于是经典方法的分歧被压缩成一个非常具体的问题：<strong>等式里的更新目标从哪里来？</strong></p>
+</section>
+
+<section id="conditions">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先不要选算法：先看你拥有哪一种信息</h2>
+  <p class="mrl-sec-lead">三类方法都在修正同一张价值表。它们并不是三个互不相干的公式，而是对三种信息条件的回答。</p>
+
+  <div class="mrl-info-matrix">
+    <article>
+      <span>条件 A · 完整说明书</span>
+      <h3>每条分支及其概率都知道</h3>
+      <p><strong>Dynamic Programming（DP，动态规划）</strong>：利用已知转移概率与奖励，对策略可能走到的所有分支求期望。</p>
+      <dl><dt>需要</dt><dd>完整 $P$ 与 $R$</dd><dt>等待</dt><dd>不必采样一局</dd><dt>target</dt><dd>模型中的期望备份</dd></dl>
+    </article>
+    <article>
+      <span>条件 B · 只有真实经历</span>
+      <h3>不知道规则，但能等到整局结束</h3>
+      <p><strong>Monte Carlo methods（MC，蒙特卡洛方法）</strong>：把这条轨迹从当前时刻到终点的完整回报直接当作样本 target。</p>
+      <dl><dt>需要</dt><dd>完整 episode</dd><dt>等待</dt><dd>直到终点</dd><dt>target</dt><dd>真实发生的 $G_t$</dd></dl>
+    </article>
+    <article>
+      <span>条件 C · 走一步就要改</span>
+      <h3>不知道规则，也不愿等待终点</h3>
+      <p><strong>Temporal-Difference learning（TD，时序差分学习）</strong>：观察一步真实奖励，再借用下一状态的当前价值估计。</p>
+      <dl><dt>需要</dt><dd>一个 transition</dd><dt>等待</dt><dd>只等一步</dd><dt>target</dt><dd>$r_t+\gamma \hat V(s_{t+1})$</dd></dl>
+    </article>
+  </div>
+
+  <table>
+    <thead><tr><th>方法</th><th>模型 $P,R$</th><th>必须等终点</th><th>target 是否借用估计</th></tr></thead>
+    <tbody>
+      <tr><td>DP</td><td>需要</td><td>否</td><td>是：使用旧表 $\hat V_k$</td></tr>
+      <tr><td>MC</td><td>不需要</td><td>是</td><td>否：使用完整样本回报</td></tr>
+      <tr><td>TD</td><td>不需要</td><td>否</td><td>是：使用下一状态估计</td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>算法名背后真正不同的是“target 的证据来源”</h3>
+      <p>DP 的证据来自模型中所有可能分支，MC 来自一条已经走完的真实轨迹，TD 来自眼前一步事实和一份尚未完全可靠的旧预测。</p>
+      <p class="mrl-insight-key">先问“我拥有什么信息、何时必须更新”，比先背三条公式更容易判断方法为什么成立、又会在哪里出错。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="dp">
+  <h2 class="mrl-sec-title"><span class="num">03</span>DP：如果环境说明书完整，就把所有分支算进去</h2>
+  <p class="mrl-sec-lead">这里先做 <strong>policy evaluation（策略评价）</strong>：策略 $\pi$ 已固定，我们只评估它，而不是偷偷把动作换成最优选择。</p>
+
+  <p>Chapter 04 的 Bellman expectation equation（贝尔曼期望方程）给出自洽关系。把右边用第 $k$ 轮旧表 $\hat V_k$ 计算，就得到一次 DP 策略评估的更新目标：</p>
+  <div class="mrl-equation">$$\text{target}_{\mathrm{DP}}(s)=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\left[R(s,a,s')+\gamma\hat V_k(s')\right]$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>公式里做什么</th><th>代码中常见变量</th></tr></thead>
+    <tbody>
+      <tr><td>$s,a,s'$</td><td>当前状态、候选动作、候选下一状态</td><td><code>state</code>, <code>action</code>, <code>next_state</code></td></tr>
+      <tr><td>$\pi(a\mid s)$</td><td>固定策略选择动作 $a$ 的概率</td><td><code>policy[state][action]</code></td></tr>
+      <tr><td>$P(s'\mid s,a)$</td><td>环境到达 $s'$ 的概率</td><td><code>transition_prob[state][action][next_state]</code></td></tr>
+      <tr><td>$R(s,a,s')$</td><td>从 $s$ 经动作 $a$ 到 $s'$ 时的期望即时奖励</td><td><code>reward[state][action][next_state]</code></td></tr>
+      <tr><td>$\hat V_k(s')$</td><td>旧表中下一状态的价值估计</td><td><code>old_values[next_state]</code></td></tr>
+      <tr><td>$\gamma$</td><td>下一状态价值的折扣</td><td><code>gamma</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>公式有两层平均：内层 $\sum_{s'}$ 对环境的随机后果求平均；外层 $\sum_a$ 对策略的随机动作求平均。仍用走廊、$\gamma=1$、初始表全 0。对 $S$ 的第一轮更新：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \hat V_1(S)&=0.8[-1+\hat V_0(M)]+0.2[-2+\hat V_0(S)]\\
+        &=0.8(-1)+0.2(-2)=-1.2.
+  \end{aligned}$$</div>
+  <p>对 $M$ 也得到 $\hat V_1(M)=-1.2$。第二轮使用第一轮旧表：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \hat V_2(S)&=0.8[-1+(-1.2)]+0.2[-2+(-1.2)]=-2.4,\\
+  \hat V_2(M)&=0.8[-1+0]+0.2[-2+(-1.2)]=-1.44.
+  \end{aligned}$$</div>
+
+  <table class="mrl-value-table">
+    <thead><tr><th>同步扫表轮次</th><th>$\hat V(S)$</th><th>$\hat V(M)$</th><th>$\hat V(G)$</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+      <tr><td>1</td><td>−1.200</td><td>−1.200</td><td>0</td></tr>
+      <tr><td>2</td><td>−2.400</td><td>−1.440</td><td>0</td></tr>
+      <tr><td>3</td><td>−2.832</td><td>−1.680</td><td>0</td></tr>
+      <tr><td>收敛</td><td>−3.375</td><td>−1.875</td><td>0</td></tr>
+    </tbody>
+  </table>
+
+  <p>负数不是“算法失败”。这个任务把每步时间成本写成负奖励，因此价值表示从这里出发预计还要付出多少代价；越接近 0 越好。$M$ 比 $S$ 更靠近终点，所以真实价值满足 $V^\pi(M)>V^\pi(S)$。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“DP 没有采样噪声，所以不使用旧估计。”</strong> 不对。迭代策略评估同样把旧表 $\hat V_k(s')$ 放进更新目标；区别是它能借助模型把所有下一分支精确加权，而不是只看到一个采样到的 $s'$。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>模型让一次更新“看见所有分支”，却不能保证你在算正确的世界</h3>
+      <p>已知而准确的模型消除了 transition 抽样噪声；但若 $P$ 或 $R$ 写错，DP 会非常稳定地收敛到错误模型的答案。</p>
+      <p class="mrl-insight-key">“计算得精确”和“任务建模得正确”是两件事。后面奖励设计仍然会成为独立风险。</p>
+    </div>
+  </aside>
+</section>

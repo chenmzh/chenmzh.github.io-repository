@@ -76,7 +76,7 @@
   async function loadChapter() {
     const host = $('#chapterContent');
     if (!host) return false;
-    const files = ['./chapter03-a.html?v=1', './chapter03-b.html?v=1', './chapter03-c.html?v=1'];
+    const files = ['./chapter03-a.html?v=1', './chapter03-b.html?v=1', './chapter03-c.html?v=2'];
     try {
       const responses = await Promise.all(files.map(url => fetch(url, { cache: 'no-cache' })));
       const bad = responses.find(response => !response.ok);

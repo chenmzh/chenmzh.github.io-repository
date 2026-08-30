@@ -39,7 +39,7 @@
   <div class="mrl-equation">$$\tau=(s_0,a_0,r_0,s_1,a_1,r_1,\ldots)$$</div>
   <p>如果任务从一次 reset 开始，并在某个自然结束条件到来时停止，这一整段也常叫一个 <strong>episode（回合）</strong>。自然结束时到达的 state 叫 <strong>terminal state（终止状态）</strong>；例如 CartPole 杆倒了、棋盘游戏分出胜负、迷宫到达终点。</p>
 
-  <div class="mrl-inline-note"><strong>终止 ≠ 时间用完。</strong> 如果环境只是因为最大步数到了而停止采样，这通常叫 truncation（截断）：任务的物理状态本身未必终止。Chapter 01 的 Gymnasium 代码里已经见过 <code>terminated</code> 与 <code>truncated</code> 的区别；后面做 value target 时，这个区别会真正影响公式。</div>
+  <div class="mrl-inline-note"><strong>终止 ≠ 时间用完。</strong> 如果环境只是因为最大步数到了而停止采样，这通常叫 truncation（截断）：任务的物理状态本身未必终止。Chapter 01 的 Gymnasium 代码里已经见过 <code>terminated</code> 与 <code>truncated</code> 的区别；后面构造价值更新目标时，这个区别会真正影响公式。</div>
 </section>
 
 <section id="code">
@@ -85,7 +85,7 @@ while True:
 (s_t, a_t, r_t, s_next)
 ...</code></pre>
 
-  <p><strong>model-free reinforcement learning（无模型强化学习）</strong>指算法不需要先显式学习或使用完整的环境 transition model，就可以直接从这些交互样本学习 value 或 policy。后面的 Q-learning、Actor-Critic 和 PPO 都可以从这个角度理解。</p>
+  <p><strong>model-free reinforcement learning（无模型强化学习）</strong>指算法不需要先显式学习或使用完整的环境 transition model，就可以直接从这些交互样本学习 value 或 policy。后面基于动作价值的算法、Actor-Critic 和 PPO 都可以从这个角度理解。</p>
 
   <p>相对地，如果算法显式学习或使用一个环境模型去预测“做这个动作以后会发生什么”，就进入 <strong>model-based reinforcement learning（基于模型的强化学习）</strong>的路线。这里只需要知道这个区别存在；世界模型怎么学、怎么规划，会留到后面的专门章节。</p>
 
@@ -154,11 +154,11 @@ while True:
 
   <div class="mrl-next">
     <span class="mrl-eyebrow">Next chapter</span>
-    <h3>第 4 章：怎样给未来的局面定价？</h3>
+    <h3><a href="./chapter04.html">第 4 章：怎样给未来的局面定价？</a></h3>
     <p>现在我们已经会写环境了，但还有一个计算难题：从当前 state 出发，未来可能分叉出大量 trajectory，难道每次都要全部展开？下一章会引入 <strong>value function（价值函数）</strong>，把未来 return 压缩成一个当前估计；再用 <strong>Bellman equation（贝尔曼方程）</strong>解释为什么这个估计可以递归地从“一步 reward + 下一状态价值”构造出来。</p>
   </div>
 
   <p class="mrl-source-note">本页以 walkinglabs/hands-on-modern-rl 中 “MDP 与马尔可夫性” 的主题和 GridWorld 代码为知识来源重新组织，不是原项目官方译本。讲解顺序刻意先制造 state representation 与 stochastic transition 的问题，再引入形式化定义；value 与 Bellman 的完整内容留到下一章。</p>
 </section>
 
-<footer class="mrl-footer"><span>Modern RL · Chapter 03</span><span><a href="./chapter02.html">← Chapter 02</a> · <a href="./">课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
+<footer class="mrl-footer"><span>Modern RL · Chapter 03</span><span><a href="./chapter02.html">← Chapter 02</a> · <a href="./">课程目录</a> · <a href="./chapter04.html">Chapter 04 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

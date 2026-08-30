@@ -1,0 +1,144 @@
+<section id="branch-example">
+  <h2 class="mrl-sec-title"><span class="num">04</span>策略会分叉，环境也会分叉：两层平均缺一不可</h2>
+  <p class="mrl-sec-lead">Chapter 03 已经把一步概率拆成策略的 $\pi(a\mid s)$ 与环境的 $P(s'\mid s,a)$。现在让它们共同参与当前价值。</p>
+
+  <p>在状态 $s$，固定策略有 60% 概率选择“稳妥”，40% 概率选择“冒险”。两个动作的即时奖励都是 1，但它们把 agent 带向不同未来。取 $\gamma=0.9$：</p>
+
+  <div class="mrl-branch-calc">
+    <div class="mrl-branch-row">
+      <span class="branch-policy">$\pi(\text{稳妥}\mid s)=0.6$</span>
+      <span class="branch-arrow">→</span>
+      <span class="branch-world">必然到安稳区<br>$V^\pi=5$</span>
+      <strong>$1+0.9(5)=5.5$</strong>
+    </div>
+    <div class="mrl-branch-row">
+      <span class="branch-policy">$\pi(\text{冒险}\mid s)=0.4$</span>
+      <span class="branch-arrow">→</span>
+      <span class="branch-world">25% 到高价值区 $V^\pi=12$<br>75% 到困境 $V^\pi=-2$</span>
+      <strong>$1+0.9[0.25(12)+0.75(-2)]=2.35$</strong>
+    </div>
+  </div>
+
+  <p>先在每个动作内部按环境概率平均，再按策略的动作概率平均：</p>
+  <div class="mrl-equation">$$V^\pi(s)=0.6(5.5)+0.4(2.35)=4.24$$</div>
+
+  <p>这 4.24 没有沿任何一条轨迹真实出现。它是<strong>在行动发生之前，对所有可能分支的概率加权结果</strong>。只保留“最可能动作”会漏掉冒险分支；只保留“每个动作最可能到达的状态”又会漏掉环境风险。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>期望不是挑一条代表性未来，而是保留所有分支的概率质量</h3>
+      <p>一个小概率坏结果不会因为“不最可能”就消失；一个低概率高价值后果也不能被当作必然发生。策略随机性与环境随机性各有一层加权。</p>
+      <p class="mrl-insight-key">这正是 Chapter 03 的 $\pi\times P$ 在价值计算中的落点。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="bellman">
+  <h2 class="mrl-sec-title"><span class="num">05</span>不看完整棵未来树：先把回报切成“第一步 + 剩余未来”</h2>
+  <p class="mrl-sec-lead">价值之所以能传播，不是额外假设出来的技巧，而是因为 return 本身就有递归结构。</p>
+
+  <p>把 $G_t$ 的第一项单独拿出来：</p>
+  <div class="mrl-equation">$$\begin{aligned}G_t&=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots\\&=r_t+\gamma\underbrace{(r_{t+1}+\gamma r_{t+2}+\cdots)}_{G_{t+1}}\\&=r_t+\gamma G_{t+1}.\end{aligned}$$</div>
+
+  <p>再把这个等式放进状态价值的定义。由于随机变量 $S_{t+1}$ 在当前还没取到具体状态，不能直接把随机的 $V^\pi(S_{t+1})$ 当成一个确定数；必须对下一状态也取期望：</p>
+  <div class="mrl-derivation">
+    <div><span>定义</span><strong>$V^\pi(s)=\mathbb{E}_\pi[G_t\mid S_t=s]$</strong></div>
+    <div><span>拆 return</span><strong>$=\mathbb{E}_\pi[r_t+\gamma G_{t+1}\mid S_t=s]$</strong></div>
+    <div><span>用下一状态概括剩余未来</span><strong>$=\mathbb{E}_\pi[r_t+\gamma V^\pi(S_{t+1})\mid S_t=s]$</strong></div>
+  </div>
+
+  <p>把离散动作和下一状态的两层期望完全展开，就得到 <strong>Bellman expectation equation（贝尔曼期望方程）</strong>：固定策略下，当前价值必须等于“一步即时奖励 + 折扣后的下一状态价值”的期望。</p>
+  <div class="mrl-equation mrl-equation-feature">$$V^\pi(s)=\sum_{a\in\mathcal A}\pi(a\mid s)\sum_{s'\in\mathcal S}P(s'\mid s,a)\left[R(s,a,s')+\gamma V^\pi(s')\right]$$</div>
+
+  <p>这里 $R(s,a,s')$ 不是假设 reward 与下一状态无关，而是条件 $(S_t=s,A_t=a,S_{t+1}=s')$ 固定以后，即时奖励 $r_t$ 的期望：</p>
+  <div class="mrl-equation">$$R(s,a,s')=\mathbb E[r_t\mid S_t=s,A_t=a,S_{t+1}=s']$$</div>
+
+  <table>
+    <thead><tr><th>从里到外</th><th>在做什么</th><th>来源</th></tr></thead>
+    <tbody>
+      <tr><td>$R(s,a,s')+\gamma V^\pi(s')$</td><td>评价一个具体的一步后果</td><td>眼前奖励 + 剩余未来</td></tr>
+      <tr><td>$\sum_{s'}P(s'\mid s,a)$</td><td>对动作 $a$ 的所有环境后果取平均</td><td>environment</td></tr>
+      <tr><td>$\sum_a\pi(a\mid s)$</td><td>对固定策略可能选择的动作取平均</td><td>agent policy</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>一个关键的概率细节</b>
+    <p><strong>不能写 $V^\pi(s)=r_t+\gamma V^\pi(S_{t+1})$ 就结束。</strong> 当动作或转移有随机性时，$r_t$ 与 $S_{t+1}$ 在行动前都不确定；正确等式必须对它们取条件期望，或像上式那样按 $\pi$ 与 $P$ 完整展开。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>贝尔曼方程不是近似：它是 value 定义必须满足的自洽关系</h3>
+      <p>真正的 $V^\pi$ 同时出现在等式两边，因为下一状态的价值已经概括了从那里开始的全部未来。</p>
+      <p class="mrl-insight-key">近似发生在我们还不知道真值、只拿当前估计去构造新目标时；不是发生在贝尔曼等式本身。</p>
+    </div>
+  </aside>
+
+  <p><strong>Bellman backup（贝尔曼备份）</strong>是把这条方程右侧当作当前状态的新目标：读取下一状态的旧估计，反过来更新当前状态。下面不换策略、不比较动作，只观察固定策略下的一步备份怎样传播信息。</p>
+</section>
+
+<section id="bellman-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>互动实验：终点奖励一次能回写到多早？</h2>
+  <p class="mrl-sec-lead">固定策略永远向右。初始价值全是 0；每次点击都让所有状态只读取上一轮的旧表，同时做一次备份。</p>
+
+  <div class="mrl-viz" id="bellmanLab">
+    <div class="mrl-viz-head">
+      <div><h3>Rightward Corridor · Bellman Propagation</h3><p>进入终点 G 得到 +1；此前奖励为 0；终止以后 $V(G)=0$。</p></div>
+      <div class="mrl-lab-actions">
+        <button class="mrl-btn primary" id="backupOnce" type="button">做一次同步备份</button>
+        <button class="mrl-btn" id="resetBackup" type="button">重置</button>
+      </div>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>终点的 $+1$ 能否在一次 Bellman backup 中立刻影响走廊里的所有状态？</dd>
+      <dt>Prediction</dt><dd>不能。同步备份只读取上一轮价值表，因此一轮最多沿转移边回写到一个更早状态。</dd>
+      <dt>Experiment</dt><dd>保持“永远向右”的策略，调整 $\gamma$，然后逐次点击备份；比较每轮前后的四个状态值。</dd>
+      <dt>Observation</dt><dd id="labObservation">第 0 轮所有估计都是 0。先预测：第一次备份会从哪个状态开始出现非零值？</dd>
+      <dt>Interpretation</dt><dd id="labInterpretation">贝尔曼右侧把下一状态的旧估计搬回当前状态；反复应用后，远期奖励才会逐层影响更早的状态。</dd>
+      <dt>Limitation</dt><dd>这是确定性走廊、固定策略且环境模型完全已知的演示；它没有比较策略，也没有说明只拿到采样经验时该怎样估计价值。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-control">折扣因子 $\gamma$ = <span id="gammaValue">0.90</span>
+        <input id="gammaSlider" type="range" min="0" max="1" step="0.05" value="0.90">
+      </label>
+      <div class="mrl-policy-lock"><span>固定策略</span><strong>$\pi(\rightarrow\mid s)=1$</strong></div>
+      <div class="mrl-round-readout"><span>当前轮次</span><strong id="backupRound">$k=0$</strong></div>
+    </div>
+
+    <div class="mrl-corridor" id="corridor" aria-label="四状态向右走廊价值表">
+      <div class="mrl-corridor-state" data-state="0"><span>S0</span><strong>0.000</strong><small>3 步后到 G</small></div>
+      <i>→</i>
+      <div class="mrl-corridor-state" data-state="1"><span>S1</span><strong>0.000</strong><small>2 步后到 G</small></div>
+      <i>→</i>
+      <div class="mrl-corridor-state" data-state="2"><span>S2</span><strong>0.000</strong><small>1 步后到 G</small></div>
+      <i>→</i>
+      <div class="mrl-corridor-state terminal" data-state="3"><span>G</span><strong>0.000</strong><small>进入时 reward +1</small></div>
+    </div>
+
+    <div class="mrl-backup-readout">
+      <span>本轮使用的旧表</span>
+      <code id="oldValueTable">V₀ = [0.000, 0.000, 0.000, 0.000]</code>
+      <span>当前价值表</span>
+      <code id="newValueTable">V₀ = [0.000, 0.000, 0.000, 0.000]</code>
+    </div>
+    <p class="mrl-caption">格子闪亮表示它在最近一次备份中发生了变化。改变 $\gamma$ 会自动重置，以免把不同折扣目标的估计混在一起。</p>
+  </div>
+
+  <p>在这个固定策略、确定性走廊里，两层概率和退化为唯一的向右转移：</p>
+  <div class="mrl-equation">$$V_{k+1}(S_i)=R(S_i,\rightarrow,S_{i+1})+\gamma V_k(S_{i+1})$$</div>
+  <p>例如第一次备份后 $V_1(S_2)=1+\gamma V_0(G)=1$。第二次备份时，$S_1$ 才能读到上一轮已经出现的 $V_1(S_2)=1$，所以 $V_2(S_1)=0+\gamma\times1$。</p>
+
+  <table class="mrl-backup-steps">
+    <thead><tr><th>取 $\gamma=0.9$</th><th>本轮最远的新传播</th><th>结果</th></tr></thead>
+    <tbody>
+      <tr><td>第 1 轮</td><td>$V_1(S_2)=1+0.9V_0(G)$</td><td>$1.00$</td></tr>
+      <tr><td>第 2 轮</td><td>$V_2(S_1)=0+0.9V_1(S_2)$</td><td>$0.90$</td></tr>
+      <tr><td>第 3 轮</td><td>$V_3(S_0)=0+0.9V_2(S_1)$</td><td>$0.81$</td></tr>
+    </tbody>
+  </table>
+</section>

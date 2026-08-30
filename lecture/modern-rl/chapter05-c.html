@@ -1,0 +1,236 @@
+<section id="tradeoff">
+  <h2 class="mrl-sec-title"><span class="num">07</span>DP、MC、TD 不是“慢、中、快”的简单排名</h2>
+  <p class="mrl-sec-lead">一步更新早，不代表最终一定更快学准；等待更多真实奖励，也不代表每次更新就更可靠。要把计算条件、偏差与方差放在一起看。</p>
+
+  <table class="mrl-method-table">
+    <thead><tr><th>维度</th><th>DP</th><th>MC</th><th>TD</th></tr></thead>
+    <tbody>
+      <tr><td>环境模型</td><td>需要完整 $P,R$</td><td>不需要</td><td>不需要</td></tr>
+      <tr><td>更新时机</td><td>扫模型时</td><td>自然终点之后</td><td>每个 transition 后</td></tr>
+      <tr><td>是否自举</td><td>是</td><td>否</td><td>是</td></tr>
+      <tr><td>主要随机来源</td><td>准确模型下无 transition 抽样噪声</td><td>完整轨迹的所有随机性</td><td>当前一步的随机性</td></tr>
+      <tr><td>主要风险</td><td>模型错误或状态数爆炸</td><td>等待久、样本回报波动大</td><td>把当前估计偏差回写到前驱</td></tr>
+      <tr><td>持续任务</td><td>模型可用时可做</td><td>缺少自然终点时不直接适用</td><td>天然适合逐步更新</td></tr>
+    </tbody>
+  </table>
+
+  <p>常见概括是：MC target 在固定策略下对 $V^\pi$ 的期望没有自举偏差，但方差往往较高；一步 TD target 依赖 $\hat V$，可能有偏，却通常比完整回报波动小。这里的“偏”与“方差”是对采样分布而言，不是说每一条具体 MC target 都接近真值，或每一条 TD target 都一定更稳定。</p>
+
+  <div class="mrl-inline-note"><strong>一个容易漏掉的细节：</strong>即使把真值 $V^\pi$ 代入 TD error，随机环境里单次 $\delta_t$ 也不必等于 0。Bellman equation 保证的是在给定 $S_t=s$ 后，按策略与环境取条件期望时 $\mathbb E_\pi[\delta_t\mid S_t=s]=0$。</div>
+
+  <p>DP 与 TD 都连接了相邻状态的估计，因此后继状态的信息能沿 transition 回写到当前状态，并继续传向更早前驱；MC 则让完整结果直接监督每个访问位置。更一般的方法可以在“等几步真实奖励以后再自举”之间连续插值，但这条轴线留给后面讨论多步回报和优势估计时再展开。</p>
+</section>
+
+<section id="control">
+  <h2 class="mrl-sec-title"><span class="num">08</span>从“这个状态值多少”到“这个动作该不该做”</h2>
+  <p class="mrl-sec-lead">前面一直做策略评价：固定 $\pi$，估计 $V^\pi$。控制问题还要一边评价，一边把策略改得更好。</p>
+
+  <p>现在定义 <strong>optimal state-value function（最优状态价值函数）</strong> 与 <strong>optimal action-value function（最优动作价值函数）</strong>：</p>
+  <div class="mrl-equation">$$V^*(s)=\max_\pi V^\pi(s),\qquad Q^*(s,a)=\max_\pi Q^\pi(s,a)$$</div>
+  <p>$V^*(s)$ 是从 $s$ 出发能达到的最大期望回报；$Q^*(s,a)$ 则先固定当前动作 $a$，再取后续能够达到的最大期望回报。控制时 $\hat Q(s,a)$ 特别有用，因为不需要另有模型就能直接比较当前动作：</p>
+  <div class="mrl-equation">$$\pi_{\mathrm{greedy}}(s)\in\arg\max_a\hat Q(s,a)$$</div>
+
+  <p>把 state-value 的一步 TD 更新换成 action-value，只剩一个关键问题：<strong>下一状态的尾部，到底接哪个下一动作？</strong></p>
+
+  <div class="mrl-action-boundary">
+    <article>
+      <span>FOLLOW WHAT HAPPENED</span>
+      <h3>接上实际会执行的 $a_{t+1}$</h3>
+      <p>更新目标是 $r_t+\gamma\hat Q(s_{t+1},a_{t+1})$。如果下一步为了探索选了次优动作，这个探索后果也进入当前估计。</p>
+    </article>
+    <article>
+      <span>FOLLOW THE GREEDY TARGET</span>
+      <h3>接上当前估计里最好的动作</h3>
+      <p>更新目标是 $r_t+\gamma\max_a\hat Q(s_{t+1},a)$。采数据时做了什么，不改变目标里假想的贪心后续。</p>
+    </article>
+  </div>
+</section>
+
+<section id="policy-data">
+  <h2 class="mrl-sec-title"><span class="num">09</span>谁下场采数据，谁在更新后变得更好？</h2>
+  <p class="mrl-sec-lead">“一条 transition 从哪里来”与“更新公式在评价哪套行为”必须分开命名。这样，同一份一步数据为什么会有两种 continuation 才会清楚。</p>
+
+  <p><strong>behavior policy（行为策略）</strong> $\mu$ 是实际与环境交互、产生 $(s_t,a_t,r_t,s_{t+1})$ 的策略；<strong>target policy（目标策略）</strong> $\pi$ 是我们希望评价或改进的策略。这里的 target policy 是“一套策略”，不要和前文的 update target（更新目标数值）混为一谈。</p>
+
+  <div class="mrl-policy-pair">
+    <div><span>DATA</span><strong>$a_t\sim\mu(\cdot\mid s_t)$</strong><small>谁实际走出这条轨迹？</small></div>
+    <div><span>LEARNING</span><strong>$Q^\pi$ 或 $Q^*$</strong><small>这份数据被用来学习谁？</small></div>
+  </div>
+
+  <p>若行为策略和目标策略是同一套，叫 <strong>on-policy learning（同策略学习）</strong>；若两者不同，叫 <strong>off-policy learning（异策略学习）</strong>。这组词只回答“数据策略和学习对象是否一致”，不回答数据是不是刚采的。</p>
+  <p><strong>online learning（在线学习）</strong>指训练期间仍可继续与环境交互采新数据；<strong>offline learning（离线学习）</strong>指只使用已经固定的数据集。它们构成另一条独立的轴：</p>
+
+  <table>
+    <thead><tr><th>概念轴</th><th>问题</th><th>两个端点</th></tr></thead>
+    <tbody>
+      <tr><td>策略关系</td><td>谁采数据，谁被评价/优化？</td><td>on-policy / off-policy</td></tr>
+      <tr><td>采集时机</td><td>训练期间还能不能继续与环境交互？</td><td>online（在线）/ offline（离线）</td></tr>
+    </tbody>
+  </table>
+  <p>因此 off-policy 不等于 offline。一个在线 agent 可以持续用带探索的 $\mu$ 采新数据，同时学习贪心目标策略；一个固定数据集也可能恰好由要评价的策略自己产生。异策略学习也不表示任意旧数据都够用：若行为数据没有覆盖重要的 state–action pair，更新公式无法凭空补出这些经验。</p>
+
+  <h3>接实际下一动作：探索后果也进入 continuation</h3>
+  <p><strong>State–Action–Reward–State–Action（SARSA，萨尔萨）</strong>是一种同策略时序差分控制算法；它的名字正好列出更新需要的五项。到了 $s_{t+1}$ 后，先按当前行为策略实际选择 $a_{t+1}$，再构造：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \text{target}_{\mathrm{SARSA}}&=r_t+\gamma\hat Q(s_{t+1},a_{t+1}),\\
+  \hat Q(s_t,a_t)&\leftarrow\hat Q(s_t,a_t)+\alpha\,[\text{target}_{\mathrm{SARSA}}-\hat Q(s_t,a_t)].
+  \end{aligned}$$</div>
+  <p>这里的 $a_{t+1}$ 不是更新时重新算出的贪心动作；在回合继续的正常 transition 中，它就是 agent 接下来<strong>真的会执行</strong>的动作。若本步仅因时间上限截断，可以从同一策略采样 $a_{t+1}$ 来保留 continuation，但当前 episode 仍须 reset。若当前策略是 $\varepsilon$-greedy，偶尔探索的风险也会进入学到的 $Q^\pi$。</p>
+
+  <h3>接贪心下一价值：采样动作不决定 continuation</h3>
+  <p><strong>Q-learning（Q 学习）</strong>是一种无模型、异策略的时序差分控制算法。它不把某个实际下一动作塞进更新目标，而是直接使用下一状态中最大的动作价值估计：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \text{target}_{Q}&=r_t+\gamma\max_{a'}\hat Q(s_{t+1},a'),\\
+  \hat Q(s_t,a_t)&\leftarrow\hat Q(s_t,a_t)+\alpha\,[\text{target}_{Q}-\hat Q(s_t,a_t)].
+  \end{aligned}$$</div>
+  <p>行为策略可以继续 $\varepsilon$-greedy 地探索，目标策略却是对当前 $\hat Q$ 贪心的策略，因此这是典型的 off-policy 控制。当 transition 进入真正终止状态时，两式都只保留 $r_t$；截断时则通常仍保留下一状态项。</p>
+
+  <table class="mrl-method-table">
+    <thead><tr><th>边界</th><th>SARSA</th><th>Q-learning</th></tr></thead>
+    <tbody>
+      <tr><td>continuation 的来源</td><td>实际选择的 $\hat Q(s_{t+1},a_{t+1})$</td><td>$\max_{a'}\hat Q(s_{t+1},a')$</td></tr>
+      <tr><td>学到的后续</td><td>当前探索策略真的会经历的后续</td><td>当前贪心目标策略的后续</td></tr>
+      <tr><td>策略关系</td><td>on-policy</td><td>典型 off-policy</td></tr>
+      <tr><td>本章边界</td><td>表格动作价值</td><td>表格动作价值；还没有神经网络</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“SARSA 比 Q-learning 多看了一步环境。”</strong> 不是。两者都从同一个一步 transition 更新；差别是下一状态的 continuation 接“实际策略选中的动作”，还是接“当前估计下最好的动作”。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>on/off-policy 是数据归属关系，不是算法是否实时运行</h3>
+      <p>“online/offline”沿时间轴问还能不能采新数据；“on/off-policy”沿策略轴问采数据的人和被学习的人是不是同一个。</p>
+      <p class="mrl-insight-key">把两条轴分开以后，经验复用、探索策略和固定数据集不再被挤进一个含混的“是不是离线”问题。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="reward">
+  <h2 class="mrl-sec-title"><span class="num">10</span>传播奖励更快，不等于奖励写对了</h2>
+  <p class="mrl-sec-lead">DP、MC、TD 解决“怎样把奖励信息写回价值估计”。它们不会检查这个数字是否忠实表达了真正任务。</p>
+
+  <p>同一张网格、同一套动作与转移，只改每步奖励，最优行为就可能改变。先取 $\gamma=1$：</p>
+  <table>
+    <thead><tr><th>规则</th><th>每次 transition</th><th>终点额外奖励</th><th>8 步路线</th><th>20 步路线</th></tr></thead>
+    <tbody>
+      <tr><td>A · 只奖励成功</td><td>0</td><td>+1</td><td>1.00</td><td>1.00</td></tr>
+      <tr><td>B · 时间有成本</td><td>−0.01</td><td>+1</td><td>0.92</td><td>0.80</td></tr>
+      <tr><td>C · 走路就加分</td><td>+0.02</td><td>+1</td><td>1.16</td><td>1.40</td></tr>
+    </tbody>
+  </table>
+  <p>表里的路线回报按“8 或 20 次 transition 的逐步奖励，再加终点 bonus”计算。规则 A 的目标干净，但成功前几乎没有学习信号，这叫 <strong>sparse reward（稀疏奖励）</strong>。规则 B 明确表达“越快越好”。规则 C 看似反馈更密，却鼓励拖延；没有步数限制时，agent 甚至可以绕圈无限加分。</p>
+
+  <p><strong>reward design（奖励设计）</strong>是在把人的任务意图翻译成每一步的标量奖励；算法真正最大化的是这些奖励累积成的期望回报。增加中间反馈可能缓解 delayed credit assignment（延迟信用分配），也可能悄悄改变任务。学习方法只会忠实传播写下来的 $r_t$；代理奖励与真实目标有缝隙时，优化得更强反而可能更擅长利用缝隙。</p>
+
+  <aside class="mrl-insight" data-insight-id="06">
+    <div class="mrl-insight-index">Insight 06</div>
+    <div class="mrl-insight-body">
+      <h3>学习算法决定信号怎样传播，奖励函数决定传播的究竟是什么</h3>
+      <p>TD 可以让一个有用的终点信号沿 transition 更快回写到前驱状态，也可以让一个错误的代理奖励更快支配行为。算法稳定收敛，并不证明任务定义正确。</p>
+      <p class="mrl-insight-key">调试 RL 时要把两类失败分开：估计没有学准，还是估计准确地学会了一个写错的目标。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">11</span>把公式落到代码：只看 target 的右端来自哪里</h2>
+  <p class="mrl-sec-lead">下面是概念代码，不绑定任何框架。三段代码刻意保留相同变量名，让差异只发生在更新目标那一行。</p>
+
+  <div class="mrl-code-stack">
+    <div>
+      <span>STATE-VALUE · TD</span>
+      <pre class="mrl-code"><code>next_state, reward, terminated, truncated, _ = env.step(action)
+
+continuation = 0.0 if terminated else value[next_state]
+td_target = reward + gamma * continuation
+td_error = td_target - value[state]
+value[state] += alpha * td_error</code></pre>
+    </div>
+    <div>
+      <span>ACTION-VALUE · SARSA</span>
+      <pre class="mrl-code"><code>next_state, reward, terminated, truncated, _ = env.step(action)
+if terminated:
+    continuation = 0.0
+    next_action = None
+else:
+    next_action = epsilon_greedy(q[next_state])
+    continuation = q[next_state][next_action]
+sarsa_target = reward + gamma * continuation
+q[state][action] += alpha * (
+    sarsa_target - q[state][action]
+)
+episode_ended = terminated or truncated
+if not episode_ended:
+    state, action = next_state, next_action  # execute in the same episode
+# otherwise reset before the next episode</code></pre>
+    </div>
+    <div>
+      <span>ACTION-VALUE · Q-LEARNING</span>
+      <pre class="mrl-code"><code>next_state, reward, terminated, truncated, _ = env.step(action)
+continuation = 0.0 if terminated else max(q[next_state])
+q_target = reward + gamma * continuation
+q[state][action] += alpha * (
+    q_target - q[state][action]
+)</code></pre>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>数学</th><th>代码</th><th>不要混淆</th></tr></thead>
+    <tbody>
+      <tr><td>$s_t,a_t,r_t,s_{t+1}$</td><td><code>state</code>, <code>action</code>, <code>reward</code>, <code>next_state</code></td><td><code>reward</code> 是执行当前 <code>action</code> 后返回</td></tr>
+      <tr><td>$\hat V(s)$</td><td><code>value[state]</code></td><td>状态价值表，不区分动作</td></tr>
+      <tr><td>$\hat Q(s,a)$</td><td><code>q[state][action]</code></td><td>动作价值表，每个状态有多个动作格</td></tr>
+      <tr><td>$a_{t+1}$</td><td><code>next_action</code></td><td>SARSA 中必须是策略实际选出的后续动作</td></tr>
+      <tr><td>$\max_{a'}\hat Q(s_{t+1},a')$</td><td><code>max(q[next_state])</code></td><td>Q-learning 的贪心更新目标，不代表行为没有探索</td></tr>
+      <tr><td>终止 continuation</td><td><code>0.0 if terminated</code></td><td>不要仅因 <code>truncated</code> 就自动清零</td></tr>
+    </tbody>
+  </table>
+
+  <p>上游 4×4 网格世界的实现正是这个骨架：用 $\varepsilon$-greedy 产生动作，保存表格 $\hat Q$，再用 <code>reward + gamma * max(next_q)</code> 更新。它能处理 16 个状态，却暴露了下一章的计算瓶颈：如果状态是图像、连续物理量或长文本上下文，根本列不出这张表。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>检查你的理解：你能从信息条件推出更新式吗？</h2>
+  <p class="mrl-sec-lead">如果只记住三个缩写，很快会混淆。试着先遮住答案，用“知道什么、等多久、借不借估计”完整回答。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. DP、MC、TD 都在做什么共同动作？真正不同的是什么？</summary><div class="inner">它们都维护价值估计，并让当前估计沿“更新目标减当前估计”的方向移动。不同的是更新目标的证据来源：DP 用模型枚举并加权全部分支，MC 用已完成轨迹的完整回报，TD 用一步真实奖励加下一状态当前估计。</div></details>
+    <details><summary>2. 为什么一次完整的 $G_t$ 仍不能直接等同于 $V^\pi(s)$？</summary><div class="inner">$G_t$ 是一条具体随机轨迹的真实回报，$V^\pi(s)$ 是从 $s$ 出发按 $\pi$ 行动时所有可能轨迹回报的条件期望。需要多次采样平均，单条幸运或倒霉轨迹会偏离期望。</div></details>
+    <details><summary>3. 哪些方法自举？自举究竟是什么意思？</summary><div class="inner">DP 与 TD 自举，MC 不自举。自举指用当前价值估计构造另一个价值估计的更新目标：DP 对模型里所有下一状态的旧估计加权，TD 使用实际到达的下一状态估计；MC 等到结局后用完整样本回报。</div></details>
+    <details><summary>4. 为什么真实终止与时间上限截断不能都把 continuation 设成 0？</summary><div class="inner">真正终止以后任务没有未来，最后奖励保留而 continuation 为 0；截断只是停止采样，物理或任务过程仍可能继续。若截断也清零，就会把尚未兑现的未来回报错当作不存在。</div></details>
+    <details><summary>5. $\delta_t>0$ 能否证明刚才动作“正确”？</summary><div class="inner">不能。正误差只表示这一步更新目标高于当前估计，可能来自正奖励，也可能来自高估的下一状态。它是预测修正信号，不是动作正确性的标签；随机环境中即使价值是真值，单个 TD error 也可能非零。</div></details>
+    <details><summary>6. SARSA 与 Q-learning 的一步数据相同，公式边界在哪里？</summary><div class="inner">边界在下一状态的 continuation。SARSA 接策略实际选中的 $a_{t+1}$，所以探索动作的后果进入更新；Q-learning 接 $\max_{a'}\hat Q(s_{t+1},a')$，学习贪心目标策略，而行为策略仍可以探索。</div></details>
+    <details><summary>7. off-policy 为什么不等于 offline？</summary><div class="inner">off-policy 比较行为策略与目标策略是否不同；offline 说明训练期间不再从环境采新数据。在线 agent 可以不断用探索策略采新数据，却学习另一个贪心策略，因此同时是 online 与 off-policy。</div></details>
+    <details><summary>8. 一个 TD agent 稳定地学会绕圈刷分，应该先查学习率还是奖励？</summary><div class="inner">若它确实在最大化环境给出的累计奖励，绕圈比到终点得分更高，那么核心是奖励错位，而非价值估计失败。先手算不同路线的 return，检查代理奖励是否把“手段”变成了“目的”，再讨论学习率等优化参数。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第五章建立起来的坐标系</h3>
+    <div class="mrl-summary-chain">
+      <div><span>已知模型</span><strong>所有分支求期望</strong><small>DP</small></div>
+      <i>→</i>
+      <div><span>完整回合</span><strong>真实回报作监督</strong><small>MC</small></div>
+      <i>→</i>
+      <div><span>一个 transition</span><strong>一步奖励 + 下一估计</strong><small>TD</small></div>
+      <i>→</i>
+      <div><span>动作价值</span><strong>实际动作或贪心动作</strong><small>SARSA / Q-learning</small></div>
+    </div>
+    <p>先看信息条件，再构造更新目标；先区分行为策略与目标策略，再判断 on/off-policy；最后检查奖励是否真的代表任务。经典算法的公式因此不再是孤立记忆，而是一组可以从问题条件重新推出的选择。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 6 章：当价值表大到写不下，怎么办？</h3>
+    <p>网格世界可以为每个 $(s,a)$ 保存一个数字，但图像状态几乎永远不会重复。下一章将用神经网络近似 $\hat Q(s,a)$，并解释经验回放与目标网络为什么是让大规模自举学习稳定下来的关键工程结构。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 “动态规划、蒙特卡洛与时序差分”“策略采样与数据来源”“奖励函数设计”及 4×4 网格世界 Q-learning 代码重新组织，不是原项目官方译本。数值走廊沿用上游示例；互动实验为本讲义重新设计。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 05</span><span><a href="./chapter04.html">← Chapter 04</a> · <a href="./">课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter03_mdp" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

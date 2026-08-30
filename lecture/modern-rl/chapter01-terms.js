@@ -94,7 +94,7 @@
         PPO 就利用这些信息来决定哪些动作概率该升、哪些该降。
       `, 'mrl-term-bridge');
       const caption = [...ppo.querySelectorAll('.mrl-caption')].find(p => p.textContent.includes('Actor-Critic'));
-      if (caption) caption.innerHTML = '这是“为什么 PPO 比最直接的 policy gradient 更稳”的第一层直觉，不是完整推导。后面学习 Actor-Critic 时还会遇到 <strong>Generalized Advantage Estimation（GAE，广义优势估计）</strong>——一种把多步 TD 信息结合起来、更稳定地估计 advantage 的方法。';
+      if (caption) caption.innerHTML = '这是“为什么 PPO 比最直接的 policy gradient 更稳”的第一层直觉，不是完整推导。后面学习 Actor-Critic 时还会遇到 <strong>Generalized Advantage Estimation（GAE，广义优势估计）</strong>——一种结合不同时间跨度的价值估计信息、更稳定地估计 advantage 的方法。';
     }
 
     const code = document.querySelector('#code');

@@ -1,0 +1,177 @@
+<section id="mc">
+  <h2 class="mrl-sec-title"><span class="num">04</span>MC：没有说明书，就让完整结局给出一次监督</h2>
+  <p class="mrl-sec-lead">模型未知时，不能枚举未发生的分支。但只要任务会自然结束，我们仍能亲自走完一局，看到这一次从当前状态开始实际拿到的全部奖励。</p>
+
+  <p>沿用课程的时间下标：执行 $a_t$ 后环境返回 $r_t$。从 $s_t$ 开始的一次完整样本回报是：</p>
+  <div class="mrl-equation">$$G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots$$</div>
+  <p>MC 直接把它作为目标：</p>
+  <div class="mrl-equation">$$\text{target}_{\mathrm{MC}}=G_t,\qquad
+  \hat V(s_t)\leftarrow\hat V(s_t)+\alpha\,[G_t-\hat V(s_t)]$$</div>
+
+  <p>为什么一条轨迹可以帮助估计一个期望？$V^\pi(s)$ 是固定策略下许多可能回报的平均；一次 $G_t$ 只是其中一个随机样本。反复从 $s$ 出发采样，样本均值才会逐渐靠近期望。MC 不需要知道哪些未走到的分支存在，也不需要知道它们的概率。</p>
+
+  <h3>一条走弯路的轨迹，怎样倒着变成 target？</h3>
+  <p>假设走廊中实际采样到：</p>
+  <div class="mrl-trajectory" aria-label="一条走廊轨迹">
+    <span><b>$S$</b><small>$r_0=-2$</small></span><i>→</i>
+    <span><b>$S$</b><small>$r_1=-1$</small></span><i>→</i>
+    <span><b>$M$</b><small>$r_2=-2$</small></span><i>→</i>
+    <span><b>$S$</b><small>$r_3=-1$</small></span><i>→</i>
+    <span><b>$M$</b><small>$r_4=-1$</small></span><i>→</i>
+    <span class="terminal"><b>$G$</b><small>结束</small></span>
+  </div>
+  <p>先取 $\gamma=1$，从每次访问位置往后加：</p>
+  <table>
+    <thead><tr><th>访问</th><th>之后实际发生的奖励</th><th>MC target</th></tr></thead>
+    <tbody>
+      <tr><td>第一次到 $S$</td><td>$-2,-1,-2,-1,-1$</td><td>$G_0=-7$</td></tr>
+      <tr><td>第二次到 $S$</td><td>$-1,-2,-1,-1$</td><td>$G_1=-5$</td></tr>
+      <tr><td>第一次到 $M$</td><td>$-2,-1,-1$</td><td>$G_2=-4$</td></tr>
+      <tr><td>第三次到 $S$</td><td>$-1,-1$</td><td>$G_3=-2$</td></tr>
+      <tr><td>第二次到 $M$</td><td>$-1$</td><td>$G_4=-1$</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">上表只计算每个访问位置各自的更新目标；下面只示范第一条更新，没有把整局中同一状态的多次更新依次展开。</p>
+  <p>例如初始 $\hat V(S)=0$、$\alpha=0.5$，第一次访问 $S$ 的更新是：</p>
+  <div class="mrl-equation">$$\hat V(S)\leftarrow0+0.5[-7-0]=-3.5$$</div>
+
+  <p>MC 的优势是 target 的尾部全部来自这次真实发生的奖励，不借用尚未学准的价值表；代价是必须等 episode 结束，而且轨迹里每一步的随机性都会进入 $G_t$。一条特别幸运或特别倒霉的长轨迹，可能带来幅度很大的更新。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“完整回报是真实的，所以一次 MC target 就是真实价值。”</strong> 不对。$G_t$ 是一条轨迹的真实回报，却仍只是随机变量的一个样本；$V^\pi(s)$ 是所有可能轨迹回报的条件期望。</p>
+  </div>
+</section>
+
+<section id="td">
+  <h2 class="mrl-sec-title"><span class="num">05</span>TD：只走一步，把还没发生的尾部换成当前预测</h2>
+  <p class="mrl-sec-lead">如果 episode 很长、没有自然终点，或者我们希望数据一到就学，等待完整 $G_t$ 就不现实。回报的递归结构提供了另一条路。</p>
+
+  <p>Chapter 04 已经把回报拆开：</p>
+  <div class="mrl-equation">$$G_t=r_t+\gamma G_{t+1}$$</div>
+  <p>走完当前一步后，$r_t$ 与 $s_{t+1}$ 已经知道，但 $G_{t+1}$ 还没发生。TD 用下一状态的当前价值估计 $\hat V(s_{t+1})$ 代替它，形成 <strong>one-step TD target（一步时序差分目标）</strong>：</p>
+  <div class="mrl-equation">$$\text{target}_{\mathrm{TD}}=r_t+\gamma\hat V(s_{t+1})$$</div>
+
+  <p>这种“拿当前估计的一部分去构造另一个估计的 target”叫 <strong>bootstrapping（自举）</strong>。DP 也自举：它把模型中所有下一状态的旧估计加权；TD 只对实际走到的一个下一状态自举；MC 使用完整回报，不自举。</p>
+
+  <p>更新目标与当前预测的差叫 <strong>temporal-difference error（TD error，时序差分误差）</strong>，记作 $\delta_t$：</p>
+  <div class="mrl-equation">$$\delta_t=r_t+\gamma\hat V(s_{t+1})-\hat V(s_t)$$</div>
+  <div class="mrl-equation">$$\hat V(s_t)\leftarrow\hat V(s_t)+\alpha\delta_t$$</div>
+  <p>人话翻译：走一步后，把“眼前真实奖励 + 下一格现在看起来值多少”与“出发前我说当前格值多少”比较；差多少，就按学习率修正多少。</p>
+
+  <table>
+    <thead><tr><th>数学</th><th>程序变量</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td>$\hat V(s_t)$</td><td><code>value[state]</code></td><td>更新前的当前状态估计</td></tr>
+      <tr><td>$r_t$</td><td><code>reward</code></td><td>执行当前动作后实际拿到的奖励</td></tr>
+      <tr><td>$\hat V(s_{t+1})$</td><td><code>value[next_state]</code></td><td>下一状态的当前估计</td></tr>
+      <tr><td>$\text{target}_{\mathrm{TD}}$</td><td><code>td_target</code></td><td>这一步构造出的学习目标</td></tr>
+      <tr><td>$\delta_t$</td><td><code>td_error</code></td><td>目标减当前估计</td></tr>
+      <tr><td>$\alpha$</td><td><code>alpha</code></td><td>沿误差修正的步幅</td></tr>
+    </tbody>
+  </table>
+
+  <h3>同一条走廊轨迹，TD 怎样边走边改？</h3>
+  <p>仍用刚才的五步轨迹，令 $\gamma=1,\alpha=0.5$，初始估计全 0。TD 不等终点：</p>
+  <table>
+    <thead><tr><th>刚发生的 transition</th><th>当时的 TD target</th><th>被更新后的估计</th></tr></thead>
+    <tbody>
+      <tr><td>$S\xrightarrow{-2}S$</td><td>$-2+\hat V(S)=-2$</td><td>$\hat V(S)=-1$</td></tr>
+      <tr><td>$S\xrightarrow{-1}M$</td><td>$-1+\hat V(M)=-1$</td><td>$\hat V(S)=-1$</td></tr>
+      <tr><td>$M\xrightarrow{-2}S$</td><td>$-2+\hat V(S)=-3$</td><td>$\hat V(M)=-1.5$</td></tr>
+      <tr><td>$S\xrightarrow{-1}M$</td><td>$-1+\hat V(M)=-2.5$</td><td>$\hat V(S)=-1.75$</td></tr>
+      <tr><td>$M\xrightarrow{-1}G$</td><td>$-1+0=-1$</td><td>$\hat V(M)=-1.25$</td></tr>
+    </tbody>
+  </table>
+
+  <p>第三步尤其关键：算法刚到 $S$，立即读取已经更新成 $-1$ 的 $\hat V(S)$，所以 $M$ 的更新目标是 $-3$。交互继续向前发生，而下一状态已有的估计会沿刚发生的 transition 回写到当前状态。</p>
+
+  <h3>终止与截断：continuation 能不能设成 0？</h3>
+  <p>若 $s_{t+1}$ 是任务真正的 <strong>terminal state（终止状态）</strong>，最后 transition 的 $r_t$ 仍然保留，但终止之后没有未来，因此：</p>
+  <div class="mrl-equation">$$\text{target}_{\mathrm{terminal}}=r_t+\gamma\cdot0=r_t$$</div>
+  <p>若环境只是因为最大步数用完而 <strong>truncation（截断）</strong>，任务本身并未终止，通常仍应保留 $\gamma\hat V(s_{t+1})$。把截断误当终止，会系统性低估还没来得及兑现的未来。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>TD 的速度来自“借钱”，风险也来自“借钱”</h3>
+      <p>它不需要等真正的尾部回报到账，而是先借用 $\hat V(s_{t+1})$。下一状态估计准，信息传播就快；下一状态估计错，误差也会被向前传。</p>
+      <p class="mrl-insight-key">自举不是一个免费技巧，而是通常用更早、方差更低的更新，交换对当前估计偏差的依赖。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="target-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>互动实验：同一条短轨迹，两种 target 到底相信什么？</h2>
+  <p class="mrl-sec-lead">固定从 $s_t$ 出发的三步轨迹。MC 看完三步奖励；TD 只看第一步奖励，并把之后的尾部交给 $\hat V(s_{t+1})$。</p>
+
+  <div class="mrl-viz mrl-target-lab" id="targetLab">
+    <div class="mrl-viz-head">
+      <div><h3>Target Comparator</h3><p>修改同一条轨迹的奖励、折扣和价值草稿，观察两个学习目标怎样分离。</p></div>
+      <button class="mrl-btn" id="targetReset" type="button">恢复默认值</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>完整后续奖励与下一状态估计分别会影响哪一种 target？两者何时可能相同？</dd>
+      <dt>Prediction</dt><dd>当 $\gamma>0$ 时，只改远端奖励 $r_{t+2}$ 会改变 MC target，却不会改变当前一步 TD target；只改 $\hat V(s_{t+1})$ 则相反。若 $\gamma=0$，两者都只看眼前的 $r_t$。</dd>
+      <dt>Experiment</dt><dd>拖动七个参数；比较 target、误差和按同一学习率更新后的 $\hat V(s_t)$。</dd>
+      <dt>Observation</dt><dd id="targetObservation">正在计算当前参数下的差异。</dd>
+      <dt>Interpretation</dt><dd>MC 用真实完成的尾部换来延迟与波动；TD 用当前尾部预测换来即时更新。当 $\gamma&gt;0$ 时，二者偶然相等只表示这条轨迹的 $G_{t+1}$ 恰好等于当前 $\hat V(s_{t+1})$；$\gamma=0$ 时二者都只看 $r_t$。</dd>
+      <dt>Limitation</dt><dd>这是一条固定的三步轨迹，只展示 target 的构造；它不能证明哪种算法在任意环境里收敛更快，也没有呈现多条轨迹的方差。</dd>
+    </dl>
+
+    <div class="mrl-lab-controls">
+      <label class="mrl-range-control"><span>折扣 $\gamma$ <output id="targetGammaValue">0.90</output></span><input id="targetGamma" type="range" min="0" max="1" step="0.05" value="0.9"></label>
+      <label class="mrl-range-control"><span>眼前 $r_t$ <output id="targetRewardNowValue">−1.0</output></span><input id="targetRewardNow" type="range" min="-4" max="4" step="0.5" value="-1"></label>
+      <label class="mrl-range-control"><span>随后 $r_{t+1}$ <output id="targetRewardLaterValue">−1.0</output></span><input id="targetRewardLater" type="range" min="-4" max="4" step="0.5" value="-1"></label>
+      <label class="mrl-range-control"><span>终点 $r_{t+2}$ <output id="targetRewardTerminalValue">+4.0</output></span><input id="targetRewardTerminal" type="range" min="-4" max="8" step="0.5" value="4"></label>
+      <label class="mrl-range-control"><span>$\hat V(s_{t+1})$ <output id="targetNextValueValue">+2.0</output></span><input id="targetNextValue" type="range" min="-5" max="7" step="0.5" value="2"></label>
+      <label class="mrl-range-control"><span>当前 $\hat V(s_t)$ <output id="targetCurrentValueValue">0.0</output></span><input id="targetCurrentValue" type="range" min="-5" max="7" step="0.5" value="0"></label>
+      <label class="mrl-range-control"><span>学习率 $\alpha$ <output id="targetAlphaValue">0.30</output></span><input id="targetAlpha" type="range" min="0.05" max="1" step="0.05" value="0.3"></label>
+    </div>
+
+    <div class="mrl-lab-trajectory">
+      <div><span>STATE</span><b>$s_t$</b><small>current</small></div>
+      <i><b id="labRewardNow">rₜ = −1.0</b><small>执行 $a_t$ 后返回</small></i>
+      <div><span>STATE</span><b>$s_{t+1}$</b><small id="labNextEstimate">估计 +2.0</small></div>
+      <i><b id="labRewardLater">rₜ₊₁ = −1.0</b><small>下一步 transition</small></i>
+      <div><span>STATE</span><b>$s_{t+2}$</b><small>继续一步</small></div>
+      <i><b id="labRewardTerminal">rₜ₊₂ = +4.0</b><small>最后 transition</small></i>
+      <div class="terminal"><span>TERMINAL</span><b>$s_{t+3}$</b><small>continuation = 0</small></div>
+    </div>
+
+    <div class="mrl-target-results">
+      <article class="mc">
+        <span>COMPLETE RETURN</span>
+        <h4>MC target <strong id="mcTargetValue">+1.34</strong></h4>
+        <code id="mcFormula">−1.0 + 0.90(−1.0) + 0.90²(+4.0)</code>
+        <dl><dt>误差 target − current</dt><dd id="mcErrorValue">+1.34</dd><dt>更新后估计</dt><dd id="mcUpdatedValue">+0.40</dd></dl>
+      </article>
+      <article class="td">
+        <span>ONE-STEP ESTIMATE</span>
+        <h4>TD target <strong id="tdTargetValue">+0.80</strong></h4>
+        <code id="tdFormula">−1.0 + 0.90(+2.0)</code>
+        <dl><dt>TD error $\delta_t$</dt><dd id="tdErrorValue">+0.80</dd><dt>更新后估计</dt><dd id="tdUpdatedValue">+0.24</dd></dl>
+      </article>
+    </div>
+
+    <div class="mrl-target-axis" aria-label="MC 与 TD 目标在共同数轴上的位置">
+      <div class="axis-line"></div>
+      <span class="axis-min" id="targetAxisMin">−2</span>
+      <span class="axis-max" id="targetAxisMax">+3</span>
+      <div class="axis-marker current" id="currentMarker"><b>current</b><span>0.00</span></div>
+      <div class="axis-marker mc" id="mcMarker"><b>MC</b><span>1.34</span></div>
+      <div class="axis-marker td" id="tdMarker"><b>TD</b><span>0.80</span></div>
+    </div>
+    <p class="mrl-caption">提示：把终点奖励从 +4 调成 −4，再只改变下一状态估计。观察哪个 marker 移动，哪个保持不动。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>两个 target 的差，不等于“一个真、一个假”</h3>
+      <p>MC target 对这条已发生轨迹是真实回报，但对 $V^\pi(s)$ 仍有采样噪声；TD target 可能继承 $\hat V$ 的偏差，却通常只含一步 transition 的随机性。</p>
+      <p class="mrl-insight-key">比较 target 时要同时问：它等了多少真实后续、借了多少当前估计、包含了多少随机性。</p>
+    </div>
+  </aside>
+</section>

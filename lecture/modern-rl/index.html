@@ -28,7 +28,7 @@
     <p class="mrl-index-note">每章遵循同一个原则：先提出一个真实问题，再引入必要抽象；术语第一次出现时先解释，公式需要能翻译回环境里的量，实验需要能回答一个具体问题。内容参考 walkinglabs/hands-on-modern-rl 的主线，但讲解结构重新组织。</p>
 
     <section class="mrl-index-section" id="chapters">
-      <header><h2>Chapters</h2><span>01–03 published</span></header>
+      <header><h2>Chapters</h2><span>01–05 published</span></header>
       <div class="mrl-chapter-list">
         <a class="mrl-chapter-row" href="./chapter01.html">
           <span class="mrl-row-num">01</span>
@@ -45,9 +45,19 @@
           <span><span class="mrl-row-title">把交互写成一个数学问题</span><span class="mrl-row-copy">动作会改变下一状态以后，怎样表示“当前局面”和“世界的变化规律”？从状态充分性与随机转移出发，建立马尔可夫决策过程的完整心智模型。</span></span>
           <span class="mrl-row-state live">READ →</span>
         </a>
-        <div class="mrl-chapter-row">
+        <a class="mrl-chapter-row" href="./chapter04.html">
           <span class="mrl-row-num">04</span>
           <span><span class="mrl-row-title">怎样给未来的局面定价？</span><span class="mrl-row-copy">用 value function（价值函数）把未来回报压缩成当前估计，再理解为什么“一步奖励 + 下一状态价值”可以形成递归关系。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter05.html">
+          <span class="mrl-row-num">05</span>
+          <span><span class="mrl-row-title">等不到结局，能不能先学？</span><span class="mrl-row-copy">从“更新目标来自哪里”出发，比较完整模型、完整回合和单步经验三种信息条件，再连接到同策略与异策略控制。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <div class="mrl-chapter-row">
+          <span class="mrl-row-num">06</span>
+          <span><span class="mrl-row-title">让神经网络估计动作价值</span><span class="mrl-row-copy">当状态太多、表格装不下时，怎样用参数化函数近似动作价值，并理解经验回放与目标网络为何能稳定学习。</span></span>
           <span class="mrl-row-state">NEXT</span>
         </div>
       </div>
