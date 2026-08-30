@@ -741,7 +741,7 @@
     elements.arcadeModeKicker.textContent = config.english;
     elements.arcadeModeTitle.textContent = config.label;
     elements.arcadeModeDescription.textContent = config.description;
-    elements.arcadeRewardHint.textContent = `单局最多 ☁ ${config.coinCap}`;
+    elements.arcadeRewardHint.textContent = "游戏得分与入账均不封顶";
     elements.arcadeIntroInstructions.textContent = config.instructions;
     elements.arcadeIntro.hidden = false;
   }

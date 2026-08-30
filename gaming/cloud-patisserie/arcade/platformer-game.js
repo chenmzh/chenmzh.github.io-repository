@@ -10,7 +10,6 @@
   const VIEW_WIDTH = 800;
   const VIEW_HEIGHT = 450;
   const WORLD_WIDTH = 2_920;
-  const REWARD_CAP = 200;
   const PLAYER_SPEED = 255;
   const JUMP_SPEED = 610;
   const GRAVITY = 1_720;
@@ -240,7 +239,7 @@
 
   function getReward(score) {
     if (!Number.isFinite(score)) throw new Error("score 必须是有限数值");
-    return Math.min(REWARD_CAP, Math.floor(Math.max(0, score) / 15));
+    return Math.floor(Math.max(0, score) / 15);
   }
 
   function mount(canvas, callbacks = {}) {
@@ -528,7 +527,6 @@
     VIEW_WIDTH,
     VIEW_HEIGHT,
     WORLD_WIDTH,
-    REWARD_CAP,
     LEVEL: Object.freeze({ platforms: PLATFORMS, checkpoint: CHECKPOINT, finish: FINISH }),
     createSession,
     stepSession,

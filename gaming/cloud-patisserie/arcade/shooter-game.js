@@ -16,7 +16,6 @@
   const PLAYER_SPEED = 260;
   const PLAYER_FIRE_INTERVAL_MS = 135;
   const PLAYER_INVULNERABLE_MS = 1_200;
-  const REWARD_CAP = 300;
   const GRAZE_SCORE = 30;
 
   function clamp(value, minimum, maximum) {
@@ -194,7 +193,7 @@
 
   function getReward(score) {
     const safeScore = Number.isFinite(score) ? Math.max(0, Math.floor(score)) : 0;
-    return Math.min(REWARD_CAP, Math.floor(safeScore / 20));
+    return Math.floor(safeScore / 20);
   }
 
   function finishSession(state, reason) {
@@ -687,7 +686,6 @@
   return {
     WAVE_DURATION_MS,
     BOSS_WAVE_INTERVAL,
-    REWARD_CAP,
     GRAZE_SCORE,
     createSession,
     stepSession,

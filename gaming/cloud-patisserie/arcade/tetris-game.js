@@ -7,7 +7,6 @@
 
   const BOARD_WIDTH = 10;
   const BOARD_HEIGHT = 20;
-  const REWARD_CAP = 360;
   const LINE_SCORES = Object.freeze([0, 120, 360, 620, 1_000]);
 
   const PIECES = Object.freeze({
@@ -148,7 +147,7 @@
     const safeScore = Math.max(0, Math.floor(Number(score) || 0));
     const safeLines = Math.max(0, Math.floor(Number(lines) || 0));
     if (safeScore === 0 && safeLines === 0) return 0;
-    return Math.min(REWARD_CAP, 30 + Math.floor(safeScore / 8) + safeLines * 16);
+    return Math.floor(safeScore / 8) + safeLines * 16;
   }
 
   function shuffledBag(random) {
@@ -642,7 +641,6 @@
   return Object.freeze({
     BOARD_WIDTH,
     BOARD_HEIGHT,
-    REWARD_CAP,
     LINE_SCORES,
     PIECES,
     createBoard,
