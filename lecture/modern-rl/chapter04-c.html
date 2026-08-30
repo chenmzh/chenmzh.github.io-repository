@@ -9,6 +9,7 @@
     <div><span>STATE VALUE</span><h3>$V^\pi(s)$</h3><p>还没指定第一步动作；由策略 $\pi$ 选择，并把各动作的长期结果平均起来。</p></div>
     <div><span>ACTION VALUE</span><h3>$Q^\pi(s,a)$</h3><p>第一步动作 $a$ 已固定；从下一步开始，才重新交回策略 $\pi$。</p></div>
   </div>
+  <p class="mrl-caption">两者的区别只发生在第一步动作是否已经作为条件固定：$Q$ 拆开各动作，$V$ 再按策略概率把它们合回去。</p>
 
   <p>因此 $V^\pi(s)$ 正是同一状态下各个 $Q^\pi(s,a)$ 按策略概率的加权平均：</p>
   <div class="mrl-equation">$$V^\pi(s)=\sum_{a\in\mathcal A}\pi(a\mid s)Q^\pi(s,a)$$</div>
@@ -83,6 +84,7 @@ def backup(old_values, gamma):
       <p>走一步得到一个 $r$ 和一个 $s'$；其他本可能发生的分支这次没有出现。</p>
     </div>
   </div>
+  <p class="mrl-caption">左边能一次枚举全部分支；右边每次只看到一个样本。贝尔曼关系没有改变，改变的是右侧期望可用什么证据来估计。</p>
 
   <h3>终止状态和“时间到了”不能混成同一个边界</h3>
   <p>走廊里的 G 是 <strong>terminal state（终止状态）</strong>：进入它时拿到 $+1$，任务本身随后结束，之后不会再有奖励，所以定义 $V^\pi(G)=0$。若采样只是因为最大步数或页面预算耗尽而停止，那叫 <strong>truncation（截断）</strong>；环境中的任务可能仍在继续，不能仅因为记录在此中断，就自动断言下一状态价值为 0。怎样从截断处保留后续价值，会在下一章讨论更新目标时处理。</p>

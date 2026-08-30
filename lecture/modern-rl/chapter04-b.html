@@ -18,6 +18,7 @@
       <strong>$1+0.9[0.25(12)+0.75(-2)]=2.35$</strong>
     </div>
   </div>
+  <p class="mrl-caption">先在每个动作内部平均环境后果，再按策略概率平均动作；计算顺序可以重排，但两层概率质量都不能丢。</p>
 
   <p>先在每个动作内部按环境概率平均，再按策略的动作概率平均：</p>
   <div class="mrl-equation">$$V^\pi(s)=0.6(5.5)+0.4(2.35)=4.24$$</div>
@@ -47,6 +48,15 @@
     <div><span>拆 return</span><strong>$=\mathbb{E}_\pi[r_t+\gamma G_{t+1}\mid S_t=s]$</strong></div>
     <div><span>用下一状态概括剩余未来</span><strong>$=\mathbb{E}_\pi[r_t+\gamma V^\pi(S_{t+1})\mid S_t=s]$</strong></div>
   </div>
+
+  <p>第三步为什么成立？先对下一状态做一次“内层平均”，再对当前状态下可能出现的下一状态做“外层平均”：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_\pi[G_{t+1}\mid S_t=s]
+  &=\mathbb E_\pi\!\left[\mathbb E_\pi[G_{t+1}\mid S_t=s,S_{t+1}]\mid S_t=s\right]\\
+  &=\mathbb E_\pi\!\left[\mathbb E_\pi[G_{t+1}\mid S_{t+1}]\mid S_t=s\right]\\
+  &=\mathbb E_\pi[V^\pi(S_{t+1})\mid S_t=s].
+  \end{aligned}$$</div>
+  <p>第一行是 nested expectation（嵌套期望）：先问“如果下一状态已经知道，剩余回报平均是多少”，再对下一状态取平均。第二行使用 Chapter 03 定义的 Markov state（马尔可夫状态）条件，并要求固定策略只依赖当前状态：给定 $S_{t+1}$ 后，更早的 $S_t$ 不再为后续回报提供额外信息。第三行才代入 $V^\pi$ 的定义。若输入只是一个遗漏关键信息的非 Markov observation，这种压缩就不能原样成立。</p>
 
   <p>把离散动作和下一状态的两层期望完全展开，就得到 <strong>Bellman expectation equation（贝尔曼期望方程）</strong>：固定策略下，当前价值必须等于“一步即时奖励 + 折扣后的下一状态价值”的期望。</p>
   <div class="mrl-equation mrl-equation-feature">$$V^\pi(s)=\sum_{a\in\mathcal A}\pi(a\mid s)\sum_{s'\in\mathcal S}P(s'\mid s,a)\left[R(s,a,s')+\gamma V^\pi(s')\right]$$</div>

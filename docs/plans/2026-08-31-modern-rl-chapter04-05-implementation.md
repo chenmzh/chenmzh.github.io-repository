@@ -162,11 +162,15 @@ Run: `git diff --check && git status --short`
 
 Expected: 无 whitespace error，变更只包含计划、Chapter 04–05 和必要导航文件。
 
-**Step 2: 审查内容与实验**
+**Step 2: 独立教学首审**
 
-核对术语首现、公式推导、数值例、Insight 数量、理解题数量和实验六要素。
+由一个未参与 Chapter 04–05 原始写作的独立教学审稿 Agent，核对术语首现、公式推导、数值例、Insight 数量、理解题、实验六要素与跨章衔接，并给出明确 `PASS` 或 `FAIL` 及问题清单。首审 Agent 只审查、不修改文件。
 
-**Step 3: 提交第一批**
+**Step 3: 修改并交回同一审稿人复审**
+
+主 Agent 修复全部阻塞项，再把当前文件交给同一个教学审稿 Agent 复审。若仍为 `FAIL`，重复“修改 → 同一审稿人复审”，直到得到明确 `PASS`；不得更换审稿人绕过未解决问题。
+
+**Step 4: 通过后提交并推送第一批**
 
 ```bash
 git add docs/plans lecture/modern-rl
@@ -174,3 +178,5 @@ git commit -m "feat: add modern RL value learning chapters"
 ```
 
 Expected: commit 成功，工作树干净。
+
+只有 Step 3 获得明确 `PASS` 后，才允许运行提交和 `git push origin master`，并核验 GitHub Pages 的线上章节。

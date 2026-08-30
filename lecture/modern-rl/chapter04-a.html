@@ -43,6 +43,7 @@
       <p>第一步同样没有奖励，却进入了更差的后续局面。</p>
     </div>
   </div>
+  <p class="mrl-caption">真正要比较的不是两张卡片里相同的 $r_t=0$，而是这一步之后还保留了哪些获得未来奖励的机会。</p>
 
   <p>Chapter 03 已经用 return（回报）$G_t$ 把一条轨迹后面的奖励合在一起：</p>
   <div class="mrl-equation">$$G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots$$</div>
@@ -117,6 +118,7 @@
     <div><span>策略 $\pi_{\text{稳}}$</span><strong>及时纠偏 → 较高 $V^{\pi_{\text{稳}}}(s)$</strong></div>
     <div><span>策略 $\pi_{\text{乱}}$</span><strong>随机推车 → 较低 $V^{\pi_{\text{乱}}}(s)$</strong></div>
   </div>
+  <p class="mrl-caption">状态向量完全相同，只有接手它的策略不同；因此价值变化来自后续行为分布，而不是物理状态本身变了。</p>
 
   <p>$V^\pi$ 因而不是“这个状态客观有几分”，而是<strong>这条策略从这个状态接手以后平均表现怎样</strong>。说“状态 $s$ 的价值”时，如果策略没有由上下文固定，问题其实还没说完整。</p>
 

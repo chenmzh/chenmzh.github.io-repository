@@ -30,6 +30,10 @@
   <p>$V^*(s)$ 是从 $s$ 出发能达到的最大期望回报；$Q^*(s,a)$ 则先固定当前动作 $a$，再取后续能够达到的最大期望回报。控制时 $\hat Q(s,a)$ 特别有用，因为不需要另有模型就能直接比较当前动作：</p>
   <div class="mrl-equation">$$\pi_{\mathrm{greedy}}(s)\in\arg\max_a\hat Q(s,a)$$</div>
 
+  <p>为什么最优控制里会出现 $\max$？当前动作 $a$ 已经固定，但到达下一状态以后，最优策略会选择后续动作中价值最大的一个。因此真正的最优动作价值必须满足：</p>
+  <div class="mrl-equation mrl-equation-feature">$$Q^*(s,a)=\mathbb E\!\left[r_t+\gamma\max_{a'}Q^*(S_{t+1},a')\mid S_t=s,A_t=a\right]$$</div>
+  <p>这是一条关于未知真值 $Q^*$ 的期望关系，还不是可直接执行的更新。实际交互只给出一个样本 $(r_t,s_{t+1})$；Q-learning 稍后会用这个样本替代外层期望，再用当前草稿 $\hat Q$ 替代右侧未知的 $Q^*$，从而得到一次可计算的 update target。换句话说，$\max$ 来自“最优后续”的定义，不是算法任意加上的技巧。</p>
+
   <p>把 state-value 的一步 TD 更新换成 action-value，只剩一个关键问题：<strong>下一状态的尾部，到底接哪个下一动作？</strong></p>
 
   <div class="mrl-action-boundary">
@@ -44,6 +48,7 @@
       <p>更新目标是 $r_t+\gamma\max_a\hat Q(s_{t+1},a)$。采数据时做了什么，不改变目标里假想的贪心后续。</p>
     </article>
   </div>
+  <p class="mrl-caption">两栏使用同一个一步样本；真正的分叉只在于怎样给 $s_{t+1}$ 之后的尾部定价：按实际探索行为，还是按贪心目标行为。</p>
 </section>
 
 <section id="policy-data">
@@ -56,6 +61,7 @@
     <div><span>DATA</span><strong>$a_t\sim\mu(\cdot\mid s_t)$</strong><small>谁实际走出这条轨迹？</small></div>
     <div><span>LEARNING</span><strong>$Q^\pi$ 或 $Q^*$</strong><small>这份数据被用来学习谁？</small></div>
   </div>
+  <p class="mrl-caption">先沿 DATA 一栏找出是谁产生样本，再沿 LEARNING 一栏找出被评价的策略；两者是否相同，才决定 on-policy 或 off-policy。</p>
 
   <p>若行为策略和目标策略是同一套，叫 <strong>on-policy learning（同策略学习）</strong>；若两者不同，叫 <strong>off-policy learning（异策略学习）</strong>。这组词只回答“数据策略和学习对象是否一致”，不回答数据是不是刚采的。</p>
   <p><strong>online learning（在线学习）</strong>指训练期间仍可继续与环境交互采新数据；<strong>offline learning（离线学习）</strong>指只使用已经固定的数据集。它们构成另一条独立的轴：</p>
@@ -78,12 +84,17 @@
   <p>这里的 $a_{t+1}$ 不是更新时重新算出的贪心动作；在回合继续的正常 transition 中，它就是 agent 接下来<strong>真的会执行</strong>的动作。若本步仅因时间上限截断，可以从同一策略采样 $a_{t+1}$ 来保留 continuation，但当前 episode 仍须 reset。若当前策略是 $\varepsilon$-greedy，偶尔探索的风险也会进入学到的 $Q^\pi$。</p>
 
   <h3>接贪心下一价值：采样动作不决定 continuation</h3>
-  <p><strong>Q-learning（Q 学习）</strong>是一种无模型、异策略的时序差分控制算法。它不把某个实际下一动作塞进更新目标，而是直接使用下一状态中最大的动作价值估计：</p>
+  <p><strong>Q-learning（Q 学习）</strong>是一种无模型、异策略的时序差分控制算法。它把上节最优贝尔曼关系变成样本更新：不把某个实际下一动作塞进目标，而是用当前 $\hat Q$ 中下一状态最大的动作价值近似未知的最优后续：</p>
   <div class="mrl-equation">$$\begin{aligned}
   \text{target}_{Q}&=r_t+\gamma\max_{a'}\hat Q(s_{t+1},a'),\\
   \hat Q(s_t,a_t)&\leftarrow\hat Q(s_t,a_t)+\alpha\,[\text{target}_{Q}-\hat Q(s_t,a_t)].
   \end{aligned}$$</div>
   <p>行为策略可以继续 $\varepsilon$-greedy 地探索，目标策略却是对当前 $\hat Q$ 贪心的策略，因此这是典型的 off-policy 控制。当 transition 进入真正终止状态时，两式都只保留 $r_t$；截断时则通常仍保留下一状态项。</p>
+
+  <div class="mrl-inline-note"><strong>同一个 transition，手算两种 target：</strong>设 $r_t=-1$、$\gamma=0.9$，下一状态有 $\hat Q(s_{t+1},\text{左})=2$、$\hat Q(s_{t+1},\text{右})=5$，而行为策略这次为了探索实际选了“左”。于是
+    <div class="mrl-equation">$$\text{target}_{\mathrm{SARSA}}=-1+0.9(2)=0.8,\qquad \text{target}_{Q}=-1+0.9(5)=3.5.$$</div>
+    两者看到的 $s_t,a_t,r_t,s_{t+1}$ 完全相同，差异只来自“用哪一种后续行为给尾部定价”。若旧值 $\hat Q(s_t,a_t)=1$、$\alpha=0.5$，两次更新会分别得到 $0.9$ 与 $2.25$；若本步真正终止，两种 target 都退化为 $r_t=-1$。
+  </div>
 
   <table class="mrl-method-table">
     <thead><tr><th>边界</th><th>SARSA</th><th>Q-learning</th></tr></thead>
