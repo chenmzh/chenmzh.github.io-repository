@@ -22,17 +22,17 @@
     math: Object.freeze({
       id: "math", label: "数学挑战", english: "MATH COUNTER",
       icon: "∑", description: "心算、比例、概率与逻辑。算得越稳，连对小费越高。",
-      baseReward: 10, streakStep: 2, streakCap: 6, perfectBonus: 12,
+      baseReward: 24, streakStep: 3, streakCap: 12, perfectBonus: 25,
     }),
     general: Object.freeze({
       id: "general", label: "常识问答", english: "CURIOSITY DESK",
       icon: "?", description: "科学、历史、地理、艺术与计算机基础，轻松但不敷衍。",
-      baseReward: 9, streakStep: 1, streakCap: 4, perfectBonus: 10,
+      baseReward: 20, streakStep: 2, streakCap: 8, perfectBonus: 20,
     }),
     rl: Object.freeze({
       id: "rl", label: "RL 研修", english: "POLICY LAB",
       icon: "π", description: "从 Bellman 到 PPO、GRPO 与 Agentic RL，难度和收益都是最高档。",
-      baseReward: 14, streakStep: 2, streakCap: 8, perfectBonus: 15,
+      baseReward: 30, streakStep: 4, streakCap: 16, perfectBonus: 30,
       sourceUrl: RL_REPO,
       sourceLabel: "题目依据 Hands-On Modern RL · CC BY-NC-SA 4.0",
     }),
@@ -115,10 +115,20 @@
     { id: "rl-reward-hacking", prompt: "“奖励投机（reward hacking）”最准确的描述是？", options: ["策略钻奖励规则漏洞拿高分，却没完成真实目标", "奖励数值太小", "训练速度过慢", "用户忘记保存模型"], answer: 0, explanation: "当奖励只是目标的代理指标，策略可能优化这个指标的漏洞，而不是我们真正关心的行为。", sourceUrl: RL_SOURCES.evaluation },
   ];
 
+  const extraMathGeneral = root.CloudQuizMathGeneralExtra
+    || (typeof module !== "undefined" && module.exports
+      ? require("./drafts/math-general-extra.js")
+      : null);
+  const extraRl = root.CloudQuizRlExtra
+    || (typeof module !== "undefined" && module.exports
+      ? require("./drafts/rl-extra.js")
+      : null);
+  if (!extraMathGeneral || !extraRl) throw new Error("扩充题库脚本未加载");
+
   const QUESTION_BANKS = Object.freeze({
-    math: Object.freeze(MATH_QUESTIONS.map(Object.freeze)),
-    general: Object.freeze(GENERAL_QUESTIONS.map(Object.freeze)),
-    rl: Object.freeze(RL_QUESTIONS.map(Object.freeze)),
+    math: Object.freeze([...MATH_QUESTIONS, ...extraMathGeneral.math].map(Object.freeze)),
+    general: Object.freeze([...GENERAL_QUESTIONS, ...extraMathGeneral.general].map(Object.freeze)),
+    rl: Object.freeze([...RL_QUESTIONS, ...extraRl].map(Object.freeze)),
   });
 
   const API = Object.freeze({ RL_REPO, RL_SOURCES, QUIZ_CONFIG, QUESTION_BANKS });

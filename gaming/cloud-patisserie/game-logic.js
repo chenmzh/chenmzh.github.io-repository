@@ -14,6 +14,27 @@
   const QUIZ_LENGTH = 5;
   const { QUIZ_CONFIG, QUESTION_BANKS } = QUIZ_DATA;
 
+  const ARCADE_CONFIG = Object.freeze({
+    platformer: Object.freeze({
+      id: "platformer", label: "云端跑堂", english: "CLOUD HOP",
+      icon: "▲", coinCap: 180,
+      description: "越过奶油台阶、收集云朵糖，跑到夜班窗口的终点。",
+      instructions: "方向键或 A / D 移动，空格或 ↑ 跳跃。",
+    }),
+    tetris: Object.freeze({
+      id: "tetris", label: "方糖堆叠", english: "SUGAR STACK",
+      icon: "▦", coinCap: 190,
+      description: "把七种甜品积木排成整行，连消与等级会大幅抬高收益。",
+      instructions: "← → 移动，↑ / X 旋转，Z 反转，↓ 软降，空格硬降。",
+    }),
+    shooter: Object.freeze({
+      id: "shooter", label: "星夜飞行", english: "STAR PATROL",
+      icon: "✦", coinCap: 220,
+      description: "驾驶糖霜小飞机穿过五波弹幕，自动射击、贴弹擦过也能加分。",
+      instructions: "方向键或 WASD 移动；飞机会自动射击。",
+    }),
+  });
+
   const RARITY = Object.freeze({
     COMMON: "common",
     RARE: "rare",
@@ -372,6 +393,8 @@
       casesCompleted: 0,
       packingRounds: 0,
       quizRounds: 0,
+      arcadeRounds: 0,
+      arcadeBestScores: {},
       coinsEarned: 0,
       currentCase: createCase(random, 1),
     };
@@ -575,12 +598,27 @@
     const bank = QUESTION_BANKS[mode];
     if (!config || !bank) throw new Error("答题路线不存在");
     if (bank.length < QUIZ_LENGTH) throw new Error(`${config.label}题库不足 ${QUIZ_LENGTH} 题`);
+    const selectedQuestions = shuffle(bank, random).slice(0, QUIZ_LENGTH);
+    const answerPositions = shuffle(
+      [0, 1, 2, 3, Math.floor(randomUnit(random) * 4)],
+      random,
+    );
+    const questions = selectedQuestions.map((question, index) => {
+      const correctOption = question.options[question.answer];
+      const distractors = shuffle(
+        question.options.filter((option, optionIndex) => optionIndex !== question.answer),
+        random,
+      );
+      const options = [...distractors];
+      options.splice(answerPositions[index], 0, correctOption);
+      return { ...question, options, answer: answerPositions[index] };
+    });
     return {
       mode,
       active: true,
       completed: false,
       settled: false,
-      questions: shuffle(bank, random).slice(0, QUIZ_LENGTH),
+      questions,
       currentIndex: 0,
       answered: false,
       selectedIndex: null,
@@ -658,15 +696,51 @@
     };
   }
 
+  function calculateArcadeReward(mode, score, details = {}) {
+    const config = ARCADE_CONFIG[mode];
+    if (!config) throw new Error("街机关卡不存在");
+    if (!Number.isFinite(score) || score < 0) throw new Error("街机分数无效");
+    if (mode === "tetris") {
+      const lines = Number.isFinite(details.lines) ? Math.max(0, Math.floor(details.lines)) : 0;
+      return Math.min(config.coinCap, Math.floor(score / 8) + lines * 16);
+    }
+    const scorePerCoin = mode === "platformer" ? 15 : 20;
+    return Math.min(config.coinCap, Math.floor(score / scorePerCoin));
+  }
+
+  function finishArcadeRun(state, run) {
+    if (run.settled) throw new Error("这一局已经结算过了");
+    if (!run.completed) throw new Error("这一局还没有结束");
+    const config = ARCADE_CONFIG[run.mode];
+    if (!config) throw new Error("街机关卡不存在");
+    const earned = calculateArcadeReward(run.mode, run.score, run);
+    const previousBest = state.arcadeBestScores?.[run.mode] || 0;
+    return {
+      earned,
+      nextRun: { ...run, settled: true },
+      nextState: {
+        ...state,
+        coins: state.coins + earned,
+        coinsEarned: (state.coinsEarned || 0) + earned,
+        arcadeRounds: (state.arcadeRounds || 0) + 1,
+        arcadeBestScores: {
+          ...(state.arcadeBestScores || {}),
+          [run.mode]: Math.max(previousBest, Math.floor(run.score)),
+        },
+      },
+    };
+  }
+
   const API = Object.freeze({
     BOX_COST, CASE_SIZE, SECRET_CASE_RATE, PACKING_DURATION_MS,
     PACKING_MAX_PAYOUT, PACKING_WRONG_PENALTY_MS, QUIZ_LENGTH,
-    RARITY, RARITY_META, CHARACTERS, DESSERTS, QUIZ_CONFIG, QUESTION_BANKS,
+    RARITY, RARITY_META, CHARACTERS, DESSERTS, QUIZ_CONFIG, QUESTION_BANKS, ARCADE_CONFIG,
     createCase, createInitialState, getCharacter, getOpenedCount,
     selectBox, shakeSelectedBox, openSelectedBox, createNextCase, refreshShelf,
     getCollectionStats, getPackingStartBonus,
     createPackingRound, answerPackingOrder, finishPackingRound,
     createQuizRound, answerQuizQuestion, advanceQuizQuestion, finishQuizRound,
+    calculateArcadeReward, finishArcadeRun,
   });
 
   root.CloudCabinetLogic = API;

@@ -80,6 +80,31 @@
     quizBestStreak: document.querySelector("#quizBestStreak"),
     quizPerfectBonus: document.querySelector("#quizPerfectBonus"),
     quizAgainButton: document.querySelector("#quizAgainButton"),
+    arcadeIntro: document.querySelector("#arcadeIntro"),
+    arcadeModeIcon: document.querySelector("#arcadeModeIcon"),
+    arcadeModeKicker: document.querySelector("#arcadeModeKicker"),
+    arcadeModeTitle: document.querySelector("#arcadeModeTitle"),
+    arcadeModeDescription: document.querySelector("#arcadeModeDescription"),
+    arcadeRewardHint: document.querySelector("#arcadeRewardHint"),
+    arcadeIntroInstructions: document.querySelector("#arcadeIntroInstructions"),
+    startArcadeButton: document.querySelector("#startArcadeButton"),
+    arcadeLive: document.querySelector("#arcadeLive"),
+    arcadeModeBadge: document.querySelector("#arcadeModeBadge"),
+    arcadeScore: document.querySelector("#arcadeScore"),
+    arcadeCoinPreview: document.querySelector("#arcadeCoinPreview"),
+    arcadeCanvas: document.querySelector("#arcadeCanvas"),
+    arcadeStatus: document.querySelector("#arcadeStatus"),
+    arcadeTouchControls: document.querySelector("#arcadeTouchControls"),
+    arcadeLiveInstructions: document.querySelector("#arcadeLiveInstructions"),
+    arcadeAbandonButton: document.querySelector("#arcadeAbandonButton"),
+    arcadeResult: document.querySelector("#arcadeResult"),
+    arcadeResultStamp: document.querySelector("#arcadeResultStamp"),
+    arcadeResultReason: document.querySelector("#arcadeResultReason"),
+    arcadeFinalScore: document.querySelector("#arcadeFinalScore"),
+    arcadeEarned: document.querySelector("#arcadeEarned"),
+    arcadeResultMode: document.querySelector("#arcadeResultMode"),
+    arcadeBestScore: document.querySelector("#arcadeBestScore"),
+    arcadeAgainButton: document.querySelector("#arcadeAgainButton"),
     revealDialog: document.querySelector("#revealDialog"),
     revealCard: document.querySelector("#revealCard"),
     revealStatus: document.querySelector("#revealStatus"),
@@ -109,6 +134,9 @@
   let packingInterval = null;
   let selectedEarningMode = "packing";
   let quizRound = null;
+  let arcadeController = null;
+  let arcadeRun = null;
+  let arcadeSessionToken = 0;
   let audioContext = null;
 
   function isValidState(candidate) {
@@ -635,6 +663,9 @@
       elements.quizIntro,
       elements.quizLive,
       elements.quizResult,
+      elements.arcadeIntro,
+      elements.arcadeLive,
+      elements.arcadeResult,
     ].forEach((view) => { view.hidden = true; });
   }
 
@@ -663,21 +694,183 @@
     elements.quizIntro.hidden = false;
   }
 
+  function isArcadeMode(mode) {
+    return Boolean(logic.ARCADE_CONFIG[mode]);
+  }
+
+  function getArcadeModule(mode) {
+    if (mode === "platformer") return window.CloudPlatformerGame;
+    if (mode === "tetris") return window.CloudTetrisGame;
+    if (mode === "shooter") return window.CloudShooterGame;
+    throw new Error("街机关卡不存在");
+  }
+
+  function showArcadeIntro(mode) {
+    const config = logic.ARCADE_CONFIG[mode];
+    if (!config) throw new Error("街机关卡不存在");
+    elements.arcadeModeIcon.textContent = config.icon;
+    elements.arcadeModeKicker.textContent = config.english;
+    elements.arcadeModeTitle.textContent = config.label;
+    elements.arcadeModeDescription.textContent = config.description;
+    elements.arcadeRewardHint.textContent = `单局最多 ☁ ${config.coinCap}`;
+    elements.arcadeIntroInstructions.textContent = config.instructions;
+    elements.arcadeIntro.hidden = false;
+  }
+
+  function destroyArcade(clearRun = false) {
+    arcadeSessionToken += 1;
+    if (arcadeController) arcadeController.destroy();
+    arcadeController = null;
+    if (clearRun) arcadeRun = null;
+  }
+
+  function updateArcadeHud(score, details, token) {
+    if (token !== arcadeSessionToken || !arcadeRun?.active) return;
+    const safeScore = Math.max(0, Math.floor(Number(score) || 0));
+    const nextDetails = details && typeof details === "object" ? details : {};
+    arcadeRun = {
+      ...arcadeRun,
+      score: safeScore,
+      lines: Number.isFinite(nextDetails.lines) ? Math.max(0, Math.floor(nextDetails.lines)) : arcadeRun.lines,
+    };
+    elements.arcadeScore.textContent = String(safeScore).padStart(6, "0");
+    elements.arcadeCoinPreview.textContent = String(logic.calculateArcadeReward(
+      arcadeRun.mode,
+      safeScore,
+      arcadeRun,
+    ));
+    const statusBits = [];
+    if (Number.isFinite(nextDetails.remainingMs)) statusBits.push(`剩余 ${Math.ceil(nextDetails.remainingMs / 1000)} 秒`);
+    if (Number.isFinite(nextDetails.lines)) statusBits.push(`消除 ${nextDetails.lines} 行`);
+    if (Number.isFinite(nextDetails.level)) statusBits.push(`等级 ${nextDetails.level}`);
+    if (Number.isFinite(nextDetails.lives)) statusBits.push(`生命 ${nextDetails.lives}`);
+    elements.arcadeStatus.textContent = statusBits.length ? statusBits.join(" · ") : "夜班进行中 · 分数越高，入账越多";
+  }
+
+  function finishArcade(payload, token) {
+    if (token !== arcadeSessionToken || !arcadeRun?.active) return;
+    const details = payload && typeof payload === "object" ? payload : {};
+    const score = Math.max(0, Math.floor(Number(details.score) || arcadeRun.score || 0));
+    arcadeRun = {
+      ...arcadeRun,
+      ...details,
+      score,
+      lines: Number.isFinite(details.lines) ? Math.max(0, Math.floor(details.lines)) : arcadeRun.lines,
+      reason: details.reason || details.status || "complete",
+      active: false,
+      completed: true,
+    };
+    try {
+      const finishedRun = arcadeRun;
+      const result = logic.finishArcadeRun(state, arcadeRun);
+      state = result.nextState;
+      arcadeRun = result.nextRun;
+      destroyArcade(false);
+      saveState();
+      renderWallet();
+      renderShelf();
+      hideEarningViews();
+      elements.arcadeResult.hidden = false;
+      const cleared = ["won", "clear", "cleared", "time"].includes(finishedRun.reason);
+      elements.arcadeResultStamp.textContent = cleared ? "STAGE COMPLETE" : "SHIFT COMPLETE";
+      elements.arcadeResultReason.textContent = cleared ? "漂亮完成，夜班奖金已经记账" : "本轮结束，沿途分数已经换成云朵币";
+      elements.arcadeFinalScore.textContent = String(score).padStart(6, "0");
+      elements.arcadeEarned.textContent = String(result.earned);
+      elements.arcadeResultMode.textContent = logic.ARCADE_CONFIG[finishedRun.mode].label;
+      elements.arcadeBestScore.textContent = String(state.arcadeBestScores?.[finishedRun.mode] || score);
+      elements.arcadeAgainButton.focus({ preventScroll: true });
+      playNotes(cleared ? [294, 440, 587, 880] : [262, 330, 392, 523], 0.12);
+    } catch (error) {
+      destroyArcade(true);
+      showToast(error.message);
+    }
+  }
+
+  function startArcade() {
+    const mode = selectedEarningMode;
+    const config = logic.ARCADE_CONFIG[mode];
+    if (!config) return;
+    try {
+      destroyArcade(true);
+      const token = arcadeSessionToken;
+      const module = getArcadeModule(mode);
+      if (!module?.mount) throw new Error(`${config.label}关卡脚本未加载`);
+      arcadeRun = {
+        mode,
+        active: true,
+        completed: false,
+        settled: false,
+        score: 0,
+        lines: 0,
+        reason: null,
+      };
+      hideEarningViews();
+      elements.arcadeLive.hidden = false;
+      elements.arcadeLive.dataset.arcadeMode = mode;
+      elements.arcadeModeBadge.textContent = config.label;
+      elements.arcadeScore.textContent = "000000";
+      elements.arcadeCoinPreview.textContent = "0";
+      elements.arcadeStatus.textContent = "夜班进行中 · 分数越高，入账越多";
+      elements.arcadeLiveInstructions.textContent = config.instructions;
+      elements.arcadeTouchControls.hidden = mode !== "tetris";
+
+      if (mode === "platformer") {
+        arcadeController = module.mount(elements.arcadeCanvas, {
+          onScore: (score) => updateArcadeHud(score, {}, token),
+          onFinish: (result) => finishArcade({ ...result, reason: result.status }, token),
+        });
+      } else if (mode === "tetris") {
+        arcadeController = module.mount(elements.arcadeCanvas, {
+          onScore: (snapshot) => updateArcadeHud(snapshot.score, snapshot, token),
+          onFinish: (result) => finishArcade(result, token),
+        });
+      } else {
+        elements.arcadeCanvas.width = 720;
+        elements.arcadeCanvas.height = 420;
+        arcadeController = module.mount(elements.arcadeCanvas, {
+          onScore: (score, _reward, session) => updateArcadeHud(score, session, token),
+          onFinish: (result) => finishArcade(result, token),
+        });
+      }
+      arcadeController.start();
+      elements.arcadeCanvas.focus({ preventScroll: true });
+      playNotes(mode === "shooter" ? [220, 330, 440, 660] : [294, 392, 523], 0.09);
+    } catch (error) {
+      destroyArcade(true);
+      hideEarningViews();
+      showArcadeIntro(mode);
+      showToast(error.message);
+    }
+  }
+
+  function abandonArcade() {
+    if (!arcadeRun?.active) return;
+    destroyArcade(true);
+    hideEarningViews();
+    showArcadeIntro(selectedEarningMode);
+    showToast("本局已放弃，没有结算云朵币。" );
+  }
+
   function selectEarningMode(mode) {
-    if (mode !== "packing" && !logic.QUIZ_CONFIG[mode]) throw new Error("赚钱路线不存在");
-    if (mode === selectedEarningMode && (packingRound?.active || quizRound?.active)) return;
+    if (mode !== "packing" && !logic.QUIZ_CONFIG[mode] && !isArcadeMode(mode)) throw new Error("赚钱路线不存在");
+    if (mode === selectedEarningMode && (packingRound?.active || quizRound?.active || arcadeRun?.active)) return;
 
     if (packingRound?.active && !packingRound.settled) finishPacking();
     if (quizRound?.active && !quizRound.settled) {
       quizRound = null;
       showToast("上一张未完成的题签已经放回柜台，没有结算奖励。" );
     }
+    if (arcadeRun?.active && !arcadeRun.settled) {
+      destroyArcade(true);
+      showToast("上一局街机已经停止，没有结算奖励。" );
+    }
 
     selectedEarningMode = mode;
     updateEarningModeButtons();
     hideEarningViews();
     if (mode === "packing") elements.packingIdle.hidden = false;
-    else showQuizIntro(mode);
+    else if (logic.QUIZ_CONFIG[mode]) showQuizIntro(mode);
+    else showArcadeIntro(mode);
   }
 
   function quizOptionMarkup(option, index) {
@@ -722,6 +915,40 @@
     }
   }
 
+  function renderQuizAnswerState(result) {
+    const question = quizRound.questions[quizRound.currentIndex];
+    elements.quizScore.textContent = String(quizRound.score);
+    elements.quizOptions.querySelectorAll("[data-quiz-option]").forEach((button) => {
+      const index = Number(button.dataset.quizOption);
+      button.disabled = true;
+      button.classList.toggle("is-correct", index === question.answer);
+      button.classList.toggle("is-wrong", index === quizRound.selectedIndex && index !== question.answer);
+    });
+    elements.quizFeedback.hidden = false;
+    elements.quizFeedback.className = `quiz-feedback ${result.correct ? "is-correct" : "is-wrong"}`;
+    elements.quizFeedbackTitle.textContent = result.correct
+      ? `回答正确 · +${result.earned} 云朵币`
+      : "这题没答对 · 连对清零";
+    elements.quizExplanation.textContent = question.explanation;
+    elements.quizQuestionSource.hidden = !question.sourceUrl;
+    if (question.sourceUrl) elements.quizQuestionSource.href = question.sourceUrl;
+    elements.quizNextButton.hidden = false;
+    elements.quizNextButton.innerHTML = quizRound.currentIndex === quizRound.questions.length - 1
+      ? "结算这一轮 <span>→</span>"
+      : "下一题 <span>→</span>";
+  }
+
+  function restoreScrollPosition(x, y) {
+    const rootStyle = document.documentElement.style;
+    const previousBehavior = rootStyle.scrollBehavior;
+    rootStyle.scrollBehavior = "auto";
+    window.scrollTo(x, y);
+    window.requestAnimationFrame(() => {
+      window.scrollTo(x, y);
+      rootStyle.scrollBehavior = previousBehavior;
+    });
+  }
+
   function startQuiz() {
     try {
       quizRound = logic.createQuizRound(selectedEarningMode);
@@ -736,13 +963,13 @@
 
   function answerQuiz(optionIndex) {
     if (!quizRound?.active || quizRound.answered) return;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
     try {
       const result = logic.answerQuizQuestion(quizRound, optionIndex);
       quizRound = result.nextRound;
-      renderQuizQuestion();
-      elements.quizFeedbackTitle.textContent = result.correct
-        ? `回答正确 · +${result.earned} 云朵币`
-        : "这题没答对 · 连对清零";
+      renderQuizAnswerState(result);
+      restoreScrollPosition(scrollX, scrollY);
       playNotes(result.correct ? [392, 494, 659] : [185, 147], 0.09);
     } catch (error) {
       showToast(error.message);
@@ -751,11 +978,13 @@
 
   function advanceOrFinishQuiz() {
     if (!quizRound?.active || !quizRound.answered) return;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
     try {
       quizRound = logic.advanceQuizQuestion(quizRound);
       if (!quizRound.completed) {
         renderQuizQuestion();
-        elements.quizLive.scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth", block: "center" });
+        restoreScrollPosition(scrollX, scrollY);
         return;
       }
 
@@ -774,6 +1003,7 @@
       elements.quizBestStreak.textContent = String(finishedSnapshot.bestStreak);
       elements.quizPerfectBonus.hidden = !result.perfect;
       if (result.perfect) elements.quizPerfectBonus.textContent = `满分印章 · 额外 ☁ ${result.perfectBonus} 已入账`;
+      restoreScrollPosition(scrollX, scrollY);
       playNotes(result.perfect ? [294, 440, 587, 880] : [294, 370, 494, 587], 0.13);
     } catch (error) {
       showToast(error.message);
@@ -845,6 +1075,19 @@
     if (button) answerQuiz(Number(button.dataset.quizOption));
   });
   elements.quizNextButton.addEventListener("click", advanceOrFinishQuiz);
+  elements.startArcadeButton.addEventListener("click", startArcade);
+  elements.arcadeAgainButton.addEventListener("click", startArcade);
+  elements.arcadeAbandonButton.addEventListener("click", abandonArcade);
+  elements.arcadeTouchControls.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-arcade-action]");
+    if (!button || selectedEarningMode !== "tetris" || !arcadeRun?.active || !arcadeController) return;
+    const action = button.dataset.arcadeAction;
+    if (action === "left" || action === "right") arcadeController.move(action);
+    else if (action === "rotate-left") arcadeController.rotate(-1);
+    else if (action === "rotate") arcadeController.rotate(1);
+    else if (action === "drop") arcadeController.drop();
+    elements.arcadeCanvas.focus({ preventScroll: true });
+  });
 
   elements.coinWallet.addEventListener("click", () => document.querySelector("#packing").scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" }));
   elements.soundToggle.addEventListener("click", () => {
@@ -887,6 +1130,7 @@
     state = logic.createInitialState();
     packingRound = null;
     quizRound = null;
+    destroyArcade(true);
     selectedEarningMode = "packing";
     if (packingInterval) window.clearInterval(packingInterval);
     packingInterval = null;
@@ -901,6 +1145,7 @@
 
   elements.restartGameButton.addEventListener("click", restartWholeGame);
   elements.resetGame.addEventListener("click", restartWholeGame);
+  window.addEventListener("beforeunload", () => destroyArcade(true));
 
   async function startGame() {
     try {
