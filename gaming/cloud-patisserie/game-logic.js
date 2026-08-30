@@ -18,20 +18,20 @@
     platformer: Object.freeze({
       id: "platformer", label: "云端跑堂", english: "CLOUD HOP",
       icon: "▲", coinCap: 180,
-      description: "越过奶油台阶、收集云朵糖，跑到夜班窗口的终点。",
-      instructions: "方向键或 A / D 移动，空格或 ↑ 跳跃。",
+      description: "不限时越过奶油台阶、收集云朵糖；抵达终点或生命耗尽才结算。",
+      instructions: "方向键或 A / D 移动，空格或 ↑ 跳跃；共有 3 条生命。",
     }),
     tetris: Object.freeze({
       id: "tetris", label: "方糖堆叠", english: "SUGAR STACK",
       icon: "▦", coinCap: 190,
-      description: "把七种甜品积木排成整行，连消与等级会大幅抬高收益。",
-      instructions: "← → 移动，↑ / X 旋转，Z 反转，↓ 软降，空格硬降。",
+      description: "不限时把七种甜品积木排成整行，只有方块堆出顶部才会结束。",
+      instructions: "← → 移动，↑ / X 旋转，Z 反转，↓ 软降，空格硬降。堆满才结算。",
     }),
     shooter: Object.freeze({
       id: "shooter", label: "星夜飞行", english: "STAR PATROL",
       icon: "✦", coinCap: 220,
-      description: "驾驶糖霜小飞机穿过五波弹幕，自动射击、贴弹擦过也能加分。",
-      instructions: "方向键或 WASD 移动；飞机会自动射击。",
+      description: "驾驶糖霜小飞机迎战无限递增波次，每 5 波出现 Boss，贴弹擦过也能加分。",
+      instructions: "方向键或 WASD 移动；飞机自动射击，3 条生命耗尽才返航。",
     }),
   });
 

@@ -10,7 +10,6 @@
   const VIEW_WIDTH = 800;
   const VIEW_HEIGHT = 450;
   const WORLD_WIDTH = 2_920;
-  const TIME_LIMIT_MS = 55_000;
   const REWARD_CAP = 200;
   const PLAYER_SPEED = 255;
   const JUMP_SPEED = 610;
@@ -51,16 +50,10 @@
   const CHECKPOINT = Object.freeze({ x: 1_470, y: 320, w: 22, h: 70 });
   const FINISH = Object.freeze({ x: 2_825, y: 292, w: 28, h: 98 });
 
-  function createSession(options = {}) {
-    const requestedLimit = options.timeLimitMs === undefined ? TIME_LIMIT_MS : Number(options.timeLimitMs);
-    if (!Number.isFinite(requestedLimit) || requestedLimit <= 0) {
-      throw new Error("timeLimitMs 必须是正数");
-    }
-
+  function createSession() {
     return {
       status: "playing",
       elapsedMs: 0,
-      timeLimitMs: requestedLimit,
       score: 0,
       lives: 3,
       checkpointActive: false,
@@ -156,8 +149,7 @@
   }
 
   function finishLevel(next) {
-    const secondsLeft = Math.max(0, Math.ceil((next.timeLimitMs - next.elapsedMs) / 1_000));
-    next.score += 1_000 + secondsLeft * 10;
+    next.score += 1_000;
     next.status = "won";
     next.player.vx = 0;
     next.player.vy = 0;
@@ -171,13 +163,7 @@
       enemies: state.enemies.map((enemy) => ({ ...enemy })),
     };
 
-    next.elapsedMs = Math.min(next.timeLimitMs, next.elapsedMs + sliceMs);
-    if (next.elapsedMs >= next.timeLimitMs) {
-      next.status = "timeout";
-      next.player.vx = 0;
-      next.player.vy = 0;
-      return next;
-    }
+    next.elapsedMs += sliceMs;
 
     const seconds = sliceMs / 1_000;
     const horizontal = (input.right ? 1 : 0) - (input.left ? 1 : 0);
@@ -411,8 +397,7 @@
       context.fill();
       context.fillStyle = "#fffdf5";
       context.font = "bold 18px system-ui, sans-serif";
-      const secondsLeft = Math.max(0, Math.ceil((session.timeLimitMs - session.elapsedMs) / 1_000));
-      context.fillText(`分数 ${session.score}   生命 ${"♥".repeat(Math.max(0, session.lives))}   时间 ${secondsLeft}s`, 32, 45);
+      context.fillText(`分数 ${session.score}   生命 ${"♥".repeat(Math.max(0, session.lives))}   无限时`, 32, 45);
 
       context.fillStyle = "rgba(62,42,52,.72)";
       roundedRect(515, 15, 267, 40, 12);
@@ -427,7 +412,7 @@
         context.fillStyle = "#fffdf5";
         context.textAlign = "center";
         context.font = "bold 38px system-ui, sans-serif";
-        const title = session.status === "won" ? "送达成功！" : session.status === "lost" ? "今日售罄" : session.status === "timeout" ? "打烊时间到" : "云朵配送大冒险";
+        const title = session.status === "won" ? "送达成功！" : session.status === "lost" ? "今日售罄" : "云朵配送大冒险";
         context.fillText(title, VIEW_WIDTH / 2, 196);
         context.font = "18px system-ui, sans-serif";
         const subtitle = session.status === "playing" ? "穿过奶油平台，收集金币并抵达终点" : `最终分数 ${session.score} · 奖励 ${getReward(session.score)} 云朵币`;
@@ -543,7 +528,6 @@
     VIEW_WIDTH,
     VIEW_HEIGHT,
     WORLD_WIDTH,
-    TIME_LIMIT_MS,
     REWARD_CAP,
     LEVEL: Object.freeze({ platforms: PLATFORMS, checkpoint: CHECKPOINT, finish: FINISH }),
     createSession,

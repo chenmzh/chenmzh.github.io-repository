@@ -11,13 +11,12 @@
 
   const DEFAULT_WIDTH = 360;
   const DEFAULT_HEIGHT = 640;
-  const SESSION_DURATION_MS = 45_000;
+  const WAVE_DURATION_MS = 8_000;
+  const BOSS_WAVE_INTERVAL = 5;
   const PLAYER_SPEED = 260;
   const PLAYER_FIRE_INTERVAL_MS = 135;
   const PLAYER_INVULNERABLE_MS = 1_200;
   const REWARD_CAP = 300;
-  const SURVIVAL_BONUS = 3_000;
-  const LIFE_BONUS = 700;
   const GRAZE_SCORE = 30;
 
   function clamp(value, minimum, maximum) {
@@ -43,9 +42,6 @@
     const height = Number.isFinite(settings.height) && settings.height >= 360
       ? settings.height
       : DEFAULT_HEIGHT;
-    const durationMs = Number.isFinite(settings.durationMs) && settings.durationMs > 0
-      ? settings.durationMs
-      : SESSION_DURATION_MS;
     const seed = Number.isInteger(settings.seed) ? settings.seed >>> 0 : 0xC10D5EED;
 
     return {
@@ -53,12 +49,11 @@
       finishedReason: null,
       width,
       height,
-      durationMs,
       elapsedMs: 0,
       seed,
       nextId: 1,
       wave: 1,
-      bossSpawned: false,
+      lastBossWave: 0,
       spawnCooldownMs: 420,
       score: 0,
       reward: 0,
@@ -108,7 +103,11 @@
   }
 
   function waveForTime(elapsedMs) {
-    return Math.min(5, 1 + Math.floor(elapsedMs / 8_000));
+    return 1 + Math.floor(elapsedMs / WAVE_DURATION_MS);
+  }
+
+  function difficultyForWave(wave) {
+    return Math.min(10, Math.max(1, wave));
   }
 
   function addPlayerBullet(state) {
@@ -125,7 +124,7 @@
 
   function addAimedEnemyBullet(state, enemy, angleOffset, speedMultiplier) {
     const baseAngle = Math.atan2(state.player.y - enemy.y, state.player.x - enemy.x);
-    const speed = (118 + state.wave * 14) * (speedMultiplier || 1);
+    const speed = (118 + difficultyForWave(state.wave) * 14) * (speedMultiplier || 1);
     const angle = baseAngle + angleOffset;
     state.enemyBullets.push({
       id: state.nextId++,
@@ -156,15 +155,16 @@
   function spawnEnemy(state) {
     const margin = 28;
     const x = margin + nextRandom(state) * (state.width - margin * 2);
+    const difficulty = difficultyForWave(state.wave);
     const sturdy = state.wave >= 4 && nextRandom(state) > 0.7;
-    const hp = sturdy ? 3 : 1 + Math.floor((state.wave - 1) / 2);
+    const hp = sturdy ? Math.min(6, 3 + Math.floor((difficulty - 4) / 3)) : Math.min(5, 1 + Math.floor((difficulty - 1) / 2));
     state.enemies.push({
       id: state.nextId++,
       type: sturdy ? "carrier" : "scout",
       x,
       y: -24,
-      vx: (nextRandom(state) - 0.5) * (24 + state.wave * 5),
-      vy: 48 + state.wave * 10,
+      vx: (nextRandom(state) - 0.5) * (24 + difficulty * 5),
+      vy: 48 + difficulty * 10,
       radius: sturdy ? 18 : 13,
       hp,
       maxHp: hp,
@@ -174,7 +174,9 @@
   }
 
   function spawnBoss(state) {
-    state.bossSpawned = true;
+    state.lastBossWave = state.wave;
+    const bossCycle = Math.floor(state.wave / BOSS_WAVE_INTERVAL);
+    const hp = Math.min(96, 40 + bossCycle * 8);
     state.enemies.push({
       id: state.nextId++,
       type: "boss",
@@ -183,10 +185,10 @@
       vx: 58,
       vy: 0,
       radius: 34,
-      hp: 48,
-      maxHp: 48,
+      hp,
+      maxHp: hp,
       fireCooldownMs: 260,
-      points: 5_000,
+      points: 4_000 + bossCycle * 1_000,
     });
   }
 
@@ -200,9 +202,6 @@
       return state;
     }
 
-    if (reason === "cleared") {
-      state.score += SURVIVAL_BONUS + state.player.lives * LIFE_BONUS;
-    }
     state.status = "finished";
     state.finishedReason = reason;
     state.reward = getReward(state.score);
@@ -235,8 +234,7 @@
       return state;
     }
 
-    const remainingMs = Math.max(0, state.durationMs - state.elapsedMs);
-    const frameMs = Math.min(dtMs, remainingMs);
+    const frameMs = dtMs;
     const dt = frameMs / 1_000;
     const movement = normalizeInput(input);
 
@@ -287,17 +285,18 @@
         fireEnemy(state, enemy);
         enemy.fireCooldownMs += enemy.type === "boss"
           ? 560
-          : Math.max(720, 1_320 - state.wave * 105);
+          : Math.max(720, 1_320 - difficultyForWave(state.wave) * 105);
       }
     }
 
     state.spawnCooldownMs -= frameMs;
-    while (state.spawnCooldownMs <= 0 && state.elapsedMs < 39_500) {
+    while (state.spawnCooldownMs <= 0) {
       spawnEnemy(state);
-      const interval = Math.max(430, 1_020 - state.wave * 105);
+      const interval = Math.max(430, 1_020 - difficultyForWave(state.wave) * 105);
       state.spawnCooldownMs += interval;
     }
-    if (!state.bossSpawned && state.elapsedMs >= 32_000) {
+    const bossIsActive = state.enemies.some((enemy) => enemy.type === "boss");
+    if (state.wave % BOSS_WAVE_INTERVAL === 0 && state.lastBossWave !== state.wave && !bossIsActive) {
       spawnBoss(state);
     }
 
@@ -369,11 +368,10 @@
     ));
     state.enemies = state.enemies.filter((enemy) => !defeatedEnemies.has(enemy.id));
 
-    if (state.status === "running" && state.elapsedMs >= state.durationMs) {
-      finishSession(state, "cleared");
-    } else {
-      state.reward = getReward(state.score);
-    }
+    state.playerBullets = state.playerBullets.slice(-90);
+    state.enemyBullets = state.enemyBullets.slice(-260);
+    state.enemies = state.enemies.slice(-48);
+    state.reward = getReward(state.score);
 
     return state;
   }
@@ -462,7 +460,7 @@
     context.fillStyle = "#f6fbff";
     context.textAlign = "right";
     context.fillText(`LIFE ${"◆".repeat(Math.max(0, state.player.lives))}`, state.width - 20, 18);
-    context.fillText(`${Math.max(0, Math.ceil((state.durationMs - state.elapsedMs) / 1_000))}s  WAVE ${state.wave}`, state.width - 20, 37);
+    context.fillText(`ENDLESS  WAVE ${state.wave}`, state.width - 20, 37);
     context.restore();
   }
 
@@ -500,7 +498,7 @@
       context.textAlign = "center";
       context.fillStyle = "#ffffff";
       context.font = "800 30px system-ui, sans-serif";
-      context.fillText(state.finishedReason === "cleared" ? "航线完成！" : "返航整备", state.width / 2, state.height / 2 - 42);
+      context.fillText("生命耗尽 · 返航整备", state.width / 2, state.height / 2 - 42);
       context.fillStyle = "#ffd166";
       context.font = "800 22px system-ui, sans-serif";
       context.fillText(`获得 ${state.reward} 云朵币`, state.width / 2, state.height / 2 + 4);
@@ -532,14 +530,18 @@
     let frameRequest = null;
     let lastFrameTime = null;
     let lastScore = null;
+    let lastWave = null;
+    let lastLives = null;
     let finishReported = false;
     let pointerId = null;
     let pointerOriginX = 0;
     let pointerOriginY = 0;
 
     function reportScore() {
-      if (session.score !== lastScore) {
+      if (session.score !== lastScore || session.wave !== lastWave || session.player.lives !== lastLives) {
         lastScore = session.score;
+        lastWave = session.wave;
+        lastLives = session.player.lives;
         onScore(session.score, session.reward, session);
       }
     }
@@ -576,12 +578,13 @@
       session = createSession({
         width: canvas.width,
         height: canvas.height,
-        durationMs: settings.durationMs,
         seed: Number.isInteger(settings.seed) ? settings.seed : Date.now() >>> 0,
       });
       finishReported = false;
       lastFrameTime = null;
       lastScore = null;
+      lastWave = null;
+      lastLives = null;
       drawSession(context, session);
       reportScore();
       frameRequest = root.requestAnimationFrame(frame);
@@ -682,7 +685,8 @@
   }
 
   return {
-    SESSION_DURATION_MS,
+    WAVE_DURATION_MS,
+    BOSS_WAVE_INTERVAL,
     REWARD_CAP,
     GRAZE_SCORE,
     createSession,

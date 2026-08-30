@@ -138,6 +138,7 @@
   let arcadeRun = null;
   let arcadeSessionToken = 0;
   let audioContext = null;
+  let arcadeMusicPlayer = null;
 
   function isValidState(candidate) {
     return candidate
@@ -238,21 +239,49 @@
     `;
   }
 
+  function getAudioContext() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) throw new Error("当前浏览器不支持 Web Audio 声音");
+    audioContext ||= new AudioContextClass();
+    return audioContext;
+  }
+
+  function getArcadeMusicPlayer() {
+    if (!window.CloudArcadeMusic?.createPlayer) throw new Error("街机配乐脚本未加载");
+    arcadeMusicPlayer ||= window.CloudArcadeMusic.createPlayer({ getContext: getAudioContext });
+    return arcadeMusicPlayer;
+  }
+
+  function startArcadeMusic(mode) {
+    if (!state.soundOn) {
+      elements.arcadeLive.dataset.musicActive = "false";
+      return;
+    }
+    getArcadeMusicPlayer().start(mode);
+    elements.arcadeLive.dataset.musicActive = "true";
+  }
+
+  function stopArcadeMusic() {
+    if (arcadeMusicPlayer) arcadeMusicPlayer.stop();
+    elements.arcadeLive.dataset.musicActive = "false";
+  }
+
   function playNotes(notes, noteLength = 0.1) {
     if (!state.soundOn) return;
     try {
-      audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-      const start = audioContext.currentTime;
+      const context = getAudioContext();
+      if (context.state === "suspended") context.resume().catch(() => {});
+      const start = context.currentTime;
       notes.forEach((frequency, index) => {
-        const oscillator = audioContext.createOscillator();
-        const gain = audioContext.createGain();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
         const noteStart = start + index * noteLength * 0.72;
         oscillator.type = index % 2 ? "triangle" : "sine";
         oscillator.frequency.value = frequency;
         gain.gain.setValueAtTime(0.0001, noteStart);
         gain.gain.exponentialRampToValueAtTime(0.065, noteStart + 0.015);
         gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + noteLength);
-        oscillator.connect(gain).connect(audioContext.destination);
+        oscillator.connect(gain).connect(context.destination);
         oscillator.start(noteStart);
         oscillator.stop(noteStart + noteLength + 0.03);
       });
@@ -719,6 +748,7 @@
 
   function destroyArcade(clearRun = false) {
     arcadeSessionToken += 1;
+    stopArcadeMusic();
     if (arcadeController) arcadeController.destroy();
     arcadeController = null;
     if (clearRun) arcadeRun = null;
@@ -740,11 +770,12 @@
       arcadeRun,
     ));
     const statusBits = [];
-    if (Number.isFinite(nextDetails.remainingMs)) statusBits.push(`剩余 ${Math.ceil(nextDetails.remainingMs / 1000)} 秒`);
     if (Number.isFinite(nextDetails.lines)) statusBits.push(`消除 ${nextDetails.lines} 行`);
     if (Number.isFinite(nextDetails.level)) statusBits.push(`等级 ${nextDetails.level}`);
-    if (Number.isFinite(nextDetails.lives)) statusBits.push(`生命 ${nextDetails.lives}`);
-    elements.arcadeStatus.textContent = statusBits.length ? statusBits.join(" · ") : "夜班进行中 · 分数越高，入账越多";
+    if (Number.isFinite(nextDetails.wave)) statusBits.push(`波次 ${nextDetails.wave}`);
+    const lives = Number.isFinite(nextDetails.lives) ? nextDetails.lives : nextDetails.player?.lives;
+    if (Number.isFinite(lives)) statusBits.push(`生命 ${lives}`);
+    elements.arcadeStatus.textContent = statusBits.length ? `无限时 · ${statusBits.join(" · ")}` : "无限时夜班 · 分数越高，入账越多";
   }
 
   function finishArcade(payload, token) {
@@ -771,7 +802,7 @@
       renderShelf();
       hideEarningViews();
       elements.arcadeResult.hidden = false;
-      const cleared = ["won", "clear", "cleared", "time"].includes(finishedRun.reason);
+      const cleared = ["won", "clear", "cleared"].includes(finishedRun.reason);
       elements.arcadeResultStamp.textContent = cleared ? "STAGE COMPLETE" : "SHIFT COMPLETE";
       elements.arcadeResultReason.textContent = cleared ? "漂亮完成，夜班奖金已经记账" : "本轮结束，沿途分数已经换成云朵币";
       elements.arcadeFinalScore.textContent = String(score).padStart(6, "0");
@@ -810,7 +841,7 @@
       elements.arcadeModeBadge.textContent = config.label;
       elements.arcadeScore.textContent = "000000";
       elements.arcadeCoinPreview.textContent = "0";
-      elements.arcadeStatus.textContent = "夜班进行中 · 分数越高，入账越多";
+      elements.arcadeStatus.textContent = "无限时夜班 · 分数越高，入账越多";
       elements.arcadeLiveInstructions.textContent = config.instructions;
       elements.arcadeTouchControls.hidden = mode !== "tetris";
 
@@ -834,7 +865,7 @@
       }
       arcadeController.start();
       elements.arcadeCanvas.focus({ preventScroll: true });
-      playNotes(mode === "shooter" ? [220, 330, 440, 660] : [294, 392, 523], 0.09);
+      startArcadeMusic(mode);
     } catch (error) {
       destroyArcade(true);
       hideEarningViews();
@@ -1095,8 +1126,10 @@
     saveState();
     renderWallet();
     if (state.soundOn) {
-      playNotes([392, 523], 0.09);
+      if (arcadeRun?.active) startArcadeMusic(arcadeRun.mode);
+      else playNotes([392, 523], 0.09);
     } else {
+      stopArcadeMusic();
       Object.values(revealSounds).forEach((audio) => {
         audio.pause();
         audio.currentTime = 0;
@@ -1145,6 +1178,10 @@
 
   elements.restartGameButton.addEventListener("click", restartWholeGame);
   elements.resetGame.addEventListener("click", restartWholeGame);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopArcadeMusic();
+    else if (arcadeRun?.active && state.soundOn) startArcadeMusic(arcadeRun.mode);
+  });
   window.addEventListener("beforeunload", () => destroyArcade(true));
 
   async function startGame() {

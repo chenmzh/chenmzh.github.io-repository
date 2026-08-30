@@ -7,7 +7,6 @@
 
   const BOARD_WIDTH = 10;
   const BOARD_HEIGHT = 20;
-  const SHIFT_DURATION_MS = 60_000;
   const REWARD_CAP = 360;
   const LINE_SCORES = Object.freeze([0, 120, 360, 620, 1_000]);
 
@@ -177,10 +176,8 @@
   function createSession(options = {}) {
     const width = options.width === undefined ? BOARD_WIDTH : options.width;
     const height = options.height === undefined ? BOARD_HEIGHT : options.height;
-    const durationMs = options.durationMs === undefined ? SHIFT_DURATION_MS : options.durationMs;
     const random = options.random === undefined ? Math.random : options.random;
     if (typeof random !== "function") throw new Error("random 必须是函数");
-    if (!Number.isFinite(durationMs) || durationMs <= 0) throw new Error("营业时长无效");
 
     const board = options.board === undefined ? createBoard(width, height) : cloneBoard(options.board);
     assertBoard(board, width, height);
@@ -190,7 +187,6 @@
     const session = {
       width,
       height,
-      durationMs,
       random,
       pieceSequence,
       sequenceIndex: 0,
@@ -314,7 +310,7 @@
   }
 
   function renderGame(context, session, view) {
-    const { width, height, remainingMs, running } = view;
+    const { width, height, running } = view;
     context.clearRect(0, 0, width, height);
 
     const sky = context.createLinearGradient(0, 0, 0, height);
@@ -382,8 +378,8 @@
       context.font = "700 14px ui-rounded, 'Hiragino Sans GB', sans-serif";
       context.fillText("云朵叠叠乐", margin, 12);
       context.font = "800 22px ui-rounded, 'Hiragino Sans GB', sans-serif";
-      context.fillStyle = remainingMs <= 10_000 ? "#ff8a91" : "#ffe267";
-      context.fillText(`${Math.ceil(remainingMs / 1000)}s`, margin, 34);
+      context.fillStyle = "#ffe267";
+      context.fillText("无限时", margin, 34);
       context.fillStyle = "#fff7df";
       context.font = "700 13px ui-rounded, 'Hiragino Sans GB', sans-serif";
       context.fillText(`分数 ${session.score}`, margin + 77, 38);
@@ -406,10 +402,10 @@
       context.fillText("云朵叠叠乐", panelX + 14, panelY + 16);
       context.font = "600 11px ui-rounded, 'Hiragino Sans GB', sans-serif";
       context.fillStyle = "rgba(255,255,255,.63)";
-      context.fillText("营业倒计时", panelX + 14, panelY + 50);
-      context.font = "800 28px ui-rounded, 'Hiragino Sans GB', sans-serif";
-      context.fillStyle = remainingMs <= 10_000 ? "#ff8a91" : "#ffe267";
-      context.fillText(`${Math.ceil(remainingMs / 1000)}s`, panelX + 14, panelY + 66);
+      context.fillText("无限营业", panelX + 14, panelY + 50);
+      context.font = "800 19px ui-rounded, 'Hiragino Sans GB', sans-serif";
+      context.fillStyle = "#ffe267";
+      context.fillText("堆满才结算", panelX + 14, panelY + 69);
       context.font = "700 13px ui-rounded, 'Hiragino Sans GB', sans-serif";
       context.fillStyle = "#fff7df";
       context.fillText(`分数  ${session.score}`, panelX + 14, panelY + 112);
@@ -443,16 +439,14 @@
     if (!context) throw new Error("浏览器无法创建 2D 画布");
     const onScore = typeof options.onScore === "function" ? options.onScore : function noop() {};
     const onFinish = typeof options.onFinish === "function" ? options.onFinish : function noop() {};
-    const durationMs = options.durationMs === undefined ? SHIFT_DURATION_MS : options.durationMs;
-    let session = createSession({ random: options.random, durationMs });
+    let session = createSession({ random: options.random });
     let running = false;
     let destroyed = false;
     let frameId = null;
-    let startTime = 0;
     let lastDropTime = 0;
-    let remainingMs = durationMs;
     let lastReportedScore = -1;
-    let lastReportedSecond = -1;
+    let lastReportedLines = -1;
+    let lastReportedLevel = -1;
 
     const timing = typeof performance !== "undefined" && typeof performance.now === "function"
       ? () => performance.now()
@@ -480,20 +474,22 @@
 
     function render() {
       const size = sizeCanvas();
-      renderGame(context, session, { ...size, remainingMs, running });
+      renderGame(context, session, { ...size, running });
     }
 
     function reportScore(force = false) {
-      const second = Math.ceil(remainingMs / 1000);
-      if (!force && session.score === lastReportedScore && second === lastReportedSecond) return;
+      if (!force
+        && session.score === lastReportedScore
+        && session.lines === lastReportedLines
+        && session.level === lastReportedLevel) return;
       lastReportedScore = session.score;
-      lastReportedSecond = second;
+      lastReportedLines = session.lines;
+      lastReportedLevel = session.level;
       onScore({
         score: session.score,
         lines: session.lines,
         level: session.level,
         reward: getReward(session.score, session.lines),
-        remainingMs,
       });
     }
 
@@ -522,9 +518,9 @@
 
     function tick(now) {
       if (!running || destroyed) return;
-      remainingMs = Math.max(0, durationMs - (now - startTime));
       let steps = 0;
       const interval = getFallInterval(session.level);
+      lastDropTime = Math.max(lastDropTime, now - interval * 5);
       while (now - lastDropTime >= interval && steps < 5 && running) {
         lastDropTime += interval;
         const result = stepSession(session);
@@ -535,10 +531,6 @@
           return;
         }
       }
-      if (remainingMs <= 0) {
-        finish("time");
-        return;
-      }
       reportScore();
       render();
       frameId = requestFrame(tick);
@@ -547,12 +539,11 @@
     function start() {
       if (destroyed) throw new Error("这个落块游戏实例已经销毁");
       if (running) return;
-      session = createSession({ random: options.random, durationMs });
-      remainingMs = durationMs;
+      session = createSession({ random: options.random });
       lastReportedScore = -1;
-      lastReportedSecond = -1;
-      startTime = timing();
-      lastDropTime = startTime;
+      lastReportedLines = -1;
+      lastReportedLevel = -1;
+      lastDropTime = timing();
       running = true;
       reportScore(true);
       render();
@@ -651,7 +642,6 @@
   return Object.freeze({
     BOARD_WIDTH,
     BOARD_HEIGHT,
-    SHIFT_DURATION_MS,
     REWARD_CAP,
     LINE_SCORES,
     PIECES,
