@@ -131,6 +131,7 @@
   let startupMessage = "";
   let toastTimer = null;
   let revealTimers = [];
+  let revealScrollAnchor = null;
   let packingRound = null;
   let packingEndsAt = 0;
   let packingInterval = null;
@@ -590,6 +591,7 @@
     elements.revealQuote.textContent = `“${character.quote}”`;
     elements.unlockTicket.innerHTML = `${unlock.label}<small>${copyCount === 1 ? character.ability : copyCount === 2 ? "橱窗里的角色现在会佩戴一枚金色店章。" : copyCount === 3 ? "角色现在会带着像素爱心开心地跳起来。" : "更高星级会记录在橱窗名牌上。"}</small>`;
     elements.revealConfetti.innerHTML = "";
+    revealScrollAnchor = window.scrollY;
     elements.revealDialog.showModal();
 
     scheduleReveal(() => {
@@ -651,6 +653,17 @@
     clearRevealTimers();
     elements.revealDialog.close();
     elements.revealStatus.hidden = false;
+    const anchor = revealScrollAnchor;
+    revealScrollAnchor = null;
+    const bag = state.currentCase.bags[state.currentCase.selectedIndex];
+    const remaining = bag ? logic.countUnrevealedBlindBoxes(bag) : 0;
+    if (remaining > 0) {
+      // 这一袋还有盲盒待开：留在托盘原位，别跳回顶部。
+      if (Number.isFinite(anchor)) {
+        window.scrollTo(0, anchor);
+      }
+      return;
+    }
     if (destination === "cabinet") {
       document.querySelector("#cabinet").scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" });
     } else {
