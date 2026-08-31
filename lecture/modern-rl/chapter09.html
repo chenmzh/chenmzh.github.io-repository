@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hands-On Modern RL 第九章：从策略分布漂移出发，理解怎样用分布约束、概率比裁剪与多步信号稳定策略更新。">
+  <meta name="theme-color" content="#f7f7f3">
+  <title>第 9 章 · 策略更新太猛，为什么会把自己学坏？ | Modern RL</title>
+  <link rel="stylesheet" href="../iml26/katex/katex.min.css">
+  <link rel="stylesheet" href="./minimal.css?v=2">
+  <link rel="stylesheet" href="./editorial.css?v=1">
+  <link rel="stylesheet" href="./chapter01-insights.css?v=1">
+  <link rel="stylesheet" href="./chapter01-terms.css?v=1">
+  <link rel="stylesheet" href="./chapter09.css?v=1">
+</head>
+<body class="mrl-page">
+  <header class="mrl-min-header">
+    <a class="mrl-min-brand" href="./">
+      <small>Hands-On Modern Reinforcement Learning</small>
+      <span>Chapter 09 · 策略更新太猛，为什么会把自己学坏？</span>
+    </a>
+    <nav class="mrl-min-links" aria-label="页面导航">
+      <a href="./">目录</a>
+      <a href="./chapter08.html">上一章</a>
+      <a href="./chapter10.html">下一章</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter10_ppo" target="_blank" rel="noopener">原章 ↗</a>
+    </nav>
+  </header>
+
+  <div class="mrl-chapter-layout">
+    <nav class="mrl-toc" aria-label="本章目录">
+      <p class="mrl-rail-label">Chapter 09</p>
+      <a href="#shock">一次好成绩也会教坏策略</a>
+      <a href="#old-policy">先冻结采样快照</a>
+      <a href="#importance">把旧分布翻译成新分布</a>
+      <a href="#surrogate">代理目标为何只是代理</a>
+      <a href="#trust-region">用分布距离约束整次更新</a>
+      <a href="#ppo-clip">用概率比限制有利过冲</a>
+      <a href="#ratio-lab">实验：比率与裁剪</a>
+      <a href="#gae-need">优势信号也会摇摆</a>
+      <a href="#gae-derive">把不同长度的优势信号加权</a>
+      <a href="#gae-lab">实验：λ 把信号传多远</a>
+      <a href="#code">公式落到训练循环</a>
+      <a href="#takeaways">理解检查</a>
+      <div class="mrl-progress">
+        <span class="mrl-small">Reading progress</span>
+        <div class="mrl-progress-track"><div class="mrl-progress-fill" id="readingProgress"></div></div>
+      </div>
+    </nav>
+
+    <main class="mrl-article" id="chapterContent" aria-live="polite">
+      <section class="mrl-chapter-hero">
+        <div class="mrl-eyebrow">Loading chapter…</div>
+        <h1>正在加载第九章</h1>
+      </section>
+    </main>
+  </div>
+
+  <script src="../iml26/katex/katex.min.js"></script>
+  <script src="../iml26/katex/auto-render.min.js"></script>
+  <script src="./chapter09.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<section id="model-based">
+  <h2 class="mrl-sec-title"><span class="num">07</span>复用真实经验还不够：能否学习一台环境模拟器？</h2>
+  <p class="mrl-sec-lead">DDPG、TD3 与 SAC 都是 <strong>model-free reinforcement learning（无模型强化学习）</strong>：它们学习价值或策略，却不显式训练一个“给定状态与动作，下一步会发生什么”的预测器。</p>
+
+  <p><strong>model-based reinforcement learning（基于模型的强化学习）</strong>显式学习近似环境：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\hat p_\psi(s_{t+1},r_t\mid s_t,a_t).$$</div>
+  <p>$\psi$ 是模型参数，帽子表示它只是对真实环境 $p$ 的近似。模型可以直接预测下一状态与奖励，也可以在 latent state（隐状态）中预测与决策相关的未来。本文把这种<strong>学习环境动力学、供预测、规划或想象训练使用的模型</strong>称为 <strong>world model（世界模型）</strong>。</p>
+
+  <div class="mrl-world-stack">
+    <article><span>REAL DATA</span><h3>少量真实 transition</h3><p>真实环境提供 $(s_t,a_t,r_t,s_{t+1})$，既训练世界模型，也校正它没见过的新区域。</p></article>
+    <i>→</i>
+    <article><span>LEARNED DYNAMICS</span><h3>$\hat p_\psi(s',r\mid s,a)$</h3><p>学习动作如何改变状态以及会产生什么奖励；模型质量决定想象数据有多可信。</p></article>
+    <i>→</i>
+    <article><span>USE THE MODEL</span><h3>生成、规划或想象</h3><p>生成短轨迹训练策略，比较候选动作序列，或在隐空间中训练 Actor–Critic。</p></article>
+  </div>
+  <p class="mrl-caption">样本效率提升来自中间这一层：一次真实 transition 不只更新策略，还改进可重复调用的动力学模型；代价是后续学习开始依赖模型是否说真话。</p>
+
+  <h3>世界模型有三种常见用法</h3>
+  <p>规划路线的典型方法包括 <strong>Probabilistic Ensembles with Trajectory Sampling（PETS，概率集成轨迹采样）</strong>与 <strong>Model Predictive Control（MPC，模型预测控制）</strong>：前者用多个概率模型表达预测分歧，后者每次比较未来动作序列、只执行第一步后重新规划。</p>
+  <table class="mrl-compact-table">
+    <thead><tr><th>用法</th><th>模型在循环里做什么</th><th>代表思路</th><th>主要代价</th></tr></thead>
+    <tbody>
+      <tr><td>数据增强</td><td>从真实状态出发生成短 rollout，再训练策略</td><td>Dyna、短程模型 rollout</td><td>模型偏差会污染训练数据</td></tr>
+      <tr><td>在线规划</td><td>预测多条动作序列，只执行第一步后重新规划</td><td>PETS、MPC</td><td>每个真实动作前要做大量模型计算</td></tr>
+      <tr><td>隐空间想象</td><td>编码历史，在 learned latent dynamics 内训练 Actor–Critic</td><td>Dreamer</td><td>表示、动力学与价值必须共同稳定</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">三行共享同一个学习动力学，却把模型放在不同位置：作为数据生成器、决策时规划器或策略训练场。不要把“有世界模型”误等同于“部署时一定搜索”。</p>
+
+  <p>模型通常先最小化一步预测误差。以确定性下一状态模型为例：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{dyn}}(\psi)=
+  \mathbb E_{(s,a,r,s')\sim\mathcal D}\left[
+  \|\hat f_\psi(s,a)-s'\|_2^2
+  +\lambda\big(\hat r_\psi(s,a)-r\big)^2
+  \right].$$</div>
+  <p>第一项训练动力学 $\hat f_\psi$，第二项训练奖励预测；$\lambda$ 平衡两个尺度。但“一步平均误差小”不保证“策略会信任的多步区域也准确”。策略会主动寻找模型里看起来高回报的位置，甚至可能利用模型尚未学好的漏洞。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>世界模型把真实样本成本换成了模型偏差与计算成本</h3>
+      <p>模型能反复生成预测，真实环境不必为每次策略更新都重新付费；但策略训练开始依赖一个会犯错的代理世界。</p>
+      <p class="mrl-insight-key">Model-based 不是免费制造真经验，而是购买一台便宜模拟器，并为它设置可验证的使用边界。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="rollout-error">
+  <h2 class="mrl-sec-title"><span class="num">08</span>单步只错一点，反复把预测喂回模型会怎样？</h2>
+  <p class="mrl-sec-lead">世界模型最危险的地方不是一次预测明显错误，而是每次都只偏一点、长 rollout 却逐步离开真实轨迹。</p>
+
+  <p>先隔离一个最小问题：<strong>预先固定同一条动作序列 $(a_0,\ldots,a_{H-1})$</strong>，让真实轨迹和模型轨迹在第 $h$ 步都使用同一个 $a_h$，只分析模型状态误差怎样累积。设真实确定性动力学为 $s_{h+1}=f(s_h,a_h)$，模型为 $\hat s_{h+1}=\hat f(\hat s_h,a_h)$。假设模型在相关区域的单步误差至多为 $\epsilon$：</p>
+  <div class="mrl-equation">$$\|\hat f(x,a)-f(x,a)\|\le\epsilon,$$</div>
+  <p>并假设真实动力学对状态满足 Lipschitz 条件：</p>
+  <div class="mrl-equation">$$\|f(x,a)-f(y,a)\|\le L\|x-y\|.$$</div>
+  <p>记第 $h$ 步状态误差 $e_h=\|\hat s_h-s_h\|$。插入并减去 $f(\hat s_h,a_h)$，再用三角不等式：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  e_{h+1}
+  &=\|\hat f(\hat s_h,a_h)-f(s_h,a_h)\|\\
+  &\le \underbrace{\|\hat f(\hat s_h,a_h)-f(\hat s_h,a_h)\|}_{\le\epsilon}
+  +\underbrace{\|f(\hat s_h,a_h)-f(s_h,a_h)\|}_{\le Le_h}\\
+  &\le\epsilon+Le_h.
+  \end{aligned}$$</div>
+  <p>若 rollout 从真实状态开始，$e_0=0$。逐步展开：</p>
+  <div class="mrl-equation mrl-equation-feature">$$e_H\le\epsilon\sum_{i=0}^{H-1}L^i
+  =\begin{cases}
+  H\epsilon,&L=1,\\[4pt]
+  \epsilon\dfrac{L^H-1}{L-1},&L\ne1.
+  \end{cases}$$</div>
+
+  <p>这个上界<strong>不是一般闭环策略 rollout 的保证</strong>。若真实轨迹用 $a_h=\pi(s_h)$、模型轨迹用 $\hat a_h=\pi(\hat s_h)$，状态一旦偏离，动作也可能偏离；递推还需加入动力学对动作的敏感度，并对策略的平滑性或稳定性作额外假设。没有这些条件时，闭环误差可能比下面的固定动作序列诊断增长得更快。</p>
+
+  <p>取 $\epsilon=0.01,L=1.1$，上界随想象长度变化：</p>
+  <table class="mrl-error-table">
+    <thead><tr><th>rollout horizon $H$</th><th>误差上界</th><th>相对单步误差</th><th>该怎样读</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>0.0100</td><td>1.0×</td><td>只承担一次模型误差</td></tr>
+      <tr><td>5</td><td>0.0611</td><td>6.1×</td><td>短 rollout 尚可能可控</td></tr>
+      <tr><td>10</td><td>0.1594</td><td>15.9×</td><td>误差开始明显放大</td></tr>
+      <tr><td>20</td><td>0.5727</td><td>57.3×</td><td>预测状态可能显著漂移</td></tr>
+      <tr><td>50</td><td>11.6391</td><td>1163.9×</td><td>上界已失去实用精度</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">在真实轨迹与模型轨迹共用同一条预定动作序列的前提下，真正要观察的是 horizon 的因果作用：单步误差 $\epsilon$ 没变，只因预测状态被再次当作输入，$L>1$ 时误差上界就从近似线性增长转向快速放大；闭环策略还会多出动作偏差。</p>
+
+  <p>这解释了 <strong>Model-Based Policy Optimization（MBPO，基于模型的策略优化）</strong> 为什么偏爱短 rollout：从 replay 中的真实状态起步，只想象少数几步，就把模型生成的 transition 交给 SAC 等异策略算法。horizon 不是越长越好；它是一笔“对模型连续相信多少步”的预算。模型早期不准时可取 1，模型改善后再逐渐增加。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“一步验证集误差很小，所以模型可以无限 rollout。”</strong> 不对。训练指标衡量常见输入上的一步平均误差；多步预测会改变自己的输入分布，并把早先偏差带入后续状态。必须单独验证多步 rollout 与策略实际访问区域。</p>
+  </div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把公式落到代码：哪些参数正在实现哪条机制？</h2>
+  <p class="mrl-sec-lead">上游固定版本提供 HalfCheetah 连续控制对照和 SAC 训练脚本。下面不复制整套训练，而是把关键参数映射回本章公式。</p>
+
+  <div class="mrl-code-pair">
+    <div>
+      <span>TD3 · DETERMINISTIC OFF-POLICY</span>
+      <pre class="mrl-code"><code>td3 = TD3(
+    "MlpPolicy", env,
+    buffer_size=100_000,
+    batch_size=256,
+    tau=0.005,
+    policy_delay=2,
+    action_noise=NormalActionNoise(
+        mean=zeros(action_dim),
+        sigma=0.1 * ones(action_dim),
+    ),
+)</code></pre>
+    </div>
+    <div>
+      <span>SAC · STOCHASTIC OFF-POLICY</span>
+      <pre class="mrl-code"><code>sac = SAC(
+    "MlpPolicy", env,
+    buffer_size=100_000,
+    batch_size=256,
+    tau=0.005,
+    ent_coef="auto",
+    train_freq=1,
+    gradient_steps=1,
+)</code></pre>
+    </div>
+  </div>
+  <p class="mrl-caption">代码差异应沿本章机制阅读：<code>policy_delay</code> 与 <code>action_noise</code> 对应 TD3 的延迟确定性策略；<code>ent_coef="auto"</code> 对应 SAC 的自动温度，而两者都用 buffer 和软更新复用、稳定旧经验。</p>
+
+  <table class="mrl-compact-table">
+    <thead><tr><th>数学/机制</th><th>上游程序变量</th><th>作用</th></tr></thead>
+    <tbody>
+      <tr><td>经验集合 $\mathcal D$</td><td><code>buffer_size=100_000</code></td><td>保存旧 transition，供异策略 mini-batch 复用</td></tr>
+      <tr><td>$\tau$ 软更新</td><td><code>tau=0.005</code></td><td>目标网络每步只跟随在线网络 0.5%</td></tr>
+      <tr><td>延迟 Actor</td><td><code>policy_delay=2</code></td><td>TD3 每两次 Critic 更新才更新一次策略</td></tr>
+      <tr><td>行为探索噪声</td><td><code>NormalActionNoise</code></td><td>让确定性 TD3 在采数据时尝试邻近动作</td></tr>
+      <tr><td>自动温度 $\alpha$</td><td><code>ent_coef="auto"</code></td><td>SAC 学习奖励与目标熵之间的权衡</td></tr>
+      <tr><td>连续动作维数</td><td><code>action_dim = 6</code></td><td>HalfCheetah 同时控制六个关节力矩</td></tr>
+    </tbody>
+  </table>
+
+  <h3>短模型 rollout 的概念代码</h3>
+  <pre class="mrl-code"><code># 真实数据只负责落脚和校正模型
+real_buffer.add(state, action, reward, next_state, terminated)
+world_model.fit(real_buffer.sample())
+
+# 每段想象都从真实访问过的状态起步
+sim_state = real_buffer.sample_state()
+for _ in range(short_horizon):
+    sim_action = policy.sample(sim_state)
+    sim_next, sim_reward, sim_terminal = world_model.predict(
+        sim_state, sim_action
+    )
+    model_buffer.add(
+        sim_state, sim_action, sim_reward, sim_next, sim_terminal
+    )
+    if sim_terminal:
+        break
+    sim_state = sim_next
+
+# 策略使用真实与短程想象的混合 batch
+policy.update(mix(real_buffer, model_buffer))</code></pre>
+  <p>注意循环里保存的是更新前的 <code>sim_state</code> 与模型返回的 <code>sim_next</code>，然后才推进状态；每段从真实 buffer 状态重新开始。代码没有把想象 transition 冒充真实观测，两个 buffer 的来源必须可追踪。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">10</span>检查你的理解：你能指出每个稳定性结构在防什么吗？</h2>
+  <p class="mrl-sec-lead">先遮住答案。不要只报算法名，要沿“动作怎么产生、target 怎么构造、真实数据怎么使用、误差会在哪里反馈”来解释。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 连续动作为什么不能直接照搬 DQN 的输出层与逐项 $\arg\max$？</summary><div class="inner">DQN 为每个有限动作输出一个 Q 值，能逐项比较；连续动作有无穷多个候选，多维时组合数更快爆炸。连续控制通常让 Critic 接收 $(s,a)$ 给标量，再训练 Actor 直接从 $s$ 产生可微动作。</div></details>
+    <details><summary>2. “随机策略”是否意味着 on-policy？请给出本章反例。</summary><div class="inner">不意味着。随机/确定描述策略输出，on/off-policy 描述行为数据与优化目标的关系。SAC 学随机策略，却从 replay buffer 复用旧策略产生的数据，因此是 off-policy。</div></details>
+    <details><summary>3. DDPG 的 Actor 为什么能从标量 $Q(s,a)$ 得到参数更新方向？</summary><div class="inner">链式法则把 Critic 对动作的斜率 $\nabla_aQ$ 与 Actor 输出对参数的 Jacobian $\nabla_\theta\mu_\theta(s)$ 相乘。前者说动作往哪边价值增加，后者说怎样改参数才能让动作往那边移动。</div></details>
+    <details><summary>4. TD3 的三个修正分别改变了哪里？</summary><div class="inner">Twin critics 在 target 数值上取较小估计，policy delay 降低 Actor 跟随 Critic 的频率，target policy smoothing 在目标动作附近加截断噪声、压平孤立 Q 尖峰。三者共同削弱错误乐观的正反馈。</div></details>
+    <details><summary>5. SAC target 中为什么是 $-\alpha\log\pi(a'\mid s')$？</summary><div class="inner">熵满足 $\mathcal H(\pi)=\mathbb E[-\log\pi]$。最大熵目标在奖励外加入 $\alpha\mathcal H$，因此单个采样动作对 soft continuation 的贡献写成 $-\alpha\log\pi(a'\mid s')$。</div></details>
+    <details><summary>6. 世界模型一步误差只有 0.01，为什么 50 步想象仍可能失效？</summary><div class="inner">即使真实轨迹和模型轨迹共用同一条预定动作序列，每一步把预测状态再次送入模型时，早先误差仍会先被动力学敏感度 $L$ 放大，再叠加新误差；本章 $L=1.1$ 的固定动作例中，50 步上界约为 11.64。闭环策略还会因状态偏差选出不同动作；没有额外平滑性假设时，这个上界不能直接套用，实际误差可能增长得更快。</div></details>
+    <details><summary>7. World model 与部署时搜索是否是同一件事？</summary><div class="inner">不是。学习动力学是共同基础，但模型可作短 rollout 数据生成器、在线规划器或隐空间训练场。MBPO 训练后可直接运行策略；PETS 则在每个真实动作前用模型规划。模型放在决策循环的哪里决定部署成本。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十章建立起来的两条效率链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>动作不可枚举</span><strong>Actor 直接产生连续动作</strong><small>DDPG</small></div>
+      <i>→</i>
+      <div><span>Critic 会高估</span><strong>min + delay + smoothing</strong><small>TD3</small></div>
+      <i>→</i>
+      <div><span>探索不应外挂</span><strong>随机策略 + entropy</strong><small>SAC</small></div>
+      <i>→</i>
+      <div><span>真实交互昂贵</span><strong>学习动力学 + 短想象</strong><small>WORLD MODEL</small></div>
+    </div>
+    <p>第一条效率来自不再枚举动作并复用旧经验；第二条效率来自让一次真实经验同时训练环境模型，再在可信的短 horizon 内重复使用这个模型。前者受价值估计误差约束，后者还额外受模型误差约束。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 11 章：如果连新的真实 transition 都不能再采，怎么办？</h3>
+    <p>本章所有异策略方法仍可回到环境继续探索，世界模型也能用新观测纠正自己。下一章将切断这条在线纠错通道：训练者只有一份固定历史数据，必须先理解这份数据允许自己可靠地学到什么。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 “DDPG”“TD3 与 SAC”“基于模型的强化学习”“搜索与世界模型”，以及 <code>ppo_td3_sac_comparison.py</code>、<code>sac_halfcheetah.py</code> 重新组织，不是原项目官方译本。互动 target 诊断与 rollout 误差数值表为本讲义重新设计。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 10</span><span><a href="./chapter09.html">← Chapter 09</a> · <a href="./">课程目录</a> · <a href="./chapter11.html">Chapter 11 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter11_continuous_control" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

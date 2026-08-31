@@ -28,7 +28,7 @@
     <p class="mrl-index-note">每章遵循同一个原则：先提出一个真实问题，再引入必要抽象；术语第一次出现时先解释，公式需要能翻译回环境里的量，实验需要能回答一个具体问题。内容参考 walkinglabs/hands-on-modern-rl 的主线，但讲解结构重新组织。</p>
 
     <section class="mrl-index-section" id="chapters">
-      <header><h2>Chapters</h2><span>01–05 published</span></header>
+      <header><h2>Chapters</h2><span>01–10 published</span></header>
       <div class="mrl-chapter-list">
         <a class="mrl-chapter-row" href="./chapter01.html">
           <span class="mrl-row-num">01</span>
@@ -55,9 +55,34 @@
           <span><span class="mrl-row-title">等不到结局，能不能先学？</span><span class="mrl-row-copy">从“更新目标来自哪里”出发，比较完整模型、完整回合和单步经验三种信息条件，再连接到同策略与异策略控制。</span></span>
           <span class="mrl-row-state live">READ →</span>
         </a>
-        <div class="mrl-chapter-row">
+        <a class="mrl-chapter-row" href="./chapter06.html">
           <span class="mrl-row-num">06</span>
-          <span><span class="mrl-row-title">让神经网络估计动作价值</span><span class="mrl-row-copy">当状态太多、表格装不下时，怎样用参数化函数近似动作价值，并理解经验回放与目标网络为何能稳定学习。</span></span>
+          <span><span class="mrl-row-title">让神经网络估计动作价值</span><span class="mrl-row-copy">当状态太多、表格装不下时，怎样用参数化函数近似动作价值，并用打散相关经验、放慢训练目标变化来稳定学习。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter07.html">
+          <span class="mrl-row-num">07</span>
+          <span><span class="mrl-row-title">不比较每个动作的 Q，能不能直接改策略？</span><span class="mrl-row-copy">从随机动作分布和轨迹概率出发，把整条轨迹的结果变成更新方向，理解怎样提高好动作被再次采样的概率。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter08.html">
+          <span class="mrl-row-num">08</span>
+          <span><span class="mrl-row-title">谁来告诉策略，这一步比平常好多少？</span><span class="mrl-row-copy">把行动与评价交给两个可学习函数，用相对同状态平常水平的好坏更新策略，并区分完整回报、价值基线与一步估计。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter09.html">
+          <span class="mrl-row-num">09</span>
+          <span><span class="mrl-row-title">策略更新太猛，为什么会把自己学坏？</span><span class="mrl-row-copy">从数据分布随策略改变的困难出发，一边组合不同长度的评价信号，一边用分布距离和概率比限制每次更新幅度。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter10.html">
+          <span class="mrl-row-num">10</span>
+          <span><span class="mrl-row-title">动作连续、真实交互昂贵时，怎样学习？</span><span class="mrl-row-copy">比较三种连续控制目标怎样找动作、抑制高估并保留探索，再理解学习环境动力学如何用短程想象改善样本效率。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <div class="mrl-chapter-row">
+          <span class="mrl-row-num">11</span>
+          <span><span class="mrl-row-title">不能再采新数据时，策略为什么会被自己骗到？</span><span class="mrl-row-copy">当训练只能依赖固定历史数据，数据实际覆盖过哪些行为、分布外动作有多危险，将重新划定可以可靠学习的边界。</span></span>
           <span class="mrl-row-state">NEXT</span>
         </div>
       </div>

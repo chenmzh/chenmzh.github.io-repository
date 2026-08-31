@@ -1,0 +1,138 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 10 · Continuous control and learned dynamics</div>
+  <h1>动作连续、真实交互昂贵时，怎样学习？</h1>
+  <p class="lead">上一章用 TRPO、PPO 与 GAE 控制策略更新的步幅，让随机 Actor–Critic 不至于一次更新就破坏自己采到的数据。但真实机械臂每转动一次关节都要花时间、耗电并承担磨损：如果每轮只用最新数据，稳定还不够。现在我们要同时回答两个问题：<strong>动作多到无法枚举时怎样优化，真实 transition 贵到不能浪费时怎样学习？</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样用可微 Actor 在连续动作空间寻找高价值动作，用异策略经验复用提升样本效率，再用学习到的环境动力学把有限真实经验变成受控的短程“想象”？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–115 min</span>
+    <span class="mrl-pill">先修：Chapter 06–09</span>
+    <span class="mrl-pill">数学：链式法则 + 条件期望</span>
+    <span class="mrl-pill">实验：三种连续控制 target</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从无法枚举到可控想象</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>放下枚举</span><small>动作是一片连续空间</small></a>
+      <a class="mrl-roadmap-step" href="#ddpg"><b>02</b><span>沿梯度调动作</span><small>让评价斜率指路</small></a>
+      <a class="mrl-roadmap-step" href="#td3"><b>03</b><span>压住错误乐观</span><small>双评价与慢更新</small></a>
+      <a class="mrl-roadmap-step" href="#sac"><b>04</b><span>把探索内生化</span><small>奖励之外也保留熵</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#target-lab"><b>05</b><span>拆开 target</span><small>同一组诊断数字</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#model-based"><b>06</b><span>学习世界</span><small>动力学与短想象</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>离散按钮可以试一遍，连续旋钮却有无穷多个刻度</h2>
+  <p class="mrl-sec-lead">在 CartPole 里，动作是“左推”或“右推”。在机器人控制里，一个动作可能是 6 个关节的实时力矩，每一维都能取区间内任意实数。</p>
+
+  <div class="mrl-action-space">
+    <article>
+      <span>DISCRETE</span>
+      <h3>有限动作：逐项比较</h3>
+      <div class="mrl-action-dots" aria-label="三个离散动作"><i></i><i></i><i></i></div>
+      <p>$a\in\{\text{左},\text{停},\text{右}\}$，可以一次算完每个 $Q(s,a)$。</p>
+    </article>
+    <article>
+      <span>CONTINUOUS</span>
+      <h3>连续动作：直接产生坐标</h3>
+      <div class="mrl-action-line" aria-label="从负一到正一的连续动作轴"><b>−1</b><i></i><b>+1</b></div>
+      <p>$a\in[-1,1]^6$，即使每维只粗分 101 格，也有 $101^6$ 个组合。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正的因果变化不是“神经网络变大”，而是动作集合从可枚举的清单变成连续几何空间：$\max_a Q(s,a)$ 仍有数学意义，却不再能靠逐项试完来计算。</p>
+
+  <p>DQN 的动作选择依赖：</p>
+  <div class="mrl-equation">$$a^*(s)\in\arg\max_{a\in\mathcal A}Q(s,a).$$</div>
+  <p>离散动作时，网络一次输出所有动作的 Q 值，取最大即可。连续动作时，Critic 接收 $(s,a)$ 才能给一个标量；要找最大值，理论上需要在连续空间求优化。每个环境步都迭代优化动作既慢又不稳。连续控制的核心转向因此是：<strong>另学一个 Actor，直接把状态映射到有希望的动作。</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>连续动作没有让最优动作消失，只让“把候选项全部列出来”失效</h3>
+      <p>$\arg\max$ 仍定义了我们想找什么；Actor 的作用是把每次在线搜索摊进网络参数，让一次前向传播直接给出动作。</p>
+      <p class="mrl-insight-key">从 DQN 到连续控制，真正变化的是动作优化器的位置：它不再是表外的一次枚举，而成为需要训练的函数。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="policy-types">
+  <h2 class="mrl-sec-title"><span class="num">02</span>连续策略有两种基本语言：给一个动作，或给一片概率密度</h2>
+  <p class="mrl-sec-lead">“连续”描述动作空间，“确定/随机”描述策略输出。两组概念不是同一个维度。</p>
+
+  <div class="mrl-policy-compare">
+    <article>
+      <span>DETERMINISTIC POLICY</span>
+      <h3>Deterministic policy（确定性策略）</h3>
+      <div class="mrl-equation">$$a=\mu_\theta(s)$$</div>
+      <p>同一状态总输出同一个动作向量。训练时为了探索，行为动作通常另加噪声：$a_{\text{beh}}=\mu_\theta(s)+\epsilon$。</p>
+    </article>
+    <article>
+      <span>STOCHASTIC POLICY</span>
+      <h3>Stochastic policy（随机策略）</h3>
+      <div class="mrl-equation">$$a\sim\pi_\theta(\cdot\mid s)$$</div>
+      <p>网络输出分布参数，例如高斯均值与标准差；动作是一次采样。随机性属于策略目标本身，不只是外加执行噪声。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两栏都能产生连续动作；应该观察的是探索进入算法的位置：确定性策略把噪声加在行为动作上，随机策略则直接学习整条动作分布。</p>
+
+  <p>上一章受更新幅度约束的方法使用随机策略：它通常输出高斯分布，再约束新旧策略变化。接下来会依次看到“确定性策略 + 单评价器”“确定性策略 + 稳定性修正”和“最大熵随机策略”三条路线。这里还要分开另一条轴：<strong>on-policy / off-policy 说的是采数据的策略与被优化策略之间的关系，不是策略本身是否随机。</strong></p>
+
+  <table class="mrl-compact-table">
+    <thead><tr><th>算法</th><th>连续策略</th><th>训练数据关系</th><th>探索从哪里来</th></tr></thead>
+    <tbody>
+      <tr><td>受限幅度的策略更新</td><td>随机</td><td>on-policy</td><td>当前策略分布</td></tr>
+      <tr><td>确定性连续控制</td><td>确定</td><td>off-policy</td><td>行为动作外加噪声</td></tr>
+      <tr><td>最大熵连续控制</td><td>随机</td><td>off-policy</td><td>熵正则化后的策略分布</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">随机策略不自动等于 on-policy，确定性策略也不自动等于 off-policy；第三行会在正式命名后成为“随机策略 + 异策略学习”的具体反例。</p>
+</section>
+
+<section id="ddpg">
+  <h2 class="mrl-sec-title"><span class="num">03</span>DDPG：让 Critic 告诉 Actor，动作应该往哪边挪</h2>
+  <p class="mrl-sec-lead"><strong>Deep Deterministic Policy Gradient（DDPG，深度确定性策略梯度）</strong>把确定性 Actor–Critic 与 Chapter 06 的经验回放、目标网络组合起来，目标是让旧经验仍能参与连续动作学习。</p>
+
+  <div class="mrl-algo-chain" aria-label="DDPG 的信息流">
+    <div><span>状态</span><strong>$s$</strong><small>来自 replay</small></div><i>→</i>
+    <div><span>Actor</span><strong>$\mu_\theta(s)$</strong><small>直接输出动作</small></div><i>→</i>
+    <div><span>Critic</span><strong>$Q_\phi(s,a)$</strong><small>给动作打分</small></div><i>→</i>
+    <div><span>梯度</span><strong>$\nabla_a Q$</strong><small>反传给 Actor</small></div>
+  </div>
+  <p class="mrl-caption">Actor 不需要在动作轴上搜索所有候选；Critic 对动作的局部斜率指出“把当前动作略微往哪边移动，会提高预测价值”。</p>
+
+  <h3>第一步：Critic 学一个一步自举目标</h3>
+  <p>从 replay buffer 取样本 $(s_t,a_t,r_t,s_{t+1},d_t)$，其中 $d_t=1$ 表示本步真正终止。DDPG 用缓慢变化的目标 Actor 与目标 Critic 构造：</p>
+  <div class="mrl-equation mrl-equation-feature">$$y_{\mathrm{DDPG}}=r_t+\gamma(1-d_t)Q_{\bar\phi}\!\left(s_{t+1},\mu_{\bar\theta}(s_{t+1})\right).$$</div>
+  <p>横线参数 $\bar\theta,\bar\phi$ 属于 target networks（目标网络）。Critic 最小化平方误差：</p>
+  <div class="mrl-equation">$$\mathcal L_Q(\phi)=\mathbb E_{\mathcal D}\left[\left(Q_\phi(s_t,a_t)-y_{\mathrm{DDPG}}\right)^2\right].$$</div>
+  <p>经验回放与异策略关系已在 Chapter 05–06 正式解释；这里的关键回顾只有一句：buffer 中动作可以由带噪旧策略产生，而 target 评价的是当前确定性策略的缓慢副本，因此同一条真实经验能被多次复用。</p>
+
+  <h3>第二步：Actor 沿 Critic 的动作斜率上升</h3>
+  <p>对一个固定状态，先定义 $F(\theta;s)=Q_\phi(s,\mu_\theta(s))$。Actor 参数并不直接进入 Critic，它先改变动作，再由动作改变 Q 值。若动作是 $m$ 维、参数是 $p$ 维，记 Actor 的 Jacobian 为 $J_\mu(s)=\partial\mu_\theta(s)/\partial\theta\in\mathbb R^{m\times p}$，链式法则给出：</p>
+  <div class="mrl-equation">$$\nabla_\theta F
+  =\underbrace{J_\mu(s)^\top}_{\text{参数怎样改变动作}}
+  \underbrace{\nabla_aQ_\phi(s,a)\big|_{a=\mu_\theta(s)}}_{\text{动作怎样改变价值}}.$$</div>
+  <p>对 replay 中状态取平均，实践中的 Actor 更新方向写成：</p>
+  <div class="mrl-equation">$$\nabla_\theta J(\theta)\approx
+  \mathbb E_{s\sim\mathcal D}\!\left[
+  J_\mu(s)^\top
+  \nabla_aQ_\phi(s,a)\big|_{a=\mu_\theta(s)}
+  \right].$$</div>
+  <p>代码通常最小化 <code>-critic(states, actor(states)).mean()</code>；负号只是把“梯度上升最大化 Q”改写为优化器熟悉的“梯度下降最小化 loss”。</p>
+
+  <p>目标网络每步只向在线网络靠近一点：</p>
+  <div class="mrl-equation">$$\bar\theta\leftarrow\tau\theta+(1-\tau)\bar\theta,\qquad
+  \bar\phi\leftarrow\tau\phi+(1-\tau)\bar\phi,$$</div>
+  <p>例如 $\tau=0.005$ 时，新参数只占 0.5%。这能减慢 target 漂移，却不能消除一个危险回路：Critic 若把某处错误估高，Actor 会主动追向那处；Actor 的移动又让 Critic 更多依赖这块不可靠区域。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>DDPG 的高效与脆弱来自同一条梯度通路</h3>
+      <p>Critic 的 $\nabla_aQ$ 让 Actor 不必枚举动作，能够高效地沿连续空间移动；同一条通路也会把 Critic 的局部幻觉迅速放大成策略行为。</p>
+      <p class="mrl-insight-key">当 Actor 与 Critic 互相生成训练目标时，“更新更快”与“错误正反馈更快”必须同时考虑。</p>
+    </div>
+  </aside>
+</section>

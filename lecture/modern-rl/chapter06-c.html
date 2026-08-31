@@ -1,0 +1,125 @@
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把公式落到一次更新：哪张网络产生哪一个张量？</h2>
+  <p class="mrl-sec-lead">代码复杂度主要来自 batch 维度和两个参数时钟。沿数据流读一遍，会发现核心仍是“预测、target、误差、更新”。</p>
+
+  <pre class="mrl-code"><code># batch comes from random replay sampling
+states, actions, rewards, next_states, terminated = replay.sample(batch_size)
+
+# online network: one row of Q values per state, then select executed actions
+all_q = q_net(states)                         # shape: [B, num_actions]
+q_pred = all_q.gather(1, actions[:, None]).squeeze(1)  # [B]
+
+# target network: build a constant one-step TD target
+with torch.no_grad():
+    next_q = target_net(next_states).max(dim=1).values
+    td_target = rewards + gamma * (1 - terminated) * next_q
+
+loss = ((td_target - q_pred) ** 2).mean()
+optimizer.zero_grad()
+loss.backward()
+torch.nn.utils.clip_grad_norm_(q_net.parameters(), 10.0)
+optimizer.step()
+
+if gradient_step % target_update_interval == 0:
+    target_net.load_state_dict(q_net.state_dict())</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>代码变量</th><th>形状 / 更新权</th></tr></thead>
+    <tbody>
+      <tr><td>$\{(s_i,a_i,r_i,s'_i,d_i)\}_{i=1}^B$</td><td><code>replay.sample(batch_size)</code></td><td>随机抽出的一个 batch</td></tr>
+      <tr><td>$Q(s_i,\cdot;\theta)$</td><td><code>all_q</code></td><td><code>[B, num_actions]</code>；有梯度</td></tr>
+      <tr><td>$Q(s_i,a_i;\theta)$</td><td><code>q_pred</code></td><td><code>gather</code> 每行只取实际动作列</td></tr>
+      <tr><td>$\max_{a'}Q(s'_i,a';\theta^-)$</td><td><code>next_q</code></td><td><code>[B]</code>；无梯度</td></tr>
+      <tr><td>$y_i$</td><td><code>td_target</code></td><td>真正终止时只剩 <code>rewards</code></td></tr>
+      <tr><td>$\frac1B\sum_i(y_i-q_i)^2$</td><td><code>loss</code></td><td>一个标量，驱动在线网络更新</td></tr>
+      <tr><td>$\theta^-\leftarrow\theta$</td><td><code>load_state_dict</code></td><td>间歇硬同步，不是梯度下降</td></tr>
+    </tbody>
+  </table>
+
+  <h3>完整训练循环还要把采数据和学数据分开</h3>
+  <pre class="mrl-code"><code>state, _ = env.reset()
+while training:
+    action = epsilon_greedy(q_net, state)
+    next_state, reward, terminated, truncated, _ = env.step(action)
+
+    replay.push(state, action, reward, next_state, float(terminated))
+    if len(replay) >= learning_starts:
+        update_from_random_batch()
+
+    episode_ended = terminated or truncated
+    state = env.reset()[0] if episode_ended else next_state</code></pre>
+  <p>这里 <code>terminated</code> 决定 TD target 是否清零，<code>terminated or truncated</code> 决定交互循环是否 reset。两者职责不同，不能为了代码短而压成同一个 <code>done</code> 后到处复用。</p>
+
+  <div class="mrl-training-loop">
+    <div><span>ACT</span><strong>$\varepsilon$-greedy</strong><small>在线网络选动作</small></div><i>→</i>
+    <div><span>STORE</span><strong>push transition</strong><small>写入 replay buffer</small></div><i>→</i>
+    <div><span>SAMPLE</span><strong>random batch</strong><small>混合历史经验</small></div><i>→</i>
+    <div><span>LEARN</span><strong>TD loss</strong><small>只更新 $\theta$</small></div><i>→</i>
+    <div><span>SYNC</span><strong>$\theta^-\leftarrow\theta$</strong><small>低频移动靶子</small></div>
+  </div>
+  <p class="mrl-caption">循环里有三个不同节奏：环境每步产生经验，优化器按训练频率更新在线参数，目标参数每隔更长间隔同步。把三个时钟混成一个，是 DQN 实现中常见的认知错误。</p>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">10</span>DQN 能把状态变复杂，但动作仍要能逐项比较</h2>
+  <p class="mrl-sec-lead">神经网络解决的是“大状态空间中的 Q 表示”，不是所有强化学习问题的通用接口。</p>
+
+  <table class="mrl-boundary-table">
+    <thead><tr><th>任务条件</th><th>DQN 为什么适合 / 不适合</th><th>先检查什么</th></tr></thead>
+    <tbody>
+      <tr><td>连续状态、少量离散动作</td><td>适合：网络处理状态，输出层逐项对应动作</td><td>CartPole、LunarLander 等低维基线</td></tr>
+      <tr><td>像素状态、离散动作</td><td>可以：CNN 提取图像特征，但需要帧堆叠与更长训练</td><td>观测是否含运动信息、评估回报是否改善</td></tr>
+      <tr><td>连续动作</td><td>不自然：无法枚举无穷多个动作再精确取 <code>max</code></td><td>应转向直接表示动作分布或连续控制方法</td></tr>
+      <tr><td>当前观测缺少历史</td><td>仅加深网络不能补出从未输入的信息</td><td>状态是否满足决策所需的 Markov 信息</td></tr>
+      <tr><td>极长链、极稀疏奖励</td><td>随机探索可能很久都收不到有用 transition</td><td>先看数据里是否真的出现成功证据</td></tr>
+    </tbody>
+  </table>
+
+  <h3>训练成功不能只看 loss</h3>
+  <p>DQN 的 target 随网络快照和经验池持续变化，训练 loss 很少像固定监督数据那样平滑下降。更可靠的检查是：定期关闭探索，用同一组评估条件运行多个 episode，报告平均回报、波动和代表性失败。LunarLander 的一次高分着陆不能证明所有初始扰动都稳；Pong 中球拍会动，也不能证明平均净得分已经改善。</p>
+
+  <div class="mrl-eval-contrast">
+    <article><span>TRAIN</span><h3>收集信息</h3><p>$\varepsilon$-greedy；写 replay；更新参数；动作包含随机探索。</p></article>
+    <article><span>EVALUATE</span><h3>测量学到什么</h3><p>通常纯贪心；冻结参数；多局平均；与随机或未训练基线比较。</p></article>
+  </div>
+  <p class="mrl-caption">两栏使用同一个在线 Q 网络，却回答不同问题：训练回合决定还会看到什么数据，独立评估回合才衡量当前贪心策略已经学到什么。</p>
+
+  <div class="mrl-inline-note"><strong>本章刻意停在这里：</strong>回放池说明历史经验可以重复利用，却不等于“任意来源的固定数据都能安全训练”。当训练期间不能再向环境询问、数据又没覆盖网络偏好的动作时，会出现新的分布边界；这留给 Chapter 11。</div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：你能从失败模式推出 DQN 组件吗？</h2>
+  <p class="mrl-sec-lead">每题都先说清“哪条依赖出了问题”，再说组件名。只背“网络 + replay + target”还不足以调试。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. DQN 相比表格 Q-learning，保留了什么，又替换了什么？</summary><div class="inner">保留一步 Q-learning 的 TD target、动作价值比较和 $\varepsilon$-greedy 控制逻辑；把每个 $(s,a)$ 独立存数的 Q 表替换成共享参数函数 $Q(s,a;\theta)$，再用梯度下降训练参数。</div></details>
+    <details><summary>2. 为什么函数逼近既带来泛化，也带来训练干扰？</summary><div class="inner">多个状态的预测共享同一组参数。一次经验更新参数后，相似状态可能一起获得有用修正，这就是泛化；不相关状态的输出也可能被连带改变，这就是干扰。两者都来自参数共享。</div></details>
+    <details><summary>3. 在数值例中，$r=-1,\gamma=0.9,d=0$，目标网络下一状态最大值为 5，为什么 target 是 3.5？若真正终止呢？</summary><div class="inner">非终止时 $y=-1+0.9\times5=3.5$。真正终止时 $d=1$，未来项乘以 0，所以 $y=-1$；最后一步奖励保留，终止之后的 continuation 清零。</div></details>
+    <details><summary>4. <code>gather</code> 为什么不是对当前状态的动作取 <code>max</code>？</summary><div class="inner">经验已经记录实际执行动作 $a_i$，loss 要修正的是 $Q(s_i,a_i;\theta)$，所以从整行输出按动作索引取对应列。$\max$ 出现在下一状态 target 中，用来表示 Q-learning 的贪心 continuation。</div></details>
+    <details><summary>5. 随机回放能否让 target 不再随网络参数变化？</summary><div class="inner">不能。回放改变的是 batch 中经验的时间组合与覆盖，target 仍可能由正在变化的网络计算。冻结 target 对参数的即时依赖需要目标网络；两种机制处理不同问题。</div></details>
+    <details><summary>6. 目标网络为什么不是“更聪明的老师”？</summary><div class="inner">它只是在线网络的延迟快照，通常更旧而非天然更准。价值在于两次同步之间参数不被当前 loss 更新，使在线网络短期面对较稳定的 bootstrap target。</div></details>
+    <details><summary>7. replay buffer 是否意味着 DQN 已经是离线强化学习？</summary><div class="inner">不是。本章 DQN 仍在训练期间持续与环境交互并把新 transition 写入有限缓冲区；回放只允许重复采样历史经验。固定数据集下不能补采数据带来的分布问题属于另一种设置。</div></details>
+    <details><summary>8. 为什么 DQN 不能自然处理任意连续动作？</summary><div class="inner">常见 DQN 让输出层逐项对应离散动作，并在下一状态枚举这些输出取最大值。连续动作有无穷多个候选，无法用有限输出层逐项列出并直接精确取 max；下一章将从直接优化策略的方向打开新路线。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第六章建立起来的稳定化链路</h3>
+    <div class="mrl-summary-chain">
+      <div><span>表格失效</span><strong>状态无法枚举</strong><small>representation</small></div><i>→</i>
+      <div><span>函数逼近</span><strong>$Q(s,\cdot;\theta)$</strong><small>generalization</small></div><i>→</i>
+      <div><span>经验回放</span><strong>随机历史 batch</strong><small>data dependence</small></div><i>→</i>
+      <div><span>目标网络</span><strong>延迟的 $\theta^-$</strong><small>target dependence</small></div>
+    </div>
+    <p>DQN 的核心不是“给 Q-learning 加一个神经网络”这么短。网络解决表示与泛化，replay buffer 重组相关的交互数据，target network 把 bootstrap 靶子放到更慢的时间尺度；三者共同把动作价值学习推进到连续状态和像素输入。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter07.html">第 7 章：不先给每个动作打分，能不能直接改策略？</a></h3>
+    <p>DQN 依赖有限个动作输出和 $\arg\max$。当动作是连续力矩，或我们希望保留一个可学习的随机策略时，逐项比较 Q 值不再自然。下一章将直接参数化动作分布，并从“提高好轨迹的概率”推出策略梯度。</p>
+  </div>
+
+  <p class="mrl-source-note">本章以固定上游版本 walkinglabs/hands-on-modern-rl 的 “从 Q-Learning 到 DQN”“深度 Q 网络的三个组件”“LunarLander 与 Atari”及 <code>code/chapter04_dqn</code> 为知识来源重新组织，不是原项目官方译本。本章正式解释函数逼近、DQN、experience replay、target network 与 TD target；Double DQN 等扩展只作为上游背景，固定数据下的分布偏移留给 Chapter 11。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 06</span><span><a href="./chapter05.html">← Chapter 05</a> · <a href="./">课程目录</a> · <a href="./chapter07.html">Chapter 07 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter07_dqn" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

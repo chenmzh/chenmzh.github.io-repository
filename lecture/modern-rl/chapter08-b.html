@@ -1,0 +1,153 @@
+<section id="critic">
+  <h2 class="mrl-sec-title"><span class="num">05</span>Critic：用一步事实和下一状态估计，训练这把动态标尺</h2>
+  <p class="mrl-sec-lead">Critic 的任务是让 $V_\phi(s_t)$ 靠近当前策略的真实 $V^{\pi_\theta}(s_t)$。最常见的早期 Actor–Critic 用一步 TD target 来提供监督。</p>
+
+  <p>采到 transition $(s_t,a_t,r_t,s_{t+1})$ 后，定义终止标记 $d_t\in\{0,1\}$：若这一步真正终止，$d_t=1$，否则为 0。一步 Critic target 是：</p>
+  <div class="mrl-equation">$$y_t=r_t+\gamma(1-d_t)V_\phi(s_{t+1})$$</div>
+  <p>$1-d_t$ 很重要：终止以后没有“下一状态继续得分”，所以终止 transition 的 target 必须退化为 $y_t=r_t$。实现时，右侧 target 通常停止梯度，只让当前预测向这个临时目标移动。</p>
+
+  <p>Critic 的平方损失可以写成：</p>
+  <div class="mrl-equation">$$L_{\text{critic}}(\phi)=\frac12\left[V_\phi(s_t)-\operatorname{stopgrad}(y_t)\right]^2$$</div>
+  <p>target 与当前预测的差，就是 Chapter 05 已经学过的 temporal-difference error（TD error，时序差分误差）：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\delta_t=y_t-V_\phi(s_t)=r_t+\gamma(1-d_t)V_\phi(s_{t+1})-V_\phi(s_t)$$</div>
+
+  <p>为什么同一个 $\delta_t$ 又能近似 advantage？若 Critic 恰好等于真实 $V^\pi$，在固定 $(s,a)$ 后对奖励与下一状态的随机性取期望：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_\pi[\delta_t\mid S_t=s,A_t=a]
+  &=\mathbb E_\pi[r_t+\gamma V^\pi(S_{t+1})\mid s,a]-V^\pi(s)\\
+  &=Q^\pi(s,a)-V^\pi(s)\\
+  &=A^\pi(s,a).
+  \end{aligned}$$</div>
+  <p>第二行正是 $Q^\pi$ 的一步贝尔曼展开。但现实中使用的是 $V_\phi$，不是已知真值；因此更准确的说法是：<strong>$\delta_t$ 是一个可立即计算的单步 advantage estimator（优势估计器），而不是每个样本上都等于真实 $A^\pi$。</strong></p>
+
+  <table>
+    <thead><tr><th>同一个 $\delta_t$</th><th>对 Critic</th><th>对 Actor</th></tr></thead>
+    <tbody>
+      <tr><td>数值含义</td><td>当前价值预测离 TD target 多远</td><td>这次动作相对当前基线有多好</td></tr>
+      <tr><td>使用方式</td><td>通过 $\delta_t^2/2$ 更新 $\phi$</td><td>作为停止梯度的权重更新 $\theta$</td></tr>
+      <tr><td>风险</td><td>自举会把下一状态估计误差带进 target</td><td>错误的 Critic 可能暂时鼓励或抑制错动作</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="actor">
+  <h2 class="mrl-sec-title"><span class="num">06</span>Actor：正 advantage 增加概率，负 advantage 降低概率</h2>
+  <p class="mrl-sec-lead">Actor 不去回归一个“正确动作标签”。它仍做策略梯度，只是把原来的绝对回报权重换成了中心化的 advantage estimate。</p>
+
+  <p>用 $\widehat A_t$ 表示任意选定的优势估计器，Actor 的梯度方向写成：</p>
+  <div class="mrl-equation">$$\widehat{\nabla_\theta J}=\sum_t\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat A_t$$</div>
+  <p>深度学习框架默认做梯度下降，因此常把它改写成要最小化的 actor loss：</p>
+  <div class="mrl-equation mrl-equation-feature">$$L_{\text{actor}}(\theta)=-\frac1T\sum_{t=0}^{T-1}\log\pi_\theta(a_t\mid s_t)\,\operatorname{stopgrad}(\widehat A_t)$$</div>
+
+  <div class="mrl-sign-grid">
+    <article class="positive"><span>$\widehat A_t&gt;0$</span><strong>提高已采样动作概率</strong><p>梯度下降让 $\log\pi(a_t\mid s_t)$ 增大，也就是让该动作更常被选。</p></article>
+    <article class="neutral"><span>$\widehat A_t\approx0$</span><strong>几乎不改变该动作</strong><p>这次结果与基线一致，没有理由仅凭它明显改变动作概率。</p></article>
+    <article class="negative"><span>$\widehat A_t&lt;0$</span><strong>降低已采样动作概率</strong><p>负权重翻转更新方向，让该动作在相同状态下更少出现。</p></article>
+  </div>
+  <p class="mrl-caption">三个框真正要看的是 advantage 的符号怎样改变所选动作的更新方向；actor loss 的数值本身不要求始终为正，也不必像监督学习 loss 那样单调下降。</p>
+
+  <h3>一个完整的数值例</h3>
+  <p>假设 Actor 在 $s_t$ 采样动作“向右”，概率为 $\pi_\theta(a_t\mid s_t)=0.4$；Critic 给出 $V_\phi(s_t)=2.5$、$V_\phi(s_{t+1})=1.0$。环境返回 $r_t=0$，未终止，$\gamma=0.9$。</p>
+  <div class="mrl-derivation">
+    <div><span>Critic target</span><strong>$y_t=0+0.9(1.0)=0.9$</strong></div>
+    <div><span>TD error / advantage estimate</span><strong>$\delta_t=0.9-2.5=-1.6$</strong></div>
+    <div><span>log probability</span><strong>$\log\pi_\theta(a_t\mid s_t)=\log0.4\approx-0.916$</strong></div>
+    <div><span>Actor loss</span><strong>$L_{\mathrm{actor}}=-(-0.916)(-1.6)\approx-1.466$</strong></div>
+    <div><span>Critic loss</span><strong>$L_{\mathrm{critic}}=\tfrac12(-1.6)^2=1.28$</strong></div>
+  </div>
+  <p>Actor loss 为负不是故障。真正重要的是 $\delta_t&lt;0$：梯度下降会降低“向右”的概率。Critic 同时把 2.5 向 target 0.9 拉近。</p>
+
+  <div class="mrl-misconception">
+    <b>梯度边界</b>
+    <p><strong>Actor 使用 Critic 给出的数值，不等于 Actor loss 要穿过 $\delta_t$ 更新 Critic。</strong> $\operatorname{stopgrad}(\widehat A_t)$ 把 advantage 当作权重；Critic 应由自己的价值损失训练。即使两者共享前面的特征网络，两条损失的职责也要保持清楚。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>同一个 TD error 可以传递两种含义，但不能混成一条梯度</h3>
+      <p>对 Critic，它是预测残差；对 Actor，它是相对好坏的权重。数值相同，优化对象和梯度路径不同。</p>
+      <p class="mrl-insight-key">Actor 消费 detached advantage；Critic 用 value loss 学会产生更好的 advantage。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="joint-step">
+  <h2 class="mrl-sec-title"><span class="num">07</span>一次联合更新：行为改变数据，数据又改变两张网络</h2>
+  <p class="mrl-sec-lead">把公式按真实发生顺序排好，Actor–Critic 就是一条很短的闭环。</p>
+
+  <ol class="mrl-joint-flow">
+    <li><span>1</span><div><strong>Actor 采样</strong><small>$a_t\sim\pi_\theta(\cdot\mid s_t)$，同时保存 $\log\pi_\theta(a_t\mid s_t)$。</small></div></li>
+    <li><span>2</span><div><strong>环境推进</strong><small>得到 $r_t$、$s_{t+1}$ 与终止标记 $d_t$。</small></div></li>
+    <li><span>3</span><div><strong>Critic 评价</strong><small>计算 $V_\phi(s_t)$ 与 $V_\phi(s_{t+1})$，构造 $y_t$ 和 $\delta_t$。</small></div></li>
+    <li><span>4</span><div><strong>更新 Critic</strong><small>最小化 $\tfrac12[V_\phi(s_t)-y_t]^2$，让基线更接近当前策略的回报。</small></div></li>
+    <li><span>5</span><div><strong>更新 Actor</strong><small>最小化 $-\log\pi_\theta(a_t\mid s_t)\operatorname{stopgrad}(\widehat A_t)$。</small></div></li>
+  </ol>
+  <p class="mrl-caption">按箭头顺序观察因果链：Actor 决定采到什么数据；Critic 用这些数据学习标尺；标尺再决定 Actor 下一次更新哪些动作。</p>
+
+  <p>“单步 target 可计算”不等于实现必须每个 environment step 都调用一次优化器。实际 A2C（Advantage Actor–Critic，优势演员—评论家）常让多个并行环境先各收集一小段 rollout，再把这些 transition 放在一个 batch 中更新。数学信号仍来自每一步，工程上则通过批量平均减少噪声、提高吞吐。</p>
+</section>
+
+<section id="trajectory-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>互动实验：同一条 trajectory，return、value 与 advantage 在说什么？</h2>
+  <p class="mrl-sec-lead">固定三步轨迹，只改变终点奖励、折扣或 Critic 的三项估计。每一行同时计算完整回报优势与一步 TD advantage。</p>
+
+  <div class="mrl-viz" id="advantageLab">
+    <div class="mrl-viz-head">
+      <div><h3>One Trajectory · Four Views</h3><p>$s_0\xrightarrow{r_0=1}s_1\xrightarrow{r_1=0}s_2\xrightarrow{r_2}\text{terminal}$</p></div>
+      <button class="mrl-btn" id="advantageReset" type="button">恢复默认值</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>同一条已发生的轨迹里，$G_t$、$V_\phi(s_t)$、$G_t-V_\phi(s_t)$ 与 $\delta_t$ 各自评价什么？为什么后两者可能给同一步不同符号？</dd>
+      <dt>Prediction</dt><dd>终点奖励会反向改变所有 MC return；单步 $\delta_t$ 只直接读取本步奖励和下一状态估计。Critic 若尚未自洽，两种 advantage estimate 可能暂时异号。</dd>
+      <dt>Experiment</dt><dd>先看默认第 1 行（$t=1$）；再把 $V_\phi(s_2)$ 从 1 调高，或把终点奖励从 4 调低，观察 MC 与 TD 两列谁先改变。</dd>
+      <dt>Observation</dt><dd id="advantageObservation">正在计算同一轨迹的四种量。</dd>
+      <dt>Interpretation</dt><dd>MC advantage 看到了实际完整尾部，方差较高；单步 TD advantage 提前用 Critic 对下一状态的估计收尾，方差通常较低，但会继承 Critic 的误差。</dd>
+      <dt>Limitation</dt><dd>这是一条确定的短轨迹，只展示估计器如何使用信息；它不能证明某种估计器在任意环境中方差一定更小，也不展示参数更新后的长期收敛。</dd>
+    </dl>
+
+    <div class="mrl-lab-controls">
+      <label class="mrl-range-control"><span>折扣 $\gamma$ <output id="labGammaValue">0.90</output></span><input id="labGamma" type="range" min="0" max="1" step="0.05" value="0.9"></label>
+      <label class="mrl-range-control"><span>终点奖励 $r_2$ <output id="labTerminalRewardValue">+4.0</output></span><input id="labTerminalReward" type="range" min="-4" max="8" step="0.5" value="4"></label>
+      <label class="mrl-range-control"><span>$V_\phi(s_0)$ <output id="labValue0Value">3.0</output></span><input id="labValue0" type="range" min="-2" max="7" step="0.5" value="3"></label>
+      <label class="mrl-range-control"><span>$V_\phi(s_1)$ <output id="labValue1Value">2.5</output></span><input id="labValue1" type="range" min="-2" max="7" step="0.5" value="2.5"></label>
+      <label class="mrl-range-control"><span>$V_\phi(s_2)$ <output id="labValue2Value">1.0</output></span><input id="labValue2" type="range" min="-2" max="7" step="0.5" value="1"></label>
+    </div>
+
+    <div class="mrl-lab-trajectory" aria-label="三步实验轨迹">
+      <div><span>STATE 0</span><strong>$s_0$</strong><small>$r_0=+1$</small></div><i>→</i>
+      <div><span>STATE 1</span><strong>$s_1$</strong><small>$r_1=0$</small></div><i>→</i>
+      <div><span>STATE 2</span><strong>$s_2$</strong><small id="labTrajectoryReward">$r_2=+4$</small></div><i>→</i>
+      <div class="terminal"><span>TERMINAL</span><strong>$V=0$</strong><small>不再 bootstrap</small></div>
+    </div>
+
+    <div class="mrl-lab-table-wrap">
+      <table class="mrl-advantage-table">
+        <thead><tr><th>时刻</th><th>完整回报 $G_t$</th><th>Critic $V_\phi(s_t)$</th><th>MC $\widehat A_t=G_t-V_\phi$</th><th>TD $\delta_t$</th><th>Actor 方向</th></tr></thead>
+        <tbody>
+          <tr id="advantageRow0"><td>$t=0$</td><td id="labReturn0">4.24</td><td id="labValueOut0">3.00</td><td id="labMcAdv0">+1.24</td><td id="labTdAdv0">+0.25</td><td id="labDirection0">都鼓励</td></tr>
+          <tr id="advantageRow1"><td>$t=1$</td><td id="labReturn1">3.60</td><td id="labValueOut1">2.50</td><td id="labMcAdv1">+1.10</td><td id="labTdAdv1">−1.60</td><td id="labDirection1">暂时异号</td></tr>
+          <tr id="advantageRow2"><td>$t=2$</td><td id="labReturn2">4.00</td><td id="labValueOut2">1.00</td><td id="labMcAdv2">+3.00</td><td id="labTdAdv2">+3.00</td><td id="labDirection2">都鼓励</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="mrl-caption">重点比较同一行最后三列：$G_t-V_\phi(s_t)$ 使用已实现的完整尾部；$\delta_t$ 只使用一步奖励与下一状态估计。异号不是代数矛盾，而是两种估计器掌握的信息不同。</p>
+  </div>
+
+  <p>默认值下：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  G_1&=0+0.9(4)=3.6, &\widehat A^{\mathrm{MC}}_1&=3.6-2.5=+1.1,\\
+  \delta_1&=0+0.9(1.0)-2.5=-1.6.&&
+  \end{aligned}$$</div>
+  <p>完整轨迹告诉我们 $s_1$ 后来拿到了 4 分，因此动作 $a_1$ 的 MC advantage 为正；单步 TD 只看到下一状态当前被 Critic 估成 1，因此相对 $V_\phi(s_1)=2.5$ 得到负信号。随着 Critic 学准，两种估计会在期望意义上更一致；在有限训练阶段，它们不必逐样本相同。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>MC advantage 与 TD error 异号，不代表其中一个公式写错</h3>
+      <p>前者用已经发生的完整未来，后者用一步事实加一份当前预测。Critic 还没把终点信息传播到 $s_2$ 时，二者自然可能给出不同的短期判断。</p>
+      <p class="mrl-insight-key">估计器的差别，本质上是“在哪一步停止使用事实，开始使用预测”。</p>
+    </div>
+  </aside>
+</section>

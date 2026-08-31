@@ -1,0 +1,176 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 09 · Stabilizing policy updates</div>
+  <h1>策略更新太猛，为什么会把自己学坏？</h1>
+  <p class="lead">上一章让 Actor 学会听 Critic 的评价：优势为正，就提高动作概率；优势为负，就降低动作概率。但“方向大致正确”不等于“走多远都安全”。一次带噪声的优势估计若让策略突然改头换面，下一批数据会来自完全不同的行为分布，刚刚学到的判断甚至来不及复核。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样复用一批由旧策略采到的经验，同时防止新策略离采样分布走得太远？而在更新策略之前，又怎样把一步 TD 与完整轨迹之间的优势信号调到合适的偏差—方差位置？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–110 min</span>
+    <span class="mrl-pill">先修：Chapter 07–08</span>
+    <span class="mrl-pill">数学：期望换分布 + 分段函数 + 递推</span>
+    <span class="mrl-pill">实验：概率比裁剪 + 多步优势</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>一边限制更新，一边校准优势</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#shock"><b>01</b><span>发现失稳</span><small>好方向也会走过头</small></a>
+      <a class="mrl-roadmap-step" href="#old-policy"><b>02</b><span>冻结快照</span><small>保存采样时的概率</small></a>
+      <a class="mrl-roadmap-step" href="#importance"><b>03</b><span>修正分布</span><small>新概率 ÷ 旧概率</small></a>
+      <a class="mrl-roadmap-step" href="#trust-region"><b>04</b><span>限制步幅</span><small>分布距离到概率比裁剪</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#ratio-lab"><b>05</b><span>裁剪实验</span><small>正负优势方向不同</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#gae-derive"><b>06</b><span>估计优势</span><small>λ 调节回看长度</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="shock">
+  <h2 class="mrl-sec-title"><span class="num">01</span>一个动作这次表现很好，为什么不能把概率一口气推到 99%？</h2>
+  <p class="mrl-sec-lead">策略梯度告诉我们往哪边改，却没有自动保证一次更新的幅度合适。有限 rollout 中的“好动作”仍可能只是一次幸运样本。</p>
+
+  <p>设某个状态只有“左”和“右”两个动作。采样时策略选择左、右的概率分别是 0.6 与 0.4。一次 rollout 恰好让“左”得到很高的估计优势 $\hat A_t=+2$。提高“左”的概率方向没有错，但若一步从 0.6 推到 0.99，会同时把“右”压到 0.01：以后几乎再也看不到右侧证据，哪怕这次高优势只是运气。</p>
+
+  <div class="mrl-policy-shock" aria-label="过大策略更新造成的分布变化">
+    <article>
+      <span>采样时</span>
+      <h3>$\pi_{\mathrm{old}}=(0.60,\,0.40)$</h3>
+      <div class="mrl-split-bar"><i style="width:60%"></i><b style="width:40%"></b></div>
+      <p>两种动作都有足够机会被观察。</p>
+    </article>
+    <i aria-hidden="true">→</i>
+    <article class="danger">
+      <span>一次激进更新后</span>
+      <h3>$\pi_\theta=(0.99,\,0.01)$</h3>
+      <div class="mrl-split-bar"><i style="width:99%"></i><b style="width:1%"></b></div>
+      <p>旧数据的 60/40 频次已无法代表新策略。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要观察的是两件事同时发生：一个被抽中的动作概率暴涨，另一个动作的后续证据来源被挤掉；策略既改变了决策，也改变了下一批训练数据。</p>
+
+  <p>甚至可以构造一个“样本方向看似正确、总体表现反而下降”的小例子。假设真实平均回报尚未被 agent 知道：左为 1.0，右为 1.2。旧策略的平均表现是 $0.6(1.0)+0.4(1.2)=1.08$；过度押注左以后变成 $0.99(1.0)+0.01(1.2)=1.002$。一次幸运样本让 agent 对左过度自信，平均表现从 1.08 降到了 1.002。</p>
+
+  <p>更麻烦的是，策略不只改变当前动作比例。动作会改变下一状态，因此连续多步以后，agent 访问的状态分布也会改变。旧 rollout 教我们的，是“旧策略经常到达的状态里哪些动作更好”；一次大跳却可能把新策略送到数据几乎没覆盖的区域。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>策略既是被训练的模型，也是下一批数据的生成器</h3>
+      <p>监督学习里改模型通常不会立刻改训练集；在线强化学习里，策略一变，动作频率、访问状态和未来证据都会跟着变。</p>
+      <p class="mrl-insight-key">稳定策略优化要保护的不只是参数，而是“这批数据仍足以说明新策略”的局部可信关系。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="old-policy">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先冻结一张采样快照：old policy 到底“旧”在哪里？</h2>
+  <p class="mrl-sec-lead">要比较策略变了多少，必须保存一个不随梯度更新移动的参照点。这个参照只对应当前这批 rollout。</p>
+
+  <p><strong>old policy（旧策略）</strong>记作 $\pi_{\theta_{\mathrm{old}}}$：它是<strong>收集当前训练批次时</strong>策略网络的冻结快照。它先与环境交互，产生 $(s_t,a_t,r_t,s_{t+1})$；训练阶段再用正在变化的 $\pi_\theta$ 重算同一个 $(s_t,a_t)$ 的概率，与采样时概率比较。</p>
+
+  <div class="mrl-snapshot-cycle">
+    <div><span>01 · SNAPSHOT</span><strong>$\theta_{\mathrm{old}}\leftarrow\theta$</strong><small>确定本批采样者</small></div>
+    <i>→</i>
+    <div><span>02 · ROLLOUT</span><strong>$a_t\sim\pi_{\mathrm{old}}(\cdot\mid s_t)$</strong><small>保存状态、动作与旧 log-prob</small></div>
+    <i>→</i>
+    <div><span>03 · UPDATE</span><strong>同一批数据训练 $K$ 轮</strong><small>旧概率保持冻结</small></div>
+    <i>→</i>
+    <div><span>04 · REFRESH</span><strong>丢弃旧批次，重新采样</strong><small>当前策略成为下一批的 old</small></div>
+  </div>
+  <p class="mrl-caption">“old”是相对当前 rollout 而言：每收集一批新数据，参照点都会刷新；它不是从训练开始到结束永远不变的祖先模型。</p>
+
+  <table>
+    <thead><tr><th>对象</th><th>本轮从哪里来</th><th>更新 $K$ 轮时会不会变</th><th>代码中常见形式</th></tr></thead>
+    <tbody>
+      <tr><td>$\log\pi_{\mathrm{old}}(a_t\mid s_t)$</td><td>采样动作的那一刻</td><td>不会</td><td><code>old_logprobs</code></td></tr>
+      <tr><td>$\log\pi_\theta(a_t\mid s_t)$</td><td>当前网络重新评估旧样本</td><td>会</td><td><code>new_logprobs</code></td></tr>
+      <tr><td>$\hat A_t$</td><td>rollout 与 Critic 估计</td><td>通常作为固定标签</td><td><code>advantages.detach()</code></td></tr>
+      <tr><td>$\theta$</td><td>待优化的 Actor 参数</td><td>会</td><td><code>model.parameters()</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>实现不一定真的复制两份完整网络。只要采样时保存动作的 <code>old_logprob</code>，并在策略更新中切断它的梯度，就已经保存了计算概率比所需的分母。相反，如果分母也随 $\theta$ 一起变，那么新旧概率会同时移动，比率无法回答“相对采样时改变了多少”。</p>
+
+  <div class="mrl-boundary-note">
+    <b>课程边界：old policy 不是后续大模型对齐里的 reference policy</b>
+    <p>本章的 $\pi_{\mathrm{old}}$ 是每批 rollout 都会刷新的短期采样快照，职责是校正数据来源并度量本轮更新。后续 Chapter 14 会在另一种任务背景下正式解释更长期的 <em>reference policy</em>（参考策略）及其正则化作用；两者即使都可能“冻结”，也不是同一个对象。本章不进入 RLHF 系统工程。</p>
+  </div>
+</section>
+
+<section id="importance">
+  <h2 class="mrl-sec-title"><span class="num">03</span>样本来自旧策略，怎样估计新策略下的平均？</h2>
+  <p class="mrl-sec-lead">旧数据并非立即失效。只要旧策略对需要讨论的动作有覆盖，就能按“新概率 ÷ 旧概率”重新加权。</p>
+
+  <p><strong>importance sampling（重要性采样）</strong>解决“从分布 $q$ 采样，却想估计分布 $p$ 下期望”的问题。先在一个固定状态 $s$ 上推导。设想要计算新策略下某个动作函数 $f(s,a)$ 的期望：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_{a\sim\pi_\theta(\cdot\mid s)}[f(s,a)]
+  &=\sum_a\pi_\theta(a\mid s)f(s,a)\\
+  &=\sum_a\pi_{\mathrm{old}}(a\mid s)
+    \frac{\pi_\theta(a\mid s)}{\pi_{\mathrm{old}}(a\mid s)}f(s,a)\\
+  &=\mathbb E_{a\sim\pi_{\mathrm{old}}(\cdot\mid s)}
+    \left[\frac{\pi_\theta(a\mid s)}{\pi_{\mathrm{old}}(a\mid s)}f(s,a)\right].
+  \end{aligned}$$</div>
+
+  <p>第二行只是乘上再除以同一个旧概率。成立的前提是：凡是新策略会赋予正概率、并对期望有贡献的动作，旧策略概率都不能为 0；否则旧数据从未采到它，任何有限权重都无法凭空补出证据。这叫 <strong>support condition（支撑集条件）</strong>。</p>
+
+  <p>为避免与课程一直用作奖励的 $r_t$ 撞符号，本章把策略概率比记成 $\rho_t(\theta)$；代码里仍通常叫 <code>ratio</code>：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\rho_t(\theta)=
+  \frac{\pi_\theta(a_t\mid s_t)}{\pi_{\mathrm{old}}(a_t\mid s_t)}
+  =\exp\!\left(\log\pi_\theta(a_t\mid s_t)-\log\pi_{\mathrm{old}}(a_t\mid s_t)\right).$$</div>
+
+  <table>
+    <thead><tr><th>$\rho_t$</th><th>同一个已采动作 $a_t$ 的概率怎样变了</th><th>样本权重</th></tr></thead>
+    <tbody>
+      <tr><td>$0.5$</td><td>新策略概率是旧策略的一半</td><td>贡献缩小到一半</td></tr>
+      <tr><td>$1$</td><td>新旧策略给出相同概率</td><td>原样保留</td></tr>
+      <tr><td>$2$</td><td>新策略概率是旧策略的两倍</td><td>贡献放大到两倍</td></tr>
+    </tbody>
+  </table>
+
+  <p>例如旧策略在状态 $s$ 对“左、右、停”的概率为 $(0.50,0.25,0.25)$，新策略为 $(0.25,0.50,0.25)$。若旧策略这次实际采到“右”，那么该样本的比率为 $0.50/0.25=2$。这不表示整个新策略是旧策略的“两倍”，只表示<strong>这一个已采动作</strong>在新策略下的概率翻倍。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>Probability ratio 是样本坐标上的局部变化尺</h3>
+      <p>每个 rollout 样本只携带自己那个 $(s_t,a_t)$ 的新旧概率比。它能修正动作频率，却不是两个完整策略分布距离的同义词。</p>
+      <p class="mrl-insight-key">看到 <code>ratio</code> 时先问：分子、分母是否在同一个状态评价同一个已采动作，分母是否真来自采样时。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="surrogate">
+  <h2 class="mrl-sec-title"><span class="num">04</span>把 ratio 乘上 advantage：为什么叫 surrogate objective？</h2>
+  <p class="mrl-sec-lead">我们需要一个能在旧 rollout 上计算、又在旧策略附近给出正确策略梯度的目标。它是局部替身，不是任意远处都精确等于真实回报。</p>
+
+  <p>Chapter 08 已把 Actor 的局部更新方向写成“log-prob 梯度 × 优势”。在旧策略采到的数据上，可写成：</p>
+  <div class="mrl-equation">$$\nabla_\theta J(\theta)\big|_{\theta=\theta_{\mathrm{old}}}
+  \approx \mathbb E_{t\sim\pi_{\mathrm{old}}}
+  \left[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\hat A_t\right]_{\theta=\theta_{\mathrm{old}}}.$$</div>
+
+  <p>重要性比率让我们构造 <strong>surrogate objective（代理目标）</strong>：</p>
+  <div class="mrl-equation mrl-equation-feature">$$L^{\mathrm{surr}}(\theta)=
+  \mathbb E_{t\sim\pi_{\mathrm{old}}}
+  \left[\rho_t(\theta)\hat A_t\right].$$</div>
+
+  <p>为什么这个替身在起点方向正确？先对比率求导：</p>
+  <div class="mrl-derivation">
+    <div><span>旧点处的比率</span><strong>$\rho_t(\theta_{\mathrm{old}})=1$</strong></div>
+    <div><span>对比率求导</span><strong>$\nabla_\theta\rho_t(\theta)=\rho_t(\theta)\nabla_\theta\log\pi_\theta(a_t\mid s_t)$</strong></div>
+    <div><span>回到旧点</span><strong>$\nabla_\theta\rho_t\big|_{\theta_{\mathrm{old}}}=\nabla_\theta\log\pi_\theta(a_t\mid s_t)\big|_{\theta_{\mathrm{old}}}$</strong></div>
+    <div><span>代理目标梯度</span><strong>$\nabla_\theta L^{\mathrm{surr}}\big|_{\theta_{\mathrm{old}}}=\mathbb E_t[\nabla_\theta\log\pi_\theta(a_t\mid s_t)\hat A_t]_{\theta_{\mathrm{old}}}$</strong></div>
+  </div>
+
+  <p>推导中 $\hat A_t$ 被当作这批 rollout 的固定标签，不让 Actor 的梯度穿过它；代码里通常会 <code>detach</code>。这样，$\hat A_t$ 决定方向：正优势鼓励提高已采动作概率，负优势鼓励降低概率；$\rho_t$ 记录新策略已经走了多远。</p>
+
+  <p>一个小算例：旧策略给动作 $a$ 的概率是 0.40，新策略改成 0.46，故 $\rho=1.15$。若 $\hat A=+2$，该样本贡献为 $1.15(2)=2.30$。另一个样本概率从 0.50 降到 0.45，$\rho=0.9$，若 $\hat A=-1.5$，贡献为 $0.9(-1.5)=-1.35$。最大化批次平均值会继续抬高好动作、压低坏动作。</p>
+
+  <p>但这里冻结了旧策略访问到的状态，并用旧 rollout 上估计的优势代表新策略附近的后果。当新旧策略很接近时，这是一张有用的局部地图；若策略走得很远，新的状态访问分布和后续动作都已改变，旧地图就会失真。更糟的是，对 $\hat A_t>0$ 的样本，单纯的 $\rho_t\hat A_t$ 会随着 $\rho_t$ 增长而一直变大，优化器没有理由自己停下。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>Surrogate objective 是旧策略附近的方向仪，不是全球地形图</h3>
+      <p>它在 $\theta_{\mathrm{old}}$ 处复现策略梯度，并允许旧动作样本被重新加权；它没有消除大步更新造成的状态分布变化。</p>
+      <p class="mrl-insight-key">因此“能写出重要性比率”只解决了怎样复用数据，还没有解决应该信任这批数据到多远。</p>
+    </div>
+  </aside>
+</section>

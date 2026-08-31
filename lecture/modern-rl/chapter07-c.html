@@ -1,0 +1,133 @@
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把公式落到代码：轨迹、return、log probability 一一对齐</h2>
+  <p class="mrl-sec-lead">上游 CartPole 实现没有隐藏算法步骤：先用当前 policy 收集完整 episode，再倒序计算每一步的 $G_t$，最后把选中动作的 log probability 与 return 相乘。</p>
+
+  <div class="mrl-code-stack">
+    <div>
+      <span>POLICY · 状态变成动作分布</span>
+      <pre class="mrl-code"><code>logits = self.network(state_tensor)
+probs = torch.softmax(logits, dim=-1)
+dist = torch.distributions.Categorical(probs)
+action = dist.sample()</code></pre>
+    </div>
+    <div>
+      <span>ROLLOUT · 用当前策略完成一条轨迹</span>
+      <pre class="mrl-code"><code>states, actions, rewards = [], [], []
+while not (terminated or truncated):
+    action = sample_from_current_policy(state)
+    next_state, reward, terminated, truncated, _ = env.step(action)
+    states.append(state)
+    actions.append(action)
+    rewards.append(reward)
+    state = next_state</code></pre>
+    </div>
+    <div>
+      <span>RETURNS · 从后向前递推</span>
+      <pre class="mrl-code"><code>returns = []
+G = 0.0
+for reward in reversed(rewards):
+    G = reward + gamma * G
+    returns.insert(0, G)</code></pre>
+    </div>
+    <div>
+      <span>UPDATE · 最小化负的策略梯度 surrogate</span>
+      <pre class="mrl-code"><code>probs = policy(states_tensor)
+action_probs = probs.gather(1, actions_tensor[:, None]).squeeze(1)
+log_probs = torch.log(action_probs + 1e-8)
+
+policy_loss = -(log_probs * returns_tensor).mean()
+optimizer.zero_grad()
+policy_loss.backward()
+optimizer.step()</code></pre>
+    </div>
+  </div>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学</th><th>上游变量</th><th>检查重点</th></tr></thead>
+    <tbody>
+      <tr><td>$\pi_\theta(\cdot\mid s_t)$</td><td><code>probs = policy(states_tensor)</code></td><td>输出经过 Softmax，整行和为 1</td></tr>
+      <tr><td>$a_t\sim\pi_\theta$</td><td><code>dist.sample()</code></td><td>训练采样，不是 <code>argmax</code></td></tr>
+      <tr><td>$G_t$</td><td><code>returns_tensor</code></td><td>由 <code>reward + gamma * G</code> 倒序得到</td></tr>
+      <tr><td>$\log\pi_\theta(a_t\mid s_t)$</td><td><code>log_probs</code></td><td><code>gather</code> 只取实际执行动作那一列</td></tr>
+      <tr><td>$-\frac1T\sum_t\log\pi\,G_t$</td><td><code>policy_loss</code></td><td>负号配合优化器的梯度下降</td></tr>
+      <tr><td>$\theta\leftarrow\theta+\alpha\hat g$</td><td><code>optimizer.step()</code></td><td>反传的是 loss；两次负号实现梯度上升</td></tr>
+    </tbody>
+  </table>
+
+  <h3>加入 baseline，核心只换一行权重</h3>
+  <pre class="mrl-code"><code>with torch.no_grad():
+    baseline = value_net(states_tensor)
+centered_signal = returns_tensor - baseline
+policy_loss = -(log_probs * centered_signal).mean()</code></pre>
+  <p>上游的 <code>reinforce_with_baseline.py</code> 还用均方误差让价值网络拟合 <code>returns_tensor</code>。策略更新时必须阻断 baseline 到 policy loss 的反向梯度；代码用 <code>torch.no_grad()</code> 实现。这里只把它看作状态相关及格线，下一章再解释评价网络的完整职责。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“<code>policy_loss</code> 下降就证明策略变好。”</strong> 不一定。采样分布和 return 每轮都在变，surrogate loss 跨 batch 不具有普通监督学习 loss 那样稳定的可比性。策略表现仍要看独立评估回报、分布变化与多随机种子趋势。</p>
+  </div>
+
+  <p>还有一个边界条件：上游简化实现遇到 <code>terminated</code> 或 <code>truncated</code> 都结束轨迹，并把已有奖励倒算成 return。真正终止后没有未来，这样合理；时间上限截断只代表采样停止，若任务本来还会继续，直接把尾部当作 0 会低估 return。REINFORCE 的最小代码便于理解，却不是所有持续任务的完整处理方案。</p>
+
+  <p class="mrl-source-links">固定版本代码：<a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter05_policy_gradient/reinforce_cartpole.py" target="_blank" rel="noopener"><code>reinforce_cartpole.py</code></a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter05_policy_gradient/reinforce_with_baseline.py" target="_blank" rel="noopener"><code>reinforce_with_baseline.py</code></a></p>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">10</span>策略梯度打开了连续与随机策略，也带来了新的不稳定来源</h2>
+  <p class="mrl-sec-lead">REINFORCE 的价值是把“直接改策略”变成一个完整可运行的数学闭环。它更像策略优化的起点，而不是今天处理复杂任务时的终点。</p>
+
+  <table class="mrl-boundary-table">
+    <thead><tr><th>性质</th><th>为什么有用</th><th>同时付出的代价</th></tr></thead>
+    <tbody>
+      <tr><td>直接参数化分布</td><td>离散动作可用 Softmax，连续动作可用概率密度</td><td>必须维护合法分布，并处理概率过早塌缩</td></tr>
+      <tr><td>不需要环境模型</td><td>只凭采样轨迹和奖励即可估计梯度</td><td>环境随机性全部进入采样噪声</td></tr>
+      <tr><td>完整 return</td><td>不借用尚未学准的下一状态估计</td><td>要等待轨迹结束，长时信用分配方差很高</td></tr>
+      <tr><td>on-policy 更新</td><td>样本分布与当前策略目标一致</td><td>策略一改，旧数据不能无校正地反复复用</td></tr>
+      <tr><td>动作无关 baseline</td><td>可把绝对回报改成相对表现，并可能降方差</td><td>基线本身也要估计；依赖动作会引入偏差风险</td></tr>
+    </tbody>
+  </table>
+
+  <p>策略分布还有一个容易忽略的风险：一旦某动作概率过早接近 0，它几乎不再被采样，也就很难得到“其实它很好”的新证据；这叫 <strong>probability collapse（概率塌缩）</strong>。随机策略天然带有探索，不代表探索一定充分。后续算法会显式监控 entropy（熵）或约束策略更新步幅；这些机制分别留到 Chapter 09 等后续章节。</p>
+
+  <p>同样，不要把“加了价值 baseline”直接等同于 Actor–Critic。本章仍然等完整 episode，用 Monte Carlo return 训练及格线并更新策略。下一章真正的新问题是：能否让一个评价者用逐步信息学习，并给每个动作提供更及时、更稳定的相对反馈？</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：能否从轨迹目标重新推出这一行 loss？</h2>
+  <p class="mrl-sec-lead">先遮住答案。每题都试着沿“参数 → 动作概率 → 轨迹概率 → 回报 → 梯度”的链条作答，而不是只背 <code>-log_prob * return</code>。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 策略梯度与 DQN 直接学习的对象分别是什么？</summary><div class="inner">DQN 直接近似动作价值 $Q(s,a)$，再用 $\arg\max$ 或带探索的行为规则导出动作；策略梯度直接学习参数化分布 $\pi_\theta(a\mid s)$，执行时从该分布采样。概率不是 $Q$ 分数，$Q$ 分数也不必归一化为 1。</div></details>
+    <details><summary>2. 为什么策略梯度不需要对环境转移 $P(s'\mid s,a)$ 求导？</summary><div class="inner">轨迹概率分解后，$P$ 与初始状态分布不依赖策略参数 $\theta$。对 $\log p_\theta(\tau)$ 求梯度时，这些项消失，只剩 $\sum_t\nabla_\theta\log\pi_\theta(a_t\mid s_t)$。环境仍需被实际采样，但无需提供可微模型。</div></details>
+    <details><summary>3. 对数导数技巧真正解决了什么，不只是数值稳定吗？</summary><div class="inner">它利用 $\nabla p=p\nabla\log p$，把对概率分布的导数改写成该分布下的期望。因此我们可以从当前策略采样少量轨迹，用样本平均估计原本需要枚举所有轨迹的梯度；数值稳定只是额外收益。</div></details>
+    <details><summary>4. 为什么第 $t$ 步使用 $G_t$，而不是把它发生之前的奖励也乘进去？</summary><div class="inner">当前动作不能改变已经发生的前缀奖励。给定过去历史，动作 score 的条件期望为 0，因此前缀奖励对期望梯度没有贡献；删去它们可减少无关噪声。$G_t$ 仍包含当前动作之后整段轨迹的随机性，所以方差问题没有完全消失。</div></details>
+    <details><summary>5. 二动作策略中，当前 $p(\text{右})=0.8$，采到左且 $G-b&gt;0$，右的概率怎样变化？</summary><div class="inner">采到左时，对右 logit $z$ 的 score 是 $-p=-0.8$。乘上正的 $G-b$ 后梯度为负，$z$ 降低，因此右的概率下降、左的概率上升：好于 baseline 的已采动作会被强化。</div></details>
+    <details><summary>6. 为什么一个正的 $G_t$ 也可能让已采动作概率下降？</summary><div class="inner">加入 baseline 后看的是 $G_t-b(s_t)$。例如 $G_t=2$、baseline 为 3，相对信号是 $-1$，表示这次虽有正回报，却低于从该状态出发的通常水平，因此已采动作会被抑制。baseline 不改环境奖励，只改训练时的比较参照。</div></details>
+    <details><summary>7. 为什么 REINFORCE 不能像 DQN 那样直接用 replay buffer 反复训练旧轨迹？</summary><div class="inner">REINFORCE 的期望要求样本来自当前 $\pi_\theta$。策略更新后，旧轨迹来自旧分布；若不做分布校正就反复使用，样本期望与当前目标不再匹配。后续算法可以引入额外机制复用数据，但不属于本章的最小闭环。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第七章建立起来的策略优化链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>参数</span><strong>改变动作 logits</strong><small>$\theta$</small></div>
+      <i>→</i>
+      <div><span>策略</span><strong>形成动作分布</strong><small>$\pi_\theta$</small></div>
+      <i>→</i>
+      <div><span>采样</span><strong>产生完整轨迹</strong><small>$\tau$</small></div>
+      <i>→</i>
+      <div><span>反馈</span><strong>score × return</strong><small>$\nabla\log\pi\,G_t$</small></div>
+      <i>→</i>
+      <div><span>更新</span><strong>移动动作概率</strong><small>REINFORCE</small></div>
+    </div>
+    <p>参数化策略把概率本身变成学习对象；轨迹目标说明策略好坏取决于长期结果；对数导数技巧让未知动力学中的梯度可以靠采样计算；REINFORCE 再用完整 return 完成最小闭环。baseline 让结果从绝对分数变成相对表现，却也暴露了下一个问题：谁来稳定地给每个状态设定这条及格线？</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter08.html">第 8 章：完整回报太吵，谁来评价每一步动作？</a></h3>
+    <p>下一章会正式定义 advantage function，把直接行动的 Actor 与学习价值的 Critic 放进同一个闭环，并解释怎样用一步 TD 信息替代整局结束后的粗粒度监督。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 “策略梯度与 REINFORCE”“为什么需要策略梯度”“策略梯度改进方法”、赌博机与 CartPole 实验，以及 <code>reinforce_cartpole.py</code>、<code>reinforce_with_baseline.py</code> 重新组织，不是原项目官方译本。二动作 Softmax 互动实验为本讲义重新设计；优势函数的正式定义留给 Chapter 08。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 07</span><span><a href="./chapter06.html">← Chapter 06</a> · <a href="./">课程目录</a> · <a href="./chapter08.html">Chapter 08 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter08_policy_gradient" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

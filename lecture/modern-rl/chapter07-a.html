@@ -1,0 +1,131 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 07 · Direct policy optimization</div>
+  <h1>不比较每个动作的 Q，能不能直接改策略？</h1>
+  <p class="lead">第六章用神经网络近似 $Q(s,a)$，再从有限动作中选出价值最大的一个。这条路线把“评价动作”做得很强，却留下一个问题：动作是连续力矩，或任务本来就需要随机选择时，能否不先列出每个动作的 $Q$，而是直接学习<strong>怎样行动的概率分布</strong>？</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>参数 $\theta$ 只改变动作概率，环境回报却要到整条轨迹结束才出现。我们怎样把最终结果变成一个可计算的梯度，告诉策略哪些已采样动作应该更常出现、哪些应该更少出现？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 04–06</span>
+    <span class="mrl-pill">数学：条件概率 + 链式法则</span>
+    <span class="mrl-pill">实验：二动作 Softmax 单步更新</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从动作分布到可采样的梯度</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>换学习对象</span><small>$Q(s,a)$ → $\pi_\theta(a\mid s)$</small></a>
+      <a class="mrl-roadmap-step" href="#objective"><b>02</b><span>看整条轨迹</span><small>最大化期望回报</small></a>
+      <a class="mrl-roadmap-step" href="#log-trick"><b>03</b><span>改写梯度</span><small>概率 → 对数概率</small></a>
+      <a class="mrl-roadmap-step" href="#reinforce"><b>04</b><span>采样估计</span><small>log probability × return</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#softmax-lab"><b>05</b><span>亲手推概率</span><small>符号、幅度与方向</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#baseline"><b>06</b><span>减去及格线</span><small>为下一章留下评价者</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>上一章学会给动作打分，这一章改为直接学习“怎么选”</h2>
+  <p class="mrl-sec-lead">上一章的网络为每个离散动作提供一个 $Q$ 值；直接优化策略的路线换了学习对象：网络输出一个合法的动作分布。两条路线解决的是同一个控制问题，却把难点放在不同位置。</p>
+
+  <div class="mrl-route-choice">
+    <article>
+      <span>VALUE-BASED · Chapter 06</span>
+      <h3>先学动作价值，再导出策略</h3>
+      <div class="mrl-route-flow"><b>$s$</b><i>→</i><b>$Q_\phi(s,\cdot)$</b><i>→</i><b>$\arg\max_a$</b><i>→</i><b>$a$</b></div>
+      <p>有限离散动作时，网络一次前向传播即可输出整组 $Q$。训练中的探索通常另加 $\varepsilon$-greedy；经验回放允许复用旧 transition。</p>
+    </article>
+    <article class="policy">
+      <span>POLICY-BASED · THIS CHAPTER</span>
+      <h3>直接学动作分布，再从中采样</h3>
+      <div class="mrl-route-flow"><b>$s$</b><i>→</i><b>$\pi_\theta(\cdot\mid s)$</b><i>→</i><b>sample</b><i>→</i><b>$a$</b></div>
+      <p>离散动作输出概率，连续动作可以输出分布参数。随机性写在策略内部；最朴素的整回合方法使用当前策略刚采到的新轨迹。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两条链真正要比较的是“被直接优化的对象”：左边先逼近动作价值，策略藏在选最大值的规则里；右边直接移动动作概率，不需要把概率解释成 $Q$ 分数。</p>
+
+  <p><strong>Policy Gradient methods（PG，策略梯度方法）</strong>就是沿期望回报的梯度直接调整策略参数的一类方法。为什么值得换这条路线？假设六关节机械臂每个关节的力矩都在连续区间内。若每个维度粗略离散成 100 档，组合动作就有 $100^6=10^{12}$ 个；输出并比较全部动作已经失去意义。参数化策略则可以一次输出六维高斯分布的均值与尺度，再从分布中采样一个力矩向量。</p>
+  <p>即使动作只有两个，随机策略也有独立价值。两个动作都可能有效、环境会变化，或我们尚未收集足够证据时，$[0.45,0.55]$ 比“永远选右”保留了更丰富的探索。注意，这不表示策略梯度永远优于 DQN：它通常更吃新数据，采样梯度也更嘈杂。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“策略梯度不计算 $Q$，所以也不需要评价行动结果。”</strong> 不对。它不必先训练一张显式的 $Q$ 表，却仍要用回报判断已采样动作带来了怎样的后果；本章最朴素的评价信号就是完整轨迹的 return。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>策略梯度不是更快地找 $\arg\max$，而是把“动作概率”本身变成可学习对象</h3>
+      <p>Value-based 方法优化的是动作价值估计，再用规则导出动作；policy-based 方法直接优化产生行为的分布。</p>
+      <p class="mrl-insight-key">先分清网络输出的是“价值”还是“概率”，后面的 target、采样方式和数据归属才不会混成一团。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="policy">
+  <h2 class="mrl-sec-title"><span class="num">02</span>Parameterized policy：把每个动作的概率写成参数的函数</h2>
+  <p class="mrl-sec-lead"><strong>parameterized policy（参数化策略）</strong> $\pi_\theta(a\mid s)$ 用参数 $\theta$ 控制“在状态 $s$ 下选择动作 $a$ 的概率”。神经网络权重是 $\theta$；改动权重，就会联动改变许多状态下的动作分布。</p>
+
+  <p>对于 $K$ 个离散动作，网络先输出没有概率约束的 <strong>logit（未归一化分数）</strong> $z_\theta(s,a)$，再用 Softmax 变成概率：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\pi_\theta(a\mid s)=\frac{\exp z_\theta(s,a)}{\sum_{j=1}^{K}\exp z_\theta(s,a_j)}$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>直觉</th><th>代码中常见形态</th></tr></thead>
+    <tbody>
+      <tr><td>$s$</td><td>这次决策看到的状态</td><td><code>state_tensor</code></td></tr>
+      <tr><td>$\theta$</td><td>决定策略行为的网络参数</td><td><code>policy.parameters()</code></td></tr>
+      <tr><td>$z_\theta(s,a)$</td><td>动作 $a$ 的原始 logit，可以为任意实数</td><td><code>logits</code></td></tr>
+      <tr><td>$\pi_\theta(a\mid s)$</td><td>归一化后选择动作 $a$ 的概率</td><td><code>probs</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>二动作数值例最容易看清。若“左、右”的 logits 是 $[0,\ln 3]$，那么：</p>
+  <div class="mrl-equation">$$\pi_\theta(\text{左}\mid s)=\frac{1}{1+3}=0.25,\qquad \pi_\theta(\text{右}\mid s)=\frac{3}{1+3}=0.75.$$</div>
+  <p>策略执行时不是把 $0.75$ 当成 $Q$ 值，也不是必然选择右，而是按 $[0.25,0.75]$ 采样。重复面对同一状态 100 次，长期频率才可能接近 25 次左、75 次右；单次仍可能抽到左。</p>
+
+  <div class="mrl-policy-flow" aria-label="参数化策略从状态到动作采样的流程">
+    <div><span>INPUT</span><strong>状态 $s$</strong><small>位置、速度、图像或上下文</small></div>
+    <i>→</i>
+    <div><span>NETWORK</span><strong>logits $z_\theta$</strong><small>尚未归一化</small></div>
+    <i>→</i>
+    <div><span>DISTRIBUTION</span><strong>$\pi_\theta(\cdot\mid s)$</strong><small>Softmax 概率</small></div>
+    <i>→</i>
+    <div class="sample"><span>ACTION</span><strong>$a\sim\pi_\theta$</strong><small>按概率采样</small></div>
+  </div>
+  <p class="mrl-caption">真正要观察的是参数的作用路径：$\theta$ 不直接改环境奖励，而是先改 logits，再改动作分布，最终改变哪些轨迹更容易被采到。</p>
+
+  <p>连续动作时，$\pi_\theta$ 不再列出无穷多个动作的概率，而是输出概率密度的参数。例如高斯策略输出 $\mu_\theta(s)$ 与 $\sigma_\theta(s)$，再采样 $a\sim\mathcal N(\mu_\theta(s),\sigma_\theta^2(s))$。本章用二动作 Softmax 把梯度机制讲透，连续控制的分布细节留到 Chapter 10。</p>
+</section>
+
+<section id="objective">
+  <h2 class="mrl-sec-title"><span class="num">03</span>策略的成绩不是一次动作概率，而是它诱导出的轨迹回报</h2>
+  <p class="mrl-sec-lead">把某个动作概率调高本身没有好坏；只有当它让高回报轨迹更常发生，策略才真正改善。因此目标必须写在 trajectory（轨迹）层面。</p>
+
+  <p>一条有限轨迹记作：</p>
+  <div class="mrl-equation">$$\tau=(s_0,a_0,r_0,s_1,a_1,r_1,\ldots,s_T).$$</div>
+  <p>它的折扣回报与策略目标分别是：</p>
+  <div class="mrl-equation mrl-equation-feature">$$R(\tau)=\sum_{t=0}^{T-1}\gamma^t r_t,\qquad J(\theta)=\mathbb E_{\tau\sim p_\theta}\left[R(\tau)\right].$$</div>
+  <p>$R(\tau)$ 是一条已经发生的轨迹拿了多少分；$J(\theta)$ 是当前策略可能产生的所有轨迹的平均成绩。优化目标是让 $J(\theta)$ 变大，而不是让某一条幸运轨迹的分数看起来漂亮。</p>
+
+  <p>参数为什么会进入轨迹概率？把环境返回的下一状态与奖励合写为一个联合分布，在 MDP 中：</p>
+  <div class="mrl-equation">$$p_\theta(\tau)=\rho_0(s_0)\prod_{t=0}^{T-1}\pi_\theta(a_t\mid s_t)P(s_{t+1},r_t\mid s_t,a_t).$$</div>
+  <div class="mrl-trajectory-factor">
+    <div><span>START</span><strong>$\rho_0(s_0)$</strong><small>环境给出的初始状态分布</small></div>
+    <div class="learned"><span>POLICY</span><strong>$\prod_t\pi_\theta(a_t\mid s_t)$</strong><small>唯一直接依赖 $\theta$ 的部分</small></div>
+    <div><span>WORLD</span><strong>$\prod_tP(s_{t+1},r_t\mid s_t,a_t)$</strong><small>环境返回什么状态与奖励</small></div>
+  </div>
+  <p class="mrl-caption">三个因子共同决定轨迹是否出现；求 $\theta$ 的梯度时，只有中间的策略概率会变化。环境仍决定结果，却不需要向我们提供可微模型。</p>
+
+  <h3>一个一步任务先把目标算成普通函数</h3>
+  <p>某状态只有“左、右”两个动作。右的回报为 $+2$，左的回报为 $-1$；令 $p=\pi_\theta(\text{右}\mid s)$，则：</p>
+  <div class="mrl-equation">$$J(\theta)=p(2)+(1-p)(-1)=3p-1.$$</div>
+  <p>当前 $p=0.6$ 时，期望回报是 $J=0.8$；把 $p$ 增大一点会提高 $J$。现实任务的轨迹多到无法枚举，回报也可能随机，因此不能每次都把 $J$ 展开成这个简单多项式。接下来需要把“对所有轨迹求导”改写成可以采样估计的形式。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>参数不必穿过环境求导，也能借由“改变轨迹出现概率”改善回报</h3>
+      <p>$\theta$ 直接控制的是策略因子，环境转移和奖励决定的是每条轨迹的结果。优化把两者通过期望连接起来。</p>
+      <p class="mrl-insight-key">策略梯度是对轨迹分布的优化：让好轨迹更常被策略生成，而不是要求环境本身成为一张可微神经网络。</p>
+    </div>
+  </aside>
+</section>

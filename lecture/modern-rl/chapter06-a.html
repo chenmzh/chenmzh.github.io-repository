@@ -1,0 +1,105 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 06 · From a Q table to a trainable value function</div>
+  <h1>当价值表大到写不下，怎么办？</h1>
+  <p class="lead">上一章已经给出一步 Q-learning target：$r_t+\gamma\max_{a'}\hat Q(s_{t+1},a')$。在 4×4 网格里，我们可以给每个 $(s,a)$ 留一格；可飞船状态是连续实数，游戏状态是像素画面，下一次观测几乎不会与上一次逐项相同。此时需要保留的不是那张表，而是<strong>从经验修正动作价值预测的机制</strong>。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样让一组共享参数代替写不下的 Q 表，又怎样避免“相关数据 + 自举目标 + 参数共享”把神经网络训练变成自己追自己的震荡？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 04–05</span>
+    <span class="mrl-pill">数学：函数逼近 + 均方误差</span>
+    <span class="mrl-pill">实验：回放与目标网络消融</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>表示得下，只是第一关；训练得稳，才算学会动作价值</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#limits"><b>01</b><span>发现瓶颈</span><small>状态无法逐行列完</small></a>
+      <a class="mrl-roadmap-step" href="#approximation"><b>02</b><span>更换表示</span><small>参数共享与泛化</small></a>
+      <a class="mrl-roadmap-step" href="#target-loss"><b>03</b><span>构造监督</span><small>TD target 变成 loss</small></a>
+      <a class="mrl-roadmap-step" href="#replay"><b>04</b><span>整理数据</span><small>随机回放打散相关性</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#stability-lab"><b>05</b><span>稳定实验</span><small>冻结靶与样本覆盖</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#code"><b>06</b><span>闭合循环</span><small>采样、前向与更新</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="limits">
+  <h2 class="mrl-sec-title"><span class="num">01</span>网格里的 64 个数字，到了连续世界会变成多少？</h2>
+  <p class="mrl-sec-lead">表格 Q-learning 隐含了一个强前提：每个状态都能命名、反复访问，并对应表中的固定一行。</p>
+
+  <p>4×4 网格有 16 个状态、4 个动作，只需保存 $16\times4=64$ 个 Q 值。LunarLander 的状态却包含位置、速度、角度、角速度和支架接触信息，其中 6 个量是连续实数。即使粗暴地把每个连续量只切成 50 桶：</p>
+  <div class="mrl-equation">$$\underbrace{50^6}_{15{,}625{,}000{,}000\ \text{个离散状态}}\times\underbrace{4}_{\text{离散动作}}=62{,}500{,}000{,}000\ \text{个格子}$$</div>
+  <p>这还没解决真正的问题：落点横坐标从 0.1200 变到 0.1201，就可能掉进另一桶；两个几乎相同的状态仍要各自从零积累经验。像素输入更极端，四帧 $84\times84$ 灰度画面共有 28,224 个像素位置，逐行建表已经失去意义。</p>
+
+  <div class="mrl-scale-contrast">
+    <article><span>ENUMERABLE</span><h3>小网格：查一行</h3><strong>$|\mathcal S||\mathcal A|=64$</strong><p>每个格子独立保存；访问同一 state–action pair 时更新同一位置。</p></article>
+    <article><span>CONTINUOUS</span><h3>飞船：邻近状态也不同</h3><strong>$s\in\mathbb R^8$</strong><p>物理量轻微变化就产生新输入，无法等到每个状态被重复访问。</p></article>
+    <article><span>PIXELS</span><h3>游戏：先理解画面</h3><strong>$s\in\{0,\ldots,255\}^{28224}$</strong><p>网络还要从局部像素变化中提取位置与运动线索。</p></article>
+  </div>
+  <p class="mrl-caption">真正要观察的不是三个数字谁更大，而是表格方法只会记住“这一行”；连续量和像素任务却要求从见过的状态推断没见过但相似的状态。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“状态太多，所以 Q-learning 的 TD target 也失效了。”</strong> 不是。失效的是逐格存储 $Q(s,a)$ 的表示方式；“用一步奖励和下一状态价值修正当前动作价值”的目标仍然保留。</p>
+  </div>
+</section>
+
+<section id="approximation">
+  <h2 class="mrl-sec-title"><span class="num">02</span>不要保存所有行，让一组参数按需生成一行</h2>
+  <p class="mrl-sec-lead"><strong>function approximation（函数逼近）</strong>是用带参数的函数表示价值：输入状态时即时算出 Q 值，而不是先枚举所有状态再填表。</p>
+
+  <p>若离散动作集合是 $\mathcal A=\{a_1,\ldots,a_m\}$，用参数 $\theta$ 的函数一次输出这一状态下所有动作的估计：</p>
+  <div class="mrl-equation mrl-equation-feature">$$Q(s,\cdot;\theta)=\big[Q(s,a_1;\theta),\ldots,Q(s,a_m;\theta)\big]\approx Q^*(s,\cdot)$$</div>
+
+  <table>
+    <thead><tr><th>对象</th><th>表格表示</th><th>函数逼近表示</th></tr></thead>
+    <tbody>
+      <tr><td>记忆内容</td><td>每个 $(s,a)$ 一个独立数字</td><td>一组共享参数 $\theta$</td></tr>
+      <tr><td>读出一行</td><td>按 state ID 查表</td><td>前向计算 $Q(s,\cdot;\theta)$</td></tr>
+      <tr><td>没见过的状态</td><td>没有对应经验就没有信息</td><td>依据已学参数产生预测</td></tr>
+      <tr><td>一次更新影响</td><td>通常只改一个格子</td><td>改 $\theta$，其他状态预测也可能变化</td></tr>
+    </tbody>
+  </table>
+
+  <p>参数共享带来 <strong>generalization（泛化）</strong>：如果网络学到“下降太快且高度较低时，主发动机通常更有价值”，附近的飞船状态可以共享这条规律。可同一份共享也带来耦合：修正一个输入的输出时，另一个输入的 Q 值可能跟着改变。泛化与干扰来自同一个机制。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>函数逼近不是把大表压缩成无损文件，而是在相似状态之间下注</h3>
+      <p>网络假设共享参数学到的结构能迁移到邻近输入。这个归纳偏好让未见状态也有预测，却不保证所有共享都正确。</p>
+      <p class="mrl-insight-key">深度动作价值方法获得规模化能力的同一刻，也失去了“只改一格、别处不动”的隔离性。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="network">
+  <h2 class="mrl-sec-title"><span class="num">03</span>输入一个状态，同时给所有离散动作打分</h2>
+  <p class="mrl-sec-lead"><strong>Deep Q-Network（DQN，深度 Q 网络）</strong>用深度神经网络近似最优动作价值函数；在常见离散动作实现中，一次前向传播输出整行动作价值。</p>
+
+  <div class="mrl-network-flow" aria-label="DQN 从状态输入到动作价值输出">
+    <div class="input"><span>STATE</span><strong>$s_t\in\mathbb R^8$</strong><small>位置、速度、姿态、接触</small></div>
+    <i>→</i>
+    <div class="hidden"><span>SHARED PARAMETERS</span><strong>$Q(\cdot,\cdot;\theta)$</strong><small>MLP / CNN 特征与非线性</small></div>
+    <i>→</i>
+    <div class="output"><span>ACTION VALUES</span><strong>$[q_0,q_1,q_2,q_3]$</strong><small>不喷、左喷、主发动机、右喷</small></div>
+  </div>
+  <p class="mrl-caption">沿箭头观察“一次输入、多个输出”：网络没有直接输出动作概率，而是先给每个离散动作估计长期回报；选择动作仍发生在输出之后。</p>
+
+  <p>例如某个 LunarLander 状态经过网络得到：</p>
+  <div class="mrl-equation">$$Q(s_t,\cdot;\theta)=[-0.4,\ 0.8,\ 2.1,\ 0.5]$$</div>
+  <p>纯贪心选择会取索引 2 的“主发动机”，因为 $2.1$ 最大。训练时仍可沿用上一章的 $\varepsilon$-greedy behavior policy：以概率 $\varepsilon$ 随机探索，否则取 $\arg\max_aQ(s_t,a;\theta)$。网络替代的是 Q 表，不是探索需要。</p>
+
+  <p>一批状态输入网络后，输出形状是 $B\times|\mathcal A|$。但每条经验只执行了一个动作 $a_i$，所以 loss 左边只需要取对应列：</p>
+  <div class="mrl-equation">$$q_i=Q(s_i,a_i;\theta)$$</div>
+  <p>代码中的 <code>gather</code> 就做这件事：从每行所有动作分数中，抽出那条 transition 实际执行动作的预测。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>DQN 没有抛弃 Q-learning；它把“改一个表格数字”改成了“训练一个预测函数”</h3>
+      <p>动作选择仍比较 Q 值，学习信号仍来自一步 TD error。变化发生在表示和优化：一个格子的增量更新变成对共享参数的梯度下降。</p>
+      <p class="mrl-insight-key">先认出不变的 Bellman/TD 骨架，再看新增的网络、数据和稳定化结构，DQN 就不会成为一串陌生模块。</p>
+    </div>
+  </aside>
+</section>

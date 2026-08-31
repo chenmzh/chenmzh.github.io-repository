@@ -3,44 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Hands-On Modern RL 第五章：从完整模型、完整轨迹和一步经验理解价值估计、信息传播与动作选择。">
+  <meta name="description" content="Hands-On Modern RL 第十章：从连续动作的梯度优化、稳定目标与最大熵探索，走向学习环境动力学和短程想象。">
   <meta name="theme-color" content="#f7f7f3">
-  <title>第 5 章 · 等不到结局，能不能先学？ | Modern RL</title>
+  <title>第 10 章 · 动作连续、真实交互昂贵时，怎样学习？ | Modern RL</title>
   <link rel="stylesheet" href="../iml26/katex/katex.min.css">
   <link rel="stylesheet" href="./minimal.css?v=2">
   <link rel="stylesheet" href="./editorial.css?v=1">
   <link rel="stylesheet" href="./chapter01-insights.css?v=1">
   <link rel="stylesheet" href="./chapter01-terms.css?v=1">
-  <link rel="stylesheet" href="./chapter05.css?v=2">
+  <link rel="stylesheet" href="./chapter10.css?v=1">
 </head>
 <body class="mrl-page">
   <header class="mrl-min-header">
     <a class="mrl-min-brand" href="./">
       <small>Hands-On Modern Reinforcement Learning</small>
-      <span>Chapter 05 · 等不到结局，能不能先学？</span>
+      <span>Chapter 10 · 动作连续、真实交互昂贵时，怎样学习？</span>
     </a>
     <nav class="mrl-min-links" aria-label="页面导航">
       <a href="./">目录</a>
-      <a href="./chapter04.html">上一章</a>
-      <a href="./chapter06.html">下一章</a>
-      <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter03_mdp/dp-mc-td.md" target="_blank" rel="noopener">原章 ↗</a>
+      <a href="./chapter09.html">上一章</a>
+      <a href="./chapter11.html">下一章</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter11_continuous_control" target="_blank" rel="noopener">原章 ↗</a>
     </nav>
   </header>
 
   <div class="mrl-chapter-layout">
     <nav class="mrl-toc" aria-label="本章目录">
-      <p class="mrl-rail-label">Chapter 05</p>
-      <a href="#start">价值怎样变成可学的数</a>
-      <a href="#conditions">三种信息条件</a>
-      <a href="#dp">有完整说明书：展开所有可能</a>
-      <a href="#mc">只看完整一局：用实际回报</a>
-      <a href="#td">只走一步：借下一状态估计</a>
-      <a href="#target-lab">实验：两种更新依据</a>
-      <a href="#tradeoff">不是简单的快慢排名</a>
-      <a href="#control">从预测到控制</a>
-      <a href="#policy-data">谁采数据，谁被优化</a>
-      <a href="#reward">传播得快不等于目标正确</a>
-      <a href="#code">公式落到变量</a>
+      <p class="mrl-rail-label">Chapter 10</p>
+      <a href="#start">连续旋钮不能逐项枚举</a>
+      <a href="#policy-types">确定输出还是保留分布</a>
+      <a href="#ddpg">让评价梯度指出动作方向</a>
+      <a href="#td3">用三项修正压住错误乐观</a>
+      <a href="#sac">把随机探索写进长期目标</a>
+      <a href="#target-lab">实验：三种一步 target</a>
+      <a href="#model-based">学习一台环境模拟器</a>
+      <a href="#rollout-error">想象越远，误差越大</a>
+      <a href="#code">公式落到程序变量</a>
       <a href="#takeaways">理解检查</a>
       <div class="mrl-progress">
         <span class="mrl-small">Reading progress</span>
@@ -51,13 +49,13 @@
     <main class="mrl-article" id="chapterContent" aria-live="polite">
       <section class="mrl-chapter-hero">
         <div class="mrl-eyebrow">Loading chapter…</div>
-        <h1>正在加载第五章</h1>
+        <h1>正在加载第十章</h1>
       </section>
     </main>
   </div>
 
   <script src="../iml26/katex/katex.min.js"></script>
   <script src="../iml26/katex/auto-render.min.js"></script>
-  <script src="./chapter05.js?v=1"></script>
+  <script src="./chapter10.js?v=1"></script>
 </body>
 </html>

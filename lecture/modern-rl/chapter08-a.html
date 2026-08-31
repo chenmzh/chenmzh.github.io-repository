@@ -1,0 +1,156 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 08 · Learning to act and evaluate</div>
+  <h1>谁来告诉策略<br>这一步比平常好多少？</h1>
+  <p class="lead">上一章让策略网络直接提高高回报动作的概率。但一条轨迹的回报既受动作影响，也受“这个状态本来就容易还是困难”、后续随机选择和环境运气影响。要把策略更新做得更有针对性，我们需要一个随状态变化的参照物：<strong>这一步相对当前局面的正常水平，究竟好多少？</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样让一个网络负责行动，另一个网络负责评价，并把“动作相对平均水平的好坏”变成两条可训练的损失？评价者自己还没学准时，又会带来什么影响？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 04–07</span>
+    <span class="mrl-pill">数学：条件期望 + 策略梯度</span>
+    <span class="mrl-pill">实验：完整回报 / 价值 / 相对评价对照</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从绝对成绩到相对评价</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>发现噪声</span><small>高分不等于好动作</small></a>
+      <a class="mrl-roadmap-step" href="#advantage"><b>02</b><span>建立标尺</span><small>$Q-V$ 看相对好坏</small></a>
+      <a class="mrl-roadmap-step" href="#baseline"><b>03</b><span>核对期望</span><small>基线不改优化目标</small></a>
+      <a class="mrl-roadmap-step" href="#critic"><b>04</b><span>训练评价者</span><small>TD target 与价值损失</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#trajectory-lab"><b>05</b><span>同轨迹对照</span><small>四种量逐步展开</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#code"><b>06</b><span>组成系统</span><small>两条 loss 一次反传</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>拿到 80 分，是动作做得好，还是局面本来就简单？</h2>
+  <p class="mrl-sec-lead">策略梯度需要的不只是“最后拿了多少分”，而是“这次选择是否值得比同状态下的其他选择获得更多概率”。</p>
+
+  <p>想象两个状态。状态 A 离终点只有一步，随便行动通常都能拿到 80 分；状态 B 已经濒临失败，通常只能拿到 $-20$ 分。某次在 A 做动作“左”得到 70 分，在 B 做动作“右”得到 $-5$ 分。若只看绝对回报，70 显然大于 $-5$；若看相对表现，结论恰好相反：</p>
+
+  <div class="mrl-relative-cases" aria-label="绝对回报与相对表现对照">
+    <article class="bad">
+      <span>EASY STATE A</span>
+      <h3>实际回报 70 · 平常水平 80</h3>
+      <strong>$70-80=-10$</strong>
+      <p>分数很高，但这个动作让简单局面表现低于平常。</p>
+    </article>
+    <article class="good">
+      <span>HARD STATE B</span>
+      <h3>实际回报 −5 · 平常水平 −20</h3>
+      <strong>$-5-(-20)=+15$</strong>
+      <p>分数仍为负，但这个动作把困难局面处理得远好于平常。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正影响动作概率的应是“相对同状态平均水平的增量”，不是跨状态比较两个绝对分数。</p>
+
+  <p>Chapter 07 的 Monte Carlo policy gradient（蒙特卡洛策略梯度）可以用完整回报 $G_t$ 为采样动作加权：</p>
+  <div class="mrl-equation">$$\widehat{\nabla_\theta J}=\sum_t \nabla_\theta\log\pi_\theta(a_t\mid s_t)\,G_t$$</div>
+  <p>它在期望上可以指向正确方向，但 $G_t$ 混合了当前动作、状态难度和后续随机性的影响。同一个动作的一次幸运长轨迹可能给出巨大正权重，另一次倒霉轨迹又给出巨大负权重。有限样本下，梯度因此摇摆。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>相对评价看的是“这次选择”，不是结果本身的正负</h3>
+      <p>困难状态里的负回报动作仍可能优于该状态的平均选择；简单状态里的正回报动作也可能低于平均。策略需要学习的是同一状态下的动作排序。</p>
+      <p class="mrl-insight-key">先校准局面难度，再判断动作是否值得增加概率。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="roles">
+  <h2 class="mrl-sec-title"><span class="num">02</span>把“做决定”和“评估局面”交给两个可学习函数</h2>
+  <p class="mrl-sec-lead"><strong>Actor–Critic（演员—评论家）</strong>不是两个 agent，而是同一个 agent 内部的两种职责：Actor 产生行为，Critic 提供训练信号。</p>
+
+  <div class="mrl-role-grid">
+    <article>
+      <span>ACTOR · 参数 $\theta$</span>
+      <h3>回答“现在做什么？”</h3>
+      <div class="mrl-equation">$$s_t\longmapsto\pi_\theta(\cdot\mid s_t)\longmapsto a_t$$</div>
+      <p>输出动作分布。离散动作常见 softmax 概率；连续动作可以输出分布参数。Actor 的目标是让长期回报更高。</p>
+    </article>
+    <article>
+      <span>CRITIC · 参数 $\phi$</span>
+      <h3>回答“这个局面通常值多少？”</h3>
+      <div class="mrl-equation">$$s_t\longmapsto V_\phi(s_t)$$</div>
+      <p>输出一个价值标量，近似当前策略的 $V^{\pi_\theta}(s_t)$。Critic 不直接控制环境，只负责学习一把随状态变化的尺。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">沿上图读数据流：Actor 的分布产生动作和新数据；Critic 只把状态压成价值标量；两者在 advantage 信号处相遇。</p>
+
+  <p>两者面对的是一个不断移动的协作问题：Actor 一更新，产生数据的策略就变了，Critic 要追踪的新 $V^{\pi_\theta}$ 也跟着变；Critic 评得更准，Actor 才能获得更清晰的相对信号。这不是“一个固定老师监督一个学生”，而是两个函数近似器边交互边共同调整。</p>
+</section>
+
+<section id="advantage">
+  <h2 class="mrl-sec-title"><span class="num">03</span>固定状态后，这个动作比策略平均好多少？</h2>
+  <p class="mrl-sec-lead">Chapter 04 已经定义 $Q^\pi(s,a)$ 与 $V^\pi(s)$。把它们相减，就得到本章连接 Actor 与 Critic 的核心量。</p>
+
+  <p><strong>advantage function（优势函数）</strong>定义为：</p>
+  <div class="mrl-equation mrl-equation-feature">$$A^\pi(s,a)=Q^\pi(s,a)-V^\pi(s)$$</div>
+  <table>
+    <thead><tr><th>量</th><th>固定了什么</th><th>在问什么</th></tr></thead>
+    <tbody>
+      <tr><td>$Q^\pi(s,a)$</td><td>状态 $s$ 与第一步动作 $a$</td><td>先做这个动作、以后按 $\pi$，平均回报多少</td></tr>
+      <tr><td>$V^\pi(s)$</td><td>状态 $s$，第一步也按 $\pi$ 随机选择</td><td>这条策略从这里接手，平均回报多少</td></tr>
+      <tr><td>$A^\pi(s,a)$</td><td>同一状态下比较两者</td><td>指定动作相对策略平常选择，多带来多少价值</td></tr>
+    </tbody>
+  </table>
+
+  <p>由于状态价值本来就是对动作价值按策略概率求平均：</p>
+  <div class="mrl-equation">$$V^\pi(s)=\sum_a\pi(a\mid s)Q^\pi(s,a)$$</div>
+  <p>所以同一状态下，策略自己采样到的 advantage 的期望必为 0：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_{a\sim\pi}[A^\pi(s,a)]
+  &=\sum_a\pi(a\mid s)[Q^\pi(s,a)-V^\pi(s)]\\
+  &=V^\pi(s)-V^\pi(s)=0.
+  \end{aligned}$$</div>
+
+  <p>这不是说每个动作的 advantage 都是 0，而是正负动作以策略概率平均后为 0。若 $V^\pi(s)=5$，三个动作的 $Q^\pi$ 分别为 8、5、1，那么 advantage 分别为 $+3$、0、$-4$：Actor 应鼓励第一个、保持第二个、抑制第三个。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“Advantage 为正，就说明这一步奖励 $r_t$ 为正。”</strong> 不对。Advantage 比较的是完整长期前景与状态基线；眼前奖励为负的动作，若换来了足够好的下一状态，仍可能具有正 advantage。</p>
+  </div>
+</section>
+
+<section id="baseline">
+  <h2 class="mrl-sec-title"><span class="num">04</span>减去状态基线，为什么不会偷偷改掉策略目标？</h2>
+  <p class="mrl-sec-lead">“不改变期望梯度”是一条精确的代数结论；“Critic 能否估准”则是有限样本和函数近似问题。两者必须分开。</p>
+
+  <p>对固定状态 $s$，从策略梯度权重里减去任意只依赖状态的 baseline（基线）$b(s)$。它额外引入的期望项为：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_{a\sim\pi_\theta}\!\left[\nabla_\theta\log\pi_\theta(a\mid s)b(s)\right]
+  &=b(s)\sum_a\pi_\theta(a\mid s)\nabla_\theta\log\pi_\theta(a\mid s)\\
+  &=b(s)\sum_a\nabla_\theta\pi_\theta(a\mid s)\\
+  &=b(s)\nabla_\theta\sum_a\pi_\theta(a\mid s)\\
+  &=b(s)\nabla_\theta 1=0.
+  \end{aligned}$$</div>
+
+  <p>第二行用了 $\pi\nabla\log\pi=\nabla\pi$；最后一行来自动作概率之和恒为 1。因此，在 on-policy（同策略）采样下，只要 $b(s)$ 不依赖当前采样动作，并且在 Actor 更新中把它当作常量，减去它不会改变期望策略梯度：</p>
+  <div class="mrl-equation">$$\mathbb E[\nabla\log\pi\,Q]
+  =\mathbb E[\nabla\log\pi\,(Q-b(s))].$$</div>
+
+  <div class="mrl-separation">
+    <article>
+      <span>数学恒等式</span>
+      <h3>state-only baseline 的期望贡献为 0</h3>
+      <p>这说明减基线不会把目标策略梯度系统性地推向另一方向。它不保证每个样本的更新都相同。</p>
+    </article>
+    <article>
+      <span>估计问题</span>
+      <h3>Critic 的数值仍可能很不准</h3>
+      <p>若用 $G_t-V_\phi(s_t)$，不准的 action-independent baseline 主要影响中心化与方差；若进一步用自举的 TD error 近似 advantage，下一状态价值误差还会进入该近似，造成短期错误方向和偏差。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">左栏是对动作分布取期望后的恒等式；右栏是有限数据下 Critic 作为函数近似器的质量。不能用左栏去声称 Critic “怎样估都没关系”。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>Baseline 不改期望梯度，不等于 Critic 误差没有代价</h3>
+      <p>基线恒等式只要求减去的量不依赖采样动作；它说明目标在期望上未变。Critic 误差却会影响样本权重的噪声，而自举误差还会影响 TD advantage 的准确性。</p>
+      <p class="mrl-insight-key">一个是“优化目标有没有被改”，另一个是“我们手里的估计信号有多可靠”。</p>
+    </div>
+  </aside>
+</section>

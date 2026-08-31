@@ -1,0 +1,196 @@
+<section id="log-trick">
+  <h2 class="mrl-sec-title"><span class="num">04</span>Log-derivative trick：把“概率的梯度”变成“从概率分布采样”</h2>
+  <p class="mrl-sec-lead">困难不在于写出 $J(\theta)$，而在于轨迹数量巨大。对数导数技巧把一大串求和重新写成期望，使我们能够用少量真实轨迹估计梯度。</p>
+
+  <p>先对有限轨迹求和，并暂时把一条轨迹的总回报记作 $R(\tau)$：</p>
+  <div class="mrl-derivation">
+    <div><span>写成求和</span><strong>$J(\theta)=\sum_\tau p_\theta(\tau)R(\tau)$</strong></div>
+    <div><span>对参数求导</span><strong>$\nabla_\theta J(\theta)=\sum_\tau \nabla_\theta p_\theta(\tau)R(\tau)$</strong></div>
+    <div><span>乘除同一个概率</span><strong>$\nabla_\theta p_\theta(\tau)=p_\theta(\tau)\dfrac{\nabla_\theta p_\theta(\tau)}{p_\theta(\tau)}$</strong></div>
+    <div><span>链式法则</span><strong>$\dfrac{\nabla_\theta p_\theta(\tau)}{p_\theta(\tau)}=\nabla_\theta\log p_\theta(\tau)$</strong></div>
+    <div><span>认回期望</span><strong>$\nabla_\theta J(\theta)=\mathbb E_{\tau\sim p_\theta}[\nabla_\theta\log p_\theta(\tau)R(\tau)]$</strong></div>
+  </div>
+
+  <p>核心恒等式只有一行：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\nabla_\theta\log p_\theta(\tau)=\frac{\nabla_\theta p_\theta(\tau)}{p_\theta(\tau)}.$$</div>
+  <p>它常被称为 <strong>log-derivative trick（对数导数技巧）</strong>，得到的 $\nabla_\theta\log p_\theta$ 也叫 score-function gradient（得分函数梯度）。这里的 “score” 不是环境奖励，而是“概率对参数的相对敏感度”。</p>
+
+  <p>再把轨迹概率取对数。乘积会变成和：</p>
+  <div class="mrl-equation">$$\log p_\theta(\tau)=\log\rho_0(s_0)+\sum_t\log\pi_\theta(a_t\mid s_t)+\sum_t\log P(s_{t+1},r_t\mid s_t,a_t).$$</div>
+  <p>初始状态分布 $\rho_0$ 与环境转移 $P$ 不依赖策略参数，因此对 $\theta$ 求导后消失：</p>
+  <div class="mrl-equation">$$\nabla_\theta\log p_\theta(\tau)=\sum_t\nabla_\theta\log\pi_\theta(a_t\mid s_t).$$</div>
+  <p>这就是 model-free（无模型）的关键：我们仍需真正与环境交互获得状态、动作和奖励，却不需要知道 $P$ 的解析式，也不需要让梯度反向穿过环境。</p>
+
+  <h3>二动作 Softmax 的 score 可以精确手算</h3>
+  <p>让“右”的 logit 为 $z$，“左”的 logit 固定为 0。此时 $p=\pi_\theta(\text{右}\mid s)=\sigma(z)$。对 $z$ 求导：</p>
+  <div class="mrl-equation">$$\frac{\partial\log\pi(\text{右}\mid s)}{\partial z}=1-p,\qquad
+  \frac{\partial\log\pi(\text{左}\mid s)}{\partial z}=-p.$$</div>
+  <p>若 $p=0.4$，采到右的 score 是 $0.6$，采到左则是 $-0.4$。乘上正的学习信号后，前者提高右的 logit，后者降低右的 logit；Softmax 的归一化会同步把另一动作的概率向相反方向推。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“取 $\log$ 是为了把很小的概率变大，所以只是数值稳定技巧。”</strong> 数值稳定是工程收益，但数学上的关键是 $\nabla p=p\nabla\log p$：它把对分布的求导改写为分布下的期望，采样估计才成为可能。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>对数概率是“这次选择对参数变化有多敏感”，不是动作本身拿了多少分</h3>
+      <p>$\nabla\log\pi$ 提供方向，return 提供这条方向该被赞成还是反对、权重多大。两者相乘才是学习信号。</p>
+      <p class="mrl-insight-key">把方向项与结果项拆开看，<code>-log_prob * return</code> 就不再像一条凭空出现的损失函数。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="gradient">
+  <h2 class="mrl-sec-title"><span class="num">05</span>从整条轨迹的总分，到每一步自己的 return-to-go</h2>
+  <p class="mrl-sec-lead">上一节得到“沿途所有 log probability × 整条轨迹回报”。但第 $t$ 步动作不可能影响它发生之前的奖励；把那些无关前缀去掉，才得到更合理的时间信用分配。</p>
+
+  <p>定义从时刻 $t$ 开始的 <strong>return-to-go（后续回报）</strong>：</p>
+  <div class="mrl-equation">$$G_t=r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\cdots=\sum_{k=t}^{T-1}\gamma^{k-t}r_k.$$</div>
+  <p>在最常见的 REINFORCE 每决策写法中，策略梯度用采样近似为：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\nabla_\theta J(\theta)\approx\sum_{t=0}^{T-1}\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,G_t.$$</div>
+  <p>为什么可以删掉 $t$ 之前的奖励？给定第 $t$ 步之前的历史，那些奖励已经发生，不随 $a_t$ 改变；而策略 score 对当前动作求期望为 0，所以前缀奖励乘上 score 的期望贡献也为 0。保留 $G_t$ 只把当前选择与它之后可能受影响的结果连接起来。</p>
+
+  <div class="mrl-inline-note"><strong>关于外层折扣的记号：</strong>若严格从 start-state 目标 $J=\mathbb E[G_0]$ 且 $\gamma&lt;1$ 推导，可在第 $t$ 项前再出现 $\gamma^t$；许多实现采用上式的每决策 surrogate，并把折扣放进 $G_t$。两种约定不要混着手算。本章沿用上游代码的 <code>log_prob × G_t</code> 写法，重点观察 score 与后续回报的乘积机制。</div>
+
+  <h3>三步数值例：同一轨迹里，每一步得到的权重并不相同</h3>
+  <p>设奖励为 $[r_0,r_1,r_2]=[0,-1,4]$，$\gamma=0.9$。从后向前递推：</p>
+  <div class="mrl-equation">$$G_2=4,\qquad G_1=-1+0.9(4)=2.6,\qquad G_0=0+0.9(2.6)=2.34.$$</div>
+
+  <table class="mrl-gradient-ledger">
+    <thead><tr><th>时刻</th><th>score（示例标量）</th><th>$G_t$</th><th>梯度贡献</th></tr></thead>
+    <tbody>
+      <tr><td>$t=0$</td><td>$+0.40$</td><td>$2.34$</td><td>$+0.936$</td></tr>
+      <tr><td>$t=1$</td><td>$-0.30$</td><td>$2.60$</td><td>$-0.780$</td></tr>
+      <tr><td>$t=2$</td><td>$+0.20$</td><td>$4.00$</td><td>$+0.800$</td></tr>
+      <tr><td>合计</td><td>—</td><td>—</td><td>$+0.956$</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正要看的是每行“方向 × 后续结果”：$G_t$ 大不保证贡献为正，score 的方向同样重要；合计才是这条轨迹对该参数分量给出的梯度估计。</p>
+
+  <p>return-to-go 比“整局总分乘每一步”少了一些无关噪声，却没有彻底解决信用分配。$G_0$ 仍包含后面所有动作、环境随机性和初始扰动；一次好运会让沿途许多动作一起得到较大权重。这正是 REINFORCE 方差高的来源。</p>
+</section>
+
+<section id="reinforce">
+  <h2 class="mrl-sec-title"><span class="num">06</span>REINFORCE：跑完、倒算、乘权重、再更新</h2>
+  <p class="mrl-sec-lead"><strong>REINFORCE（蒙特卡洛策略梯度算法）</strong>是策略梯度定理最朴素的采样实现。算法名不必拆字背诵；记住它用完整 episode 的样本回报估计期望梯度。</p>
+
+  <div class="mrl-reinforce-loop">
+    <div><span>01 · ROLLOUT</span><strong>按当前 $\pi_\theta$ 跑完整局</strong><small>保存 $s_t,a_t,r_t$</small></div>
+    <i>→</i>
+    <div><span>02 · RETURNS</span><strong>从后向前算 $G_t$</strong><small>$G_t=r_t+\gamma G_{t+1}$</small></div>
+    <i>→</i>
+    <div><span>03 · LOSS</span><strong>组成 $-\log\pi\cdot G_t$</strong><small>负号把上升改成下降</small></div>
+    <i>→</i>
+    <div><span>04 · UPDATE</span><strong>反传并更新 $\theta$</strong><small>下一局重新采样</small></div>
+  </div>
+  <p class="mrl-caption">闭环的关键断点在 UPDATE：策略已经改变，下一批轨迹必须来自更新后的策略；不能直接把 DQN replay buffer 的旧轨迹无条件搬来反复训练。</p>
+
+  <p>算法使用梯度上升：</p>
+  <div class="mrl-equation">$$\theta\leftarrow\theta+\alpha\sum_t\nabla_\theta\log\pi_\theta(a_t\mid s_t)G_t.$$</div>
+  <p>深度学习框架通常最小化 loss，所以代码把符号翻转：</p>
+  <div class="mrl-equation">$$L_{\mathrm{policy}}(\theta)=-\frac{1}{T}\sum_t\log\pi_\theta(a_t\mid s_t)G_t.$$</div>
+  <p>若 $G_t&gt;0$，最小化 $-\log\pi\,G_t$ 会提高已采样动作的 log probability；若 $G_t&lt;0$，方向反转，降低它的概率。$G_t=0$ 时该项不给出更新。注意“正回报就鼓励”只是相对于 0 的粗判断；所有回报都为正时，即使表现很差的轨迹也会被鼓励，这正是 baseline 要修正的直觉问题。</p>
+
+  <p>REINFORCE 是 <strong>on-policy learning（同策略学习）</strong>：期望中的轨迹来自当前 $\pi_\theta$。策略更新后，旧轨迹对应的是旧分布，直接复用会让梯度估计失配。后续方法会用额外校正提高数据复用率；本章不提前展开。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>REINFORCE 把监督学习的“标签”换成了自己采样得到的回报权重</h3>
+      <p>没有老师告诉网络正确动作；策略先行动，环境给结果，再用结果给已选动作的 log probability 加权。</p>
+      <p class="mrl-insight-key">它能在未知动力学中学习，却必须付出完整轨迹、同策略新数据和高方差这三项代价。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="baseline">
+  <h2 class="mrl-sec-title"><span class="num">07</span>Baseline：不要只问“拿了多少”，还要问“比通常好多少”</h2>
+  <p class="mrl-sec-lead">一局 CartPole 坚持 100 步是好是坏，取决于从当前状态出发通常能坚持多久。<strong>baseline（基线）</strong> $b(s_t)$ 是一条不依赖当前动作的“及格线”，把绝对回报改成相对表现 $G_t-b(s_t)$。</p>
+
+  <div class="mrl-baseline-compare">
+    <article><span>RAW RETURN</span><h3>$G_t=100$</h3><p>只知道这次之后拿了 100 分；若所有回报都为正，几乎每个已采样动作都被强化。</p></article>
+    <article class="centered"><span>CENTERED SIGNAL</span><h3>$G_t-b(s_t)$</h3><p>若通常能拿 130 分，本次信号是 $-30$；若通常只能拿 60 分，本次信号是 $+40$。</p></article>
+  </div>
+  <p class="mrl-caption">两栏环境回报完全相同；基线改变的是训练时的比较参照。真正要观察的是信号是否跨过 0，因为它决定已采样动作被强化还是被抑制。</p>
+
+  <p>为什么可以减？固定状态 $s$，在更新 policy 时把 $b(s)$ 当作常数（代码中停止这条支路的梯度），只要它不随当前动作 $a$ 改变，基线项的期望梯度为 0：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \mathbb E_{a\sim\pi_\theta}[\nabla_\theta\log\pi_\theta(a\mid s)b(s)]
+  &=b(s)\sum_a\pi_\theta(a\mid s)\nabla_\theta\log\pi_\theta(a\mid s)\\
+  &=b(s)\sum_a\nabla_\theta\pi_\theta(a\mid s)\\
+  &=b(s)\nabla_\theta\sum_a\pi_\theta(a\mid s)=b(s)\nabla_\theta 1=0.
+  \end{aligned}$$</div>
+  <p>因此，一个选得合适的 baseline 可以减少采样波动，而不改变期望梯度；它并不保证每个 batch 都更稳，也不是越大越好。若 baseline 依赖当前动作，上面的最后一步通常不再成立，可能把梯度方向一起改掉。</p>
+
+  <h3>正回报也可能应该降低概率</h3>
+  <p>设某次 $G_t=2$，但当前状态的 baseline 是 $b(s_t)=3$。相对信号为 $-1$。即使原始回报是正数，这次表现仍低于该状态通常水平，因此已采样动作的概率应该下降。这比“只要分数为正就鼓励”提供了更有辨别力的反馈。</p>
+
+  <div class="mrl-inline-note"><strong>本章边界：</strong>这里把 $G_t-b(s_t)$ 叫“基线中心化信号”，只建立“比状态平均水平好还是差”的第一层直觉。Chapter 08 将正式定义 advantage function（优势函数），解释如何学习状态评价者，并把完整回报监督改造成可逐步更新的 Actor–Critic。</div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>Baseline 不改环境奖励；它改的是策略如何解释同一个结果</h3>
+      <p>一个数是好还是坏，需要放回出发状态的通常水平中比较。合适的动作无关基线让学习信号更居中、更少被绝对分数尺度牵着走。</p>
+      <p class="mrl-insight-key">减去及格线不等于换任务；它为下一章“谁来学习这条及格线”留下了明确问题。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="softmax-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>实验：一项 log probability × relative return，怎样推移动作概率？</h2>
+  <p class="mrl-sec-lead">把网络压缩成一个 logit $z$：$p(\text{右})=\sigma(z)$。我们不模拟数百局训练，只检查一次已采样动作对 $z$ 和概率的精确影响。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>在同一个二动作 Softmax 中，已采样动作、初始概率与 $G-b$ 怎样共同决定一次策略梯度更新的方向和幅度？</dd>
+    <dt>Prediction</dt><dd>默认选择“右”、$p(\text{右})=0.40$、$G=3$、$b=1$：相对信号为正，右动作概率应该上升；把 baseline 调到 4 后，方向应该反转。</dd>
+    <dt>Experiment</dt><dd>选择本次采到的动作，改变旧概率、return、baseline 与学习率。页面按 $z\leftarrow z+\alpha\,\partial_z\log\pi(a\mid s)(G-b)$ 计算新概率。</dd>
+    <dt>Observation</dt><dd id="policyObservation" aria-live="polite">等待实验初始化。</dd>
+    <dt>Interpretation</dt><dd id="policyInterpretation" aria-live="polite">等待实验初始化。</dd>
+    <dt>Limitation</dt><dd>这里只展示一个状态、一个标量 logit 和一次确定的样本更新；真实神经网络共享参数，多步回报随机，batch 梯度也会同时影响许多状态。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar">
+    <div class="mrl-action-picker" role="group" aria-label="选择本次采样到的动作">
+      <span>本次采样动作</span>
+      <div>
+        <button class="mrl-btn" id="chooseLeft" type="button" aria-pressed="false">左</button>
+        <button class="mrl-btn primary" id="chooseRight" type="button" aria-pressed="true">右</button>
+      </div>
+    </div>
+    <button class="mrl-btn" id="policyReset" type="button">Reset</button>
+  </div>
+
+  <div class="mrl-lab-controls">
+    <label class="mrl-range-control"><span>旧 $p(\text{右})$ <output id="oldProbabilityValue">0.40</output></span><input id="oldProbability" type="range" min="0.05" max="0.95" step="0.05" value="0.40"></label>
+    <label class="mrl-range-control"><span>return $G$ <output id="returnValue">+3.0</output></span><input id="returnInput" type="range" min="-5" max="5" step="0.5" value="3"></label>
+    <label class="mrl-range-control"><span>baseline $b$ <output id="baselineValue">+1.0</output></span><input id="baselineInput" type="range" min="-5" max="5" step="0.5" value="1"></label>
+    <label class="mrl-range-control"><span>学习率 $\alpha$ <output id="policyAlphaValue">0.40</output></span><input id="policyAlpha" type="range" min="0.05" max="1" step="0.05" value="0.40"></label>
+  </div>
+
+  <div class="mrl-probability-shift" aria-label="更新前后右动作概率对比">
+    <article>
+      <span>BEFORE · $p(\text{右})$</span>
+      <div class="mrl-prob-track"><i id="beforeProbabilityBar"></i></div>
+      <strong id="beforeProbabilityText">40.0%</strong>
+    </article>
+    <i>→</i>
+    <article class="after">
+      <span>AFTER · $p'(\text{右})$</span>
+      <div class="mrl-prob-track"><i id="afterProbabilityBar"></i></div>
+      <strong id="afterProbabilityText">51.9%</strong>
+    </article>
+  </div>
+
+  <div class="mrl-policy-readout">
+    <div><span>选中动作概率</span><code id="chosenProbability">0.400</code></div>
+    <div><span>log probability</span><code id="logProbability">−0.916</code></div>
+    <div><span>score $\partial_z\log\pi$</span><code id="scoreValue">+0.600</code></div>
+    <div><span>相对信号 $G-b$</span><code id="relativeReturn">+2.000</code></div>
+    <div><span>梯度贡献</span><code id="gradientContribution">+1.200</code></div>
+    <div><span>logit 更新 $z\to z'$</span><code id="logitUpdate">−0.405 → +0.075</code></div>
+  </div>
+  <p class="mrl-caption">先看 $G-b$ 是否跨过 0，它决定强化还是抑制；再看被采动作当时有多“意外”，score 的绝对值决定同样相对回报会给 logit 多大推动。</p>
+</section>

@@ -1,0 +1,126 @@
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把两条损失写进同一个训练步</h2>
+  <p class="mrl-sec-lead">代码只需要保存一次动作的 log probability、当前与下一状态价值，再明确两处 stop-gradient 边界。</p>
+
+  <pre class="mrl-code"><code># state + action -> (reward, next_state, done)
+action_dist, value = model(state)             # Actor + Critic
+action = action_dist.sample()
+log_prob = action_dist.log_prob(action)
+
+next_state, reward, terminated, truncated, _ = env.step(action.item())
+
+with torch.no_grad():
+    _, next_value = model(next_state)
+    # 只有真正 terminated 才把未来价值置零；time-limit truncated 仍应 bootstrap
+    bootstrap_mask = 0.0 if terminated else 1.0
+    td_target = reward + gamma * bootstrap_mask * next_value
+
+td_error = td_target - value
+
+actor_loss = -(log_prob * td_error.detach())  # 只沿 log_prob 更新 Actor
+critic_loss = 0.5 * td_error.pow(2)            # 只拟合 value 到 td_target
+loss = actor_loss + value_coef * critic_loss
+
+optimizer.zero_grad()
+loss.backward()
+optimizer.step()
+
+# episode 边界仍由 terminated or truncated 决定；这里只展示一次更新</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>概念代码变量</th><th>固定上游 A2C 脚本里的入口</th></tr></thead>
+    <tbody>
+      <tr><td>$\pi_\theta(\cdot\mid s_t)$</td><td><code>action_dist</code></td><td><code>A2C(policy="MlpPolicy", ...)</code> 内部的 policy head</td></tr>
+      <tr><td>$V_\phi(s_t)$</td><td><code>value</code></td><td>同一 <code>MlpPolicy</code> 内部的 value head</td></tr>
+      <tr><td>$r_t+\gamma(1-d_t)V_\phi(s_{t+1})$</td><td><code>td_target</code></td><td><code>gamma=0.99</code> 与 rollout 的终止标记</td></tr>
+      <tr><td>$\widehat A_t$</td><td><code>td_error</code>（本章单步版）</td><td><code>n_steps=32</code> 收集 rollout；实现内部批量构造 advantage</td></tr>
+      <tr><td>Critic loss 权重</td><td><code>value_coef</code></td><td><code>vf_coef=0.5</code></td></tr>
+      <tr><td>策略与价值诊断</td><td><code>actor_loss</code>, <code>critic_loss</code></td><td><code>train/policy_loss</code>, <code>train/value_loss</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>上游的 Pendulum 与 BipedalWalker 脚本把训练循环交给 Stable-Baselines3 的 <code>A2C</code>，所以看不到上面这些内部张量逐行展开；但超参数已经把机制暴露出来：<code>gamma</code> 决定未来折扣，<code>n_steps</code> 决定每次更新前收集多长的 rollout，<code>vf_coef</code> 决定 Critic loss 在总损失里的权重。</p>
+
+  <div class="mrl-inline-note"><strong>只做预告：</strong>上游代码还有 <code>gae_lambda=0.95</code>。它对应 Generalized Advantage Estimation（GAE，广义优势估计），会把不同长度的 TD 信息组合起来，在偏差与方差之间调节。它的权重推导和与 PPO 的关系留到 Chapter 09；本章实验只比较完整 MC 与单步 TD 两个端点。</div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>“走一步就有 target”与“每一步都更新参数”不是同一句话</h3>
+      <p>一步 TD 信号可以在 transition 到达后立即计算；A2C 实现仍常把多个环境、多个时间步组成 batch 再优化，以换取更稳定的平均和更高吞吐。</p>
+      <p class="mrl-insight-key">数学定义数据依赖，工程配置决定何时把这些数据送进优化器。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">10</span>Actor–Critic 解决了什么，又留下了什么？</h2>
+  <p class="mrl-sec-lead">它把策略路线与价值路线接起来，降低了等待完整结局的依赖；但两个共同变化的网络也带来了新的不稳定来源。</p>
+
+  <div class="mrl-boundary-grid">
+    <article>
+      <span>得到的能力</span>
+      <h3>更及时、更有上下文的策略信号</h3>
+      <ul>
+        <li>Actor 可以直接表示随机策略与连续动作分布。</li>
+        <li>Critic 用状态基线过滤“局面本来就容易或困难”的共同部分。</li>
+        <li>TD advantage 不必等 episode 完整结束。</li>
+        <li>同一批 rollout 同时训练策略与价值。</li>
+      </ul>
+    </article>
+    <article>
+      <span>留下的风险</span>
+      <h3>评价误差与策略突变会互相放大</h3>
+      <ul>
+        <li>Critic 的 bootstrap target 会继承自己的估计误差。</li>
+        <li>Actor 更新后，Critic 正在追踪的价值函数也跟着移动。</li>
+        <li>一次过猛的策略更新会让新策略偏离采样数据的分布。</li>
+        <li>只看单步 TD 可能偏差较大；只看完整回报又可能方差很高。</li>
+      </ul>
+    </article>
+  </div>
+  <p class="mrl-caption">左栏说明 Actor–Critic 为什么成为通用架构；右栏则给出下一章的必要性：同时管理 advantage 的时间尺度和策略每次更新的幅度。</p>
+
+  <p>上游连续控制实验也体现了这条边界：Pendulum 的一维力矩已经可以由 Actor 输出连续分布，Critic 提供价值信号；到了 BipedalWalker 的多关节协调，vanilla A2C 的训练曲线可能明显震荡。问题不再是“有没有 Actor 和 Critic”，而是<strong>怎样避免 Actor 一次走太远，并让 advantage 在有限 rollout 中更稳</strong>。</p>
+
+  <div class="mrl-misconception">
+    <b>范围边界</b>
+    <p>本章没有展开 GAE 的加权公式，也没有引入 probability ratio、trust region 或 clipping。它们都服务于“更稳地估计和使用 advantage”，但需要先把本章的 $A^\pi$、两条 loss 与梯度边界建立牢固。</p>
+  </div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>理解检查：你能分清成绩、基线、优势和误差吗？</h2>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么一个回报为负的动作仍可能拥有正 advantage？</summary><div class="inner">Advantage 比较的是该动作的长期价值 $Q^\pi(s,a)$ 与同一状态的平均价值 $V^\pi(s)$。若状态通常只能得到 $-20$，某动作带来 $-5$，则 $A=-5-(-20)=+15$；结果仍差，但相对平常显著更好。</div></details>
+    <details><summary>2. 减去 $b(s)$ 不改变期望策略梯度，需要什么关键条件？</summary><div class="inner">在固定状态下，$b(s)$ 不能依赖当前采样动作，并且 Actor 更新要把它当作常量。这样它的期望贡献是 $b(s)\nabla_\theta\sum_a\pi_\theta(a\mid s)=b(s)\nabla_\theta1=0$。</div></details>
+    <details><summary>3. 既然任意 state-only baseline 都不改期望梯度，为什么还要训练准确的 Critic？</summary><div class="inner">恒等式不保证有限样本的方差小。更合适的基线能让动作权重围绕 0 更有效地中心化；而当用 TD error 估计 advantage 时，下一状态价值误差还直接进入自举估计，可能造成短期错误方向与偏差。</div></details>
+    <details><summary>4. 真正终止时，为什么 Critic target 不能继续加 $\gamma V(s_{t+1})$？</summary><div class="inner">真正终止表示任务未来回报已经结束，没有一个继续产生奖励的后继状态。用 $1-d_t$ 屏蔽 bootstrap 后，target 退化为 $y_t=r_t$。否则会凭空添加终止以后的价值。</div></details>
+    <details><summary>5. 为什么 Actor loss 中要对 advantage 使用 stop-gradient？</summary><div class="inner">Advantage 在 Actor 更新里只是所选动作的权重。若梯度沿它反传到 Critic，Actor loss 会同时改变评价器，混淆两条优化职责。Critic 应由自己的 value loss 学习；Actor 的梯度沿 $\log\pi_\theta$ 路径传播。</div></details>
+    <details><summary>6. 单步 $\delta_t$ 在什么意义下等于 advantage？</summary><div class="inner">若 Critic 恰好是真实 $V^\pi$，那么在固定 $(s,a)$ 后，对即时奖励和下一状态的随机性取条件期望，$\mathbb E[\delta_t\mid s,a]=Q^\pi(s,a)-V^\pi(s)=A^\pi(s,a)$。单个样本和近似 Critic 下不保证逐点相等。</div></details>
+    <details><summary>7. 为什么“每步能算 TD target”不代表 A2C 必须每步调用一次优化器？</summary><div class="inner">target 的数据依赖与参数更新的批处理节奏是两件事。实现可以先让多个并行环境各收集若干步，再把每步的 return、value 和 advantage 组成 batch，一次更新以降低噪声并提高计算效率。</div></details>
+    <details><summary>8. 实验里 MC advantage 与 TD error 异号，最应该检查什么？</summary><div class="inner">先检查两者使用的尾部信息：MC 是否用了已发生的完整奖励，TD 是否用了当前 $V_\phi(s_{t+1})$，以及终止屏蔽是否正确。若公式无误，异号可能只是 Critic 尚未学准或两种估计器时间尺度不同，不必立即判定代码错误。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第八章真正拼起来的闭环</h3>
+    <div class="mrl-summary-chain">
+      <div><span>Actor</span><strong>$\pi_\theta(a\mid s)$</strong><small>产生动作与数据</small></div><i>→</i>
+      <div><span>Critic</span><strong>$V_\phi(s)$</strong><small>学习状态基线</small></div><i>→</i>
+      <div><span>Advantage</span><strong>$Q^\pi-V^\pi$</strong><small>衡量相对好坏</small></div><i>→</i>
+      <div><span>Two losses</span><strong>$-\log\pi\,\widehat A$ 与 $(V-y)^2$</strong><small>分别改策略与评价</small></div>
+    </div>
+    <p>Actor 负责选择动作，Critic 近似当前策略的状态价值。优势函数把动作价值减去状态平均，单步 TD error 则提供一个可以马上计算的优势估计。相同数值进入两条损失时必须保持不同的梯度路径。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter09.html">第 9 章：怎样让策略每次只迈可信的一步？</a></h3>
+    <p>Actor–Critic 已经知道往哪个方向更新，却没有限制一次更新能走多远，也没有解决单步 TD 与完整回报之间的时间尺度选择。下一章将从这两个缺口出发，引入更稳健的 advantage 估计与受约束的策略优化。</p>
+  </div>
+
+  <p class="mrl-source-note">本页以固定上游版本 walkinglabs/hands-on-modern-rl 的 “Advantage Function”“Critic Training”“Actor-Critic” 与 A2C Pendulum / BipedalWalker 代码为知识来源重新组织，不是原项目官方译本。本章首次完整解释 advantage、Actor/Critic 两条损失与 TD error 的连接；GAE 与 PPO 的正式推导留给 Chapter 09。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 08</span><span><a href="./chapter07.html">← Chapter 07</a> · <a href="./">课程目录</a> · <a href="./chapter09.html">Chapter 09 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter09_actor_critic" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

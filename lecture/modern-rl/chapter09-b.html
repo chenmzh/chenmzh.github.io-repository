@@ -1,0 +1,164 @@
+<section id="trust-region">
+  <h2 class="mrl-sec-title"><span class="num">05</span>TRPO：不要只盯一条动作概率，直接限制整个策略分布的距离</h2>
+  <p class="mrl-sec-lead">代理目标只在旧策略附近可信。Trust Region Policy Optimization（TRPO，信任域策略优化）把“附近”写成一个明确的约束集合。</p>
+
+  <p>先需要一把衡量概率分布变化的尺。对离散动作，<strong>Kullback–Leibler divergence（KL divergence，KL 散度）</strong>可以写成：</p>
+  <div class="mrl-equation">$$D_{\mathrm{KL}}\!\left(\pi_{\mathrm{old}}\|\pi_\theta\right)(s)
+  =\sum_a\pi_{\mathrm{old}}(a\mid s)
+  \log\frac{\pi_{\mathrm{old}}(a\mid s)}{\pi_\theta(a\mid s)}.$$</div>
+
+  <p>它对相同分布取 0，分布差异越大通常越大，但不是对称距离：交换两者次序一般会得到不同数字。TRPO 使用旧策略作为加权方。以两动作为例：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \pi_{\mathrm{old}}&=(0.6,0.4),\qquad \pi_\theta=(0.9,0.1),\\
+  D_{\mathrm{KL}}(\pi_{\mathrm{old}}\|\pi_\theta)
+  &=0.6\log\frac{0.6}{0.9}+0.4\log\frac{0.4}{0.1}\\
+  &\approx0.6(-0.4055)+0.4(1.3863)=0.3112.
+  \end{aligned}$$</div>
+  <p>第一项为负并不矛盾；KL 是各项相加后的整体量，最终仍非负。这里第二个动作从 0.4 被压到 0.1，旧策略原本赋给它的 40% 概率质量使这次变化受到明显惩罚。</p>
+
+  <p>记旧策略产生的状态访问分布为 $d_{\mathrm{old}}(s)$。TRPO 把策略更新写成一个 constrained optimization（约束优化）问题：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\begin{aligned}
+  \max_\theta\quad &\mathbb E_{t\sim\pi_{\mathrm{old}}}
+  [\rho_t(\theta)\hat A_t]\\
+  \text{subject to}\quad &\mathbb E_{s_t\sim d_{\mathrm{old}}}
+  \left[D_{\mathrm{KL}}\!\left(\pi_{\mathrm{old}}(\cdot\mid s_t)\|\pi_\theta(\cdot\mid s_t)\right)\right]\leq\delta.
+  \end{aligned}$$</div>
+
+  <table>
+    <thead><tr><th>组成</th><th>它在问什么</th><th>若单独使用会怎样</th></tr></thead>
+    <tbody>
+      <tr><td>最大化代理目标</td><td>在旧数据看来，哪些概率变化会提高优势？</td><td>可能沿有利方向走得过远</td></tr>
+      <tr><td>平均 KL 约束</td><td>新策略整体还像不像采样策略？</td><td>只保守不改进，学不到新行为</td></tr>
+      <tr><td>阈值 $\delta$</td><td>局部模型允许信任到多大的行为变化？</td><td>太小几乎不学，太大保护变弱</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>trust region（信任域）</strong>不是“参数每个坐标最多移动多少”，而是局部近似仍值得信任的一块策略分布区域。网络参数即使只移动一点，也可能让输出概率大变；反过来，参数空间里走得不短，某些状态的动作分布仍可能近似不变。TRPO 因而在行为分布上量距离。这里的 KL 又是按 $d_{\mathrm{old}}$ 平均，所以旧策略几乎不访问的状态仍缺少直接约束；它依然是一种以旧数据覆盖为边界的局部保护。</p>
+
+  <p>代价是求解更复杂。TRPO 利用 KL 在旧策略附近的二阶近似得到 Fisher 几何，用共轭梯度近似求自然梯度方向，再用 line search（线搜索）寻找满足约束且改善代理目标的步长。它避免显式存储巨大的 Hessian，却仍比普通一阶梯度更新更难实现、调试与并行化。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>Trust region 约束的是“行为变了多少”，不是“权重改了几位小数”</h3>
+      <p>深度网络的参数距离与策略输出距离没有简单的一一对应。KL 把更新尺度放回 agent 真正执行的动作分布上。</p>
+      <p class="mrl-insight-key">TRPO 的贡献不只是一个算法名字，而是把“别更新太猛”从经验提醒变成了分布级约束。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="ppo-clip">
+  <h2 class="mrl-sec-title"><span class="num">06</span>PPO-Clip：不解二阶约束，改写“继续走远还有没有收益”</h2>
+  <p class="mrl-sec-lead">Proximal Policy Optimization（PPO，近端策略优化）保留“新策略应靠近旧策略”的思想，用普通一阶优化就能计算的裁剪代理目标实现软限制。</p>
+
+  <p>先把概率比截到围绕 1 的区间：</p>
+  <div class="mrl-equation">$$\bar\rho_t(\theta)=
+  \operatorname{clip}\!\left(\rho_t(\theta),1-\epsilon,1+\epsilon\right).$$</div>
+  <p>若 $\epsilon=0.2$，区间就是 $[0.8,1.2]$。注意这不是动作概率只能绝对变化 0.2；它限制的是<strong>相对采样概率的比率</strong>。旧概率从 0.01 到 0.012 与从 0.50 到 0.60 的比率都为 1.2，但绝对变化分别是 0.002 与 0.10。</p>
+
+  <p>只把 $\rho$ 替换成 $\bar\rho$ 还不够：当更新走错方向时，纯 clip 会在区间外也给出零梯度，无法把策略拉回来。PPO 同时保留未裁剪项，并取两者中更保守的一个：</p>
+  <div class="mrl-equation mrl-equation-feature">$$L^{\mathrm{CLIP}}(\theta)=
+  \mathbb E_t\left[
+  \min\!\left(
+  \rho_t(\theta)\hat A_t,
+  \bar\rho_t(\theta)\hat A_t
+  \right)
+  \right].$$</div>
+
+  <h3>正优势：提高概率是对的，但超过上界不再加分</h3>
+  <p>取 $\hat A_t=+2$、$\epsilon=0.2$。当 $\rho=1.3$：</p>
+  <div class="mrl-equation">$$\rho\hat A=1.3(2)=2.6,\qquad
+  \bar\rho\hat A=1.2(2)=2.4,\qquad
+  \min(2.6,2.4)=2.4.$$</div>
+  <p>最大化目标时，$2.4$ 这条水平线不再奖励继续增大该动作概率。反过来，若好动作被错误压到 $\rho=0.7$，未裁剪项 $1.4$ 小于裁剪项 $1.6$，<code>min</code> 选择仍有梯度的未裁剪项，推动比率回升。</p>
+
+  <h3>负优势：降低概率是对的，但超过下界不再加分</h3>
+  <p>取 $\hat A_t=-2$。当 $\rho=0.7$：</p>
+  <div class="mrl-equation">$$\rho\hat A=0.7(-2)=-1.4,\qquad
+  \bar\rho\hat A=0.8(-2)=-1.6,\qquad
+  \min(-1.4,-1.6)=-1.6.$$</div>
+  <p>看负数时要格外小心：$-1.6$ 才是更小、更保守的值。它在下界外成为常数，不再奖励继续压低坏动作概率。若坏动作反被抬到 $\rho=1.3$，未裁剪项 $-2.6$ 比裁剪项 $-2.4$ 更小，目标仍保留纠偏梯度。</p>
+
+  <table class="mrl-direction-table">
+    <thead><tr><th>优势</th><th>有利更新方向</th><th>顺方向过冲时哪边生效</th><th>反方向越界时</th></tr></thead>
+    <tbody>
+      <tr><td>$\hat A_t>0$</td><td>增大 $\rho_t$</td><td>$\rho_t>1+\epsilon$ 后上界封顶</td><td>保留未裁剪梯度，推回向上</td></tr>
+      <tr><td>$\hat A_t<0$</td><td>减小 $\rho_t$</td><td>$\rho_t<1-\epsilon$ 后下界封底</td><td>保留未裁剪梯度，推回向下</td></tr>
+      <tr><td>$\hat A_t=0$</td><td>没有偏好</td><td colspan="2">两个目标都为 0，这个样本不推动 Actor</td></tr>
+    </tbody>
+  </table>
+
+  <p>代码通常最小化 loss，因此在最大化目标前加负号：</p>
+  <pre class="mrl-code"><code>ratio = exp(new_log_prob - old_log_prob)
+raw = ratio * advantage
+clipped = clamp(ratio, 1 - eps, 1 + eps) * advantage
+policy_loss = -minimum(raw, clipped).mean()</code></pre>
+
+  <div class="mrl-misconception">
+    <b>裁剪不是硬墙</b>
+    <p><strong>“用了 PPO，所有 ratio 都一定留在 $[1-\epsilon,1+\epsilon]$。”</strong> 不对。PPO 裁剪的是目标收益，不是把网络输出投影回区间；共享参数的一次更新还会同时影响许多动作和状态。PPO-Clip 也不直接保证整体 KL 小于某阈值。因此实践中仍会监控 <code>clip_fraction</code>、近似 KL，并在偏移过大时提前停止更新。</p>
+  </div>
+</section>
+
+<section id="ratio-lab">
+  <h2 class="mrl-sec-title"><span class="num">07</span>互动实验：同一个 ratio，优势换符号后哪条边界会生效？</h2>
+  <p class="mrl-sec-lead">先固定“旧策略确实采到动作 $a_t$”这一事实，再改变新策略给同一动作的概率。不要只看 ratio 是否越界，还要同时看优势方向。</p>
+
+  <div class="mrl-viz" id="ratioLab">
+    <div class="mrl-viz-head">
+      <div><h3>Probability Ratio · PPO-Clip</h3><p>单个旧样本 $(s_t,a_t)$ 的新旧概率比与裁剪目标。</p></div>
+      <button class="mrl-btn" id="ratioReset" type="button">恢复默认</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>为什么 PPO 的上界只阻止“好动作被继续推高”，下界只阻止“坏动作被继续压低”？</dd>
+      <dt>Prediction</dt><dd>取正优势并把新概率推到上界外，目标会封顶；再把优势改成负数，同一个高 ratio 会恢复纠偏梯度，而低于下界时才会封底。</dd>
+      <dt>Experiment</dt><dd>调节采样时概率、新策略概率、优势与 $\epsilon$；对照未裁剪项、裁剪项和 <code>min</code> 最终选择。</dd>
+      <dt>Observation</dt><dd id="ratioObservation">默认正优势样本的 ratio 超过上界，PPO 选择裁剪项。</dd>
+      <dt>Interpretation</dt><dd id="ratioInterpretation">优势符号定义“有利方向”，裁剪只移除顺着这个方向继续过冲所获得的额外收益。</dd>
+      <dt>Limitation</dt><dd>这是一个固定状态、固定动作的样本级目标；它不能证明共享网络更新后的所有动作比率或整体 KL 都满足硬约束，也没有画出同一状态下其他动作因概率归一化产生的联动。连续动作时，ratio 比较的还是概率密度而非单个动作的概率质量。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar mrl-ratio-controls">
+      <label class="mrl-range-control">
+        <span>旧策略概率 $\pi_{\mathrm{old}}(a_t\mid s_t)$ <output id="oldProbValue">0.40</output></span>
+        <input id="oldProb" type="range" min="0.05" max="0.95" step="0.01" value="0.40">
+      </label>
+      <label class="mrl-range-control">
+        <span>新策略概率 $\pi_\theta(a_t\mid s_t)$ <output id="newProbValue">0.52</output></span>
+        <input id="newProb" type="range" min="0.05" max="0.95" step="0.01" value="0.52">
+      </label>
+      <label class="mrl-range-control">
+        <span>优势 $\hat A_t$ <output id="advantageValue">+2.00</output></span>
+        <input id="advantage" type="range" min="-3" max="3" step="0.1" value="2">
+      </label>
+      <label class="mrl-range-control">
+        <span>裁剪宽度 $\epsilon$ <output id="clipEpsilonValue">0.20</output></span>
+        <input id="clipEpsilon" type="range" min="0.05" max="0.40" step="0.01" value="0.20">
+      </label>
+    </div>
+
+    <div class="mrl-prob-compare" aria-label="新旧动作概率对比">
+      <div><span>OLD · 采样频率</span><div><i id="oldProbBar"></i></div><strong id="oldProbReadout">0.40</strong></div>
+      <div><span>NEW · 当前概率</span><div><i id="newProbBar"></i></div><strong id="newProbReadout">0.52</strong></div>
+    </div>
+
+    <div class="mrl-ratio-axis" aria-label="策略比率及裁剪边界">
+      <div class="axis-line"></div>
+      <div class="axis-band" id="ratioSafeBand"></div>
+      <span class="axis-origin">0</span>
+      <span class="axis-end" id="ratioAxisMax">2.00</span>
+      <div class="ratio-marker lower" id="lowerMarker"><b>LOWER</b><span>0.80</span></div>
+      <div class="ratio-marker current" id="ratioMarker"><b>RATIO</b><span>1.30</span></div>
+      <div class="ratio-marker upper" id="upperMarker"><b>UPPER</b><span>1.20</span></div>
+    </div>
+    <p class="mrl-caption">绿色带只标出围绕 1 的候选裁剪区间；是否真的出现零梯度，还必须把 ratio 所在方向与优势正负一起判断。</p>
+
+    <div class="mrl-objective-ledger">
+      <article><span>RATIO</span><strong id="ratioValue">1.300</strong><code id="ratioFormula">0.52 ÷ 0.40</code></article>
+      <article><span>RAW SURROGATE</span><strong id="rawObjective">+2.600</strong><code>$\rho_t\hat A_t$</code></article>
+      <article><span>CLIPPED SURROGATE</span><strong id="clippedObjective">+2.400</strong><code>$\bar\rho_t\hat A_t$</code></article>
+      <article class="chosen"><span>PPO CHOOSES</span><strong id="chosenObjective">+2.400</strong><code id="chosenBranch">clipped · plateau</code></article>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,259 @@
+<section id="gae-need">
+  <h2 class="mrl-sec-title"><span class="num">08</span>策略步幅稳住了，优势标签本身仍可能摇摆</h2>
+  <p class="mrl-sec-lead">PPO 决定“拿到优势后怎样安全更新”，却不会自动让 $\hat A_t$ 变准确。优势估计太短会依赖 Critic，太长会把整条随机未来带回来。</p>
+
+  <p>Chapter 08 定义了 advantage function（优势函数）$A^\pi(s,a)=Q^\pi(s,a)-V^\pi(s)$：某个动作比当前策略在该状态的平均水平好多少。真实的 $Q^\pi$ 与 $V^\pi$ 不可直接获得，rollout 里只能构造估计。最短的选择是一阶 TD residual（TD 残差）：</p>
+  <div class="mrl-equation">$$\delta_t=r_t+\gamma V_\phi(s_{t+1})-V_\phi(s_t).$$</div>
+  <p>这里 $V_\phi$ 是 Critic 的当前估计。若 transition 真正终止，下一状态没有任务内未来，应把 continuation 设为 0；正常 transition 才使用 $V_\phi(s_{t+1})$。$\delta_t$ 只引入一步环境随机性，通常方差较低；但若 Critic 不准，它的误差会直接进入优势。</p>
+
+  <p>另一端是等到 episode 结束，计算完整样本回报：</p>
+  <div class="mrl-equation">$$\hat A_t^{\mathrm{MC}}=G_t-V_\phi(s_t),\qquad
+  G_t=\sum_{k=0}^{T-t-1}\gamma^k r_{t+k}.$$</div>
+  <p>它不借用中间状态的 Critic 估计，减少了 bootstrapping（自举）误差，却把从 $t$ 到终点的全部动作与环境随机性都装进一条样本，通常方差更高。</p>
+
+  <p>用同一条五步轨迹看两端。取 $\gamma=1$，奖励为 $(0,0,0,0,1)$，Critic 依次预测 $(0.1,0.2,0.3,0.5,0.8)$，终止后的 value 为 0：</p>
+  <table class="mrl-advantage-table">
+    <thead><tr><th>$t$</th><th>$r_t$</th><th>$V_\phi(s_t)$</th><th>一步 $\delta_t$</th><th>完整 $G_t-V_\phi(s_t)$</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>0</td><td>0.1</td><td>$0+0.2-0.1=0.1$</td><td>$1-0.1=0.9$</td></tr>
+      <tr><td>1</td><td>0</td><td>0.2</td><td>$0+0.3-0.2=0.1$</td><td>$1-0.2=0.8$</td></tr>
+      <tr><td>2</td><td>0</td><td>0.3</td><td>$0+0.5-0.3=0.2$</td><td>$1-0.3=0.7$</td></tr>
+      <tr><td>3</td><td>0</td><td>0.5</td><td>$0+0.8-0.5=0.3$</td><td>$1-0.5=0.5$</td></tr>
+      <tr><td>4</td><td>1</td><td>0.8</td><td>$1+0-0.8=0.2$</td><td>$1-0.8=0.2$</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正要比较的是起点信号从 0.1 到 0.9 的来源：一步残差相信下一状态 Critic 已经概括未来；完整回报则让这次终点结果直接影响每个前驱步骤。</p>
+
+  <div class="mrl-bias-variance">
+    <article><span>短回看 · 更多自举</span><h3>低轨迹方差，依赖 Critic</h3><p>若 $V_\phi=V^\pi$，一步残差在条件期望下就能给出正确优势；现实中 Critic 近似误差会造成偏差。</p></article>
+    <article><span>长回看 · 更少自举</span><h3>少依赖中间 Critic，高轨迹方差</h3><p>完整 return 使用真实发生的长尾，避免中间 value 误差，却会随每次幸运或倒霉结局大幅波动。</p></article>
+  </div>
+  <p class="mrl-caption">“TD 一定有偏、MC 一定无偏”过于粗糙：偏差还取决于 Critic 是否准确、rollout 是否完整、终止处理与函数近似。更可靠的说法是比较它们依赖哪一类误差源。</p>
+</section>
+
+<section id="gae-derive">
+  <h2 class="mrl-sec-title"><span class="num">09</span>GAE 不是凭空加权：先把每个 n-step advantage 写成 TD 残差和</h2>
+  <p class="mrl-sec-lead">Generalized Advantage Estimation（GAE，广义优势估计）用 $\lambda$ 连续调节“回看多少步”。它可以从多步自举目标一步步推出。</p>
+
+  <p>先定义一个 $n$ 步优势估计：前 $n$ 步使用真实奖励，第 $n$ 步以后用 Critic 收尾，再减去当前状态基线：</p>
+  <div class="mrl-equation">$$\hat A_t^{(n)}=
+  \underbrace{\sum_{l=0}^{n-1}\gamma^l r_{t+l}+\gamma^nV_\phi(s_{t+n})}_{n\text{-step target}}
+  -V_\phi(s_t).$$</div>
+
+  <p>以 $n=3$ 为例，把三个 TD 残差加起来：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \delta_t+\gamma\delta_{t+1}+\gamma^2\delta_{t+2}
+  =&\,[r_t+\gamma V_{t+1}-V_t]\\
+   &+\gamma[r_{t+1}+\gamma V_{t+2}-V_{t+1}]\\
+   &+\gamma^2[r_{t+2}+\gamma V_{t+3}-V_{t+2}]\\
+  =&\,r_t+\gamma r_{t+1}+\gamma^2r_{t+2}+\gamma^3V_{t+3}-V_t\\
+  =&\,\hat A_t^{(3)}.
+  \end{aligned}$$</div>
+  <p>中间的 $+\gamma V_{t+1}$ 与 $-\gamma V_{t+1}$、$+\gamma^2V_{t+2}$ 与 $-\gamma^2V_{t+2}$ 两两抵消。这种首尾保留、中间消去的结构叫 telescoping sum（望远镜求和）。一般地：</p>
+  <div class="mrl-equation">$$\hat A_t^{(n)}=\sum_{l=0}^{n-1}\gamma^l\delta_{t+l}.$$</div>
+
+  <p>现在让短目标权重大、长目标权重按几何速度衰减。对所有 $n$ 步优势做归一化的 $\lambda$ 加权：</p>
+  <div class="mrl-equation">$$\hat A_t^{\mathrm{GAE}(\gamma,\lambda)}
+  =(1-\lambda)\sum_{n=1}^{\infty}\lambda^{n-1}\hat A_t^{(n)},
+  \qquad 0\leq\lambda<1.$$</div>
+  <p>这条归一化无限混合式严格写在 $0\leq\lambda<1$ 上；$\lambda=1$ 是由下面的有限轨迹递推式（也可视作 $\lambda\uparrow1$ 的端点）定义，不能把 1 直接代进 $(1-\lambda)$ 的无限和。对有限 episode，可以把真正终止后的状态看成 value 与后续残差都为 0 的吸收状态；等价地，有限 $\lambda$-return 让最长步目标承接剩余权重，因此理论混合与代码里的终止 mask 并不矛盾。</p>
+
+  <p>把 $\hat A_t^{(n)}$ 换成残差和，并收集同一个 $\delta_{t+l}$ 的系数。它会出现在所有 $n\ge l+1$ 的多步估计中：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \text{coefficient of }\gamma^l\delta_{t+l}
+  &=(1-\lambda)\sum_{n=l+1}^{\infty}\lambda^{n-1}\\
+  &=(1-\lambda)\lambda^l\sum_{j=0}^{\infty}\lambda^j\\
+  &=(1-\lambda)\lambda^l\frac{1}{1-\lambda}=\lambda^l.
+  \end{aligned}$$</div>
+  <p>于是得到熟悉的 GAE 公式：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\hat A_t^{\mathrm{GAE}(\gamma,\lambda)}
+  =\sum_{l=0}^{\infty}(\gamma\lambda)^l\delta_{t+l}.$$</div>
+
+  <p>这条几何级数还能改写成从后往前的一步递推。令 $m_t=0$ 表示本步后发生真正终止，$m_t=1$ 表示轨迹仍连续：</p>
+  <div class="mrl-equation">$$\hat A_t=\delta_t+\gamma\lambda m_t\hat A_{t+1}.$$</div>
+  <p>它把直接求和的 $O(T^2)$ 计算降为一次反向扫描的 $O(T)$。终止 mask 阻止下一局的优势越过 reset 泄漏回来；若只是采样窗口在非终止状态截断，$\delta_t$ 仍应使用最后状态的 bootstrap value，而不是把物理未来误当成 0。</p>
+
+  <h3>两个端点与一个容易忽略的条件</h3>
+  <table>
+    <thead><tr><th>$\lambda$</th><th>GAE 变成什么</th><th>主要依赖</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>$\hat A_t=\delta_t$</td><td>一步奖励与下一状态 Critic</td></tr>
+      <tr><td>$0<\lambda<1$</td><td>按 $(\gamma\lambda)^l$ 聚合多步残差</td><td>Critic 与实际后续共同决定</td></tr>
+      <tr><td>1</td><td>$\sum_l\gamma^l\delta_{t+l}$</td><td>在真实终止的完整 episode 中望远镜化为 $G_t-V_\phi(s_t)$</td></tr>
+    </tbody>
+  </table>
+  <p>只有残差链一直加到<strong>真正终止</strong>的完整 episode，且终止后的 value 为 0 时，$\lambda=1$ 才望远镜化为样本 Monte Carlo return 减基线：$G_t-V_\phi(s_t)$。若 rollout 在仍可继续的 $s_H$ 截断，正确结果是：</p>
+  <div class="mrl-equation">$$\hat A_t^{\lambda=1,\,H}
+  =\sum_{l=0}^{H-t-1}\gamma^l r_{t+l}
+  +\gamma^{H-t}V_\phi(s_H)-V_\phi(s_t).$$</div>
+  <p>这是“截断的多步回报 + 尾部 Critic bootstrap”，不是已经观察到真实未来的 MC return。保留 $V_\phi(s_H)$ 是为了不把仍存在的未来误当成 0；只有继续采到真正终止，或尾部 value 恰好等于该条轨迹之后实际发生的折扣回报时，两种形式才重合。</p>
+
+  <p>回到上一节五步数据，取 $\gamma=1,\lambda=0.5$，从后往前算：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \hat A_4&=0.2,\\
+  \hat A_3&=0.3+0.5(0.2)=0.4,\\
+  \hat A_2&=0.2+0.5(0.4)=0.4,\\
+  \hat A_1&=0.1+0.5(0.4)=0.3,\\
+  \hat A_0&=0.1+0.5(0.3)=0.25.
+  \end{aligned}$$</div>
+  <p>它确实落在一步 TD 的 0.1 与完整轨迹的 0.9 之间。若改成 $\lambda=0.95$，$\hat A_0\approx0.796$，远端残差会更完整地传回起点。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>$\gamma$ 决定任务怎样看未来，$\lambda$ 决定估计器怎样使用未来证据</h3>
+      <p>$\gamma$ 是 return 定义的一部分；$\lambda$ 不改环境奖励，也不改优化目标，只改变 TD 残差向前聚合的长度。</p>
+      <p class="mrl-insight-key">把 $\lambda$ 调大不是“让 agent 更重视未来奖励”，而是让优势估计更少依赖短程自举、更多吸收已采到的后续随机结果。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="gae-lab">
+  <h2 class="mrl-sec-title"><span class="num">10</span>互动实验：$\lambda$ 增大时，远端奖励与 Critic 误差怎样交换位置？</h2>
+  <p class="mrl-sec-lead">继续使用五步轨迹。调节后续 Critic 估计的整体倍率，再观察小 $\lambda$ 与大 $\lambda$ 对中间 value 和终点随机性的敏感度。</p>
+
+  <div class="mrl-viz" id="gaeLab">
+    <div class="mrl-viz-head">
+      <div><h3>Five-Step GAE · Bias–Variance Dial</h3><p>$r=(0,0,0,0,z)$，基础 $V=(0.1,0.2,0.3,0.5,0.8)$，最后一步真正终止。</p></div>
+      <button class="mrl-btn" id="gaeReset" type="button">恢复默认</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>$\lambda$ 怎样同时控制“终点结果传回起点的强度”和“起点优势对中间 Critic 估计的依赖”？</dd>
+      <dt>Prediction</dt><dd>$\lambda$ 越大，终点正负结果造成的 $\hat A_0$ 跨度越大，但缩放中间 Critic 时 $\hat A_0$ 的变化会因望远镜抵消而减弱。</dd>
+      <dt>Experiment</dt><dd>调节 $\lambda$、$\gamma$、终点奖励和后续 Critic 倍率；逐步比较 $\delta_t$、反向累计的 $\hat A_t$ 及一对正负终点造成的起点跨度。</dd>
+      <dt>Observation</dt><dd id="gaeObservation">默认 $\lambda=0.50$ 时，起点吸收一部分终点信息，但仍明显依赖下一状态 value。</dd>
+      <dt>Interpretation</dt><dd id="gaeInterpretation">$\lambda$ 把误差来源从“中间 Critic 是否可信”连续移向“这条采样轨迹是否幸运”。</dd>
+      <dt>Limitation</dt><dd>一条手工轨迹和两个对称终点只能展示机制与波动代理，不能测出真实环境的统计 bias、variance 或最优 $\lambda$；这些需要多批独立 rollout。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar mrl-gae-controls">
+      <label class="mrl-range-control">
+        <span>GAE 参数 $\lambda$ <output id="gaeLambdaValue">0.50</output></span>
+        <input id="gaeLambda" type="range" min="0" max="1" step="0.05" value="0.50">
+      </label>
+      <label class="mrl-range-control">
+        <span>折扣因子 $\gamma$ <output id="gaeGammaValue">1.00</output></span>
+        <input id="gaeGamma" type="range" min="0.50" max="1" step="0.01" value="1">
+      </label>
+      <label class="mrl-range-control">
+        <span>终点奖励 $z$ <output id="terminalRewardValue">+1.00</output></span>
+        <input id="terminalReward" type="range" min="-1.5" max="1.5" step="0.1" value="1">
+      </label>
+      <label class="mrl-range-control">
+        <span>后续 Critic 倍率 $V(s_1{:}s_4)$ <output id="criticScaleValue">1.00×</output></span>
+        <input id="criticScale" type="range" min="0.50" max="1.50" step="0.05" value="1">
+      </label>
+    </div>
+
+    <div class="mrl-gae-steps" aria-label="五个时间步的 TD 残差和 GAE 优势">
+      <div><span>STEP 0</span><strong id="gaeA0">+0.250</strong><small id="gaeDelta0">δ = +0.100</small><i id="gaeBar0"></i></div>
+      <div><span>STEP 1</span><strong id="gaeA1">+0.300</strong><small id="gaeDelta1">δ = +0.100</small><i id="gaeBar1"></i></div>
+      <div><span>STEP 2</span><strong id="gaeA2">+0.400</strong><small id="gaeDelta2">δ = +0.200</small><i id="gaeBar2"></i></div>
+      <div><span>STEP 3</span><strong id="gaeA3">+0.400</strong><small id="gaeDelta3">δ = +0.300</small><i id="gaeBar3"></i></div>
+      <div><span>STEP 4</span><strong id="gaeA4">+0.200</strong><small id="gaeDelta4">δ = +0.200</small><i id="gaeBar4"></i></div>
+    </div>
+    <p class="mrl-caption">每格大数是从该步开始反向累计的 GAE，小字是本步 TD 残差；重点看调大 $\lambda$ 后，STEP 0 如何吸收越来越多的后续残差。</p>
+
+    <div class="mrl-gae-readouts">
+      <article><span>ONE-STEP AT $t=0$</span><strong id="oneStepA0">+0.100</strong><small>只看 $\delta_0$</small></article>
+      <article><span>GAE AT $t=0$</span><strong id="gaeStartValue">+0.250</strong><small id="gaeExpansion">δ₀ + 0.50δ₁ + …</small></article>
+      <article><span>TERMINAL WEIGHT</span><strong id="terminalWeight">0.063</strong><small>$(\gamma\lambda)^4$</small></article>
+      <article><span>± ENDING SPREAD</span><strong id="endingSpread">0.125</strong><small>$|\hat A_0^{(+|z|)}-\hat A_0^{(-|z|)}|$</small></article>
+      <article><span>CRITIC SENSITIVITY</span><strong id="criticSensitivity">0.000</strong><small>相对倍率 1.00× 的 $\hat A_0$ 变化</small></article>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">11</span>把公式落到训练循环：先固定标签，再让 Actor 多看几遍同一批数据</h2>
+  <p class="mrl-sec-lead">上游从零实现的代码把 PPO 拆成四个清晰阶段。真正需要冻结的对象、反向扫描的边界和重新计算的概率都能逐一对应。</p>
+
+  <div class="mrl-code-pipeline">
+    <div><span>01 · COLLECT</span><strong>用当前策略采 rollout</strong><small>保存 <code>states</code>、<code>actions</code>、<code>old_logprobs</code>、<code>values</code></small></div>
+    <i>→</i>
+    <div><span>02 · LABEL</span><strong>反向计算 GAE</strong><small>得到固定的 <code>advantages</code> 与 Critic targets</small></div>
+    <i>→</i>
+    <div><span>03 · UPDATE × K</span><strong>重算 new log-prob</strong><small><code>ratio → clamp → minimum</code></small></div>
+    <i>→</i>
+    <div><span>04 · REFRESH</span><strong>采下一批新数据</strong><small>当前策略成为新的采样快照</small></div>
+  </div>
+  <p class="mrl-caption">数据复用发生在同一 rollout 的有限个 update epoch 内；一轮结束后重新采样，避免无限使用越来越失真的旧状态分布。</p>
+
+  <pre class="mrl-code"><code># rollout labels: compute once, backwards
+gae = 0.0
+for t in reversed(range(T)):
+    delta = rewards[t] + gamma * next_values[t] - values[t]
+    continuation = 0.0 if episode_ends[t] else 1.0
+    gae = delta + gamma * lam * continuation * gae
+    advantages[t] = gae
+returns = advantages + values
+
+# actor update: recompute under the changing policy
+new_logprobs, new_values, entropy = model.evaluate(states, actions)
+ratio = exp(new_logprobs - old_logprobs)
+raw = ratio * advantages
+clipped = clamp(ratio, 1 - eps, 1 + eps) * advantages
+policy_loss = -minimum(raw, clipped).mean()
+
+value_loss = mse(new_values, returns)
+loss = policy_loss + vf_coef * value_loss - ent_coef * entropy.mean()</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>上游代码变量</th><th>关键合同</th></tr></thead>
+    <tbody>
+      <tr><td>$\log\pi_{\mathrm{old}}(a_t\mid s_t)$</td><td><code>old_logprobs</code></td><td>采样时记录，更新阶段不回传梯度</td></tr>
+      <tr><td>$\log\pi_\theta(a_t\mid s_t)$</td><td><code>new_logprobs</code></td><td>每个 mini-batch update 都用当前参数重算</td></tr>
+      <tr><td>$\rho_t$</td><td><code>torch.exp(new_logprobs - old_logprobs)</code></td><td>同一状态、同一已采动作的新旧概率比</td></tr>
+      <tr><td>$\delta_t$</td><td><code>rewards[t] + gamma * next_values[t] - values[t]</code></td><td>真正终止时 <code>next_values[t] = 0</code></td></tr>
+      <tr><td>$\hat A_t$</td><td><code>gae</code>, <code>advantages</code></td><td>从后向前；不能跨 episode reset 传播</td></tr>
+      <tr><td>$L^{\mathrm{CLIP}}$</td><td><code>minimum(raw, clipped)</code></td><td>最大化目标在 loss 中取负号</td></tr>
+      <tr><td>更新过猛指标</td><td><code>clip_fraction</code>, approximate KL</td><td>裁剪是软限制，仍应监控整体偏移</td></tr>
+    </tbody>
+  </table>
+
+  <p>实现里常用 $\hat A_i'=(\hat A_i-\bar A)/(s_A+\varepsilon)$ 把 batch 内优势重新中心化并缩放，以稳定梯度尺度。它保留样本之间的排序，但减去 batch 均值可能改变个别样本相对 0 的符号；标准化后的正负表示“高于或低于本批平均优势”，PPO 裁剪方向由实际送入 Actor loss 的最终 advantage 标签决定。价值损失训练 Critic，熵项避免策略过早塌成近乎确定的动作。它们与裁剪目标共同组成实用 PPO，不能把 Actor 的一条 clip 公式误当作完整训练程序。</p>
+
+  <div class="mrl-boundary-note">
+    <b>PPO 的能力边界</b>
+    <p>PPO 通常在每批有限复用后仍要重新与环境交互，不能像经验回放那样长期复用任意历史数据；裁剪也不提供严格单调改进保证。它让 Actor–Critic 更易稳定训练，却没有解决连续动作怎样参数化、真实交互为何昂贵、怎样借模型生成额外经验。下一章从这些剩余问题出发。</p>
+  </div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>检查你的理解：能否把“数据来源、更新距离、优势长度”分成三条轴？</h2>
+  <p class="mrl-sec-lead">PPO 最容易被背成一个 <code>clip</code> 函数。先遮住答案，试着从问题条件重新推出每个对象的职责。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. $\pi_{\mathrm{old}}$ 为什么必须冻结？它什么时候刷新？</summary><div class="inner">它表示当前 rollout 的真实采样分布，给概率比提供固定分母。若分母也随梯度改变，比率就无法衡量相对采样时的变化。本批有限个 update epoch 结束并重新采样时，当前策略成为下一批的 old policy。它不是训练全程不变的模型。</div></details>
+    <details><summary>2. 为什么 $\rho_t=2$ 不等于“整个新策略是旧策略的两倍”？</summary><div class="inner">$\rho_t$ 只比较同一个状态 $s_t$ 上、同一个已采动作 $a_t$ 的新旧概率。完整策略还包含该状态其他动作以及其他所有状态的动作分布；整体差异需用 KL 等分布级量观察。</div></details>
+    <details><summary>3. 代理目标为什么只是一张局部地图？</summary><div class="inner">它冻结旧策略访问的状态和旧 rollout 上估计的优势，在旧参数点的梯度与策略梯度一致。但策略走远后，新的状态访问分布和未来动作会改变，旧数据不再完整代表新策略的行为后果。</div></details>
+    <details><summary>4. TRPO 与 PPO-Clip 分别怎样表达“不要更新太远”？</summary><div class="inner">TRPO 对旧状态上的平均 KL 设置显式约束，并求解约束优化；PPO-Clip 不直接解二阶约束，而是让样本概率比沿优势有利方向越过 $1\pm\epsilon$ 后不再获得额外代理收益。</div></details>
+    <details><summary>5. 若 $\hat A_t<0$ 且 $\rho_t=0.7$、$\epsilon=0.2$，为什么 <code>min</code> 选择裁剪项？</summary><div class="inner">未裁剪项是 $0.7\hat A_t$，裁剪项是 $0.8\hat A_t$。因为优势为负，乘法会反转大小关系，所以 $0.8\hat A_t$ 更小。最大化目标时它在下界外成为常数，不再奖励继续降低坏动作概率。</div></details>
+    <details><summary>6. PPO 的 clip 能否保证每个 ratio 都在区间内，或保证 KL 小于固定阈值？</summary><div class="inner">不能。它裁剪的是代理目标的收益，不是把网络输出硬投影回区间。共享参数更新还会联动许多状态与动作，因此仍需监控 clip fraction、近似 KL，必要时减小学习率或提前停止。</div></details>
+    <details><summary>7. 怎样从三步 TD 残差推出三步 advantage？</summary><div class="inner">把 $\delta_t+\gamma\delta_{t+1}+\gamma^2\delta_{t+2}$ 展开后，中间的 $V(s_{t+1})$ 与 $V(s_{t+2})$ 正负抵消，只剩三步真实奖励、$\gamma^3V(s_{t+3})$ 和 $-V(s_t)$，正好是三步自举 target 减当前 value。</div></details>
+    <details><summary>8. $\gamma$ 与 $\lambda$ 都出现在 $(\gamma\lambda)^l$，为什么不能互换？</summary><div class="inner">$\gamma$ 定义任务回报中未来奖励的权重，改变它会改变优化问题；$\lambda$ 只控制优势估计聚合多少步 TD 残差，改变的是对 Critic 偏差与轨迹方差的取舍。$\lambda=1$ 在完整、真正终止的 episode 中变成 MC return 减基线；在非终止 rollout 截断处则是带尾部 Critic bootstrap 的截断回报，不能叫作已经观察到真实未来的 MC。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第九章建立起来的三层稳定性</h3>
+    <div class="mrl-summary-chain">
+      <div><span>数据层</span><strong>冻结采样时的 old policy</strong><small>知道经验从哪里来</small></div>
+      <i>→</i>
+      <div><span>更新层</span><strong>ratio + KL / clip</strong><small>限制旧数据被信到多远</small></div>
+      <i>→</i>
+      <div><span>估计层</span><strong>GAE 的 $\lambda$ 递推</strong><small>平衡 Critic 误差与轨迹噪声</small></div>
+    </div>
+    <p>重要性采样让旧 rollout 能服务于附近的新策略；TRPO 用分布级 KL 定义信任域，PPO 用方向性的裁剪代理目标换取一阶优化的简洁；GAE 再决定优势标签从多长的未来中吸收证据。三者解决的是不同层面的不稳定，不能互相替代。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter10.html">第 10 章：动作连续、真实交互又昂贵时怎么办？</a></h3>
+    <p>PPO 已能通过概率分布描述策略，但本章一直用“某动作的概率”讲核心机制。下一章会正式面对连续动作：离散枚举为什么失效，确定性与随机连续策略怎样构造 target，以及在真实交互昂贵时，off-policy 复用和 world model（世界模型）如何改变样本效率。</p>
+  </div>
+
+  <p class="mrl-source-note">本页依据 walkinglabs/hands-on-modern-rl 固定版本中的 PPO 数学推导、信任域与裁剪、GAE 讲义，以及 <code>code/chapter07_ppo/ppo_from_scratch.py</code>、<code>gae_visualization.py</code> 与 PPO/GAE 代码速查表重新组织，不是原项目官方译本。本章只建立通用策略优化机制；LLM 的反馈来源、参考策略与对齐训练流水线留给 Chapter 14。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 09</span><span><a href="./chapter08.html">← Chapter 08</a> · <a href="./">课程目录</a> · <a href="./chapter10.html">Chapter 10 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter10_ppo" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

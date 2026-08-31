@@ -26,7 +26,7 @@
 | 11 | 离线强化学习 | Offline Reinforcement Learning | `docs/chapter12_offline_rl/` |
 | 12 | 模仿、逆强化与元强化学习 | Imitation, Inverse RL, and Meta-RL | `docs/chapter13_imitation_meta_rl/` |
 | 13 | 探索、多智能体与层级强化学习 | Exploration, Multi-Agent, and Hierarchical RL | `docs/chapter14_exploration_marl_hierarchical/` |
-| 14 | RLHF 流水线 | The RLHF Training Pipeline | `docs/chapter15_rlhf/` |
+| 14 | RLHF、Constitutional AI 与 RLAIF | The RLHF Training Pipeline; Constitutional AI and AI Feedback | `docs/chapter15_rlhf/`, `docs/chapter21_cai_rlvr/` |
 | 15 | DPO 家族 | Preference Alignment and the DPO Family | `docs/chapter17_dpo/` |
 | 16 | GRPO、RLVR 与验证器 | GRPO, RLVR, and Verifier Engineering | `docs/chapter18_grpo/` |
 | 17 | 推理模型与推理时计算 | Reasoning Models and Inference-Time Compute | `docs/chapter19_reasoning/` |
@@ -37,7 +37,7 @@
 | 22 | Deep Research 与浏览器智能体 | Deep Research and Browser Agents | `docs/chapter24_deep_research/` |
 | 23 | Computer Use 与 GUI 智能体 | Computer Use and GUI Agents | `docs/chapter25_computer_use/` |
 | 24 | 视觉语言模型 RL | Vision-Language Model RL | `docs/chapter26_vlm/` |
-| 25 | 音频、具身与视觉生成 RL | Audio, Embodied Intelligence, and Visual Generation | `docs/chapter27_audio_rl/`, `chapter28_vla/`, `chapter29_visual_generation/` |
+| 25 | 音频、具身与视觉生成 RL | Audio, Embodied Intelligence, and Visual Generation | `docs/chapter27_audio_rl/`, `modelscope-space/hands-on-modern-rl-experiment08-maniskill/`, `modelscope-space/hands-on-modern-rl-experiment10-minestudio/`, `modelscope-space/hands-on-modern-rl-experiment11-unity-mlagents/`, `modelscope-space/hands-on-modern-rl-experiment12-ai2thor-embodied/`, `docs/chapter29_visual_generation/` |
 | 26 | 奖励黑客与 RL 评测 | Reward Hacking and RL Evaluation | `docs/chapter30_alignment_failures/` |
 | 27 | 自博弈、规模化与研究前沿 | Self-Play, Scaling, and Research Frontiers | `docs/chapter32_selfplay/` |
 

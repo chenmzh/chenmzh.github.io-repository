@@ -1,0 +1,191 @@
+<section id="target-loss">
+  <h2 class="mrl-sec-title"><span class="num">04</span>表格能直接改数值，神经网络必须先把 TD error 变成 loss</h2>
+  <p class="mrl-sec-lead">DQN 的监督信号不是数据集提前附带的固定标签，而是从一条 transition 和另一份价值估计临时构造出来的。</p>
+
+  <p>从回放池取第 $i$ 条经验 $(s_i,a_i,r_i,s'_i,d_i)$。这里 $d_i=1$ 只表示任务真正终止；若任务继续，$d_i=0$。DQN 用稍后解释的目标网络参数 $\theta^-$ 构造 <strong>TD target（时序差分目标）</strong>：</p>
+  <div class="mrl-equation mrl-equation-feature">$$y_i=r_i+\gamma(1-d_i)\max_{a'}Q(s'_i,a';\theta^-)$$</div>
+
+  <p>当前网络给实际动作的预测是 $q_i=Q(s_i,a_i;\theta)$，因此 <strong>TD error（时序差分误差）</strong>为：</p>
+  <div class="mrl-equation">$$\delta_i=y_i-Q(s_i,a_i;\theta)$$</div>
+
+  <p>表格方法能直接执行 $Q\leftarrow Q+\alpha\delta$；神经网络只能通过参数间接改变输出。于是对大小为 $B$ 的 mini-batch（小批量），把误差平方并平均：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\mathcal L(\theta)=\frac1B\sum_{i=1}^{B}\left[y_i-Q(s_i,a_i;\theta)\right]^2$$</div>
+
+  <div class="mrl-loss-derivation">
+    <div><span>1 · SAMPLE</span><strong>$(s_i,a_i,r_i,s'_i,d_i)$</strong><p>一次真实 transition</p></div>
+    <div><span>2 · TARGET</span><strong>$y_i=r_i+\gamma(1-d_i)\max Q_{\theta^-}(s'_i,\cdot)$</strong><p>一步事实 + 冻结的尾部估计</p></div>
+    <div><span>3 · ERROR</span><strong>$\delta_i=y_i-Q_\theta(s_i,a_i)$</strong><p>目标减当前预测</p></div>
+    <div><span>4 · LOSS</span><strong>$\mathcal L=\frac1B\sum_i\delta_i^2$</strong><p>让梯度下降有一个标量目标</p></div>
+  </div>
+  <p class="mrl-caption">真正要沿四行追踪的是同一条经验怎样逐步变成可优化的标量：环境只提供 transition；$y_i$ 是算法结合目标网络构造的，不是环境给出的“正确 Q 标签”。</p>
+
+  <h3>把一条经验手算到底</h3>
+  <p>设 $r_i=-1$、$\gamma=0.9$、$d_i=0$，目标网络在下一状态输出 $[2,5,3]$，当前网络对实际动作的预测为 1：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  y_i&=-1+0.9\max(2,5,3)=3.5,\\
+  \delta_i&=3.5-1=2.5,\\
+  \ell_i&=(2.5)^2=6.25.
+  \end{aligned}$$</div>
+  <p>若这条 transition 真正终止，则 $d_i=1$，未来项被乘成 0，$y_i=-1$。平方误差为正并不表示网络一定会把这个输出直接加上某个固定量；优化器更新的是共享参数 $\theta$，实际输出变化还取决于网络梯度。</p>
+
+  <p>在一次参数更新内部，把 $y_i$ 当常量，可以写出梯度方向：</p>
+  <div class="mrl-equation">$$\nabla_\theta\mathcal L=-\frac{2}{B}\sum_{i=1}^{B}\delta_i\,\nabla_\theta Q(s_i,a_i;\theta)$$</div>
+  <p>$\delta_i$ 决定每条经验希望把预测往哪边拉，$\nabla_\theta Q$ 决定通过哪些共享参数产生这次变化。计算 target 时切断梯度，正是为了不让“答案端”也在同一步被 loss 推动。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>DQN 的标签是临时搭出来的脚手架，不是静态真值</h3>
+      <p>即时奖励是真实观测，下一状态价值仍是估计。loss 下降只说明当前网络更接近这批 target，不能单独证明策略回报已经提高。</p>
+      <p class="mrl-insight-key">评估 DQN 要看独立 episode 的回报与行为；训练 loss 是诊断量，不是任务成绩。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="instability">
+  <h2 class="mrl-sec-title"><span class="num">05</span>把 Q 表机械换成一个网络，为什么容易自己追自己？</h2>
+  <p class="mrl-sec-lead">表格中改一个格子通常不会碰到另一格；神经网络共享参数，因此当前预测、未来预测和之后采到的数据会互相牵动。</p>
+
+  <div class="mrl-instability-grid">
+    <article>
+      <span>DEPENDENCY 01</span>
+      <h3>连续经验高度相关</h3>
+      <p>相邻几帧可能只差球移动了几个像素。顺序 batch 看似有很多样本，实际都在重复最近的同一局面，梯度被局部经历主导。</p>
+    </article>
+    <article>
+      <span>DEPENDENCY 02</span>
+      <h3>同一网络同时出题和答题</h3>
+      <p>若 target 也用 $\theta$，更新 $Q(s,a;\theta)$ 时，$Q(s',a';\theta)$ 也可能改变；网络刚靠近旧 target，target 又移动。</p>
+    </article>
+    <article>
+      <span>DEPENDENCY 03</span>
+      <h3>策略改变之后，数据也改变</h3>
+      <p>Q 值影响 $\varepsilon$-greedy 动作，动作决定以后访问哪些状态。模型更新不仅改变预测，也改变后续训练数据的来源。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">三栏不是三个独立 bug：数据的时间依赖、target 的参数依赖和策略造成的数据反馈共同形成回路。DQN 的稳定化组件分别切断其中不同的一条短反馈。</p>
+
+  <p>用同一个网络构造 target 时，设 $Q_\theta(s,a)=5$、$\max_{a'}Q_\theta(s',a')=8$、$r=1$、$\gamma=0.99$，当前 target 是 8.92。一次梯度更新后，共享参数可能让下一状态最大值从 8 变成 4，于是同一 transition 的 target 立刻变为：</p>
+  <div class="mrl-equation">$$1+0.99(4)=4.96$$</div>
+  <p>这不意味着 target 永远不能变化；价值估计本来就应该随学习改善。问题是它若与学生每一步完全同步，优化过程缺少一个短期稳定参照。下面两个组件分别处理“样本太挨着”和“靶子动得太快”。</p>
+
+  <div class="mrl-inline-note"><strong>一个严谨边界：</strong>函数逼近、自举和 off-policy learning 同时出现时，发散风险会明显增大，常被概括为 <em>deadly triad</em>（致命三要素）。它说明不稳定是可能且有结构来源的，不是断言每个 DQN 运行都会发散。</div>
+</section>
+
+<section id="replay">
+  <h2 class="mrl-sec-title"><span class="num">06</span>Experience replay：先存下时间线，再打散成训练集</h2>
+  <p class="mrl-sec-lead"><strong>Experience Replay（经验回放）</strong>把在线交互产生的 transition 存进缓冲区 $\mathcal D$，训练时随机抽取 mini-batch，而不是只拿最近几步顺序更新。</p>
+
+  <div class="mrl-replay-flow" aria-label="经验回放从顺序交互到随机批次">
+    <div class="stream"><span>TIME-ORDERED STREAM</span><strong>$e_1\to e_2\to e_3\to\cdots$</strong><small>相邻状态来自同一段轨迹</small></div>
+    <i>→</i>
+    <div class="buffer"><span>REPLAY BUFFER $\mathcal D$</span><strong>$(s,a,r,s',d)$</strong><small>容量有限，持续写入历史经验</small></div>
+    <i>→</i>
+    <div class="batch"><span>RANDOM MINI-BATCH</span><strong>$\{e_{37},e_4,e_{91},e_{18}\}$</strong><small>混合不同局面与时间</small></div>
+  </div>
+  <p class="mrl-caption">沿编号观察采样顺序：回放不改变任何 transition 的内容，只改变哪些历史经验在同一次梯度更新里相遇，从而降低“最近一小段轨迹”对梯度的垄断。</p>
+
+  <p>每条经验至少保存：</p>
+  <div class="mrl-equation">$$e_i=(s_i,a_i,r_i,s'_i,d_i)$$</div>
+  <p>其中 $d_i$ 用于真正终止时切断 continuation。实践里还要单独记录 episode 是否因时间上限截断，以便 reset 交互循环而不把任务未来误判为不存在。</p>
+
+  <table>
+    <thead><tr><th>回放带来的变化</th><th>它解决什么</th><th>它没有保证什么</th></tr></thead>
+    <tbody>
+      <tr><td>随机混合不同时间的经验</td><td>降低连续样本的短程相关</td><td>样本并不会因此严格 i.i.d.</td></tr>
+      <tr><td>一条经验可被多次采到</td><td>提高昂贵交互的数据利用率</td><td>重复次数多不代表信息变新</td></tr>
+      <tr><td>旧经验与新经验共存</td><td>减轻只记得最近局面的遗忘</td><td>容量和数据覆盖仍需设计</td></tr>
+    </tbody>
+  </table>
+
+  <p>本章的 replay buffer 是训练中的在线 agent 持续写入的有限缓存。它允许 off-policy 的经验复用，但这不等于已经进入“只能使用固定历史数据集”的设置；固定数据下的分布边界会在 Chapter 11 单独建立。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>Replay 改的是训练样本的相遇方式，不是 Bellman target 的含义</h3>
+      <p>环境仍按时间顺序发生，transition 也没有被伪造；随机性只发生在“下一次梯度更新从记忆里复习哪几条”。</p>
+      <p class="mrl-insight-key">不要把经验回放理解成打乱环境时间。agent 不能回到过去重做动作，只能重复学习过去留下的记录。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="target-network">
+  <h2 class="mrl-sec-title"><span class="num">07</span>Target network：让出题者隔一段时间才换一次答案</h2>
+  <p class="mrl-sec-lead"><strong>Target Network（目标网络）</strong>是在线 Q 网络的延迟副本：结构相同、参数记作 $\theta^-$，只负责构造 TD target，不被当前 loss 的梯度更新。</p>
+
+  <div class="mrl-network-pair">
+    <article class="online"><span>ONLINE Q NETWORK</span><h3>$Q(s,a;\theta)$</h3><p>选择动作；计算当前预测；每个优化步由梯度更新。</p><strong>$\theta\leftarrow\theta-\eta\nabla_\theta\mathcal L$</strong></article>
+    <article class="target"><span>TARGET NETWORK</span><h3>$Q(s,a;\theta^-)$</h3><p>计算下一状态的 bootstrap value；两次同步之间保持冻结。</p><strong>每隔 $C$ 步：$\theta^-\leftarrow\theta$</strong></article>
+  </div>
+  <p class="mrl-caption">两张网络结构相同，差异只在参数更新时间：梯度箭头只进入在线网络；目标网络通过间歇复制更新，因此 target 是“分段恒定”，不是永远不变。</p>
+
+  <p>完整的 DQN target 因而写成：</p>
+  <div class="mrl-equation mrl-equation-feature">$$y_i=r_i+\gamma(1-d_i)\max_{a'}Q(s'_i,a';\theta^-)$$</div>
+  <p>若每一步都令 $\theta^-=\theta$，两个网络重新完全同步，短期稳定参照就消失；若很久都不更新，target 又会过时。同步间隔 $C$ 因而控制一个具体折中：<strong>靶子移动得有多慢</strong>。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“目标网络更准确，所以它当老师。”</strong> 不一定。同步后两个网络起点相同，随后目标网络只是更旧、更慢；它提供的是短期稳定性，不是天然更接近 $Q^*$ 的保证。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>目标网络不是第二个独立专家，而是在线网络的慢速时间切片</h3>
+      <p>它把“预测变化”和“target 变化”拆到不同时间尺度，让在线网络先追一段近似固定的靶，再整体移动靶子。</p>
+      <p class="mrl-insight-key">稳定化的关键不是两个网络意见不同，而是两份参数更新节奏不同。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="stability-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>互动实验：打散样本和冻结 target，分别切断哪条依赖？</h2>
+  <p class="mrl-sec-lead">下面的回放池有四类局面。顺序 batch 只拿同一段“高空下降”，打散 batch 会混合成功、失速和恢复；随后模拟共享参数让所有非终止下一状态 Q 值一起漂移。</p>
+
+  <div class="mrl-viz mrl-stability-lab" id="stabilityLab">
+    <div class="mrl-viz-head">
+      <div><h3>DQN Stability Workbench</h3><p>先改变 batch，再让在线网络漂移；最后手动同步目标网络。</p></div>
+      <div class="mrl-lab-actions">
+        <button class="mrl-btn" id="sampleSequential" type="button">取连续 4 条</button>
+        <button class="mrl-btn primary" id="sampleReplay" type="button">打散采样 4 条</button>
+        <button class="mrl-btn" id="stabilityReset" type="button">重置</button>
+      </div>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>经验回放与目标网络都被称为“稳定化”，它们究竟在稳定同一个东西，还是处理两种不同依赖？</dd>
+      <dt>Prediction</dt><dd>打散回放会增加一个 batch 覆盖的局面类型，却不会阻止 target 随网络参数移动；冻结目标网络会让同一 batch 的 target 在在线参数漂移时保持不动，却不会自动增加样本多样性。</dd>
+      <dt>Experiment</dt><dd>比较连续 batch 与打散 batch 的 scene coverage；设定共享参数漂移 $\Delta Q_\theta(s',\cdot)$，重复“在线网络变化”，观察同网 target 与冻结 target 的均值，再点击同步。</dd>
+      <dt>Observation</dt><dd id="stabilityObservation">正在读取初始 batch 与 target。</dd>
+      <dt>Interpretation</dt><dd id="stabilityInterpretation">经验回放处理数据的时间相关；目标网络处理 bootstrap target 对当前参数的即时依赖。二者互补，不能互相替代。</dd>
+      <dt>Limitation</dt><dd>这是一个透明的标量消融：用统一 offset 表示共享参数对下一状态预测的连带变化，没有模拟真实神经网络的非线性梯度、优化器或长期收敛。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-range-control"><span>折扣 $\gamma$ <output id="stabilityGammaValue">0.90</output></span><input id="stabilityGamma" type="range" min="0" max="1" step="0.05" value="0.90"></label>
+      <label class="mrl-range-control"><span>每次在线漂移 $\Delta Q_\theta$ <output id="onlineDriftValue">+2.0</output></span><input id="onlineDrift" type="range" min="-4" max="4" step="0.5" value="2"></label>
+      <button class="mrl-btn primary" id="driftOnline" type="button">让在线网络变化一次</button>
+      <button class="mrl-btn" id="syncTarget" type="button">同步 $\theta^-\leftarrow\theta$</button>
+    </div>
+
+    <div class="mrl-buffer-strip" id="bufferStrip" aria-label="当前经验回放池中的八条经验"></div>
+
+    <div class="mrl-stability-results">
+      <article><span>BATCH COVERAGE</span><h4 id="coverageValue">1 / 4 类局面</h4><p id="batchLabels">连续采样：A1, A2, A3, A4</p></article>
+      <article class="naive"><span>SAME-NETWORK TARGET</span><h4 id="onlineTargetMean">+3.62</h4><p>$r+\gamma(1-d)\max Q_{\theta}(s',\cdot)$</p></article>
+      <article class="stable"><span>FROZEN TARGET</span><h4 id="frozenTargetMean">+3.62</h4><p>$r+\gamma(1-d)\max Q_{\theta^-}(s',\cdot)$</p></article>
+      <article><span>PARAMETER CLOCK</span><h4><b id="onlineOffset">online +0.0</b> / <b id="targetOffset">target +0.0</b></h4><p id="syncAge">尚未发生在线漂移</p></article>
+    </div>
+    <p class="mrl-caption">先看 coverage，再看两张 target 卡片：回放按钮只改变当前 batch 的场景组合；在线漂移只移动同网 target；“同步”才会让冻结 target 跳到在线网络的新快照。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="06">
+    <div class="mrl-insight-index">Insight 06</div>
+    <div class="mrl-insight-body">
+      <h3>DQN 的两个稳定器解决的是两种正交依赖</h3>
+      <p>Replay buffer 改善“这批数据彼此有多像”；target network 改善“这批数据的监督目标会不会跟着当前梯度立即移动”。</p>
+      <p class="mrl-insight-key">诊断训练不稳时，要先分清是 batch 被最近轨迹垄断，还是 bootstrap 靶子与在线参数耦合过紧。</p>
+    </div>
+  </aside>
+</section>

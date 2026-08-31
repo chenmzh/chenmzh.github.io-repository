@@ -1,0 +1,138 @@
+<section id="td3">
+  <h2 class="mrl-sec-title"><span class="num">04</span>TD3：不相信单个高分，让评价先站稳再推 Actor</h2>
+  <p class="mrl-sec-lead"><strong>Twin Delayed Deep Deterministic Policy Gradient（TD3，双延迟深度确定性策略梯度）</strong>保留 DDPG 的确定性 Actor，却针对错误乐观和更新耦合加入三个稳定性修正。</p>
+
+  <div class="mrl-fix-grid">
+    <article>
+      <span>FIX 01 · TWIN CRITICS</span>
+      <h3>Twin critics（双 Critic）取较小值</h3>
+      <p>$Q_{\phi_1}$ 与 $Q_{\phi_2}$ 独立初始化。若一个网络偶然给出尖锐高估，另一网络未必在同处一起高估；取 min 抑制“只因为乐观就被 Actor 追上”。</p>
+    </article>
+    <article>
+      <span>FIX 02 · DELAY</span>
+      <h3>Delayed policy updates（延迟策略更新）</h3>
+      <p>Critic 每步更新，Actor 常见为每两步更新一次，目标网络也随 Actor 更新。目的不是节省计算，而是减少 Actor 追随尚未站稳的价值斜率。</p>
+    </article>
+    <article>
+      <span>FIX 03 · SMOOTHING</span>
+      <h3>Target policy smoothing（目标策略平滑）</h3>
+      <p>给下一动作加截断小噪声；只有邻近动作也保持较高价值的峰，才更可能进入 target。孤立尖峰会被周围较低估值拉回。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">三个修正分别作用于 target 的数值、Actor 的更新时间尺度和 target 动作的位置；它们不是三种探索方法，而是在切断 DDPG 的错误正反馈。</p>
+
+  <p>先在目标 Actor 输出上加截断噪声，并裁剪到合法动作区间：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \epsilon&\sim\operatorname{clip}(\mathcal N(0,\sigma^2),-c,c),\\
+  \tilde a_{t+1}&=\operatorname{clip}\!\left(\mu_{\bar\theta}(s_{t+1})+\epsilon,
+  a_{\min},a_{\max}\right).
+  \end{aligned}$$</div>
+  <p>再让两个目标 Critic 给同一 $(s_{t+1},\tilde a_{t+1})$ 打分：</p>
+  <div class="mrl-equation mrl-equation-feature">$$y_{\mathrm{TD3}}=r_t+\gamma(1-d_t)
+  \min_{i\in\{1,2\}}Q_{\bar\phi_i}(s_{t+1},\tilde a_{t+1}).$$</div>
+
+  <p>一个最小数值例：设 $r_t=-1$、$\gamma=0.99$、没有终止，两个目标 Critic 给出 $12$ 和 $9$。若忽略平滑动作本身造成的额外变化，双 Critic continuation 取 $9$，于是：</p>
+  <div class="mrl-equation">$$y_{\mathrm{TD3}}=-1+0.99\times9=7.91.$$</div>
+  <p>如果只信第一个 Critic，target 会是 $-1+0.99\times12=10.88$。取 min 不是在证明 $9$ 就是真值，而是在不确定时选择更保守的自举依据。若两个 Critic 恰好一起犯错，TD3 仍会错。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“双 Critic 取 min 等于得到无偏真值。”</strong> 不对。它用一定低估风险换取较少的系统性高估，主要目标是阻断 Actor–Critic 的乐观正反馈，而不是构造真值证书。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>稳定化常常是在控制“错误被谁放大、多久放大一次”</h3>
+      <p>Twin critics 限制错误幅度，policy delay 限制错误进入 Actor 的频率，target smoothing 限制策略追逐极窄估值尖峰。</p>
+      <p class="mrl-insight-key">TD3 的三项设计共同改变反馈环路，而不是给 DDPG 随意堆三个技巧。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="sac">
+  <h2 class="mrl-sec-title"><span class="num">05</span>SAC：不要先变成一根针，再靠外加噪声把它摇散</h2>
+  <p class="mrl-sec-lead"><strong>Soft Actor-Critic（SAC，软演员–评论家）</strong>使用随机连续策略，并在奖励之外直接奖励策略熵；“保持多种好动作仍有概率”成为优化目标的一部分。</p>
+
+  <p><strong>entropy regularization（熵正则化）</strong>是在累计奖励中加入策略分布的不确定性。连续策略的 entropy（熵）是 differential entropy（微分熵）：</p>
+  <div class="mrl-equation">$$\mathcal H\!\left(\pi(\cdot\mid s)\right)
+  =\mathbb E_{a\sim\pi}\left[-\log\pi(a\mid s)\right].$$</div>
+  <p>最大熵目标写成：</p>
+  <div class="mrl-equation mrl-equation-feature">$$J(\pi)=\mathbb E_\pi\!\left[
+  \sum_{t=0}^{\infty}\gamma^t
+  \left(r_t+\alpha\mathcal H(\pi(\cdot\mid s_t))\right)
+  \right].$$</div>
+  <p>$\alpha>0$ 是 temperature（温度系数）：大 $\alpha$ 更看重分布广度，小 $\alpha$ 更看重高 Q 动作。连续分布的 $\pi(a\mid s)$ 是概率密度，不是离散概率；密度可以大于 1，微分熵也可以为负。这里真正有用的是同一坐标尺度下 $-\log\pi$ 对 Actor 与 target 的一致修正，不能把熵机械理解成“0 到 1 的随机程度”。</p>
+
+  <h3>随机采样怎样把梯度传回均值和方差？</h3>
+  <p>SAC 的 Actor 输出 $\mu_\theta(s)$ 与 $\sigma_\theta(s)$。直接写“从高斯采样”会把随机节点挡在计算图中；<strong>reparameterization trick（重参数化技巧）</strong>把随机性搬到一个与参数无关的标准噪声：</p>
+  <div class="mrl-equation">$$\epsilon\sim\mathcal N(0,I),\qquad
+  u=\mu_\theta(s)+\sigma_\theta(s)\odot\epsilon,\qquad
+  a=\tanh(u).$$</div>
+  <p>固定一次 $\epsilon$ 后，$u$ 和 $a$ 都是 $\mu_\theta,\sigma_\theta$ 的可微函数，梯度可以沿 $a\to u\to(\mu,\sigma)\to\theta$ 回传。$\tanh$ 把动作压进 $(-1,1)$；实际计算 <code>log_prob</code> 时还要加入这个变换的 Jacobian 修正。</p>
+
+  <h3>Soft target：价值之外，再保留一份随机余地</h3>
+  <p>从下一状态策略采样 $a_{t+1}'\sim\pi_\theta(\cdot\mid s_{t+1})$，SAC 的双 Critic target 是：</p>
+  <div class="mrl-equation mrl-equation-feature">$$y_{\mathrm{SAC}}=r_t+\gamma(1-d_t)
+  \left[
+  \min_iQ_{\bar\phi_i}(s_{t+1},a_{t+1}')
+  -\alpha\log\pi_\theta(a_{t+1}'\mid s_{t+1})
+  \right].$$</div>
+  <p>Actor 则最小化：</p>
+  <div class="mrl-equation">$$\mathcal L_\pi(\theta)=
+  \mathbb E_{s\sim\mathcal D,\,a\sim\pi_\theta}
+  \left[\alpha\log\pi_\theta(a\mid s)-\min_iQ_{\phi_i}(s,a)\right].$$</div>
+  <p>第二项推动策略选择高价值动作；第一项惩罚过度集中的高密度选择。现代实现通常把 $\alpha$ 也作为可学习量，使策略熵靠近 target entropy（目标熵）；上游代码的 <code>ent_coef="auto"</code> 就打开了这一步。</p>
+
+  <table class="mrl-compact-table">
+    <thead><tr><th>算法</th><th>Actor</th><th>Critic target 核心</th><th>探索</th><th>主要用途</th></tr></thead>
+    <tbody>
+      <tr><td>DDPG</td><td>确定</td><td>单 Q</td><td>外加动作噪声</td><td>理解连续异策略 Actor–Critic 的起点</td></tr>
+      <tr><td>TD3</td><td>确定</td><td>双 Q 取 min + 平滑动作</td><td>外加动作噪声</td><td>精确确定性控制的强基线</td></tr>
+      <tr><td>SAC</td><td>随机</td><td>双 Q 取 min + 熵项</td><td>策略目标内生</td><td>通用连续控制常用首选</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">这张表应该沿“策略类型 → target 如何防高估 → 探索写在哪里”横向阅读；三种算法的差异不是简单性能排名，具体结果仍依赖任务、实现、算力预算和随机种子。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>SAC 的随机性不是部署前随手关掉的训练噪声，而是被目标函数定价的策略属性</h3>
+      <p>DDPG/TD3 先学一条确定动作曲线，再给行为动作加噪声；SAC 同时学习“动作中心在哪里”和“还应保留多宽的选择范围”。</p>
+      <p class="mrl-insight-key">熵把探索从数据采集技巧提升为优化问题：高回报与不过早确定需要共同权衡。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="target-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>实验：同一组诊断数值，三种 target 分别防什么？</h2>
+  <p class="mrl-sec-lead">把网络训练暂时停在一个非终止 transition，只观察 target 的代数结构。你可以制造两个 Critic 的分歧，或改变 SAC 的温度与动作 log-density。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>单 Critic 的乐观估计、双 Critic 取 min 与熵项，分别怎样进入一步更新目标？</dd>
+    <dt>Prediction</dt><dd>当 $Q_1>Q_2$ 时，TD3 会比 DDPG 的诊断 target 更低；在当前限定 $\log\pi\le 0$ 的例子里，SAC 的熵项会把 soft target 从 TD3 数值上方抬高。</dd>
+    <dt>Experiment</dt><dd>调节 $r_t,\gamma,Q_1,Q_2,\log\pi$ 与 $\alpha$；页面按本节三条公式重新计算 DDPG、TD3、SAC target。</dd>
+    <dt>Observation</dt><dd>默认值给出 $10.88,7.91,8.05$：双 Critic 先削去单 Critic 的高估，SAC 再加入 $-\alpha\log\pi=0.14$ 的 soft continuation。</dd>
+    <dt>Interpretation</dt><dd>TD3 的 min 针对价值过估计；SAC 的额外项来自最大熵目标。两者数值接近，不代表学习机制或策略分布相同。</dd>
+    <dt>Limitation</dt><dd>这是 target 结构诊断，不是算法跑分。真实算法在各自下一动作处评估 Q，动作、网络误差、数据分布与训练动态都可能不同。</dd>
+  </dl>
+
+  <div class="mrl-lab-controls">
+    <label class="mrl-range-control"><span>即时奖励 $r_t$ <output id="targetRewardValue">−1.0</output></span><input id="targetReward" type="range" min="-3" max="3" step="0.1" value="-1"></label>
+    <label class="mrl-range-control"><span>折扣 $\gamma$ <output id="targetGammaValue">0.99</output></span><input id="targetGamma" type="range" min="0" max="1" step="0.01" value="0.99"></label>
+    <label class="mrl-range-control"><span>第一个 Critic $Q_1$ <output id="targetQ1Value">12.0</output></span><input id="targetQ1" type="range" min="-3" max="15" step="0.1" value="12"></label>
+    <label class="mrl-range-control"><span>第二个 Critic $Q_2$ <output id="targetQ2Value">9.0</output></span><input id="targetQ2" type="range" min="-3" max="15" step="0.1" value="9"></label>
+    <label class="mrl-range-control"><span>SAC $\log\pi(a'\mid s')$ <output id="targetLogProbValue">−0.70</output></span><input id="targetLogProb" type="range" min="-3" max="0" step="0.05" value="-0.7"></label>
+    <label class="mrl-range-control"><span>温度 $\alpha$ <output id="targetAlphaValue">0.20</output></span><input id="targetAlpha" type="range" min="0" max="1" step="0.05" value="0.2"></label>
+  </div>
+
+  <div class="mrl-target-results" aria-live="polite">
+    <article class="ddpg"><span>DDPG · SINGLE CRITIC</span><h3>$y_{\mathrm{DDPG}}$ <strong id="ddpgTargetValue">+10.88</strong></h3><code id="ddpgTargetFormula">−1.0 + 0.99 × 12.0</code><p>只使用第一个 Critic 在确定性目标动作处的估计。</p></article>
+    <article class="td3"><span>TD3 · CLIPPED DOUBLE Q</span><h3>$y_{\mathrm{TD3}}$ <strong id="td3TargetValue">+7.91</strong></h3><code id="td3TargetFormula">−1.0 + 0.99 × min(12.0, 9.0)</code><p>对平滑后的目标动作，使用两个 Critic 的较小值。</p></article>
+    <article class="sac"><span>SAC · SOFT TARGET</span><h3>$y_{\mathrm{SAC}}$ <strong id="sacTargetValue">+8.05</strong></h3><code id="sacTargetFormula">−1.0 + 0.99 × [9.0 − 0.20(−0.70)]</code><p>对随机采样动作，双 Q 取 min 后再减去 $\alpha\log\pi$。</p></article>
+  </div>
+  <p class="mrl-caption">不要把三根数字读成最终成绩。应该观察参数变化的局部因果：只拉开 $Q_1,Q_2$ 会改变 TD3 的保守修正，只改变 $\alpha$ 或 $\log\pi$ 会改变 SAC 的熵修正。</p>
+
+  <div class="mrl-lab-actions"><button class="mrl-btn" id="targetReset" type="button">恢复默认值</button></div>
+  <div class="mrl-inline-note" id="targetObservation">默认情况下，第一个 Critic 比第二个高 3.00；双 Critic 让 TD3 target 比 DDPG 低 2.97。SAC 的熵项再把 target 提高 0.14。</div>
+</section>
