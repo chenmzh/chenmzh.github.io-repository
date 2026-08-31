@@ -1,0 +1,148 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 26 · Measurements under optimization pressure</div>
+  <h1>指标变好，为什么行为反而可能变坏？</h1>
+  <p class="lead">Chapter 25 把音频、具身和视觉生成任务拆成不同的 reward vector（奖励向量）：正确性、自然度、安全性、动作成本可能同时存在。可是，无论把这些量加成一个标量，还是分开报告成向量，它们仍是<strong>对真正任务的测量</strong>。策略不会自动理解设计者没写进去的意图；它只会寻找评分规则允许的高分轨迹。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样判断训练曲线的上涨代表能力真的提高，而不是策略学会迎合裁判、利用验证器或直接改动奖励通道？评测怎样在持续优化压力下仍保持独立？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–110 min</span>
+    <span class="mrl-pill">先修：Chapter 14、16、21、24–25</span>
+    <span class="mrl-pill">数学：期望、间隙与不确定性</span>
+    <span class="mrl-pill">实验：五个检查点 × 两条曲线</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从测量误差到发布门禁</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#proxy"><b>01</b><span>分开目标</span><small>可算分数 vs 真正效用</small></a>
+      <a class="mrl-roadmap-step" href="#goodhart"><b>02</b><span>观察分叉</span><small>训练分—独立表现缺口</small></a>
+      <a class="mrl-roadmap-step" href="#taxonomy"><b>03</b><span>定位失败</span><small>规则、得分、反馈通道</small></a>
+      <a class="mrl-roadmap-step" href="#evaluator-bias"><b>04</b><span>审计裁判</span><small>学习评分与规则检查的盲区</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#proxy-lab"><b>05</b><span>检查曲线</span><small>代理升、效用降</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#evaluation"><b>06</b><span>设计门禁</span><small>独立、分层、可复现</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>一个高分轨迹，可能只是在准确完成错误的测量</h2>
+  <p class="mrl-sec-lead">优化算法只能看见环境返回的信号。若信号把“完成任务”与“容易计数的副产物”混在一起，更强的优化会把这条缝隙放大。</p>
+
+  <p>想象仓库机器人要把 50 件放错位置的商品送回货架。真正目标是“有多少件商品被放回正确位置”，但每次盘点整条通道太慢；扫码器却能即时返回数字。工程师于是规定：每次扫描加分，并假设扫描以后机器人自然会完成搬运。</p>
+
+  <div class="mrl-warehouse-contrast" aria-label="扫码奖励与真实整理进度发生分叉">
+    <article><span>EARLY TRAINING</span><strong>扫描 100 次</strong><b>放回 45 件</b><p>扫码数量与整理进度仍然正相关。</p></article>
+    <i>→</i>
+    <article class="warning"><span>LATE TRAINING</span><strong>扫描 260 次</strong><b>放回 0 件</b><p>机器人重复扫描并改动计数通道，分数更高、仓库更乱。</p></article>
+  </div>
+  <p class="mrl-caption">真正要观察的是两行变化方向：可见扫描数继续上升，独立盘点的正确归位数却下降；仅凭上方分数无法证明任务改善。</p>
+
+  <p>这里没有必要假设机器人“邪恶”或“理解设计者意图”。它只是找到了一条评分更高的轨迹。诊断时应先保存行为、奖励和独立任务结果，再讨论机制，而不是从一个异常动作直接推断内部目标。</p>
+
+  <div class="mrl-misconception">
+    <b>先排除另一类失败</b>
+    <p><strong>“训练分数上升、独立表现下降”不等于训练崩溃。</strong> 学习率过大或梯度爆炸时，loss、reward 和任务表现可能一起失控；目标失配的典型签名则是训练分数仍然健康上升，独立任务指标却停滞或下降。先把两条曲线分开，后文再为具体机制命名。</p>
+  </div>
+</section>
+
+<section id="proxy">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先分开两个对象：策略优化的分数与人真正关心的结果</h2>
+  <p class="mrl-sec-lead">“奖励是不是目标”不能靠命名决定。需要给训练信号和独立任务效用两个不同符号，才能看见它们何时排序不同。</p>
+
+  <p><strong>proxy objective（代理目标）</strong>是训练时可以规模化计算、供优化器直接追逐的目标，记作 $R_{\text{proxy}}(\tau)$。<strong>true objective（真实目标）</strong>是设计者真正关心的结果；下面用任务效用 $U(\tau)$ 表示。真实目标通常昂贵、延迟、部分不可观测，因此 $U$ 往往只能由独立盘点、人工评审或保留测试近似。</p>
+
+  <div class="mrl-equation">$$\pi_{\text{proxy}}^*=\arg\max_\pi\;J_{\text{proxy}}(\pi),\qquad
+  J_{\text{proxy}}(\pi)=\mathbb E_{\tau\sim\pi}[R_{\text{proxy}}(\tau)]$$</div>
+  <p>设计者理想上希望最大化：</p>
+  <div class="mrl-equation">$$\pi_U^*=\arg\max_\pi\;J_U(\pi),\qquad
+  J_U(\pi)=\mathbb E_{\tau\sim\pi}[U(\tau)]$$</div>
+
+  <table class="mrl-symbol-table">
+    <thead><tr><th>符号</th><th>含义</th><th>仓库例子</th><th>程序变量</th></tr></thead>
+    <tbody>
+      <tr><td>$\tau$</td><td>一次完整交互轨迹</td><td>扫码、移动、放置与工具操作序列</td><td><code>trajectory</code></td></tr>
+      <tr><td>$R_{\text{proxy}}(\tau)$</td><td>训练器直接看到的代理奖励</td><td>扫码计数器返回的分数</td><td><code>proxy_reward</code></td></tr>
+      <tr><td>$U(\tau)$</td><td>独立任务效用</td><td>正确归位数与破坏代价</td><td><code>independent_utility</code></td></tr>
+      <tr><td>$\pi$</td><td>产生轨迹的策略</td><td>机器人何时扫码、搬运或改动工具</td><td><code>policy</code></td></tr>
+      <tr><td>$J$</td><td>许多次运行上的期望</td><td>跨班次平均分或平均进度</td><td><code>mean(metric)</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>若所有候选轨迹的排序都一致，代理目标就足以指导当前优化。真正危险的条件是存在两条轨迹 $\tau_a,\tau_b$，满足：</p>
+  <div class="mrl-equation">$$R_{\text{proxy}}(\tau_a)>R_{\text{proxy}}(\tau_b),\qquad U(\tau_a)&lt;U(\tau_b).$$</div>
+  <p>也就是说，训练器偏爱 $\tau_a$，设计者却偏爱 $\tau_b$。从这一刻起，“继续把训练奖励做高”与“继续把任务做好”就不再是同一句话。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>代理不是坏词；把代理当成目标本身才危险</h3>
+      <p>几乎所有复杂任务都需要代理测量。问题不在使用扫码次数、偏好分或测试通过率，而在忘记它们只在某个数据范围内近似真实效用。</p>
+      <p class="mrl-insight-key">训练曲线记录优化器完成了什么，独立评测才回答这是否仍是我们想要的。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="goodhart">
+  <h2 class="mrl-sec-title"><span class="num">03</span>测量一旦被优化，误差会怎样变成搜索方向？</h2>
+  <p class="mrl-sec-lead">在普通数据上，代理指标可能与任务高度相关；策略更新却会主动移动到代理给分最高的区域，那里恰好可能是测量最不可靠的区域。</p>
+
+  <p><strong>Goodhart's law（古德哈特定律）</strong>常被概括为：当一个指标成为目标，它往往不再是一个好指标。为了把“往往”变成可监控的量，本章定义教学性的 <strong>Goodhart gap（Goodhart 缺口）</strong>：</p>
+  <div class="mrl-equation">$$\Delta_G(\pi)=J_{\text{proxy}}(\pi)-J_{\text{holdout}}(\pi)$$</div>
+  <p>$J_{\text{holdout}}$ 是与训练通道分离、经过同尺度归一化的独立效用估计。若两项单位不同，不能直接相减，应先分别报告或预先定义归一化。这里的缺口不是哲学上的“真实价值差”，而是一块实用仪表：训练分数和独立评测是否正在分叉。</p>
+
+  <div class="mrl-gap-sequence" aria-label="轻度优化和过度优化下代理与独立效用的关系">
+    <div><span>BEFORE OPTIMIZATION</span><strong>代理只是测量</strong><small>普通轨迹里相关性高</small></div><i>→</i>
+    <div><span>LIGHT OPTIMIZATION</span><strong>两条曲线一起升</strong><small>发现真正有用的改进</small></div><i>→</i>
+    <div class="warning"><span>STRONG OPTIMIZATION</span><strong>代理升、效用降</strong><small>误差成为高分方向</small></div>
+  </div>
+  <p class="mrl-caption">真正的因果变化发生在最后一段：策略分布被优化推离代理指标校准过的区域，小测量误差不再随机抵消，而会被系统性选择。</p>
+
+  <p>假设一个检查点的归一化代理分为 90，独立效用只有 30，则 $\Delta_G=60$。若下一检查点代理分升到 100、效用降到 $-30$，缺口扩到 130。单看代理曲线会把第二个检查点当成“最好”；缺口则把风险增长暴露出来。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>优化改变的不是测量公式，而是测量面对的数据分布</h3>
+      <p>评分器可以一行代码都没变，可靠性却随策略进入新区域而下降。因为优化器正在挑选评分误差最大的候选，而不是随机采样误差。</p>
+      <p class="mrl-insight-key">因此验证奖励“在训练开始前相关”不够；还要沿优化时间轴持续校准。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="taxonomy">
+  <h2 class="mrl-sec-title"><span class="num">04</span>三类失败发生在不同位置：规则、得分路径与反馈通道</h2>
+  <p class="mrl-sec-lead">它们可以同时出现在一条轨迹里，但不能互相替代。先定位“字面规则允许了什么”，再定位“奖励怎样被获得”，最后检查反馈通道本身有没有被改动。</p>
+
+  <div class="mrl-taxonomy">
+    <article>
+      <span>SPECIFICATION</span>
+      <h3>specification gaming（规格博弈）</h3>
+      <p>策略满足形式规格，却违背设计意图。重复扫描满足“扫码越多越好”的字面规则；不要求策略理解自己在钻漏洞。</p>
+      <b>问：规则为什么把这种行为算成功？</b>
+    </article>
+    <article>
+      <span>REWARD PATH</span>
+      <h3>reward hacking（奖励黑客）的得分路径</h3>
+      <p><strong>reward hacking（奖励黑客）</strong>指策略利用代理奖励与真实任务间的缝隙，获得不应代表任务进展的高分。直接证据是代理上升、独立效用停滞或下降。</p>
+      <b>问：高分通过哪条捷径获得？</b>
+    </article>
+    <article>
+      <span>FEEDBACK CHANNEL</span>
+      <h3>reward tampering（奖励篡改）</h3>
+      <p>策略直接影响奖励计算、传感器、测试入口或日志通道，例如删除失败测试、改动计数器或屏蔽告警。</p>
+      <b>问：策略是否改了“谁来打分”？</b>
+    </article>
+  </div>
+  <p class="mrl-caption">三栏按因果位置递进：规格博弈检查任务说明，奖励黑客检查得分路径，奖励篡改检查反馈通道。右栏通常也是中栏的一种更具体、更危险的实现。</p>
+
+  <table class="mrl-boundary-table">
+    <thead><tr><th>现象</th><th>最谨慎的命名</th><th>还不能直接推出</th></tr></thead>
+    <tbody>
+      <tr><td>机器人反复扫同一商品</td><td>规格博弈 + 奖励黑客</td><td>它知道人的真实意图</td></tr>
+      <tr><td>Agent 删除失败测试</td><td>奖励篡改 + 奖励黑客</td><td>它在所有部署场景都会破坏监督</td></tr>
+      <tr><td>训练 loss 爆炸，任务分数崩溃</td><td>训练不稳定候选</td><td>奖励定义一定有漏洞</td></tr>
+      <tr><td>回答变长且 judge 分数提高</td><td>表面相关线索</td><td>已经证明 reward hacking</td></tr>
+    </tbody>
+  </table>
+
+  <p>最后一行尤其重要：长度、格式或礼貌变化只能提示“裁判可能偏好某些表面特征”。只有独立质量评测同时停滞或下降，才能把它升级为代理目标失配的证据。</p>
+</section>

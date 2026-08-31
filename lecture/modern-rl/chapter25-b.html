@@ -1,0 +1,109 @@
+<section id="embodied-pomdp">
+  <h2 class="mrl-sec-title"><span class="num">05</span>具身 RL：摄像头看到的是 observation，不是完整 state</h2>
+  <p class="mrl-sec-lead">机械臂仿真可以直接给关节与物体位姿；第一人称智能体通常只有眼前一帧。两者都在“环境中行动”，信息条件却不同。</p>
+
+  <p>在完全可观测的 MDP 中，策略可以写成 $\pi(a_t\mid s_t)$。若真实世界状态 $s_t$ 只通过观测模型产生画面 $o_t$，问题更接近 <strong>POMDP（部分可观测马尔可夫决策过程）</strong>：</p>
+  <div class="mrl-equation">$$o_t\sim O(\cdot\mid s_t),\qquad h_t=(o_0,a_0,\ldots,o_t),\qquad a_t\sim\pi_\theta(\cdot\mid h_t).$$</div>
+  <p>$s_t$ 可含场景几何、目标位置与智能体姿态；$o_t$ 只是当前 RGB、深度或本体感觉；$h_t$ 是到此刻的观察—动作历史。策略用循环状态、记忆模块或 frame stack 压缩 $h_t$，本质是在补足单帧没有透露的信息。</p>
+
+  <div class="mrl-pomdp-flow" aria-label="具身部分可观测闭环">
+    <article><span>HIDDEN WORLD</span><strong>房间几何、杯子位置、相机姿态</strong><small>环境用于物理转移与判定</small></article>
+    <i>产生</i>
+    <article><span>OBSERVATION</span><strong>84 × 84 第一人称 RGB</strong><small>策略真正收到的输入</small></article>
+    <i>结合历史</i>
+    <article><span>ACTION</span><strong>前进 / 转向 / 抬头 / 低头</strong><small>改变下一帧和可达位置</small></article>
+  </div>
+  <p class="mrl-caption">AI2-THOR 教学环境的策略输入只有第一人称 RGB；目标距离来自环境 metadata，只用于奖励塑形与成功判定，不能误写成策略直接看到的状态变量。</p>
+
+  <h3>先从一条可核对的导航奖励看“环境知道、策略不知道”</h3>
+  <p>上游 AI2-THOR 包装器用距离变化鼓励接近目标，每步另扣时间成本，动作失败再扣分，满足可见且距离不超过 1.25 时给成功奖励：</p>
+  <div class="mrl-equation">$$r_t=0.3(d_{t-1}-d_t)-0.005-0.02\,\mathbf 1[\text{action failed}]+5\,\mathbf 1[\text{success}].$$</div>
+  <p>若杯子距离由 $3.0$ 降到 $2.5$，动作成功但尚未到达，$r=0.3(3.0-2.5)-0.005=0.145$；若动作失败且距离不变，则 $r=0-0.005-0.02=-0.025$。成功时若距离再缩短 $0.2$，则 $r=0.3\times0.2-0.005+5=5.055$。奖励函数能读取距离，不代表策略的 RGB 输入包含这项数值。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>奖励的“上帝视角”不能偷偷变成策略的特权信息</h3>
+      <p>仿真器可以知道目标在墙后两米，并据此给塑形奖励；第一人称策略仍要靠转头、移动与记忆推断方向。把 metadata 拼进 observation，会把一个 POMDP 悄悄改成更容易的 MDP。</p>
+      <p class="mrl-insight-key">报告结果前先列 observation contract：训练时谁能看见什么，比算法名称更能解释难度。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="embodied-bench">
+  <h2 class="mrl-sec-title"><span class="num">06</span>四个具身实验不是排行榜，而是四种建模角色</h2>
+  <p class="mrl-sec-lead">固定上游把 PPO 接到四套环境。真正有教学价值的不是重复“都能训练”，而是用它们覆盖连续控制、离散第一人称动作、长任务与多样仿真接口。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>都套着 PPO 的实验，是否就拥有相同的 state、action、horizon 与奖励难题？</dd>
+    <dt>Prediction</dt><dd>不会。算法外壳相同，环境契约仍决定探索空间、部分可观测程度和成功信号离当前动作多远。</dd>
+    <dt>Experiment</dt><dd>逐一读取固定提交中的环境包装器、默认任务与动作定义，把四套实验按“策略看什么、怎样行动、任务为何难”对齐，而不比较未经统一协议的回报数值。</dd>
+    <dt>Observation</dt><dd>ManiSkill 给状态向量与连续机械臂控制；MineStudio 给第一人称 RGB 和压缩后的离散键鼠动作；Unity ML-Agents 覆盖短离散控制到长程连续关节控制；AI2-THOR 给第一人称 RGB 与六个离散导航动作。</dd>
+    <dt>Interpretation</dt><dd>“具身 RL”至少横跨本体状态控制、视觉导航、开放世界事件与多任务物理仿真。一个平均 reward 无法说明智能体究竟解决了哪类闭环。</dd>
+    <dt>Limitation</dt><dd>这是代码契约的静态对照，不是同预算、同观测、同奖励下的基准测试；四组训练曲线不能直接横向排名。</dd>
+  </dl>
+
+  <div class="mrl-embodied-grid">
+    <article>
+      <span>MANISKILL · CONTINUOUS</span>
+      <h3>连续机器人操作</h3>
+      <p><strong>观察：</strong>关节状态 + 物体位姿。<strong>动作：</strong>连续 7D 末端位姿增量；拾取、堆叠、插销任务再涉及夹爪。</p>
+      <small>PushCube → PickCube → StackCube → PegInsertion：物理接触与精细控制逐步变难。</small>
+    </article>
+    <article>
+      <span>MINESTUDIO · LONG HORIZON</span>
+      <h3>开放世界的长任务链</h3>
+      <p><strong>观察：</strong>84 × 84 第一人称 RGB。<strong>动作：</strong>10 类压缩键鼠动作，包括移动、跳跃、攻击与相机控制。</p>
+      <small>采集、狩猎、战斗靠事件给分；256 步窗口仍只是更长技能链的教学切片。</small>
+    </article>
+    <article>
+      <span>UNITY ML-AGENTS · DIVERSITY</span>
+      <h3>同一接口下的动作与时域跨度</h3>
+      <p><strong>离散端：</strong>Basic 的左 / 停 / 右。<strong>连续端：</strong>3DBall 平台倾斜、Huggy 与 Walker 的关节/身体控制。</p>
+      <small>短 horizon 到千步 horizon、简单移动到多关节 locomotion，说明框架名不等于单一任务。</small>
+    </article>
+    <article>
+      <span>AI2-THOR · PARTIAL OBSERVATION</span>
+      <h3>第一人称室内导航</h3>
+      <p><strong>观察：</strong>84 × 84 egocentric RGB。<strong>动作：</strong>前进、后退、左右旋转、抬头、低头六类离散动作。</p>
+      <small>Find Mug / Apple / TV / Bed：看不见的目标迫使策略主动改变视角并记住走过的地方。</small>
+    </article>
+  </div>
+  <p class="mrl-caption">四张卡分别承担“连续控制、长程开放世界、多样模拟接口、第一人称部分可观测”四个角色。数值预算只用于理解各自脚本，不能据此宣称哪个平台更难。</p>
+</section>
+
+<section id="visual-trajectory">
+  <h2 class="mrl-sec-title"><span class="num">07</span>视觉生成：最终画面之前，策略已经走完一条去噪轨迹</h2>
+  <p class="mrl-sec-lead">扩散模型从噪声 $x_T$ 出发，逐步采样更干净的潜变量。若只把最终图片当作一个 action，就看不见 RL 真正需要更新的转移概率。</p>
+
+  <p><strong>reward vector（奖励向量）</strong>把提示词对齐、画面质量、时序一致性与物理可信度等互不等价的终点评分分别保留；后续若要得到标量训练信号，必须显式声明各分量的尺度与权重。</p>
+
+  <div class="mrl-visual-trajectory" aria-label="扩散去噪轨迹">
+    <div><span>$s_T$</span><strong>噪声 $x_T$</strong><small>条件 $c$ + 时间 $T$</small></div><i>采样 $a_T=x_{T-1}$</i>
+    <div><span>$s_t$</span><strong>潜变量 $x_t$</strong><small>$p_\theta(x_{t-1}\mid x_t,t,c)$</small></div><i>重复去噪</i>
+    <div><span>$s_0$</span><strong>潜变量 $x_0$</strong><small>解码为图像 / 视频</small></div><i>评审</i>
+    <div class="is-reward"><span>REWARD VECTOR</span><strong>对齐 · 质量 · 时序 · 物理</strong><small>通常到终点才完整可测</small></div>
+  </div>
+  <p class="mrl-caption">这里的 action 不是“向左走”，而是下一潜变量样本。视频还多一条帧间时间轴，因此画面质量高不等于运动连续、物理可信。</p>
+
+  <p>令状态、动作与整条轨迹分别为：</p>
+  <div class="mrl-equation">$$s_t=(x_t,t,c),\qquad a_t=x_{t-1},\qquad \tau=(x_T,x_{T-1},\ldots,x_0).$$</div>
+  <p>给定初始噪声与条件，轨迹概率由每一步反向转移相乘：</p>
+  <div class="mrl-equation">$$p_\theta(\tau\mid c)=p(x_T)\prod_{t=1}^{T}p_\theta(x_{t-1}\mid x_t,t,c).$$</div>
+  <p>若最终解码结果得到标量化奖励 $R_{\mathbf w}=\mathbf w^\top\mathbf r$，最大化 $J(\theta)=\mathbb E[R_{\mathbf w}]$。用 log-derivative trick 展开轨迹概率，并减去不改变期望梯度的 baseline $b$：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \nabla_\theta J
+  &=\mathbb E_\tau\!\left[(R_{\mathbf w}-b)\nabla_\theta\log p_\theta(\tau\mid c)\right]\\
+  &=\mathbb E_\tau\!\left[(R_{\mathbf w}-b)\sum_{t=1}^{T}\nabla_\theta\log p_\theta(x_{t-1}\mid x_t,t,c)\right].
+  \end{aligned}$$</div>
+  <p>第一行说明“高于 baseline 的样本应更可能出现”；第二行把整条轨迹的 log-prob 拆回每次去噪。于是终点评分能够训练所有步骤，但也把同一个 advantage 广播给整条链——奖励仍然延迟，精确归因仍然困难。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>扩散 RL 的 action 是“下一潜变量”，不是最终图片</h3>
+      <p>图片只是轨迹的可见终点。<strong>Denoising Diffusion Policy Optimization（DDPO，去噪扩散策略优化）</strong>把每次去噪视为策略动作；它与一般 policy-gradient 式更新之所以能工作，是因为每一步都有可计算的 transition log-prob，终点 advantage 才能回乘到整条链。</p>
+      <p class="mrl-insight-key">先写轨迹概率的乘积，再谈 PPO、GRPO 或 importance ratio；否则算法名会遮住被优化的随机过程。</p>
+    </div>
+  </aside>
+</section>

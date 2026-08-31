@@ -1,0 +1,152 @@
+<section id="reward-vector-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>实验二：四个分量都没变，为什么“最佳视频”会换人？</h2>
+  <p class="mrl-sec-lead">视觉生成的评审常同时关心 prompt alignment（提示词对齐）、画面质量、时序一致性和运动/物理可信度。先保留 reward vector，再观察标量化权重怎样改变决策。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>候选 A 与 B 的四项原始评分固定不动，只调整 reward vector 的权重，训练目标会不会选出相反胜者？</dd>
+    <dt>Prediction</dt><dd>A 的画质与对齐更高，B 的时序与物理更高；强调前两项会选 A，强调后两项会选 B。</dd>
+    <dt>Experiment</dt><dd>先保持四项等权，复算 A 的 0.5875 与 B 的 0.6000；再分别输入原始权重 $(0.4,0.3,0.15,0.15)$ 和 $(0.1,0.1,0.4,0.4)$，观察归一化加权总分。</dd>
+    <dt>Observation</dt><dd id="rewardVectorObservation">等权时，A 得 0.588，B 得 0.600，B 以 0.013 分领先。</dd>
+    <dt>Interpretation</dt><dd id="rewardVectorInterpretation">A 在画质与对齐领先，B 在时序与物理领先；总分不是“客观质量”，而是当前权重表达的取舍。</dd>
+    <dt>Limitation</dt><dd>四项分数来自固定教学样例，假定各评审已校准到可比较的 $[0,1]$ 区间；真实 reward model 会有噪声、尺度差异、相关性和分布外误判。</dd>
+  </dl>
+
+  <div class="mrl-candidate-table" role="group" aria-label="两个固定视频候选的奖励向量">
+    <article class="candidate-a"><span>CANDIDATE A</span><strong>清晰、贴题，但运动不稳</strong><dl><div><dt>Quality</dt><dd>0.90</dd></div><div><dt>Alignment</dt><dd>0.80</dd></div><div><dt>Temporal</dt><dd>0.30</dd></div><div><dt>Physics</dt><dd>0.35</dd></div></dl></article>
+    <article class="candidate-b"><span>CANDIDATE B</span><strong>画面普通，但运动连贯</strong><dl><div><dt>Quality</dt><dd>0.60</dd></div><div><dt>Alignment</dt><dd>0.55</dd></div><div><dt>Temporal</dt><dd>0.60</dd></div><div><dt>Physics</dt><dd>0.65</dd></div></dl></article>
+  </div>
+
+  <div class="mrl-reward-vector-controls" aria-label="视觉生成奖励向量权重">
+    <label><span>Quality <output id="rewardWeightQualityValue">25%</output></span><input id="rewardWeightQuality" type="range" min="0.05" max="1" step="0.05" value="1"></label>
+    <label><span>Alignment <output id="rewardWeightAlignmentValue">25%</output></span><input id="rewardWeightAlignment" type="range" min="0.05" max="1" step="0.05" value="1"></label>
+    <label><span>Temporal <output id="rewardWeightTemporalValue">25%</output></span><input id="rewardWeightTemporal" type="range" min="0.05" max="1" step="0.05" value="1"></label>
+    <label><span>Physics <output id="rewardWeightPhysicsValue">25%</output></span><input id="rewardWeightPhysics" type="range" min="0.05" max="1" step="0.05" value="1"></label>
+    <button class="mrl-btn" id="rewardVectorReset" type="button">恢复四项等权</button>
+  </div>
+
+  <div class="mrl-reward-results" aria-live="polite">
+    <article><span>A · WEIGHTED SCORE</span><strong id="candidateAScore">0.588</strong><div class="mrl-score-track"><i id="candidateABar"></i></div></article>
+    <article><span>B · WEIGHTED SCORE</span><strong id="candidateBScore">0.600</strong><div class="mrl-score-track"><i id="candidateBBar"></i></div></article>
+    <article class="is-winner"><span>CURRENT WINNER</span><strong id="rewardWinner">B</strong><small id="rewardMargin">领先 0.013</small></article>
+  </div>
+  <p class="mrl-vector-formula" id="rewardVectorFormula">$R_A=0.25(0.90)+0.25(0.80)+0.25(0.30)+0.25(0.35)=0.5875$</p>
+  <p class="mrl-caption">滑杆表示四个 reward 分量的相对权重，页面会归一化到和为 1。候选向量始终不变；变的是优化目标对“好视频”的定义，因此这不是一个通用 scalar reward 滑杆。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>标量 reward 会决定胜者，也会隐藏为什么获胜</h3>
+      <p>相同的 0.60 总分可能来自高画质低运动，也可能来自普通画质高时序。训练只读总分时，这两种失败会被压成一个数字；调权重则可能让梯度方向整体翻转。</p>
+      <p class="mrl-insight-key">先记录 reward vector、各维尺度与权重，再汇报 scalar return；否则无法判断模型究竟改善了哪一项。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code-map">
+  <h2 class="mrl-sec-title"><span class="num">09</span>从公式回到程序：三类轨迹必须落到三套接口</h2>
+  <p class="mrl-sec-lead">下面不是完整训练脚本，而是阅读固定上游时的最短变量索引。每一行都回答“数学对象在代码里由谁保存或计算”。</p>
+
+  <h3>音频：序列长度、回复轨迹与分项评审</h3>
+  <div class="mrl-table-scroll" role="region" aria-label="音频数学对象与上游程序接口对照表" tabindex="0">
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>上游程序接口</th><th>阅读重点</th></tr></thead>
+    <tbody>
+      <tr><td>帧率 $f$</td><td><code>audio_frame_rate</code></td><td>上游未来展望示例取 12.5 Hz；本页 75 Hz × 8 码本是 reward-design 文档的长序列量级例。</td></tr>
+      <tr><td>策略回复轨迹</td><td><code>AudioDialoguePolicy</code> / <code>responses</code></td><td>最小代码优化的是文本策略回复，不能自动等同于端到端 codec action。</td></tr>
+      <tr><td>$\mathbf r_{\mathrm{audio}}$</td><td><code>AudioReward</code></td><td>上游未来展望伪代码组合内容、韵律与格式奖励；时延只在 <code>reward-design.md</code> 的概念模板中单列。本章三分量向量是教学重组，额外语音合成器也是教学接口。</td></tr>
+      <tr><td>policy-gradient 更新</td><td><code>grpo_train_step</code></td><td>组内相对优势更新文本策略；本章只借它定位变量，不重复 Chapter 16 的 GRPO 推导。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>具身：环境 wrapper 定义 observation contract</h3>
+  <div class="mrl-table-scroll" role="region" aria-label="具身环境角色与上游程序接口对照表" tabindex="0">
+  <table class="mrl-code-map">
+    <thead><tr><th>角色</th><th>上游程序接口</th><th>数学映射</th></tr></thead>
+    <tbody>
+      <tr><td>ManiSkill 连续控制</td><td><code>gym.make(..., obs_mode="state", reward_mode="dense")</code></td><td>状态向量 $o_t$、连续末端控制 $a_t$、物理仿真转移。</td></tr>
+      <tr><td>MineStudio 长程事件</td><td><code>MinecraftDiscreteEnv</code></td><td>第一人称 RGB $o_t$、十类离散键鼠动作、采集/战斗事件奖励。</td></tr>
+      <tr><td>Unity 多样接口</td><td><code>TASKS</code> + 生成的 trainer YAML + <code>mlagents-learn</code></td><td>由 Basic、3DBall、Huggy、Walker 等任务分别决定离散/连续 action 与 horizon。</td></tr>
+      <tr><td>AI2-THOR 部分可观测</td><td><code>ThorObjectNavEnv</code></td><td>策略取 RGB $o_t$；环境 metadata 中的距离进入 $r_t$ 与成功条件。</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>视觉生成：去噪 transition 的 log-prob 承接终点 advantage</h3>
+  <div class="mrl-table-scroll" role="region" aria-label="视觉生成数学对象与上游程序接口对照表" tabindex="0">
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>上游程序接口</th><th>程序含义</th></tr></thead>
+    <tbody>
+      <tr><td>$\tau=(x_T,\ldots,x_0)$</td><td><code>trajectories = policy.sample(...)</code></td><td>保留完整采样链及旧策略 log-prob。</td></tr>
+      <tr><td>最终 $x_0$</td><td><code>trajectories.final_latents</code></td><td>经 <strong>Variational Autoencoder（VAE，变分自编码器）</strong>把潜变量解码成可被视觉奖励器检查的图像。</td></tr>
+      <tr><td>$R_{\mathbf w}$ 与 $A$</td><td><code>rewards</code>, <code>advantages</code></td><td>终点评分后做组内/批内归一化，形成相对更新信号。</td></tr>
+      <tr><td>$\pi_\theta/\pi_{\mathrm{old}}$</td><td><code>new_log_probs</code>, <code>trajectories.old_log_probs</code>, <code>ratio</code></td><td>比较每条去噪轨迹在新旧策略下的概率，并做 clipped 更新。</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="mrl-caption">程序映射故意保持三栏分开：音频的回复序列、具身环境的真实 transition、扩散模型的 latent transition 不能共用一个“trajectory tensor”解释。</p>
+
+  <div class="mrl-source-grid">
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter27_audio_rl" target="_blank" rel="noopener"><span>AUDIO RL</span><strong>音频奖励、RVQ 与未来方向</strong><small>docs/chapter27_audio_rl ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter29_visual_generation" target="_blank" rel="noopener"><span>VISUAL GENERATION</span><strong>扩散轨迹优化与视频奖励</strong><small>docs/chapter29_visual_generation ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment08-maniskill" target="_blank" rel="noopener"><span>EXPERIMENT 08</span><strong>ManiSkill 连续操作</strong><small>固定代码 ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment10-minestudio" target="_blank" rel="noopener"><span>EXPERIMENT 10</span><strong>MineStudio 开放世界</strong><small>固定代码 ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment11-unity-mlagents" target="_blank" rel="noopener"><span>EXPERIMENT 11</span><strong>Unity ML-Agents 多样环境</strong><small>固定代码 ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment12-ai2thor-embodied" target="_blank" rel="noopener"><span>EXPERIMENT 12</span><strong>AI2-THOR 第一人称导航</strong><small>固定代码 ↗</small></a>
+  </div>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">10</span>总分上升仍可能变坏：本章只先看见三种局部裂缝</h2>
+  <p class="mrl-sec-lead">三类任务一旦被压成单一训练信号，就可能在未被重视的维度上退化。本节只标出接口处的风险，不提前展开下一章的系统分类。</p>
+
+  <div class="mrl-boundary-grid">
+    <article><span>AUDIO</span><h3>答对了，但不适合听</h3><p>只奖励内容可能得到语义正确却迟缓、机械或带爆音的回复；只压低延迟又可能催生抢答和截断。</p></article>
+    <article><span>EMBODIED</span><h3>塑形分高，但任务没完成</h3><p>距离奖励能帮助探索，也可能鼓励在目标附近徘徊；碰撞、可见性与真正交互成功需要分别核验。</p></article>
+    <article><span>VISUAL</span><h3>单帧漂亮，但视频不再运动</h3><p>只推画质或偏好分，生成器可能偏向清晰的静态片段；加入 motion、temporal 与 physics 分量才暴露冲突。</p></article>
+  </div>
+  <p class="mrl-caption">这些例子只说明“训练分数和真正目标可能裂开”。这种分叉怎样命名、怎样定位到得分路径或反馈通道，以及怎样建立防护流程，将在 Chapter 26 统一整理。</p>
+
+  <div class="mrl-transition-strip mrl-chapter-bridge" aria-label="第二十四到二十六章桥梁">
+    <div><span>CHAPTER 24</span><strong>多模态 verifier</strong><small>检查文字、坐标与框是否接地</small></div><i>→</i>
+    <div><span>CHAPTER 25</span><strong>模态自己的 trajectory</strong><small>延迟、部分可观测、reward vector</small></div><i>→</i>
+    <div><span>CHAPTER 26</span><strong>奖励为何会失真</strong><small>沿独立表现诊断测量裂缝</small></div>
+  </div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：能否先写过程，再选择奖励？</h2>
+  <p class="mrl-sec-lead">每题都要求从 state、action、trajectory、reward timing 中找依据。只回答“都能用 PPO”不算完成。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 十秒音频为什么可能对应 6000 个 codec action？</summary><div class="inner">在教学近似中，动作数是时长 × codec 帧率 × 每帧码本 token 数。用 $10\times75\times8$ 得 6000。真实模型可能并行码本、按 chunk 生成或只优化文本策略，因此要同时声明动作粒度。</div></details>
+    <details><summary>2. 把 $\gamma$ 从 0.999 调到 1，音频奖励延迟是否被彻底解决？</summary><div class="inner">没有。数值衰减消失了，但完整回复只有一个终点分数时，仍无法判断数千个动作中哪一帧、哪段停顿或哪条推理造成结果。衰减与定位是两个问题。</div></details>
+    <details><summary>3. AI2-THOR 用目标距离给奖励，为什么策略仍属于部分可观测？</summary><div class="inner">距离来自环境 metadata，奖励函数和成功判定可读取；策略 observation 只有第一人称 RGB。奖励能利用隐藏状态计算训练信号，不等于策略在决策时看到了隐藏状态。</div></details>
+    <details><summary>4. 四个具身实验都用 PPO，为什么不能直接比较回报高低？</summary><div class="inner">它们的 observation、action、horizon、奖励尺度与任务成功条件不同：连续机械臂、离散键鼠、不同 Unity 任务和室内视觉导航不是同一个实验协议。回报只在各自契约里有意义。</div></details>
+    <details><summary>5. 扩散生成中，$s_t$、$a_t$ 和 $\tau$ 分别是什么？</summary><div class="inner">$s_t=(x_t,t,c)$ 是当前潜变量、时间步与条件；$a_t=x_{t-1}$ 是采样得到的下一潜变量；$\tau=(x_T,\ldots,x_0)$ 是完整去噪链。最终图片只是 $x_0$ 解码后的轨迹终点。</div></details>
+    <details><summary>6. 为什么去噪轨迹的 log-prob 能把终点 advantage 传给每一步？</summary><div class="inner">轨迹概率是各步转移概率之积，所以轨迹 log-prob 是各步 log-prob 之和。REINFORCE 梯度把终点 advantage 乘到这项和上，每一步 transition 都收到更新；但同一 advantage 广播全链，精确归因仍困难。</div></details>
+    <details><summary>7. 候选评分向量没变，调权重为何会改变赢家？</summary><div class="inner">标量奖励是 $R_{\mathbf w}=\mathbf w^\top\mathbf r$。A 强在画质与对齐，B 强在时序与物理；改变 $\mathbf w$ 就改变“好结果”的定义，因此加权总分和梯度方向都可能翻转。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第二十五章建立起来的三条独立链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>AUDIO</span><strong>codec / chunk 序列</strong><small>终点评审跨越长动作链</small></div>
+      <i>·</i>
+      <div><span>EMBODIED</span><strong>观察—动作—物理转移</strong><small>部分可观测与长程任务</small></div>
+      <i>·</i>
+      <div><span>GENERATION</span><strong>latent 去噪轨迹</strong><small>reward vector 决定方向</small></div>
+    </div>
+    <p>三类任务共享策略优化的数学骨架，却不共享一步的含义。可靠分析必须分别声明策略看见什么、动作改变什么、轨迹多长、奖励何时到达，以及标量总分由哪些维度压缩而来。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter26.html">第 26 章：奖励升高，为什么真实表现反而下降？</a></h3>
+    <p>本章已经看到延迟反馈、隐藏状态与 reward vector 权重会留下裂缝。下一章将系统检查训练分数与独立表现怎样分叉、得分捷径怎样出现、反馈通道怎样被动手脚：不是继续堆奖励项，而是学习怎样发现“模型赢了评分器，却输掉任务”。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据固定提交 <code>78d4e459dcd40844e030a3ce67378b8bcb9735bd</code> 的<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter27_audio_rl" target="_blank" rel="noopener">音频 RL 文档</a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter29_visual_generation" target="_blank" rel="noopener">视觉生成文档</a>，以及<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment08-maniskill" target="_blank" rel="noopener">ManiSkill</a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment10-minestudio" target="_blank" rel="noopener">MineStudio</a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment11-unity-mlagents" target="_blank" rel="noopener">Unity ML-Agents</a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/modelscope-space/hands-on-modern-rl-experiment12-ai2thor-embodied" target="_blank" rel="noopener">AI2-THOR</a>四个实验重新组织，不是原项目官方译本。音频折扣计算与分项权重交互为本讲义设计；涉及的数值假设均在实验限制中明示。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 25</span><span><a href="./chapter24.html">← Chapter 24</a> · <a href="./">课程目录</a> · <a href="./chapter26.html">Chapter 26 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter29_visual_generation" target="_blank" rel="noopener">固定上游 ↗</a></span></footer>

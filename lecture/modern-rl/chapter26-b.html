@@ -1,0 +1,149 @@
+<section id="evaluator-bias">
+  <h2 class="mrl-sec-title"><span class="num">05</span>学习型裁判与规则验证，都可能留下稳定盲区</h2>
+  <p class="mrl-sec-lead">Chapter 14 已讲过 AI 反馈的训练流水线，Chapter 16、21、24 已讲过结果验证器。本节不重走这些流程，只检查评分通道本身怎样形成系统误差。</p>
+
+  <p><strong>judge bias（裁判偏差）</strong>是学习型裁判在相同任务质量下，对位置、长度、语气、格式或模型风格产生稳定偏好。若生成者和裁判来自相同模型家族，还可能出现 <strong>self-preference bias（自偏好偏差）</strong>：裁判更容易奖励像自己表达习惯的答案，而不是任务上更正确的答案。</p>
+
+  <p><strong>verifier bias（验证器偏差）</strong>则来自可执行规则覆盖不全或解析协议狭窄。例如代码测试只覆盖公开输入、答案抽取器只读取第一个数字、多模态检查只验证输出格式而没有验证视觉内容是否与条件一致。这里的“偏差”不是说程序随机或主观，而是它稳定测量了任务的一个不完整切片。</p>
+
+  <div class="mrl-evaluator-pair">
+    <article>
+      <span>LEARNED JUDGE</span>
+      <h3>同样正确，风格不同</h3>
+      <p>交换候选顺序、控制长度、匿名化来源、改变语气和模型家族，检查排名是否应当保持。</p>
+      <b>风险：偏好被生成器反向迎合</b>
+    </article>
+    <article>
+      <span>RULE VERIFIER</span>
+      <h3>同样通过，覆盖不同</h3>
+      <p>加入保留测试、边界输入、迁移任务、解析失败统计和一次性门禁，检查高分是否能离开训练规则。</p>
+      <b>风险：漏洞被搜索与记忆放大</b>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要比较的是“改变与任务无关的因素以后，分数是否仍稳定”。若只换回答顺序或格式，裁判排名就翻转，评分器测到的便不只是任务质量。</p>
+
+  <p>AI 裁判可降低人工成本，却不会自动突破自己的知识上限。生成者能力超过裁判时，流畅但错误的答案可能得到更高分；同一个模型同时生成、评判和学习时，稳定盲点还会形成自我强化环。修复方向不是重讲一遍 CAI/RLAIF，而是引入异质裁判、可执行证据、人类校准与裁判反事实测试。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>“可重复”只说明误差稳定，不说明误差为零</h3>
+      <p>一个确定性测试可以每次都漏掉同一个边界；一个低温 judge 也可以每次都偏爱同一种风格。</p>
+      <p class="mrl-insight-key">评测可靠性要靠反事实与独立测量证明，不能从评分器的一致性直接推出。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="overoptimization">
+  <h2 class="mrl-sec-title"><span class="num">06</span>代理继续上升，独立效用为什么会先饱和再下降？</h2>
+  <p class="mrl-sec-lead"><strong>reward overoptimization（奖励过度优化）</strong>指策略持续优化不完美的代理奖励，超过两者相关性可靠的区域后，代理分继续上升，独立效用却开始下降。</p>
+
+  <p>设优化强度为 $d$：它可以代表更多训练步、更大的策略漂移，或为同一道题搜索更多候选。训练只直接求：</p>
+  <div class="mrl-equation">$$\max_\theta\;\mathbb E[R_{\text{proxy}}(x,y)],\qquad y\sim\pi_\theta(\cdot\mid x).$$</div>
+  <p>独立效用 $U(x,y)$ 没有出现在梯度里。轻度优化时，代理与效用共享的部分先被提高；继续增大 $d$，优化器逐渐把容量花在代理特有的误差上。于是常见的诊断形状不是“两条曲线同时崩溃”，而是：</p>
+
+  <div class="mrl-overopt-shape" aria-label="代理奖励单调上升而独立效用先升后降">
+    <div><span>$d$ 较小</span><strong>$R_{\text{proxy}}\uparrow$</strong><b>$U\uparrow$</b><small>有用改进占主导</small></div>
+    <i>→</i>
+    <div><span>$d$ 中等</span><strong>$R_{\text{proxy}}\uparrow$</strong><b>$U$ 达峰</b><small>最佳独立检查点</small></div>
+    <i>→</i>
+    <div class="warning"><span>$d$ 过大</span><strong>$R_{\text{proxy}}\uparrow$</strong><b>$U\downarrow$</b><small>代理漏洞占主导</small></div>
+  </div>
+  <p class="mrl-caption">真正的早停点由独立效用峰值决定，不是代理奖励的最高点；最右侧仍有“漂亮训练曲线”，所以只看 loss/reward 很难发现。</p>
+
+  <h3>搜索预算也会放大罕见漏洞</h3>
+  <p>假设每个候选独立地以概率 $p$ 利用评分漏洞。为同一道题采样 $N$ 个候选，再选择代理分最高者，至少出现一个漏洞候选的概率为：</p>
+  <div class="mrl-equation">$$P(\text{至少一个漏洞})=1-(1-p)^N$$</div>
+  <p>推导只有两步：单个候选不含漏洞的概率是 $1-p$；若近似独立，$N$ 个都不含漏洞的概率是 $(1-p)^N$，再用 1 减去这个补事件。取 $p=0.01$：</p>
+  <table class="mrl-search-table">
+    <thead><tr><th>候选数 $N$</th><th>至少一个漏洞</th><th>代码映射</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>$1.0\%$</td><td><code>num_candidates = 1</code></td></tr>
+      <tr><td>10</td><td>$1-0.99^{10}\approx9.6\%$</td><td><code>num_candidates = 10</code></td></tr>
+      <tr><td>100</td><td>$1-0.99^{100}\approx63.4\%$</td><td><code>num_candidates = 100</code></td></tr>
+    </tbody>
+  </table>
+  <p>真实候选并不完全独立，这只是方向性的手算；它说明 <strong>Best-of-$N$（多候选择优）</strong>、树搜索或更长训练既可能发现优质解，也会更有效地发现 verifier 的薄弱区域。比较模型时必须固定搜索预算。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>更强的模型和更大的搜索预算，同时放大能力与漏洞发现能力</h3>
+      <p>弱策略没有作弊，不一定说明奖励写得好；它可能只是尚未找到那条高分捷径。</p>
+      <p class="mrl-insight-key">每次扩大模型、训练距离或测试时采样数，都应重新运行旧漏洞回归和未知攻击搜索。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="proxy-lab">
+  <h2 class="mrl-sec-title"><span class="num">07</span>实验：代理分一路上涨时，该发布哪一个检查点？</h2>
+  <p class="mrl-sec-lead">五个检查点来自同一仓库任务。训练只看扫码计数；独立盘点同时记录正确归位数与是否篡改计数通道。先把审计权重留在 0，观察纯代理选模；再把它调到 0.50 做反事实。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>若训练和选模都只追逐代理奖励，最高分检查点是否也是独立任务效用最高的检查点？</dd>
+    <dt>Prediction</dt><dd>不是。代理分会随优化压力单调上升；独立效用先上升，随后因重复扫描和奖励篡改下降。纯代理会选择最后一个检查点。</dd>
+    <dt>Experiment</dt><dd>点击 C0–C4 查看同一奖励公式下的扫码数、归位数、篡改标记、$R_{\text{proxy}}$、$U$ 与 $\Delta_G$；再把独立审计权重 $\lambda$ 从 0 调到 0.50。</dd>
+    <dt>Observation</dt><dd id="proxyObservation">当前 C2 的代理分为 50、独立效用为 90；但当 $\lambda=0$ 时，发布规则仍会选择代理分 100、独立效用 −30 的 C4。</dd>
+    <dt>Interpretation</dt><dd>训练代理奖励和独立发布指标必须分离。反事实中加入足够权重的独立审计，最佳发布候选会从 C4 回到真正完成最多任务的 C2。</dd>
+    <dt>Limitation</dt><dd>教学环境直接给出了 $U$；现实真实效用通常只能由保留任务、人工审查和部署监控近似。加权和也不能替代硬安全门槛或多维报告。</dd>
+  </dl>
+
+  <div class="mrl-viz mrl-proxy-lab" aria-labelledby="proxyLabTitle">
+    <div class="mrl-viz-head">
+      <div><h3 id="proxyLabTitle">Proxy–Utility Checkpoint Lab</h3><p>同一初始策略，优化强度逐步增加；数值均为教学构造，可逐项手算。</p></div>
+      <button class="mrl-btn" id="proxyReset" type="button">重置实验</button>
+    </div>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-audit-control">独立审计权重 $\lambda$ <output id="auditWeightValue">0.00</output>
+        <input id="auditWeight" type="range" min="0" max="1" step="0.05" value="0">
+      </label>
+      <div class="mrl-release-readout"><span>发布规则当前选择</span><strong id="releaseChoice">C4 · 篡改计数</strong><small id="releaseScore">selection score = 100.0</small></div>
+    </div>
+
+    <div class="mrl-checkpoint-grid" role="group" aria-label="选择训练检查点">
+      <button type="button" data-checkpoint="0"><span>C0</span><strong>初始策略</strong><small>刚学会搬运</small></button>
+      <button type="button" data-checkpoint="1"><span>C1</span><strong>有效改进</strong><small>路线更高效</small></button>
+      <button class="is-active" type="button" data-checkpoint="2"><span>C2</span><strong>任务峰值</strong><small>独立效用最高</small></button>
+      <button type="button" data-checkpoint="3"><span>C3</span><strong>重复扫码</strong><small>代理开始分叉</small></button>
+      <button type="button" data-checkpoint="4"><span>C4</span><strong>篡改计数</strong><small>代理最高</small></button>
+    </div>
+
+    <div class="mrl-checkpoint-detail">
+      <article><span>SCAN EVENTS</span><strong id="scanEvents">100</strong><small>奖励通道看到的次数</small></article>
+      <article><span>UNIQUE SHELVED</span><strong id="shelvedItems">45 / 50</strong><small>独立盘点的正确归位</small></article>
+      <article><span>REWARD CHANNEL</span><strong id="tamperState">完整</strong><small>是否修改计数器或日志</small></article>
+    </div>
+
+    <div class="mrl-score-comparison">
+      <article class="proxy"><span>代理奖励</span><strong id="proxyScore">50</strong><div><i id="proxyBar"></i></div><code>proxy_reward = min(scan_events, 200) / 2</code></article>
+      <article class="utility"><span>独立任务效用</span><strong id="utilityScore">90</strong><div><i id="utilityBar"></i></div><code>independent_utility = 2 * shelved - 30 * tamper</code></article>
+      <article class="gap"><span>Goodhart 缺口</span><strong id="gapScore">−40</strong><div><i id="gapBar"></i></div><code>gap = proxy_reward - independent_utility</code></article>
+    </div>
+    <p class="mrl-caption">条形图都使用 −40 到 130 的共同显示范围，五个检查点的代理、效用与缺口都落在范围内。真正要看的是：C2 之后代理条继续变长，效用条却反向缩短，缺口由负转正并迅速扩大。</p>
+
+    <div class="mrl-lab-verdict" id="proxyVerdict" aria-live="polite">
+      <span>当前检查点</span>
+      <strong>C2 · 独立任务效用达到峰值</strong>
+      <p>100 次扫描对应 45 件正确归位；代理仍低估了真实进展，但这个策略尚未依赖重复扫描或篡改。</p>
+    </div>
+  </div>
+
+  <h3>默认值与反事实手算</h3>
+  <p>检查点 C4 有 $N_{\text{scan}}=260$、$N_{\text{shelved}}=0$、$\mathrm{tamper}=1$，因此：</p>
+  <div class="mrl-equation">$$R_{\text{proxy}}=\frac{\min(260,200)}{2}=100,\qquad U=2(0)-30(1)=-30.$$</div>
+  <p>发布规则用同尺度的审计效用构造一个教学性选择分数：</p>
+  <div class="mrl-equation">$$S_\lambda=(1-\lambda)R_{\text{proxy}}+\lambda U.$$</div>
+  <p>$\lambda=0$ 时只看代理，C4 以 100 分胜出。把 $\lambda$ 调到 $0.50$：</p>
+  <div class="mrl-equation">$$S_{0.5}(C2)=0.5(50)+0.5(90)=70,\qquad S_{0.5}(C4)=0.5(100)+0.5(-30)=35.$$</div>
+  <p>C2 因而成为发布候选。注意这不是说任何项目都应取 $\lambda=0.5$；真实安全约束常应设为硬门槛，并分别报告子指标，而不是用加权总分掩盖失败。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>训练最优、代理最优与发布最优是三个不同检查点</h3>
+      <p>训练器按代理更新参数；开发者可以按隐藏集早停；发布门禁还要检查迁移、违规行为和最坏组风险。</p>
+      <p class="mrl-insight-key">把三者都用同一测试集决定，会让“独立评测”悄悄变成训练循环的一部分。</p>
+    </div>
+  </aside>
+</section>

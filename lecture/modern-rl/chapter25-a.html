@@ -1,0 +1,145 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 25 · Audio, embodied, and visual-generation RL</div>
+  <h1>声音、身体与生成画面，还是同一种 RL 吗？</h1>
+  <p class="lead">Chapter 24 让 multimodal verifier（多模态验证器）检查视觉语言模型输出的文字、坐标或框。现在输出本身变成声音、身体运动与图像/视频：动作不再总是“下一个 token”，环境也不再总能把完整状态交给策略。RL 的公式骨架仍在，但<strong>时间尺度、可观测性和奖励结构已经换了</strong>。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>音频序列、具身交互和扩散去噪分别把什么叫作 state、action 与 trajectory？终点奖励怎样跨越数千步，多个 reward 维度又为何会选出相反的“最佳结果”？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 90–120 min</span>
+    <span class="mrl-pill">先修：Chapter 10、13、16、24</span>
+    <span class="mrl-pill">数学：折扣回报 + POMDP + 策略梯度</span>
+    <span class="mrl-pill">实验：奖励延迟 + 分项权重冲突</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>先分别建模，再比较共同风险</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#three-processes"><b>01</b><span>拆开三类轨迹</span><small>不同时间单位</small></a>
+      <a class="mrl-roadmap-step" href="#audio-model"><b>02</b><span>数音频动作</span><small>离散声学序列与延迟</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#audio-delay-lab"><b>03</b><span>量奖励距离</span><small>终点信号回到开头</small></a>
+      <a class="mrl-roadmap-step" href="#embodied-pomdp"><b>04</b><span>分 state 与 observation</span><small>记忆隐藏世界</small></a>
+      <a class="mrl-roadmap-step" href="#visual-trajectory"><b>05</b><span>重写去噪链</span><small>潜变量就是状态</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#reward-vector-lab"><b>06</b><span>保留分项奖励</span><small>看权重怎样换胜者</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>Verifier 走出答案框，首先改变的是“被评价的过程”</h2>
+  <p class="mrl-sec-lead">视觉问答通常把图像当证据，最终动作仍是一串文字 token。到了本章，音频波形、机器人动作与潜变量采样本身就是策略输出的一部分。</p>
+
+  <div class="mrl-transition-strip" aria-label="从视觉语言输出到三类多模态轨迹">
+    <div><span>CHAPTER 24</span><strong>图像作为输入证据</strong><small>输出：文字 / 坐标 / 框</small></div><i>→</i>
+    <div><span>AUDIO</span><strong>边听、边想、边说</strong><small>输出：文本或离散声学序列</small></div><i>·</i>
+    <div><span>EMBODIED</span><strong>看一帧、动身体、再观察</strong><small>输出：电机或键鼠动作</small></div><i>·</i>
+    <div><span>GENERATION</span><strong>从噪声逐步得到画面</strong><small>输出：下一潜变量</small></div>
+  </div>
+  <p class="mrl-caption">真正变化的不是“是否还能用 RL”，而是一步的物理含义：token、关节控制和一次去噪转移有不同的时间尺度、信息边界与失败后果。</p>
+
+  <p>因此不能先画一个万能的 reward 滑杆，再把三个名字贴上去。建模必须从每类过程自己的交互闭环开始：</p>
+  <div class="mrl-equation">$$s_t \xrightarrow{\ a_t\ } s_{t+1},\qquad r_t=R(s_t,a_t,s_{t+1}).$$</div>
+  <p>这行抽象式仍然成立，但 $s_t$ 是否能被策略看全、$a_t$ 是离散还是连续、$r_t$ 立即到达还是几千步后才出现，会决定算法真正面对的难题。</p>
+</section>
+
+<section id="three-processes">
+  <h2 class="mrl-sec-title"><span class="num">02</span>同样叫 trajectory，三类任务储存的对象完全不同</h2>
+  <p class="mrl-sec-lead">先建立一张不会混淆的坐标表。后文所有公式和实验都会回到这三行。</p>
+
+  <div class="mrl-table-scroll" role="region" aria-label="三类任务的状态、动作、轨迹与奖励对照表" tabindex="0">
+  <table class="mrl-process-table">
+    <thead><tr><th>机制</th><th>策略可用的 state / observation</th><th>action</th><th>trajectory</th><th>奖励何时到</th></tr></thead>
+    <tbody>
+      <tr><td><strong>音频序列</strong></td><td>输入音频表示、问题与已生成前缀</td><td>下一个文本 token、离散声学码或音频 chunk</td><td>从输入到完整回复的文本/声学序列</td><td>内容、韵律常在整段结束后；首包延迟可更早测</td></tr>
+      <tr><td><strong>具身交互</strong></td><td>关节/物体状态，或第一人称 RGB 与历史</td><td>连续末端位姿/关节目标，或离散移动、转向、交互</td><td>观察—动作—物理转移组成的长 episode</td><td>距离塑形可逐步给；成功、采集、战斗事件更稀疏</td></tr>
+      <tr><td><strong>视觉生成</strong></td><td>当前潜变量 $x_t$、时间步 $t$、生成条件 $c$</td><td>采样下一潜变量 $x_{t-1}$</td><td>$x_T\to\cdots\to x_0$ 的去噪链</td><td>最终图像/视频解码后得到多项评分</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="mrl-caption">请横向比较“策略在一步时真正能看到什么”和“奖励离这一步多远”。三行共享轨迹概念，却不能共享同一个 observation、action 或奖励时钟。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>模态不是输入文件格式，而是决策过程的时间单位</h3>
+      <p>把 wav、RGB 和 latent 都塞进张量，不会让问题自动统一。音频的一步可能是 1/75 秒的一枚离散声学码，机械臂一步会改变真实接触，扩散一步则在整个画面的潜空间移动。</p>
+      <p class="mrl-insight-key">先定义“一步改变了什么”，再讨论策略和奖励；否则相同公式只会掩盖不同的信用分配问题。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="audio-model">
+  <h2 class="mrl-sec-title"><span class="num">03</span>音频序列：十秒语音为什么可能包含六千个动作？</h2>
+  <p class="mrl-sec-lead">波形是连续信号。许多音频模型先用 <strong>neural audio codec（神经音频编解码器，简称 codec）</strong>把它压成离散声学码序列，再像语言模型一样自回归处理。</p>
+
+  <p><strong>Residual Vector Quantization（RVQ，残差向量量化）</strong>用多层码本逐步逼近一帧音频表示：第 $k$ 层从上一层未解释的残差中选最近码字，再把新残差交给下一层。</p>
+  <div class="mrl-equation">$$c_k=\arg\min_c\left\|e^{(k-1)}-\mathrm{CB}_k[c]\right\|,\qquad e^{(k)}=e^{(k-1)}-\mathrm{CB}_k[c_k].$$</div>
+  <p>$e^{(0)}$ 是编码器给出的一帧表示，$\mathrm{CB}_k$ 是第 $k$ 层码本，$c_k$ 是选中的离散索引。层数越多，声学细节通常越充分，序列也越长。</p>
+
+  <p>若回复时长为 $d$ 秒、codec 帧率为 $f$ Hz、每帧有 $K$ 个码本 token，一个简单的动作数近似是：</p>
+  <div class="mrl-equation">$$N_{\mathrm{audio}}=d\,f\,K.$$</div>
+  <p>例如 $d=10$、$f=75$、$K=8$：</p>
+  <div class="mrl-equation">$$N_{\mathrm{audio}}=10\times75\times8=6000.$$</div>
+  <p>这不是说所有音频模型都逐个生成这 6000 个 token；并行码本、chunk 生成和文本后接 <strong>Text-to-Speech（TTS，文本转语音）</strong>会改变动作粒度。数字的意义是：<strong>同样十秒内容，声学细节会把决策链拉得远长于文字摘要</strong>。</p>
+
+  <div class="mrl-audio-map" aria-label="音频强化学习映射">
+    <article><span>STATE $s_t$</span><h3>输入声学表示 + 问题 + 输出前缀</h3><p>若系统全双工，还要包括尚未结束的输入 chunk、对话历史与是否被打断。</p></article>
+    <article><span>ACTION $a_t$</span><h3>下一个 token 或可播放 chunk</h3><p>文本回答策略选择文本 token；端到端语音策略还需选择声学 codec token。</p></article>
+    <article><span>TRAJECTORY $\tau$</span><h3>完整的“听—想—说”序列</h3><p>训练记录 log-prob、文本、合成/生成波形，以及奖励评审所需的结束时间。</p></article>
+  </div>
+  <p class="mrl-caption">三栏必须对应具体系统。上游最小训练例把策略文本交给额外 speech synthesizer 再评审韵律；它是教学接口，不能误写成 Step-Audio-R1.5 在 codec 层直接做偏好优化。</p>
+
+  <h3>音频的 reward 不是一个“答对”位</h3>
+  <p>内容正确但声调机械，或语气自然却迟迟不开口，都可能在真实交互中失败。教学上可先保留三个分量：</p>
+  <div class="mrl-equation">$$\mathbf r_{\mathrm{audio}}=
+  \begin{bmatrix}
+  R_{\mathrm{content}}\\
+  R_{\mathrm{prosody}}\\
+  R_{\mathrm{latency}}
+  \end{bmatrix},
+  \qquad
+  R_{\mathrm{audio}}=w_cR_{\mathrm{content}}+w_pR_{\mathrm{prosody}}+w_lR_{\mathrm{latency}}.$$</div>
+  <p>$R_{\mathrm{content}}$ 可来自标准答案、语义判断，或由 <strong>Word Error Rate（WER，词错误率）</strong>转换成 $1-\mathrm{WER}$：错误率越低，内容奖励越高；$R_{\mathrm{prosody}}$ 检查音高、节奏、能量、停顿与情感匹配；$R_{\mathrm{latency}}$ 要明确测量“用户话音结束 → 第一段可播放音频”的时间。权重是产品取舍，不是自然常数。</p>
+
+  <p>若只有终点奖励 $R_T$，从早期时刻 $t$ 回看的折扣回报是：</p>
+  <div class="mrl-equation">$$G_t=\gamma^{T-t}R_T.$$</div>
+  <p>这会产生两个不同问题。$\gamma&lt;1$ 时，超长链开头的数值权重可能接近 0；即使像语言模型 RL 那样取 $\gamma=1$，所有步骤也拿到同一个终点分数，仍不知道哪一帧爆音、哪段停顿或哪条声学推理真正造成结果。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>把 gamma 设成 1，只消除了衰减，没有解决定位</h3>
+      <p>序列开头不再被折掉，但终点的“整体不自然”仍同时归到数千个动作上。格式奖励、分段评审与声学接地检查的价值，在于增加可定位的中间证据。</p>
+      <p class="mrl-insight-key">奖励延迟有两层：信号有多弱，以及信号能否指出究竟哪一步错了。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="audio-delay-lab">
+  <h2 class="mrl-sec-title"><span class="num">04</span>实验一：终点的 1 分，回到第一枚音频 token 还剩多少？</h2>
+  <p class="mrl-sec-lead">这不是通用 reward 滑杆，而是一台音频序列长度计算器。它只回答“codec 配置怎样改变奖励延迟”，不替代具身物理或扩散生成的分项评分。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>语音时长、codec 帧率与码本数怎样共同拉长动作链，并改变终点奖励对第一个动作的折扣权重？</dd>
+    <dt>Prediction</dt><dd>时长、帧率或码本数翻倍都会让动作数近似翻倍；当 $\gamma&lt;1$ 时，第一步的 $\gamma^{N-1}$ 会按指数而非线性缩小。</dd>
+    <dt>Experiment</dt><dd>先用 10 秒、75 Hz、8 码本、$\gamma=0.999$ 复算 6000 个动作；再把码本改成 1，最后把 $\gamma$ 调到 1，分别观察“衰减”和“定位”是否消失。</dd>
+    <dt>Observation</dt><dd id="audioDelayObservation">默认配置得到 6000 个 codec token；终点奖励为 1 时，第一个动作的折扣权重约为 0.00247。</dd>
+    <dt>Interpretation</dt><dd id="audioDelayInterpretation">链长来自时长 × 帧率 × 码本数。把 $\gamma$ 设为 1 会保留数值权重，却仍把同一个终点分数无差别地归给全部动作。</dd>
+    <dt>Limitation</dt><dd>这是把每个 codec token 当作一个 RL 时间步的教学模型；真实系统可能并行生成码本、按 chunk 行动、只优化文本策略，或使用不折扣的序列级目标。</dd>
+  </dl>
+
+  <div class="mrl-audio-controls" aria-label="音频奖励延迟实验参数">
+    <label><span>回复时长 $d$ <output id="audioDurationValue">10 s</output></span><input id="audioDuration" type="range" min="1" max="12" step="1" value="10"></label>
+    <label><span>codec 帧率 $f$</span><select id="audioFrameRate"><option value="12.5">12.5 Hz</option><option value="50">50 Hz</option><option value="75" selected>75 Hz</option></select></label>
+    <label><span>码本数 $K$</span><select id="audioCodebooks"><option value="1">1 layer</option><option value="8" selected>8 layers</option></select></label>
+    <label><span>折扣 $\gamma$ <output id="audioGammaValue">0.9990</output></span><input id="audioGamma" type="range" min="0.995" max="1" step="0.0005" value="0.999"></label>
+    <button class="mrl-btn" id="audioReset" type="button">恢复 6000-token 例子</button>
+  </div>
+
+  <div class="mrl-delay-results" aria-live="polite">
+    <article><span>ACTIONS</span><strong id="audioTokenCount">6000</strong><small>$N=d f K$</small></article>
+    <article><span>TERMINAL REWARD</span><strong>+1.000</strong><small>整段结束后才评分</small></article>
+    <article><span>FIRST-STEP WEIGHT</span><strong id="audioFirstWeight">0.00247</strong><small>$\gamma^{N-1}$</small></article>
+    <article><span>EFFECTIVE LOSS</span><strong id="audioAttenuation">99.75%</strong><small>只描述折扣衰减</small></article>
+  </div>
+  <div class="mrl-delay-meter"><div id="audioWeightBar"></div><i></i></div>
+  <p class="mrl-caption">横条显示第一个动作保留下来的终点奖励比例。它只可视化数值衰减；即使横条在 $\gamma=1$ 时填满，也不能告诉策略 6000 个动作中哪一个破坏了韵律。</p>
+</section>

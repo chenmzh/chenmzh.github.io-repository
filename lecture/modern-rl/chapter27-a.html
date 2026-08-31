@@ -1,0 +1,120 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 27 · Learning against a moving population</div>
+  <h1>当对手也会学习，能力怎样持续扩展？</h1>
+  <p class="lead">一个策略对训练对手的胜率从 55% 升到 99%，听起来已经“学会了”。可如果这个对手永远只出石头，策略只要永远出布就能得到满分；换成剪刀，它立刻输掉。课程最后一章要解决的不是怎样再追一个高分，而是怎样构造<strong>会成长、不会轻易遗忘、还能被独立检验</strong>的改进循环。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>对手也在更新时，训练分布为什么不再固定？保存历史版本并动态安排下一场对局，怎样把循环对抗变成学习信号？规模扩大以后，我们凭什么相信提升来自策略，而不是配对偏差、代理奖励或幸存者偏差？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 80–100 min</span>
+    <span class="mrl-pill">先修：Chapter 13、20、26</span>
+    <span class="mrl-pill">数学：混合分布、指数加权、成对评分</span>
+    <span class="mrl-pill">实验：固定对手 vs 历史版本混合</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从一场虚高胜利，到可审计的研究闭环</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#start"><b>01</b><span>发现脆弱</span><small>固定对手过拟合</small></a>
+      <a class="mrl-roadmap-step" href="#nonstationarity"><b>02</b><span>追踪分布</span><small>其他策略也在变</small></a>
+      <a class="mrl-roadmap-step" href="#pool"><b>03</b><span>保存历史</span><small>版本集合与混合目标</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#pool-lab"><b>04</b><span>拨动变量</span><small>稳健性与遗忘</small></a>
+      <a class="mrl-roadmap-step" href="#scaling"><b>05</b><span>扩大系统</span><small>交叉评测与成本</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#checklist"><b>06</b><span>独立验证</span><small>研究检查表</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>赢了训练对手，为什么还不能说“策略变强了”？</h2>
+  <p class="mrl-sec-lead">在对抗任务里，“表现”从来不是策略自己的一个常数；它还取决于对手是谁、怎样被抽到、用什么规则计分。</p>
+
+  <p>先看最小的石头—剪刀—布。若固定对手永远出石头，学习者最终永远出布，就能得到 100% 训练胜率。可布会被剪刀稳定击败；训练分数上升只证明它找到了固定对手的漏洞，不证明它获得了对整个策略空间都稳健的能力。</p>
+
+  <div class="mrl-rps-cycle" aria-label="石头剪刀布的循环克制关系">
+    <article><span>POLICY A</span><strong>石头</strong><small>击败剪刀</small></article><i>→</i>
+    <article><span>POLICY B</span><strong>剪刀</strong><small>击败布</small></article><i>→</i>
+    <article><span>POLICY C</span><strong>布</strong><small>击败石头</small></article><i>↺</i>
+  </div>
+  <p class="mrl-caption">这里没有一个纯策略能排在最前：A 胜 B、B 胜 C、C 又胜 A。单个对手上的最好回应，可能正是另一个对手最容易利用的弱点。</p>
+
+  <p><strong>Self-Play（自博弈）</strong>是让学习者与自己当前或历史版本交互，并把胜负或可验证结果继续用于更新策略。它把“谁来出题”也纳入训练循环：策略一旦学会利用当前对手，新版本就会成为下一轮更难的对手。</p>
+
+  <div class="mrl-selfplay-loop" aria-label="自博弈训练循环">
+    <div><span>PLAY</span><strong>与当前／历史策略交互</strong><small>产生可比较轨迹</small></div><i>→</i>
+    <div><span>EVALUATE</span><strong>由环境给胜负</strong><small>保留外部锚点</small></div><i>→</i>
+    <div><span>UPDATE</span><strong>形成新策略</strong><small>改变下一轮分布</small></div><i>→</i>
+    <div><span>ARCHIVE</span><strong>保存策略快照</strong><small>防止只追最新对手</small></div>
+  </div>
+  <p class="mrl-caption">只有交互结果进入参数或策略更新，才是自博弈训练；在推理时让多个固定模型辩论，不会自动让任何参与者学会新策略。</p>
+
+  <div class="mrl-callbacks">
+    <article><span>CALLBACK · CH13</span><p>非平稳性的基本定义与联合动作求和公式已经建立；本章不重做类型学，只新增<strong>训练轮次、策略版本与对手分布如何共同移动</strong>。</p></article>
+    <article><span>CALLBACK · CH20</span><p>协作 Agent 的角色、消息和联合轨迹已经讲过；这里关心的是参与者更新以后，旧伙伴与旧对手会不会失配。</p></article>
+    <article><span>CALLBACK · CH26</span><p>奖励黑客说明代理指标可能被钻空子；本章沿用独立测试与外部规则，不再重复失效类型清单。</p></article>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>对抗能力是一张关系表，不是一个孤立分数</h3>
+      <p>“99% 胜率”必须同时报告对手分布。若只对一个固定弱点计分，策略可以越来越会利用该弱点，同时越来越容易被其他策略利用。</p>
+      <p class="mrl-insight-key">训练对手上的分数回答“我能否击败它”；交叉评测才开始回答“换一个对手后，我还站得住吗”。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="nonstationarity">
+  <h2 class="mrl-sec-title"><span class="num">02</span>给旧概念加上版本索引：昨天有效的动作，今天可能变成陷阱</h2>
+  <p class="mrl-sec-lead">Chapter 13 已解释其他智能体更新为何造成非平稳性。本节只把那条基本关系沿训练轮次展开：其他策略每次升级，当前智能体面对的有效环境就换了版本。</p>
+
+  <p>沿用 Chapter 13 的 <strong>non-stationarity（非平稳性）</strong>：数据生成机制会随训练变化。本章新增的是显式版本索引——对智能体 $i$ 而言，把其他参与者在第 $t$ 轮的联合策略记为 $\pi_{-i}^{(t)}$，它诱导出的有效转移可以写成：</p>
+  <div class="mrl-equation">$$P_t(s'\mid s,a_i)=\sum_{a_{-i}}P(s'\mid s,a_i,a_{-i})\,\pi_{-i}^{(t)}(a_{-i}\mid s).$$</div>
+  <p>$P$ 是不变的游戏规则，$a_i$ 是当前智能体动作，$a_{-i}$ 是其他参与者动作；真正随 $t$ 变化的是 $\pi_{-i}^{(t)}$，因此同一个 $(s,a_i)$ 会得到不同的下一状态与回报分布。</p>
+
+  <h3>一个可以心算的翻转</h3>
+  <p>用赢 $+1$、平 $0$、输 $-1$ 计分。第一轮对手以 80% 概率出石头、20% 出剪刀时，固定出布的期望回报是：</p>
+  <div class="mrl-equation">$$0.8(+1)+0.2(-1)=+0.6.$$</div>
+  <p>若对手学会针对布，下一轮改成 20% 石头、80% 剪刀，同一个动作的期望回报立即变成：</p>
+  <div class="mrl-equation">$$0.2(+1)+0.8(-1)=-0.6.$$</div>
+  <p>没有任何物理规则改变；变化来自对手策略。把前一轮经验无限期当成同分布样本，会混合两个不同学习目标。常见缓解方法是减小同时更新的步幅、冻结—轮换、保存策略版本，并持续做跨版本评测；它们降低漂移速度，却不自动保证收敛。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“环境代码没变，所以数据一定平稳。”</strong> 对单个参与者而言，其他策略就是环境的一部分。只要它们更新，条件在同一状态上的动作分布就已经变了。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>自博弈同时制造课程，也制造分布漂移</h3>
+      <p>新对手会把学习者推向尚未解决的弱点，这是课程来源；同一个变化也让旧经验迅速过时，这是训练不稳定的来源。</p>
+      <p class="mrl-insight-key">“对手越来越强”不是免费数据增强：每次更新都要同时记录版本、配对分布与旧对手回归结果。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="pool">
+  <h2 class="mrl-sec-title"><span class="num">03</span>保存历史版本：把“追最新对手”改成“面对一个分布”</h2>
+  <p class="mrl-sec-lead">只和最新策略交手，很容易形成你追我赶的循环。保存历史版本以后，学习目标不再是一名对手，而是一组带权对手。</p>
+
+  <p><strong>opponent pool（对手池）</strong>是当前策略可以抽样交互的一组对手策略或历史快照：</p>
+  <div class="mrl-equation">$$\Pi_t=\{\pi^1,\pi^2,\ldots,\pi^{K_t}\},\qquad
+  \mu_t(k)\ge0,\quad\sum_{k=1}^{K_t}\mu_t(k)=1.$$</div>
+  <p>$\Pi_t$ 决定有哪些对手，<strong>opponent distribution（对手分布）</strong> $\mu_t$ 决定它们被抽到的概率。若 $V(\pi,\pi^k)$ 表示当前策略 $\pi$ 对第 $k$ 个对手的期望得分，则混合训练目标是：</p>
+  <div class="mrl-equation mrl-equation-feature">$$J(\pi;\mu_t)=\sum_{k=1}^{K_t}\mu_t(k)V(\pi,\pi^k).$$</div>
+
+  <div class="mrl-derivation">
+    <div><span>MOTIVATION</span><strong>固定对手只奖励一个弱点；历史池要求新策略同时面对多种旧行为。</strong></div>
+    <div><span>SYMBOLS</span><strong>$V$ 是逐对手表现，$\mu_t$ 是采样权重，$J$ 是当前训练分布下的加权表现。</strong></div>
+    <div><span>NUMERIC EXAMPLE</span><strong>若三项表现为 $(0.9,0.2,0.4)$：固定第一名对手时 $J=0.9$；均匀池时 $J=(0.9+0.2+0.4)/3=0.5$；最差项仍只有 $0.2$。</strong></div>
+    <div><span>PROGRAM MAPPING</span><strong><code>pool[k]</code> 对应 $\pi^k$，<code>weights[k]</code> 对应 $\mu_t(k)$，<code>cross_play[i][k]</code> 估计 $V(\pi^i,\pi^k)$。</strong></div>
+  </div>
+
+  <p>这个数值例揭示了两种不同问题：固定对手的 $0.9$ 会隐藏另外两列；均值 $0.5$ 又会隐藏最差的 $0.2$。所以至少要同时报告对手池均值与最差对手表现。若应用更重视尾部风险，还应预先定义分位数或最小值，而不是看到结果后再挑指标。</p>
+
+  <div class="mrl-pool-design">
+    <article><span>LATEST ONLY</span><h3>只打最新版本</h3><p>适应速度快，但可能忘掉早期策略，尤其容易在非传递游戏中循环。</p></article>
+    <article><span>UNIFORM HISTORY</span><h3>均匀抽历史快照</h3><p>定义简单、覆盖清楚；大量相似旧版本会浪费交互预算。</p></article>
+    <article><span>PRIORITIZED POOL</span><h3>优先薄弱或信息量高的对手</h3><p>提高样本效率；权重规则本身会成为需要审计的课程设计。</p></article>
+  </div>
+  <p class="mrl-caption">“有一个列表”还不等于建立了对手池实验；必须明确快照何时加入、何时淘汰、怎样抽样，以及哪些对手只用于独立评测而不参与调参。</p>
+</section>

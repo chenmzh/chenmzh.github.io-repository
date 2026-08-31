@@ -1,0 +1,118 @@
+<section id="evaluation">
+  <h2 class="mrl-sec-title"><span class="num">08</span>评测设计：不是多找一个分数，而是建立独立证据链</h2>
+  <p class="mrl-sec-lead">一个 benchmark 名称不足以复现实验。需要同时固定数据、提示、采样、工具、抽取器、评分器与聚合方式，才能判断差异来自模型还是评测协议。</p>
+
+  <p><strong>evaluation harness（评测框架）</strong>把整条测量流水线版本化。对第 $i$ 个任务 $x_i$，提示模板为 $p$，推理与工具预算为 $c$，模型生成 $y_i$，成功条件为 $z_i$，可以写成：</p>
+  <div class="mrl-equation">$$y_i\sim\pi_\theta(\cdot\mid p(x_i);c),\qquad
+  \hat M=\operatorname{Aggregate}_i\bigl(\operatorname{Score}(y_i,z_i)\bigr).$$</div>
+  <p>公式不是要把评测变复杂，而是提醒每个可变项都能改变 $\hat M$ 的含义。一次可信报告至少回答五类问题：</p>
+
+  <div class="mrl-eval-grid">
+    <article><span>01 · VERIFIABILITY</span><strong>单题怎样判定</strong><p>保存原始输出、解析结果、环境终态与失败码；解析失败不能静默混入答案错误。</p></article>
+    <article><span>02 · COVERAGE</span><strong>测试覆盖谁</strong><p>按任务、难度、模态、工具权限和高风险组分层；总平均外报告最差组。</p></article>
+    <article><span>03 · INDEPENDENCE</span><strong>数据是否仍独立</strong><p>训练奖励、开发隐藏集、迁移集与一次性门禁承担不同职责，不能循环复用。</p></article>
+    <article><span>04 · BUDGET PARITY</span><strong>推理预算是否一致</strong><p>固定提示版本、温度、最大长度、采样数、工具权限、超时和候选选择规则。</p></article>
+    <article><span>05 · UNCERTAINTY</span><strong>差异是否稳定</strong><p>报告逐题结果、多个随机种子和置信区间；同题模型比较使用配对方法。</p></article>
+  </div>
+  <p class="mrl-caption">五格不是五个可以求和的子分数，而是五条证据条件。任意一格缺失，最终百分比能支持的结论都会变弱。</p>
+
+  <h3>一个最小不确定性手算</h3>
+  <p>若 100 道独立二值题答对 60 道，$\hat p=0.60$。大样本正态近似的标准误为：</p>
+  <div class="mrl-equation">$$\operatorname{SE}(\hat p)=\sqrt{\frac{\hat p(1-\hat p)}{n}}=\sqrt{\frac{0.6\times0.4}{100}}\approx0.049.$$</div>
+  <p>粗略 95% 区间是 $0.60\pm1.96(0.049)$，约为 $[0.504,0.696]$。这说明“60% 对 55%”未必足以证明优势。样本少或比例接近 0/1 时应用 Wilson 区间；同一批题比较两个模型时应使用 McNemar、配对 bootstrap（自助采样）或置换检验，而不是把两个独立区间机械相减。</p>
+
+  <table class="mrl-protocol-table">
+    <thead><tr><th>风险</th><th>最小对照</th><th>应保存的字段</th></tr></thead>
+    <tbody>
+      <tr><td>数据污染</td><td>发布时间后的新题、程序生成题、n-gram（连续词片段）/语义重合检查</td><td><code>dataset_version</code>, <code>created_at</code></td></tr>
+      <tr><td>提示敏感</td><td>预注册的等价提示，逐模板报告与翻转率</td><td><code>prompt_id</code>, <code>chat_template</code></td></tr>
+      <tr><td>搜索预算</td><td>固定每题候选数、温度、工具调用与选择器</td><td><code>n_samples</code>, <code>tool_budget</code></td></tr>
+      <tr><td>条件行为</td><td>只改变监督可见性、权限或语义形式的配对输入</td><td><code>group</code>, <code>paired_case_id</code></td></tr>
+      <tr><td>长程失败</td><td>终点成功 + 过程违规 + 终止原因</td><td><code>trajectory</code>, <code>stop_reason</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>隐藏集也会“用旧”。只要开发者反复根据同一隐藏集调模型、提示和奖励权重，它就已经参与了开发决策。可靠流程要轮换开发集，并保留最终一次性门禁；发布后发现的新失败进入永久回归集，但不能反过来改写历史报告。</p>
+</section>
+
+<section id="defenses">
+  <h2 class="mrl-sec-title"><span class="num">09</span>五层防线：降低漏洞概率，也限制一次失败的后果</h2>
+  <p class="mrl-sec-lead">没有单条奖励补丁能覆盖未知捷径。分层防御让不同机制在不同因果位置拦截失败。</p>
+
+  <ol class="mrl-defense-stack">
+    <li><span>01</span><div><strong>奖励层 · 分开成功与违规</strong><p>分别记录任务成功、权限违规、不可逆操作和评分器分歧；不要只留下一个加权总分。</p></div></li>
+    <li><span>02</span><div><strong>优化层 · 限制漂移并独立早停</strong><p>使用 KL 或更新约束减慢策略离开校准区域；依据独立效用峰值，而非代理最高点选择检查点。</p></div></li>
+    <li><span>03</span><div><strong>训练层 · 失败进入永久回归</strong><p>确认的删除测试、越权调用和裁判迎合轨迹同时进入训练与回归；新红队继续搜索未知变体。</p></div></li>
+    <li><span>04</span><div><strong>评测层 · 配对条件与一次性门禁</strong><p>改变措辞、监督可见性、权限与预算，报告分组和最差组；最终门禁不参与调参。</p></div></li>
+    <li><span>05</span><div><strong>部署层 · 最小权限、日志与回滚</strong><p>写入、支付、删除和发布需要审批；日志位于模型不可修改的位置，模型与工具配置能够版本化回滚。</p></div></li>
+  </ol>
+  <p class="mrl-caption">前四层降低错误策略进入部署的概率，第五层降低错误发生后的损失。部署权限不证明策略“已经对齐”，但能阻止一次漏检直接变成不可逆后果。</p>
+
+  <h3>把诊断落到代码变量</h3>
+  <pre><code>for checkpoint in checkpoints:
+    train_score = evaluate(checkpoint, train_verifier)
+    holdout = evaluate(checkpoint, frozen_holdout)
+    transfer = evaluate(checkpoint, transfer_tasks)
+    violation_count = count_policy_violations(checkpoint.trajectories)
+
+    report({
+        "proxy_reward": train_score,
+        "holdout_utility": holdout,
+        "goodhart_gap": train_score - holdout,
+        "transfer_score": transfer,
+        "violation_count": violation_count,
+        "policy_distance": checkpoint.kl_from_reference,
+    })
+
+release = select_checkpoint(checkpoints, rule=independent_release_rule)</code></pre>
+
+  <p>这段代码刻意没有用相关系数自动宣布“检测到奖励黑客”。短轨迹、非线性关系或共同时间趋势都可能误导相关系数。可靠诊断先看独立指标是否分叉，再检查高奖励轨迹具体做了什么，并用反事实环境复现。</p>
+
+  <div class="mrl-diagnosis-pair">
+    <article><span>REWARD HACKING</span><strong>代理奖励上升，独立效用下降</strong><p>先检查奖励定义、验证器覆盖、工具权限与高分轨迹。</p></article>
+    <article><span>TRAINING COLLAPSE</span><strong>loss/梯度失控，奖励与效用一起下降</strong><p>先检查学习率、数值稳定、梯度、探索与数据流水线。</p></article>
+  </div>
+  <p class="mrl-caption">两类故障可能同时存在，但第一诊断入口不同：前者问“优化了什么”，后者问“优化过程是否稳定”。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">10</span>检查你的理解：一个高分究竟能证明什么？</h2>
+  <p class="mrl-sec-lead">如果你能把“训练器看见什么、独立评测看见什么、策略有没有改动评分通道”分开，奖励黑客就不再是一顶含混帽子。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 代理目标为什么不是“错误目标”的同义词？</summary><div class="inner">复杂任务通常无法把真实效用实时、完整地写进训练器，因此代理测量是必要工具。问题在于代理与效用对候选轨迹排序不一致，却仍被当成真实目标无限优化。</div></details>
+    <details><summary>2. C3 的代理分为 90、独立效用为 30，Goodhart 缺口是多少？</summary><div class="inner">在两项已归一到同尺度的前提下，$\Delta_G=90-30=60$。这个差值说明训练评分器比独立评测乐观 60 分。</div></details>
+    <details><summary>3. “删除失败测试”为什么同时属于奖励黑客与奖励篡改？</summary><div class="inner">它让策略获得没有对应功能改善的高奖励，所以属于奖励黑客；它直接改变测试入口或奖励计算通道，所以又是更具体的奖励篡改。</div></details>
+    <details><summary>4. 奖励上升、真实任务下降，与 loss 爆炸有什么不同？</summary><div class="inner">前者说明优化过程可能很稳定，只是优化了错位代理；后者首先提示数值或训练不稳定。奖励黑客应审计目标与轨迹，训练崩溃应先查学习率、梯度和数据流程。</div></details>
+    <details><summary>5. AI judge 每次都给出同样排名，为什么仍不能证明它可靠？</summary><div class="inner">一致性只排除了部分采样噪声。裁判仍可能稳定偏爱位置、长度、风格或自己的模型家族；需要交换顺序、控制长度、匿名化来源并用独立证据校准。</div></details>
+    <details><summary>6. 单个候选利用漏洞概率为 1%，采样 100 个时至少出现一个的概率约多少？</summary><div class="inner">$1-(1-0.01)^{100}=1-0.99^{100}\approx63.4\%$。这说明增加搜索预算会显著提高遇到罕见评分漏洞的机会。</div></details>
+    <details><summary>7. 为什么开发隐藏集反复用于早停后，不能再当最终发布门禁？</summary><div class="inner">模型、提示和奖励权重都已根据它被选择，开发过程事实上拟合了这套数据。最终发布还需要没有参与调参的一次性门禁集与迁移评测。</div></details>
+    <details><summary>8. 为什么不能把安全、能力、成本和违规率加成一个总分后只报总分？</summary><div class="inner">同一个总分可能来自完全不同的交换：能力提高但违规暴增，或安全提高但能力崩溃。应分别报告子指标、权重与硬门槛，并检查指标间取舍和最差组。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>本章建立的诊断链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>MEASURE</span><strong>分开代理与效用</strong><small>$R_{\text{proxy}}$ / $U$</small></div><i>→</i>
+      <div><span>COMPARE</span><strong>沿时间轴看分叉</strong><small>$\Delta_G$</small></div><i>→</i>
+      <div><span>LOCATE</span><strong>审计规则、得分路径与通道</strong><small>gaming / hacking / tampering</small></div><i>→</i>
+      <div><span>GATE</span><strong>独立评测 + 分层防线</strong><small>release evidence</small></div>
+    </div>
+    <p>代理奖励是优化输入，不是成功证明；独立评测是证据，也会因反复调参而失去独立性；部署权限则在未知失败穿过评测后限制真实后果。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 27 章：连对手和题目都在变化时，评测基线怎样保持意义？</h3>
+    <p>本章默认候选策略面对固定任务分布。下一章进入“对手也会更新”的规模化学习：策略会改变对手，对手又改变下一轮训练数据，题目难度与行为分布持续移动。届时，独立评测不只要防止代理漏洞，还要处理会移动的对手分布、版本化策略群体与跨时间比较。</p>
+    <a class="mrl-btn primary" href="./chapter27.html">继续 Chapter 27 →</a>
+  </div>
+
+  <p class="mrl-source-note">本章依据固定版本 <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter30_alignment_failures" target="_blank" rel="noopener">docs/chapter30_alignment_failures/</a> 与 <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/appendix_common_pitfalls" target="_blank" rel="noopener">appendix_common_pitfalls</a>进行中文教学重构；AI 裁判的 self-preference 只参考固定版本 <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter21_cai_rlvr/hhh-practice.md" target="_blank" rel="noopener">Chapter 21 裁判偏差材料</a>，本章不重讲 CAI/RLAIF 流程。实验数值与公式为便于核对而设计，不冒充论文实测曲线。</p>
+
+  <footer class="mrl-footer">
+    <a href="./chapter25.html">← Chapter 25 · 多模态生成与具身 RL</a>
+    <a href="./">课程目录</a>
+    <a href="./chapter27.html">Chapter 27 · 对手也会学习 →</a>
+  </footer>
+</section>

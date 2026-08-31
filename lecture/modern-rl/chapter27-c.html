@@ -1,0 +1,198 @@
+<section id="population">
+  <h2 class="mrl-sec-title"><span class="num">06</span>种群、循环与成对评分：一个数字装不下整张对战图</h2>
+  <p class="mrl-sec-lead">历史快照能减轻遗忘；维护多个同时探索的策略，则把训练从一条版本链扩展成一个种群。但最终仍要回到逐对手对战矩阵。</p>
+
+  <p><strong>Population-Based Training（PBT，种群式训练）</strong>同时维护多个策略实例，让它们使用不同初始化、超参数或训练经历，并周期性比较、复制与扰动较好的配置。在对抗场景中，这些实例还可以互相配对，增加行为多样性。它与对手池有关，却不是同义词：</p>
+
+  <div class="mrl-population-compare">
+    <article><span>OPPONENT POOL</span><h3>档案库</h3><p>可以只保存不可训练的历史快照，重点是提供稳定、可回放的对手分布。</p></article>
+    <article><span>LIVE POPULATION</span><h3>并行学习者</h3><p>多个策略继续更新并探索不同区域，重点是维持多样性与发现新最佳回应。</p></article>
+    <article><span>EXTERNAL EVAL POOL</span><h3>封存考卷</h3><p>不参与训练、选择和调参，重点是给进展提供独立证据。</p></article>
+  </div>
+  <p class="mrl-caption">训练池可以改；评测池必须有封存部分。否则根据评测池持续挑选对手和超参数以后，它实际上已经变成训练信号。</p>
+
+  <h3>为什么循环策略会让总排名失真？</h3>
+  <table class="mrl-crossplay-table">
+    <thead><tr><th>行策略 \ 列对手</th><th>石头 $\pi_R$</th><th>布 $\pi_P$</th><th>剪刀 $\pi_S$</th><th>等权平均</th></tr></thead>
+    <tbody>
+      <tr><td>石头 $\pi_R$</td><td>$0.5$</td><td>$0$</td><td>$1$</td><td>$0.5$</td></tr>
+      <tr><td>布 $\pi_P$</td><td>$1$</td><td>$0.5$</td><td>$0$</td><td>$0.5$</td></tr>
+      <tr><td>剪刀 $\pi_S$</td><td>$0$</td><td>$1$</td><td>$0.5$</td><td>$0.5$</td></tr>
+    </tbody>
+  </table>
+  <p>三项平均都是 $0.5$，但逐格结构完全不同：布克石头、剪刀克布、石头又克剪刀。这类关系称为<strong>非传递</strong>。只保留平均值或单一名次，会丢失“谁克制谁”的关键信息。</p>
+
+  <p><strong>Elo rating（Elo 等级分）</strong>把成对胜负压缩成标量。若 A、B 当前等级分为 $R_A,R_B$，A 的期望得分常写成：</p>
+  <div class="mrl-equation">$$E_A=\frac{1}{1+10^{(R_B-R_A)/400}},\qquad
+  R_A'=R_A+K(S_A-E_A).$$</div>
+  <p>$S_A\in\{0,0.5,1\}$ 是本场实际得分，$K$ 是更新步幅。两名 1500 分选手交手时 $E_A=0.5$；若 A 获胜、$K=32$，则 $R_A'=1500+32(1-0.5)=1516$，B 相应变为 1484。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“Elo 更高，所以它对每个对手都更强。”</strong> Elo 适合汇总大量成对比赛，却默认能力近似可以排在一条轴上。遇到石头—剪刀—布式循环时，等级分可能相近，逐对手克制关系仍然很强。</p>
+  </div>
+
+  <p>因此种群评测至少保留三层输出：完整 cross-play matrix（交叉对战矩阵）、预先约定的汇总分数，以及对最差匹配或可利用性的诊断。Elo 是仪表盘，不是原始数据的替代品。</p>
+</section>
+
+<section id="scaling">
+  <h2 class="mrl-sec-title"><span class="num">07</span>规模化：先说清楚横轴，再谈“越大越强”</h2>
+  <p class="mrl-sec-lead">环境数、对手数、每次 rollout 长度、更新步数与评测场次都能增加计算；把它们混成一个“训练更久”会让曲线无法解释。</p>
+
+  <div class="mrl-scaling-axes">
+    <article><span>DATA SCALE</span><h3>环境与任务多样性</h3><p>增加地图、提示、初始状态和规则变体；同时做去重、污染检查与难度覆盖。</p></article>
+    <article><span>POPULATION SCALE</span><h3>对手与策略数量</h3><p>增加历史快照和活跃策略；报告有效多样性，不能只报列表长度。</p></article>
+    <article><span>ROLLOUT SCALE</span><h3>每轮交互预算</h3><p>增加并行环境、每对局轨迹数和 horizon；记录有效样本率与墙钟时间。</p></article>
+    <article><span>UPDATE SCALE</span><h3>优化轮数与步幅</h3><p>更新更多次也会放大非平稳性；监控 KL、熵、回归测试和版本漂移。</p></article>
+  </div>
+
+  <p>一个训练成本账本可以写成 $C_{\text{train}}=N_{\text{rollout}}\,L\,c_{\text{step}}$：$N_{\text{rollout}}$ 是轨迹数，$L$ 是平均轨迹长度，$c_{\text{step}}$ 是一步交互与推理成本。它不是经验 scaling law，只负责阻止不同预算被悄悄混在一起。若线上有 $Q$ 次独立评测或请求，则总成本仍要把评测侧单列：</p>
+  <div class="mrl-equation">$$C_{\text{total}}=C_{\text{train}}+Q\,C_{\text{eval}}.$$</div>
+
+  <h3>种群扩大时，评测本身也会二次增长</h3>
+  <p>若有 $K$ 个策略，要对每个无序、非自身配对运行 $n_{\text{seed}}$ 个随机种子，完整交叉评测的对局数是：</p>
+  <div class="mrl-equation mrl-equation-feature">$$N_{\text{match}}=\binom{K}{2}n_{\text{seed}}=\frac{K(K-1)}{2}n_{\text{seed}}.$$</div>
+  <p>例如 $K=40,n_{\text{seed}}=20$，共有 $40\times39/2=780$ 个配对，需要 $780\times20=15{,}600$ 局。若游戏有先后手，还应交换位置或把方向分别统计，不能用一局代替两种角色。</p>
+
+  <table class="mrl-scale-table">
+    <thead><tr><th>想画的曲线</th><th>只改变</th><th>必须固定</th><th>同时报告</th></tr></thead>
+    <tbody>
+      <tr><td>对手池大小 → 稳健性</td><td>$K$ 与明确淘汰规则</td><td>总 rollout、环境、优化器</td><td>均值、最差项、矩阵多样性</td></tr>
+      <tr><td>rollout 数 → 表现</td><td>$N_{\text{rollout}}$</td><td>池、更新次数、评测集</td><td>总步数、有效样本率、墙钟时间</td></tr>
+      <tr><td>更新步数 → 表现</td><td>梯度更新次数</td><td>数据、对手权重、评测预算</td><td>KL、熵、旧对手回归</td></tr>
+      <tr><td>训练成本 → 独立得分</td><td>总计算预算</td><td>封存评测协议</td><td>多随机种子与不确定性</td></tr>
+    </tbody>
+  </table>
+
+  <p>一条可信曲线还应先定义停止规则，再运行多个随机种子，并在没有参与超参数选择的保留对手上复测。只挑最好一次运行、只展示最终种群冠军，都会把大量失败候选藏在图外。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>规模化首先放大的是实验设计</h3>
+      <p>策略数从 10 增到 40，不只增加训练候选，也把完整配对从 45 组推到 780 组。若评测预算没有同步设计，系统越大，遗漏的关系反而越多。</p>
+      <p class="mrl-insight-key">所谓“规模收益”必须落在一个预先固定、成本可核算、分布独立的评测协议上。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="frontiers">
+  <h2 class="mrl-sec-title"><span class="num">08</span>研究前沿：每个“自我改进”系统究竟改了什么？</h2>
+  <p class="mrl-sec-lead">自博弈、进化搜索、世界模型和多智能体训练都能形成闭环；它们的共同外形很像，写回系统的对象却不同。</p>
+
+  <div class="mrl-frontier-map">
+    <article><span>POLICY SELF-PLAY</span><h3>更新策略参数</h3><p>当前／历史版本制造课程，环境胜负进入梯度更新。关键审计：对手分布、循环与独立评测。</p></article>
+    <article><span>OPEN-ENDED CURRICULUM</span><h3>更新任务分布</h3><p>Proposer 生成略高于 Solver 当前能力的任务。关键审计：太易、不可解与外部正确性锚点。</p></article>
+    <article><span>PROGRAM EVOLUTION</span><h3>更新可执行候选库</h3><p>固定上游的 AlphaEvolve 例子由语言模型改程序、评估器执行、数据库选择；它主要改变程序种群，不等同于策略梯度训练。</p></article>
+    <article><span>WORLD / PARTNER MODEL</span><h3>更新后果预测</h3><p>显式预测环境或其他参与者的响应再规划。关键审计：模型偏差会不会随规划深度累积。</p></article>
+  </div>
+  <p class="mrl-caption">读到“系统不断变强”时，先圈出被修改的对象：权重、任务、程序、记忆还是环境模型；再追问谁验证它、失败是否保留、改动能否回滚。</p>
+
+  <p>前沿真正共享的是一个有边界的发现循环：生成候选，执行或交互，获得外部反馈，把被接受的改变写回，再在封存评测上复测。数学和代码任务更容易构造高速验证器；机器人、生物与长期社会交互的现实反馈昂贵且有风险，闭环速度不能替代安全门槛。</p>
+
+  <div class="mrl-discovery-chain">
+    <div><span>GENERATE</span><strong>扩大候选</strong><small>策略／任务／程序</small></div><i>→</i>
+    <div><span>EXECUTE</span><strong>让结果发生</strong><small>环境／沙箱／实验</small></div><i>→</i>
+    <div><span>VERIFY</span><strong>外部判断</strong><small>胜负／测试／证明</small></div><i>→</i>
+    <div><span>ARCHIVE</span><strong>写回与回滚</strong><small>保留失败记录</small></div>
+  </div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>从固定上游代码出发：先承认它实现了什么</h2>
+  <p class="mrl-sec-lead">固定仓库的 <code>multi_agent_marl.py</code> 实现多智能体网格环境、独立 Q-learning 与共享 Q 表对比；它提供联合交互接口，但没有实现本页的对手池、Elo 或自博弈课程。</p>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>本章对象</th><th>固定上游中的对应</th><th>还缺什么</th></tr></thead>
+    <tbody>
+      <tr><td>联合动作与回报</td><td><code>MultiAgentGridWorld.step(actions)</code></td><td>对抗式胜负或可验证任务结果</td></tr>
+      <tr><td>策略作用域</td><td><code>QLearningAgent</code> / <code>SharedPolicyAgent</code></td><td>可保存、恢复并配对的版本标识</td></tr>
+      <tr><td>训练轨迹</td><td><code>train_independent</code> / <code>train_shared</code></td><td>按 $\mu_t$ 选择对手的 matchmaker</td></tr>
+      <tr><td>结果指标</td><td><code>episode_rewards</code>、<code>completion_rates</code></td><td>cross-play matrix、最差匹配与 Elo</td></tr>
+      <tr><td>推理搜索对照</td><td><code>tree_of_thought.py</code> 的 breadth 与 score</td><td>它搜索思路节点，不更新对手策略；不能当作自博弈实现</td></tr>
+    </tbody>
+  </table>
+
+  <p>沿着现有训练函数扩展，最小的对手池循环可以写成下面的接口草图。它强调版本、抽样与独立评测，不声称是固定仓库已经提供的可运行实现：</p>
+
+  <pre class="mrl-code"><code>pool = [snapshot(policy, version=0)]
+
+for iteration in range(num_iterations):
+    scores = evaluate_against_pool(policy, pool)     # s_k
+    weights = softmax(-beta * scores)                # mu_k
+    opponent = sample(pool, probabilities=weights)
+
+    trajectories = rollout(policy, opponent, env)
+    policy.update(trajectories)
+
+    if (iteration + 1) % snapshot_every == 0:
+        pool.append(snapshot(policy, version=iteration + 1))
+
+# 即使最后一轮不落在 snapshot_every 上，也把最终策略纳入评测
+final_policy = snapshot(policy, version=num_iterations)
+eval_population = pool if pool[-1].version == num_iterations else [*pool, final_policy]
+
+# sealed_eval_pool 从未参与上面的抽样、更新与调参
+cross_play = evaluate_all_pairs(eval_population, seeds=20)
+heldout = evaluate_against_pool(final_policy, sealed_eval_pool)</code></pre>
+
+  <p>公式到程序的映射是直接的：<code>scores[k]</code> 估计 $s_k$，<code>weights[k]</code> 是 $\mu_t(k)$，<code>snapshot_every</code> 决定池的时间分辨率；<code>eval_population</code> 额外保证最终策略不会因快照间隔而漏评，<code>cross_play[i][j]</code> 则保留非传递结构。若只打印 <code>policy</code> 对最后一个 <code>opponent</code> 的 reward，前面整章最关键的信息都会消失。</p>
+
+  <p class="mrl-source-links">固定上游代码：<a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter12_future_trends/multi_agent_marl.py" target="_blank" rel="noopener">multi_agent_marl.py ↗</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter12_future_trends/tree_of_thought.py" target="_blank" rel="noopener">tree_of_thought.py ↗</a></p>
+</section>
+
+<section id="checklist">
+  <h2 class="mrl-sec-title"><span class="num">10</span>一份可操作的研究检查表</h2>
+  <p class="mrl-sec-lead">无论你下一步研究机器人、多 Agent、推理还是科学发现，都可以用同一组问题检查闭环是否值得相信。</p>
+
+  <ol class="mrl-research-checklist">
+    <li><span>01</span><div><strong>先定义被更新的对象。</strong><p>策略参数、对手池、任务生成器、程序库与世界模型不能用同一句“系统自我改进”带过。</p></div></li>
+    <li><span>02</span><div><strong>固定参与者、可见信息与行动顺序。</strong><p>记录谁在何时看到什么、版本号是什么，以及哪次工具调用真正改变了环境。</p></div></li>
+    <li><span>03</span><div><strong>写出训练分布。</strong><p>给出环境、任务与对手的采样权重；报告实际采样频率，而不只报告池容量。</p></div></li>
+    <li><span>04</span><div><strong>保留外部验证锚点。</strong><p>胜负、单元测试、形式证明或人工复核至少有一项不由同一学习者自说自话。</p></div></li>
+    <li><span>05</span><div><strong>建立最小基线与反事实。</strong><p>固定对手、最新对手、均匀池、自适应池逐项比较；关闭遗忘、课程或历史快照，看结论是否仍成立。</p></div></li>
+    <li><span>06</span><div><strong>保存完整关系数据。</strong><p>保留 cross-play matrix、版本与随机种子；Elo、均值和冠军只是派生摘要。</p></div></li>
+    <li><span>07</span><div><strong>核算每一根规模横轴。</strong><p>分别记录 rollout、轨迹长度、更新步数、对手数、评测对局与墙钟时间；一次只改变一个核心变量。</p></div></li>
+    <li><span>08</span><div><strong>预注册停止与接受规则。</strong><p>先规定何时停止训练、何时把新版本纳入种群、哪些回归会阻止部署，并保留失败候选。</p></div></li>
+    <li><span>09</span><div><strong>在封存分布上复测。</strong><p>不用于课程、调参和模型选择的任务与对手，才有资格给出最后一份外推证据。</p></div></li>
+  </ol>
+
+  <p class="mrl-caption">这份清单不保证研究一定成功；它保证失败更容易定位，成功也更难被训练分布泄漏、代理奖励或只挑冠军的叙事伪装。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>课程收束：从“会更新”走到“值得相信”</h2>
+  <p class="mrl-sec-lead">最后的理解检查不问术语背诵，而问你能否识别一条结果曲线背后少了哪份证据。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 永远出布的策略对固定石头胜率 100%，为什么不能称为稳健最优策略？</summary><div class="inner">因为胜率是相对于对手分布定义的。它对石头是最佳回应，却会被剪刀稳定击败；对手池均值、最差匹配和完整对战矩阵都会暴露这个弱点。</div></details>
+    <details><summary>2. 环境规则不变时，自博弈为什么仍然非平稳？</summary><div class="inner">其他参与者的策略 $\pi_{-i}^{(t)}$ 随训练更新。它改变当前智能体在同一状态下遇到的联合动作分布，从而改变有效转移 $P_t$ 与回报分布；物理规则固定不等于学习分布固定。</div></details>
+    <details><summary>3. 若逐对手得分为 $(0.9,0.2,0.4)$，固定第一名对手与均匀三对手的目标分别是多少？</summary><div class="inner">固定权重 $(1,0,0)$ 时 $J=0.9$；均匀权重 $(1/3,1/3,1/3)$ 时 $J=(0.9+0.2+0.4)/3=0.5$。两者都还应补充最差项 $0.2$。</div></details>
+    <details><summary>4. 课程公式里把 $\beta$ 调大，总是更好吗？</summary><div class="inner">不是。较大的 $\beta$ 会更集中到当前低分对手；如果它只是尚不可解、没有学习进度，就可能长期吞噬预算并返回零信号。需要权重上限、学习进度诊断与均匀池消融。</div></details>
+    <details><summary>5. “关闭遗忘”反事实能否证明固定对手训练已经足够？</summary><div class="inner">不能。关闭遗忘会阻止未练习能力下滑，却不会让它们得到提升。固定对手仍只改善一项，对手池会把预算分配给三项；这说明退化由遗忘解释一部分，覆盖不足仍是另一部分。</div></details>
+    <details><summary>6. 为什么 Elo 不能替代 cross-play matrix？</summary><div class="inner">Elo 把成对比赛压成一个标量，适合观察总体趋势，却会隐藏石头—剪刀—布式非传递循环。完整矩阵保留谁克制谁，才能诊断特定弱点与循环。</div></details>
+    <details><summary>7. 40 个策略、每个无序配对跑 20 个随机种子，需要多少局？</summary><div class="inner">无序非自身配对数为 $40\times39/2=780$，乘以 20 个种子得到 $15{,}600$ 局。若先后手不对称，还需要交换角色或分别统计。</div></details>
+    <details><summary>8. 一个“自我改进”结果最先应该追问哪四件事？</summary><div class="inner">被修改的对象是什么；反馈由谁提供；训练与评测分布怎样生成；最佳结果能否在封存任务、独立代码或外部实验中复现。若这四项说不清，“改进”仍可能只是指标循环。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>二十七章最终形成的是一条证据链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>DEFINE</span><strong>状态、动作、奖励</strong><small>问题可学习</small></div><i>→</i>
+      <div><span>TRAIN</span><strong>策略与数据分布</strong><small>对手会移动</small></div><i>→</i>
+      <div><span>EVALUATE</span><strong>独立关系与成本</strong><small>不只看冠军</small></div><i>→</i>
+      <div><span>VERIFY</span><strong>复现、回归与边界</strong><small>结果值得相信</small></div>
+    </div>
+    <p>自博弈把当前能力变成下一轮课程；对手池保存历史，课程分配有限交互，种群扩展多样性，交叉评测揭示循环。规模越大，版本、成本与独立验证越不能省略。现代强化学习的终点不是一个永远上升的奖励数字，而是一条能被反事实、保留集和复现实验反复检查的改进链。</p>
+  </div>
+
+  <div class="mrl-next mrl-course-return">
+    <span class="mrl-eyebrow">Course complete</span>
+    <h3><a href="./">回到 Modern RL 课程目录</a></h3>
+    <p>你现在可以从任一真实任务重新走一遍这条链：先定义 MDP 与反馈，再选择价值学习或策略优化，最后把对手、工具、验证器与成本都纳入评测。目录会把二十七章重新组织成可回查的学习地图。</p>
+  </div>
+
+  <p class="mrl-source-note">本页以固定上游版本 walkinglabs/hands-on-modern-rl 的<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter32_selfplay" target="_blank" rel="noopener">自博弈文档</a>与<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter12_future_trends" target="_blank" rel="noopener">研究前沿代码</a>为知识来源重新组织，不是原项目官方译本。本章重点解释对手池、自博弈课程、对手分布、种群式训练、Elo 与规模化交叉评测，并把 Chapter 13 已定义的非平稳性应用到会更新、可版本化的对手分布；Chapter 20、26 的内容只作必要回顾。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 27 · Course finale</span><span><a href="./chapter26.html">← Chapter 26</a> · <a href="./">课程目录</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter32_selfplay" target="_blank" rel="noopener">固定上游来源 ↗</a></span></footer>

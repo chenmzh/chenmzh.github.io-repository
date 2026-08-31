@@ -1,0 +1,116 @@
+<section id="curriculum">
+  <h2 class="mrl-sec-title"><span class="num">04</span>有限交互预算，下一场应该分给谁？</h2>
+  <p class="mrl-sec-lead">均匀抽样把每个对手当成同样有教学价值；真正的训练系统还要决定，有限交互预算应该优先放在哪些尚未掌握的匹配上。</p>
+
+  <p><strong>self-play curriculum（自博弈课程）</strong>是根据当前能力，动态安排对手、任务或难度的规则。一个透明的教学规则是：当前对某个对手的成功率越低，下轮抽到它的权重越高。若 $s_k^{(t)}\in[0,1]$ 表示第 $t$ 轮对对手 $k$ 的成功率，可写成：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\mu_t(k)=\frac{\exp[-\beta s_k^{(t)}]}{\sum_j\exp[-\beta s_j^{(t)}]}.$$</div>
+  <p>$\beta\ge0$ 是课程聚焦强度。$\beta=0$ 时退化为均匀分布；$\beta$ 越大，越集中到当前薄弱对手。这里的负号很关键：分数低，指数值反而大。</p>
+
+  <div class="mrl-derivation">
+    <div><span>MOTIVATION</span><strong>把更多训练回合分给尚未掌握的匹配，而不是继续刷已经接近满分的对手。</strong></div>
+    <div><span>SYMBOLS</span><strong>$s_k^{(t)}$ 是逐对手成功率，$\mu_t(k)$ 是下一轮训练权重，$\beta$ 控制“补短板”有多激进。</strong></div>
+    <div><span>NUMERIC EXAMPLE</span><strong>取 $s=(0.8,0.5,0.2),\beta=2$，未归一化权重约为 $(0.202,0.368,0.670)$，归一化后约为 $(0.163,0.297,0.540)$。</strong></div>
+    <div><span>PROGRAM MAPPING</span><strong><code>raw = scores.map(s =&gt; Math.exp(-beta * s))</code>，再除以 <code>sum(raw)</code> 得到抽样权重。</strong></div>
+  </div>
+
+  <p>上例中最弱的第三项获得约 54% 预算。但“最难”不一定“最有教学价值”：如果第三个任务目前不可解，它会长期吸走样本却始终返回零奖励。实际课程需要最低／最高权重、可学习进度或外部难度分层，并用消融实验检查聚焦规则是否真的优于均匀池。</p>
+
+  <div class="mrl-curriculum-spectrum">
+    <article><span>TOO EASY</span><strong>成功率接近 1</strong><p>梯度与新信息很少，适合低频回归。</p></article>
+    <article class="is-focus"><span>LEARNING FRONTIER</span><strong>正在进步的边界</strong><p>有成功信号，也保留足够失败空间。</p></article>
+    <article><span>UNSOLVABLE NOW</span><strong>成功率接近 0</strong><p>若长期没有进步，应降权、拆题或换工具。</p></article>
+  </div>
+  <p class="mrl-caption">课程不是永远选择“最难”。更稳健的目标是追踪学习进度：既防止重复简单题，也防止把全部预算押在当前不可解区域。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>对手池决定支持集，课程决定采样密度</h3>
+      <p>池里没有的策略永远不会被训练到；池里存在却几乎不被抽到的策略，也很难阻止遗忘。存什么与怎么抽是两项独立实验变量。</p>
+      <p class="mrl-insight-key">报告“pool size = 20”远远不够，还要报告有效权重、版本多样性与每个对手实际获得的交互次数。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="pool-lab">
+  <h2 class="mrl-sec-title"><span class="num">05</span>实验：训练分数升高时，跨对手能力会怎样变化？</h2>
+  <p class="mrl-sec-lead">下面不假装浏览器在训练一个真实神经网络，而用一套完全明示的教学动力学，隔离“训练分配”和“未练习能力遗忘”两个效应。</p>
+
+  <p>设 $s_{k,t}$ 是第 $t$ 轮对第 $k$ 类对手的成功率，$\mu_{k,t}$ 是该轮分给它的训练比例，$\eta$ 是学习速率，$d$ 是未练习能力的遗忘率。页面逐项更新：</p>
+  <div class="mrl-equation mrl-equation-feature">$$s_{k,t+1}=\operatorname{clip}_{[0,1]}\!\left[
+  s_{k,t}+\eta\mu_{k,t}(1-s_{k,t})-d(1-\mu_{k,t})s_{k,t}
+  \right].$$</div>
+  <p>第二项表示把训练预算投入尚未掌握的部分，第三项表示某类对手长期不被练习时发生遗忘。固定对手使用 $\mu=(1,0,0)$；自适应池使用上一节的 softmax 权重。</p>
+
+  <div class="mrl-derivation">
+    <div><span>MOTIVATION</span><strong>同一训练预算下，固定对手能否把一列刷满，却让另外两列退化？</strong></div>
+    <div><span>SYMBOLS</span><strong>$s$ 是逐对手能力，$\eta$ 是学习率，$d$ 是遗忘率，$\mu$ 是训练分配；三者都由页面直接显示。</strong></div>
+    <div><span>NUMERIC EXAMPLE</span><strong>初始 $s=(0.55,0.45,0.35)$、$\eta=0.25,d=0.06$。固定第一类对手一步后为 $(0.6625,0.4230,0.3290)$。</strong></div>
+    <div><span>PROGRAM MAPPING</span><strong><code>simulate('fixed')</code> 令权重为 <code>[1,0,0]</code>；<code>simulate('pool')</code> 每轮由 <code>curriculumWeights</code> 重算 $\mu$。</strong></div>
+  </div>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>同样训练轮数下，固定对手的表面胜率、独立对手池均值与最差匹配，和自适应对手池相比会怎样变化？</dd>
+    <dt>Prediction</dt><dd>固定对手会让已见对手分数快速接近 1；遗忘率大于 0 时，未练习两项下滑，跨对手均值甚至可能下降。对手池提升得较慢，却会使最差项更稳。</dd>
+    <dt>Experiment</dt><dd>从同一初始能力 $(0.55,0.45,0.35)$ 出发，分别使用固定权重 $(1,0,0)$ 与 softmax 自适应权重，调节轮数、学习率、遗忘率和课程聚焦强度；“关闭遗忘”按钮执行反事实。</dd>
+    <dt>Observation</dt><dd id="poolObservation">等待实验加载。</dd>
+    <dt>Interpretation</dt><dd>训练对手胜率与策略稳健性不是同一指标。对手池通过持续分配历史匹配来换取覆盖；固定对手的高分只证明局部最佳回应被学到。</dd>
+    <dt>Limitation</dt><dd>这是确定性的教学能力模型，不是策略梯度收敛定理，也没有模拟真实轨迹噪声、对手相关性和优化器；结论应在真实环境的跨版本对战矩阵上复测。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar">
+    <div class="mrl-lab-controls">
+      <label class="mrl-range-control"><span>训练轮数 $T$ <output id="trainingRoundsValue">20</output></span><input id="trainingRounds" type="range" min="1" max="40" step="1" value="20"></label>
+      <label class="mrl-range-control"><span>学习率 $\eta$ <output id="learningRateValue">0.25</output></span><input id="learningRate" type="range" min="0.05" max="0.50" step="0.01" value="0.25"></label>
+      <label class="mrl-range-control"><span>遗忘率 $d$ <output id="forgettingRateValue">0.06</output></span><input id="forgettingRate" type="range" min="0" max="0.12" step="0.01" value="0.06"></label>
+      <label class="mrl-range-control"><span>课程聚焦 $\beta$ <output id="curriculumFocusValue">4.0</output></span><input id="curriculumFocus" type="range" min="0" max="8" step="0.5" value="4"></label>
+    </div>
+    <div class="mrl-lab-actions">
+      <button class="mrl-btn mrl-btn-secondary" id="noForgetting" type="button">反事实：关闭遗忘</button>
+      <button class="mrl-btn" id="poolReset" type="button">恢复默认</button>
+    </div>
+  </div>
+
+  <div class="mrl-lab-results" aria-live="polite">
+    <article><span>FIXED · SEEN OPPONENT</span><strong id="fixedSeenScore">99.9%</strong><small>训练对手上的表面分数</small></article>
+    <article><span>FIXED · POOL MEAN</span><strong id="fixedPoolMean">41.0%</strong><small>三类对手等权评测</small></article>
+    <article><span>FIXED · WORST CASE</span><strong id="fixedWorstScore">10.2%</strong><small>三类对手中的最差项</small></article>
+    <article><span>POOL · MEAN / WORST</span><strong id="adaptivePoolScore">66.0% / 66.0%</strong><small>自适应池的均值与最差项</small></article>
+  </div>
+
+  <figure class="mrl-training-figure">
+    <div class="mrl-chart-legend" aria-hidden="true">
+      <span class="fixed-seen">固定 · 已见对手</span>
+      <span class="fixed-mean">固定 · 对手池均值</span>
+      <span class="pool-mean">对手池 · 均值</span>
+      <span class="pool-worst">对手池 · 最差项</span>
+    </div>
+    <svg id="poolChart" viewBox="0 0 720 320" role="img" aria-labelledby="poolChartTitle poolChartDescription">
+      <title id="poolChartTitle">固定对手与对手池的训练曲线</title>
+      <desc id="poolChartDescription">固定对手上的成功率上升，但跨对手均值可能下降；自适应对手池的均值和最差表现更均衡。</desc>
+      <g id="poolChartGrid"></g>
+      <path id="fixedSeenPath" class="chart-line fixed-seen" d=""></path>
+      <path id="fixedMeanPath" class="chart-line fixed-mean" d=""></path>
+      <path id="poolMeanPath" class="chart-line pool-mean" d=""></path>
+      <path id="poolWorstPath" class="chart-line pool-worst" d=""></path>
+      <circle id="fixedSeenPoint" class="chart-point fixed-seen" cx="0" cy="0" r="5"></circle>
+      <circle id="fixedMeanPoint" class="chart-point fixed-mean" cx="0" cy="0" r="5"></circle>
+      <circle id="poolMeanPoint" class="chart-point pool-mean" cx="0" cy="0" r="5"></circle>
+      <circle id="poolWorstPoint" class="chart-point pool-worst" cx="0" cy="0" r="5"></circle>
+      <text class="axis-label" x="350" y="315">训练轮数</text>
+      <text class="axis-label y" transform="translate(14 187) rotate(-90)">成功率</text>
+    </svg>
+    <figcaption class="mrl-caption">先观察暖色“固定 · 已见对手”是否持续上升，再比较其“对手池均值”。把遗忘率设为 0 是关键反事实：均值下降会减弱，但未练习对手仍没有被改善，因而“训练高分 = 全面学习”的结论依然不成立。</figcaption>
+  </figure>
+
+  <p>默认参数下，20 轮后的固定策略约为 $(0.9986,0.1305,0.1015)$：训练对手几乎满分，三类平均却只有约 $0.4102$。自适应池约为 $(0.6598,0.6597,0.6597)$，平均和最差项都约为 $0.6597$。这些数完全由上面的更新式逐轮计算，可以用页面代码复核。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>最有用的曲线往往不是训练胜率，而是训练分布外的回归线</h3>
+      <p>固定对手上的分数单调上升，恰好可能掩盖历史对手上的持续退化。只有让同一批独立对手贯穿训练，才能看到“进步”和“遗忘”是否同时发生。</p>
+      <p class="mrl-insight-key">凡是对手选择参与了训练，就不能再把同一配对分数当作独立证据；必须保留不用于更新与调参的评测池。</p>
+    </div>
+  </aside>
+</section>
