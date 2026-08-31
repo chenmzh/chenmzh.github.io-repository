@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hands-On Modern RL 第十一章：从固定行为数据、分布偏移和外推误差理解离线强化学习、保守价值估计与序列建模。">
+  <meta name="theme-color" content="#f7f7f3">
+  <title>第 11 章 · 不能再采数据时，策略为什么会被分布外动作欺骗？ | Modern RL</title>
+  <link rel="stylesheet" href="../iml26/katex/katex.min.css">
+  <link rel="stylesheet" href="./minimal.css?v=2">
+  <link rel="stylesheet" href="./editorial.css?v=1">
+  <link rel="stylesheet" href="./chapter01-insights.css?v=1">
+  <link rel="stylesheet" href="./chapter01-terms.css?v=1">
+  <link rel="stylesheet" href="./chapter11.css?v=1">
+</head>
+<body class="mrl-page">
+  <header class="mrl-min-header">
+    <a class="mrl-min-brand" href="./">
+      <small>Hands-On Modern Reinforcement Learning</small>
+      <span>Chapter 11 · 不能再采数据时，策略为什么会被分布外动作欺骗？</span>
+    </a>
+    <nav class="mrl-min-links" aria-label="页面导航">
+      <a href="./">目录</a>
+      <a href="./chapter10.html">上一章</a>
+      <a href="./chapter12.html">下一章</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter12_offline_rl" target="_blank" rel="noopener">原章 ↗</a>
+    </nav>
+  </header>
+
+  <div class="mrl-chapter-layout">
+    <nav class="mrl-toc" aria-label="本章目录">
+      <p class="mrl-rail-label">Chapter 11</p>
+      <a href="#start">把环境的门关上</a>
+      <a href="#offline">固定数据改变了什么</a>
+      <a href="#support">数据支撑是证据边界</a>
+      <a href="#shift">策略改进为何制造偏移</a>
+      <a href="#extrapolation">最大化会挑中猜测</a>
+      <a href="#error-lab">实验：虚高动作的诱惑</a>
+      <a href="#conservative">在证据外保持保守</a>
+      <a href="#cql">保守价值的一压一拉</a>
+      <a href="#sequence">把 RL 改写成序列</a>
+      <a href="#code">公式落到变量</a>
+      <a href="#takeaways">理解检查</a>
+      <div class="mrl-progress">
+        <span class="mrl-small">Reading progress</span>
+        <div class="mrl-progress-track"><div class="mrl-progress-fill" id="readingProgress"></div></div>
+      </div>
+    </nav>
+
+    <main class="mrl-article" id="chapterContent" aria-live="polite">
+      <section class="mrl-chapter-hero">
+        <div class="mrl-eyebrow">Loading chapter…</div>
+        <h1>正在加载第十一章</h1>
+      </section>
+    </main>
+  </div>
+
+  <script src="../iml26/katex/katex.min.js"></script>
+  <script src="../iml26/katex/auto-render.min.js"></script>
+  <script src="./chapter11.js?v=1"></script>
+</body>
+</html>

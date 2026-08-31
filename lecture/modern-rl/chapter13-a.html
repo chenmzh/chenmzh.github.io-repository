@@ -1,0 +1,169 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 13 · When feedback, agency, and time stop being simple</div>
+  <h1>奖励稀疏、多个 agent、任务很长时，问题结构怎样改变？</h1>
+  <p class="lead">上一章说明，示范可以替代一部分试错，任务族可以让 agent 学会更快适应。但示范不一定覆盖未知区域，现实任务也常常不再是“一个 agent、每步有分、几十步结束”。本章把三个假设依次拿掉：<strong>奖励可能很久不出现，其他 agent 也在改变世界，一次有意义的决定可能持续很多步。</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>当“没有反馈”“不知道该奖励谁”“奖励离动作太远”同时出现时，我们应分别修改奖励信号、训练信息和动作时间尺度中的哪一层？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–110 min</span>
+    <span class="mrl-pill">先修：Chapter 05、09、12</span>
+    <span class="mrl-pill">数学：条件概率 + 反事实 + 变时长高层更新</span>
+    <span class="mrl-pill">实验：探索、信用与时间抽象</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>先定位困难发生在哪一层，再选结构</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#sparse"><b>01</b><span>奖励稀疏</span><small>没有成功轨迹就没有梯度</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#intrinsic-lab"><b>02</b><span>探索信号</span><small>给新颖状态临时奖金</small></a>
+      <a class="mrl-roadmap-step" href="#marl"><b>03</b><span>多个 agent</span><small>联合动作改变世界</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#credit-lab"><b>04</b><span>信用分配</span><small>团队得分不等于个人贡献</small></a>
+      <a class="mrl-roadmap-step" href="#ctde"><b>05</b><span>信息边界</span><small>训练与执行分开设计</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#hierarchy"><b>06</b><span>时间抽象</span><small>一段策略成为一个动作</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>不是再换一个优化器：是原问题的三个结构假设失效了</h2>
+  <p class="mrl-sec-lead">先诊断信号断在哪里。三种困难都会表现成“学不动”，但补错位置，往往只是让 agent 更快地学会无关行为。</p>
+
+  <div class="mrl-stress-grid">
+    <article>
+      <span>FEEDBACK</span>
+      <h3>奖励很久才出现</h3>
+      <p>钥匙、门、终点相隔上百步；随机策略几乎采不到成功轨迹。问题首先是<strong>发现</strong>，不是更新公式算得慢。</p>
+      <b>修改层：探索信号</b>
+    </article>
+    <article>
+      <span>AGENCY</span>
+      <h3>多个策略同时行动</h3>
+      <p>同一时刻的后果取决于联合动作；队友还会边训练边变化。问题首先是<strong>谁造成了结果</strong>。</p>
+      <b>修改层：训练信息与信用</b>
+    </article>
+    <article>
+      <span>TIME</span>
+      <h3>一次任务横跨很长时间</h3>
+      <p>“拿钥匙”被拆成几十次转向和移动，最终奖励离早期选择太远。问题首先是<strong>决策粒度</strong>。</p>
+      <b>修改层：动作时间尺度</b>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要观察的是三种断点的位置：没有可学习信号、信号无法归因、信号跨越太多原子决策。它们对应不同结构，不能用同一个“加大模型”回答。</p>
+
+  <p>后面会用同一个 DoorKey 小任务贯穿本章：一个 agent 要先探索房间、拿到钥匙，再与队友配合开门，最后走到目标。外部环境只在成功时给高奖励。这个小故事同时包含稀疏反馈、联合行为和长程顺序。</p>
+</section>
+
+<section id="sparse">
+  <h2 class="mrl-sec-title"><span class="num">02</span>稀疏奖励真正可怕的地方：第一次成功以前，失败轨迹长得都一样</h2>
+  <p class="mrl-sec-lead">Sparse reward（稀疏奖励）不是“奖励数值小”，而是大多数 transition 都返回同样的无信息反馈。即使价值更新完全正确，也没有证据告诉策略应该向哪里改变。</p>
+
+  <p>假设到达目标至少要连续做对 $H$ 个关键选择，每个位置有 $m$ 个看起来同样可能的动作。把各步粗略看成独立且均匀，随机撞出成功路径的概率是：</p>
+  <div class="mrl-equation">$$p_{\text{success}}\approx\left(\frac{1}{m}\right)^H$$</div>
+  <p>例如每个关键点有 4 个动作、连续 20 次都要选对：</p>
+  <div class="mrl-equation">$$p_{\text{success}}\approx4^{-20}\approx9.1\times10^{-13}$$</div>
+  <p>这不是环境的精确成功率，而是一个诊断量级：搜索深度进入指数项后，仅靠无方向的随机动作很难先得到第一条正回报轨迹。Chapter 12 的示范能把 agent 带到已覆盖区域，但当测试迷宫、钥匙位置或可行路线变化时，策略仍需要主动收集新证据。</p>
+
+  <div class="mrl-signal-strip" aria-label="稀疏奖励轨迹">
+    <div><span>起点</span><b>$r_0=0$</b></div><i>→</i>
+    <div><span>找走廊</span><b>$r_1=0$</b></div><i>→</i>
+    <div><span>拿钥匙</span><b>$r_{34}=0$</b></div><i>→</i>
+    <div><span>开门</span><b>$r_{61}=0$</b></div><i>→</i>
+    <div class="goal"><span>抵达终点</span><b>$r_{89}=+1$</b></div>
+  </div>
+  <p class="mrl-caption">关键不是末尾的 +1 很小，而是前 89 步都没有区分“正在接近钥匙”和“在出生点绕圈”。第一条成功轨迹出现以前，外部奖励无法提供方向。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>稀疏奖励首先是数据发现问题，其次才是价值传播问题</h3>
+      <p>TD、GAE 或更大的网络可以更有效地利用已经见过的奖励，却不能从全零轨迹里推断出从未访问过的成功区域。</p>
+      <p class="mrl-insight-key">先问 replay 或 rollout 里有没有成功证据；没有时，需要改变采样分布，而不是只调学习率。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="intrinsic">
+  <h2 class="mrl-sec-title"><span class="num">03</span>Intrinsic motivation：在外部奖励到来前，为“获得新信息”付临时工资</h2>
+  <p class="mrl-sec-lead"><strong>Intrinsic motivation（内在动机）</strong>把新颖、难预测或尚未掌握的状态变成 intrinsic reward（内在奖励），引导策略访问更有信息量的区域；环境定义的任务分数则叫 extrinsic reward（外部奖励）。</p>
+
+  <p>训练时最简单的组合是：</p>
+  <div class="mrl-equation">$$r_t^{\text{train}}=r_t^{\text{ext}}+\eta\,r_t^{\text{int}}$$</div>
+  <p>$r_t^{\text{ext}}$ 来自环境目标，$r_t^{\text{int}}$ 来自探索模块，$\eta\ge0$ 控制“好奇心”在训练信号里的权重。这里用 $\eta$，避免和后面 option 的终止函数 $\beta_\omega$ 混淆。</p>
+
+  <h3>从可数状态开始：访问越多，奖金越少</h3>
+  <p>若能维护状态访问次数 $N(s)$，一种最小新颖度奖金是：</p>
+  <div class="mrl-equation">$$r^{\text{int}}(s)=\frac{1}{\sqrt{N(s)+1}}$$</div>
+  <p>当前状态过去从未访问，$N=0$，奖金为 1；已经访问 24 次，奖金降到 $1/\sqrt{25}=0.2$。这种 <strong>consumable bonus（可耗尽奖金）</strong> 很重要：如果同一个位置永远给高分，agent 会在那里刷内在奖励。</p>
+
+  <h3>高维观测不能逐像素计数：改用可学习的新颖度</h3>
+  <div class="mrl-method-pair">
+    <article>
+      <span>PREDICTION-BASED</span>
+      <h3>预测误差</h3>
+      <p>编码状态后，预测执行动作的下一特征；越预测不准，说明动力学越陌生：</p>
+      <div class="mrl-equation">$$r_t^{\text{int}}=\frac12\left\|f_\psi(\phi(s_t),a_t)-\phi(s_{t+1})\right\|_2^2$$</div>
+      <p>Intrinsic Curiosity Module（ICM，内在好奇心模块）会再用逆向动作预测帮助特征保留与 agent 可控的变化。</p>
+    </article>
+    <article>
+      <span>DISTILLATION-BASED</span>
+      <h3>随机目标拟合误差</h3>
+      <p>Random Network Distillation（RND，随机网络蒸馏）冻结随机目标网络 $\bar f$，只训练预测器 $f_\psi$：</p>
+      <div class="mrl-equation">$$r^{\text{int}}(s)=\left\|f_\psi(s)-\bar f(s)\right\|_2^2$$</div>
+      <p>常见状态被反复拟合后误差下降。它不需要动作标签，但仍需归一化，并检查随机视觉变化是否持续制造“假新颖”。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两条路线真正比较的是“未知”的定义：动力学预测不准，或对固定随机表示还拟合不好。误差大只表示模型陌生，不自动表示状态对外部任务有用。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“内在奖励只是加速器，不会改变最优策略。”</strong> 一般不成立。只要 $\eta r^{\text{int}}$ 进入优化目标，它就在改变训练回报；若奖金不衰减，策略可能偏爱新奇但无用的区域。评估必须单独报告外部任务成功率。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>好奇心的价值来自“会耗尽”，风险也来自“它是一份真实工资”</h3>
+      <p>新状态的奖金应帮助策略跨过无反馈区；学会以后奖金下降，外部任务再接管方向。</p>
+      <p class="mrl-insight-key">训练 reward 可以混合，评估指标不能混淆：最终仍要用 $r^{\text{ext}}$ 或任务成功率判断是否真的完成任务。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="intrinsic-lab">
+  <h2 class="mrl-sec-title"><span class="num">04</span>实验：多大的好奇心，才会让 agent 暂时离开熟路？</h2>
+  <p class="mrl-sec-lead">比较两个动作。熟路立刻带来 0.20 外部奖励，但几乎不新颖；新房间暂时没有外部奖励，却可能提供可耗尽的探索奖金。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>内在奖励权重与重复访问次数，怎样共同改变这一步的动作偏好？</dd>
+    <dt>Prediction</dt><dd>$\eta$ 较大且新房间访问少时，探索分数更高；反复访问后，新颖度衰减，熟路重新占优。</dd>
+    <dt>Experiment</dt><dd>调节好奇心权重 $\eta$ 与新房间过去访问次数 $N$，比较两条路的 $r^{\text{train}}$。</dd>
+    <dt>Observation</dt><dd>页面实时显示两条训练奖励、差值与当前贪心选择；默认值下，新房间以很小优势胜出。</dd>
+    <dt>Interpretation</dt><dd>内在奖励改变的是采样方向：它让“尚无外部回报但能增加信息”的动作暂时可选。</dd>
+    <dt>Limitation</dt><dd>这是一步贪心对照，不代表完整 RL 训练；固定的新颖度也没有模拟表征学习、归一化或跨回合衰减。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar">
+    <label class="mrl-range-control"><span>好奇心权重 $\eta$ <output id="intrinsicWeightValue">0.30</output></span><input id="intrinsicWeight" type="range" min="0" max="1" value="0.30" step="0.05"></label>
+    <label class="mrl-range-control"><span>新房间过去访问次数 $N$ <output id="intrinsicVisitsValue">0</output></span><input id="intrinsicVisits" type="range" min="0" max="24" value="0" step="1"></label>
+    <button class="mrl-btn" type="button" id="intrinsicReset">恢复默认</button>
+  </div>
+
+  <div class="mrl-score-compare">
+    <article class="familiar">
+      <span>熟路 · EXPLOIT</span>
+      <h3>外部 $0.20$ + 内在 $0.10$</h3>
+      <strong id="familiarScore">0.230</strong>
+      <code id="familiarFormula">0.20 + 0.30 × 0.10</code>
+    </article>
+    <article class="novel">
+      <span>新房间 · EXPLORE</span>
+      <h3>外部 $0$ + 内在 $1/\sqrt{N+1}$</h3>
+      <strong id="novelScore">0.300</strong>
+      <code id="novelFormula">0.00 + 0.30 × 1.000</code>
+    </article>
+  </div>
+  <p class="mrl-lab-observation" id="intrinsicObservation">新房间高 0.070；在这一步的贪心比较里，agent 会选择探索。</p>
+  <p class="mrl-caption">真正要观察的是决策翻转边界，而不是“内在奖励越大越好”：访问次数上升会耗尽奖金；权重过大则可能让新奇压过任务进展。</p>
+
+  <h3>默认数值手算</h3>
+  <p>默认 $\eta=0.30,N=0$。熟路分数是 $0.20+0.30(0.10)=0.23$；新房间分数是 $0+0.30(1)=0.30$，所以先探索。若同一房间过去已访问 24 次，新颖度变为 $0.2$，新房间分数降到 $0.06$，熟路以 $0.23$ 胜出。</p>
+</section>

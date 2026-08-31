@@ -1,0 +1,136 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 11 · Learning behind a closed data boundary</div>
+  <h1>不能再采数据时，策略为什么会被分布外动作欺骗？</h1>
+  <p class="lead">上一章已经能在连续动作空间里训练策略，也能用 replay buffer 复用旧 transition、用世界模型减少真实交互。但这些方法仍保留一条纠错通道：新策略可以继续行动，让真实后果推翻错误估值。现在把环境的门彻底关上——训练只能读取一份固定日志。一个从没在日志里出现过的动作，为什么反而可能被 Q 网络评成全场最高？</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>当数据不再随策略更新而增长，怎样区分“数据支持的改进”和“函数逼近器在证据之外的乐观猜测”？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 05–10</span>
+    <span class="mrl-pill">数学：Bellman target + 概率支撑</span>
+    <span class="mrl-pill">实验：数据覆盖 × Q 高估 × 保守惩罚</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从固定日志到两条离线学习路线</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#offline"><b>01</b><span>冻结数据</span><small>失去在线纠错</small></a>
+      <a class="mrl-roadmap-step" href="#support"><b>02</b><span>画出证据</span><small>哪些动作被覆盖</small></a>
+      <a class="mrl-roadmap-step" href="#extrapolation"><b>03</b><span>追踪误差</span><small>max 挑中虚高值</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#error-lab"><b>04</b><span>做反事实</span><small>改变覆盖与惩罚</small></a>
+      <a class="mrl-roadmap-step" href="#conservative"><b>05</b><span>保持保守</span><small>限制动作或压低价值</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#sequence"><b>06</b><span>换一种写法</span><small>回报条件序列模型</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>把环境的门关上，历史日志就从“记忆”变成“全部证据”</h2>
+  <p class="mrl-sec-lead">连续控制里，旧数据只是训练材料的一部分；离线设定里，它是训练期间唯一允许查看的世界。</p>
+
+  <p>想象一家医院保存了过去五年的治疗记录。我们希望从中学出更好的治疗策略，但训练中的新策略不能直接拿病人试错。自动驾驶事故、昂贵机器人和大规模推荐系统也有同样限制：新动作可能危险、缓慢或不可逆。</p>
+
+  <p><strong>Offline Reinforcement Learning（Offline RL，离线强化学习）</strong>指这样一种学习设定：训练开始前数据已经收集完毕，训练期间不能再向环境索取新的 transition。目标仍然是最大化未来回报，而不只是复现日志里的动作；真正新增的约束，是所有改进判断都必须建立在固定证据上。</p>
+
+  <div class="mrl-door-compare" aria-label="在线经验回放与离线学习的数据通道对照">
+    <article>
+      <span>ONLINE + REPLAY</span>
+      <strong>旧数据会被新交互刷新</strong>
+      <div class="mrl-door-flow"><i>策略</i><b>→</b><i>环境</i><b>→</b><i>buffer</i><b>↺</b></div>
+      <p>某个新动作被高估，策略会去执行它；真实奖励随后进入 buffer，提供纠错机会。</p>
+    </article>
+    <article class="closed">
+      <span>OFFLINE</span>
+      <strong>数据集在训练前冻结</strong>
+      <div class="mrl-door-flow"><i>固定日志</i><b>→</b><i>训练</i><b>→</b><i>部署</i><b>×</b></div>
+      <p>训练中无法验证新策略偏爱的动作；估值错误可能在被环境检验之前就反复进入 target。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要观察的不是“有没有 buffer”，而是训练环是否还能把当前策略的新后果写回数据。右侧的反馈箭头被切断，才是离线问题成立的边界。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>离线数据不是一个更大的 replay buffer，而是一条被关闭的纠错通道</h3>
+      <p>经验回放和 off-policy 学习允许数据来自旧策略，但通常仍会继续采样；离线学习的关键是数据集不再跟随新策略更新。</p>
+      <p class="mrl-insight-key">同一条 TD 更新式，放在“还能验证”与“永远不能验证”的训练环里，会产生完全不同的风险。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="offline">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先把两条轴拆开：策略关系不等于数据是否冻结</h2>
+  <p class="mrl-sec-lead">Chapter 05 已区分 on/off-policy；这里仅把它放回数据访问条件，避免把“旧策略的数据”误当成“离线数据”。</p>
+
+  <table class="mrl-two-axis-table">
+    <thead><tr><th>问题轴</th><th>它询问什么</th><th>可能答案</th></tr></thead>
+    <tbody>
+      <tr><td>策略轴</td><td>采数据的策略与被学习的策略是否相同？</td><td>on-policy / off-policy</td></tr>
+      <tr><td>数据轴</td><td>训练期间还能不能与环境交互并加入新样本？</td><td>online / offline</td></tr>
+    </tbody>
+  </table>
+
+  <p>DQN、TD3、SAC 可以从 replay buffer 中抽取旧策略的经验，所以常常是 off-policy；只要它们还能继续执行当前策略并补充 buffer，仍然属于 online。反过来，一份固定日志也可能恰好由待评价策略自己采得，但它依旧是 offline。两条轴没有互相推出关系。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“只要训练使用历史数据，就是 offline RL。”</strong> 不对。判断标准不是数据有没有历史，而是训练期间能否继续获得与当前策略相关的新交互。普通 replay buffer 会滚动更新；behavior dataset 不会。</p>
+  </div>
+</section>
+
+<section id="support">
+  <h2 class="mrl-sec-title"><span class="num">03</span>Behavior dataset：先问日志究竟支持哪些判断</h2>
+  <p class="mrl-sec-lead">固定日志不是从“环境本身”均匀抽来的。它记录的是过去某个行为策略愿意去的状态、愿意做的动作及其后果。</p>
+
+  <p>设收集日志的策略为 <strong>behavior policy（行为策略）</strong> $\pi_\beta$，由它产生的固定 <strong>behavior dataset（行为数据集）</strong> 写成：</p>
+  <div class="mrl-equation">$$\mathcal D=\{(s_i,a_i,r_i,s'_i,d_i)\}_{i=1}^{N},\qquad (s,a)\sim d^{\pi_\beta}(s)\,\pi_\beta(a\mid s).$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>它保存或描述什么</th><th>代码中的常见名字</th></tr></thead>
+    <tbody>
+      <tr><td>$s_i,a_i$</td><td>日志中的当前状态与已执行动作</td><td><code>observations</code>, <code>actions</code></td></tr>
+      <tr><td>$r_i,s'_i$</td><td>该动作后真实返回的奖励与下一状态</td><td><code>rewards</code>, <code>next_observations</code></td></tr>
+      <tr><td>$d_i$</td><td>是否真正终止，用于决定 continuation</td><td><code>terminals</code></td></tr>
+      <tr><td>$d^{\pi_\beta}(s)$</td><td>行为策略经常访问哪些状态</td><td>通常不显式存储，由日志频率体现</td></tr>
+      <tr><td>$\pi_\beta(a\mid s)$</td><td>行为策略在状态 $s$ 做各动作的概率</td><td>可能未知，只能从数据近似</td></tr>
+    </tbody>
+  </table>
+
+  <p><strong>support（支撑集）</strong>表示一个分布可能产生的区域。在离散动作下，可把状态 $s$ 的动作支撑直观写成：</p>
+  <div class="mrl-equation">$$\operatorname{supp}_{\mathcal D}(a\mid s)=\{a:\pi_\beta(a\mid s)>0\}.$$</div>
+  <p>有限样本里，我们看不到真正的 $\pi_\beta$，只能用计数、密度模型或近邻距离估计支撑。连续动作中，要求“动作值与日志完全相等”没有意义；更合理的问题是：这个动作附近是否有足够数据，能让价值估计接受监督？</p>
+
+  <div class="mrl-support-strip" aria-label="固定状态下动作数据密度示意">
+    <span class="empty">几乎无数据<small>强左</small></span>
+    <span class="low">少量<small>左</small></span>
+    <span class="high">密集<small>直行</small></span>
+    <span class="medium">中等<small>右</small></span>
+    <span class="empty">无数据<small>强右</small></span>
+  </div>
+  <p class="mrl-caption">要观察的是证据密度而不是动作名称：直行附近的 Q 输出会被许多 transition 约束，最右侧即使在物理上合法，网络输出也可能主要来自函数外推。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>数据支撑划出的是“我们知道什么”，不是“环境允许什么”</h3>
+      <p>分布外动作可能完全合法，甚至真的很好；问题在于固定数据没有提供足够证据判断它好不好。</p>
+      <p class="mrl-insight-key">离线算法的保守性针对知识边界，而不是给动作贴上永恒的安全或危险标签。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="shift">
+  <h2 class="mrl-sec-title"><span class="num">04</span>Distribution shift：策略一改进，自己遇到的世界也会改变</h2>
+  <p class="mrl-sec-lead">行为数据覆盖的是 $\pi_\beta$ 产生的 occupancy；部署策略 $\pi_\theta$ 优化的目的恰恰是做出不同选择。</p>
+
+  <p><strong>distribution shift（分布偏移）</strong>是训练证据分布与部署策略实际访问分布不一致。它有两层：</p>
+  <div class="mrl-shift-chain">
+    <article><span>动作层</span><strong>$\pi_\theta(a\mid s)\neq\pi_\beta(a\mid s)$</strong><p>在同一状态，新策略偏爱日志中少见的动作。</p></article>
+    <i>→</i>
+    <article><span>状态层</span><strong>$d^{\pi_\theta}(s)\neq d^{\pi_\beta}(s)$</strong><p>动作改变后，后续进入的状态也逐步离开日志覆盖。</p></article>
+  </div>
+  <p class="mrl-caption">动作偏移会改变下一状态，下一状态又改变之后能做的动作；长时决策把一次局部偏移复合成整条轨迹的状态分布偏移。</p>
+
+  <p>在给定状态下，落在行为数据低密度区域的动作称为 <strong>out-of-distribution action（OOD action，分布外动作）</strong>。如果 $a_{\mathrm{ood}}\notin\operatorname{supp}_{\mathcal D}(a\mid s)$，数据集中就没有相应 target 直接校正 $\hat Q(s,a_{\mathrm{ood}})$。神经网络仍会输出一个数字，但“能输出”不等于“有证据”。</p>
+
+  <p>这给离线策略改进制造了一个两难：若严格复现 $\pi_\beta$，就很难超过历史策略；若无限制地最大化 $\hat Q$，又会主动走向估计最不可靠的区域。下一节要追踪后者为什么会形成自我强化。</p>
+</section>

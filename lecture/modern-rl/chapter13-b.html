@@ -1,0 +1,162 @@
+<section id="marl">
+  <h2 class="mrl-sec-title"><span class="num">05</span>Multi-agent RL：对单个学习者来说，“环境”里也住着会更新的策略</h2>
+  <p class="mrl-sec-lead"><strong>Multi-Agent Reinforcement Learning（MARL，多智能体强化学习）</strong>研究多个 agent 在同一动态系统中行动与学习。一步后果不再由一个动作决定，而由 joint action（联合动作）共同决定。</p>
+
+  <p>一个最小 Markov game（马尔可夫博弈）可以写成：</p>
+  <div class="mrl-equation">$$\mathcal G=\left\langle\mathcal S,\{\mathcal A_i\}_{i=1}^{n},P,\{R_i\}_{i=1}^{n},\gamma\right\rangle$$</div>
+
+  <table class="mrl-symbol-table">
+    <thead><tr><th>对象</th><th>含义</th><th>DoorKey 双 agent 例子</th></tr></thead>
+    <tbody>
+      <tr><td>$s\in\mathcal S$</td><td>环境全局状态</td><td>两人的位置、谁拿钥匙、门是否打开</td></tr>
+      <tr><td>$o_i$</td><td>agent $i$ 实际看到的局部观察</td><td>自己的局部视野，不一定看见队友</td></tr>
+      <tr><td>$a_i\in\mathcal A_i$</td><td>agent $i$ 的动作</td><td>转向、前进、拿取或等待</td></tr>
+      <tr><td>$\mathbf a=(a_1,\ldots,a_n)$</td><td>同一时刻的联合动作</td><td>一人拿钥匙，同时另一人移动到门旁</td></tr>
+      <tr><td>$P(s'\mid s,\mathbf a)$</td><td>联合动作导致下一状态的概率</td><td>门是否在本步被成功打开</td></tr>
+      <tr><td>$R_i(s,\mathbf a,s')$</td><td>每个 agent 的奖励</td><td>可共享团队分，也可各自不同</td></tr>
+    </tbody>
+  </table>
+
+  <p>为什么单 agent 算法直接套上去会遇到 <strong>non-stationarity（非平稳性）</strong>？对 agent $i$ 来说，其他人的动作像环境随机性。若各 agent 条件独立采样动作，它实际看到的有效转移近似为：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  P_i^{\text{eff}}(s'\mid s,a_i)
+  &=\sum_{\mathbf a_{-i}}P(s'\mid s,a_i,\mathbf a_{-i})\\
+  &\qquad{}\cdot\prod_{j\ne i}\pi_j(a_j\mid o_j).
+  \end{aligned}$$</div>
+  <p>$\mathbf a_{-i}$ 表示除 agent $i$ 外所有人的动作。当队友策略 $\pi_j$ 更新时，右侧即使环境动力学 $P$ 完全没变，也会变化。于是昨天 replay buffer 里的“在 $s$ 做 $a_i$ 会发生什么”，可能不再代表今天的队友。</p>
+
+  <div class="mrl-joint-scene" aria-label="两个 agent 的联合动作结果">
+    <div class="state"><span>STATE</span><b>钥匙在地上，门已锁</b></div>
+    <div class="branch"><span>$a_1=$ 拿钥匙<br>$a_2=$ 去门口</span><strong>→ 协作进展</strong></div>
+    <div class="branch"><span>$a_1=$ 拿钥匙<br>$a_2=$ 挡住通道</span><strong>→ 仍然失败</strong></div>
+  </div>
+  <p class="mrl-caption">agent 1 做了同一个“拿钥匙”动作，下一局面的价值却依赖 agent 2 同时做什么；因此单独记录 $a_1$ 不能解释全部后果。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“多智能体只是把 batch 里多放几条轨迹。”</strong> 不对。多个行为主体共享同一个转移，且它们的策略会共同更新；数据分布、对手强度和队友行为都可能随训练时间改变。</p>
+  </div>
+</section>
+
+<section id="credit">
+  <h2 class="mrl-sec-title"><span class="num">06</span>团队拿到 12 分，不代表每个人都贡献了 12 分</h2>
+  <p class="mrl-sec-lead"><strong>Individual credit assignment（个体信用分配）</strong>追问：联合结果中，哪些 agent 的哪些选择真正造成了改进？它与时间上的 credit assignment 相互叠加，但不是同一个维度。</p>
+
+  <div class="mrl-credit-grid">
+    <article>
+      <span>GLOBAL / TEAM REWARD</span>
+      <h3>所有人看见同一个 $R_{\text{team}}$</h3>
+      <p>优点是目标对齐：团队成功就是每个人的训练方向。缺点是方差与歧义：有人开门、有人等待、有人挡路，却收到相同回报。</p>
+    </article>
+    <article>
+      <span>INDIVIDUAL REWARD</span>
+      <h3>每个人获得自己的 $r_i$</h3>
+      <p>更容易归因，却可能局部最优：若“拿钥匙”有个人分，“把钥匙送到门口”没有，agent 可能只收集钥匙，不完成团队任务。</p>
+    </article>
+    <article>
+      <span>COUNTERFACTUAL CREDIT</span>
+      <h3>问“没有我会怎样？”</h3>
+      <p>保留团队目标，同时用反事实 baseline 去掉队友和环境本来就能获得的部分。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">三栏真正比较的是目标与可归因性的交换：团队奖励最对齐却最模糊，个体奖励清楚却可能互相冲突，反事实信用尝试同时保留两者。</p>
+
+  <p>把整条联合轨迹记作 $z$，把 agent $i$ 替换成默认行为后的反事实轨迹记作 $z^{-i}$。最简单的 difference reward（差分奖励）是：</p>
+  <div class="mrl-equation">$$D_i=R_{\text{team}}(z)-R_{\text{team}}(z^{-i})$$</div>
+  <p>它不是把 12 分机械切成几份，而是在问：保持其他条件尽量不变，拿掉 agent $i$ 的实际行为，团队表现会掉多少？</p>
+
+  <h3>一组能手算的反事实</h3>
+  <p>三名 agent 协作得到团队回报 12。若把 A 替换成默认等待，团队只剩 5；拿掉 B 的贡献剩 8；拿掉 C 的贡献剩 11：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  D_A&=12-5=7,\\
+  D_B&=12-8=4,\\
+  D_C&=12-11=1.
+  \end{aligned}$$</div>
+  <p>共享团队奖励会把同一个 12 发给三人；差分信用则指出 A 的边际影响更大。注意 $D_A+D_B+D_C$ 不必等于团队回报：协同、冗余和所选反事实 baseline 都会破坏简单可加性。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>Reward 回答“团队发生了什么”，credit 回答“谁使它发生”</h3>
+      <p>同一个团队目标可以配很多信用估计器。共享回报保证方向一致，却没有自动解决个体归因。</p>
+      <p class="mrl-insight-key">看到 team return 上升，还要检查每个 agent 的策略是否真的学到角色；否则提升可能来自少数 agent 独自完成任务。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="credit-lab">
+  <h2 class="mrl-sec-title"><span class="num">07</span>实验：同一个团队结果，在全局回报与反事实信用下长什么样？</h2>
+  <p class="mrl-sec-lead">固定实际团队回报，改变“拿掉每个 agent 后团队还能得多少”。反事实越接近实际结果，该 agent 的边际信用越小。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>共享团队奖励为什么无法区分三个 agent 的贡献，而反事实 baseline 可以？</dd>
+    <dt>Prediction</dt><dd>三人的共享信号始终相同；反事实团队分越低，对应 agent 的 difference reward 越高。</dd>
+    <dt>Experiment</dt><dd>调节实际团队回报及三个“替换为默认行为”的反事实回报，观察 $D_i=R_{\text{team}}-R_{\text{team}}(z^{-i})$。</dd>
+    <dt>Observation</dt><dd>页面同时显示相同的 global signal 与不同的 individual credit，并标出边际影响最大的 agent。</dd>
+    <dt>Interpretation</dt><dd>反事实 baseline 去掉了“即使 agent $i$ 不这样做，团队本来也能得到”的那部分回报。</dd>
+    <dt>Limitation</dt><dd>真实环境通常不能精确重放 $z^{-i}$；反事实由 critic 或模型估计时，会引入新的建模误差。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar mrl-credit-controls">
+    <label class="mrl-range-control"><span>实际团队回报 <output id="teamRewardValue">12</output></span><input id="teamReward" type="range" min="0" max="20" value="12" step="1"></label>
+    <label class="mrl-range-control"><span>没有 A 时 <output id="withoutAValue">5</output></span><input id="withoutA" type="range" min="0" max="20" value="5" step="1"></label>
+    <label class="mrl-range-control"><span>没有 B 时 <output id="withoutBValue">8</output></span><input id="withoutB" type="range" min="0" max="20" value="8" step="1"></label>
+    <label class="mrl-range-control"><span>没有 C 时 <output id="withoutCValue">11</output></span><input id="withoutC" type="range" min="0" max="20" value="11" step="1"></label>
+    <button class="mrl-btn" type="button" id="creditReset">恢复默认</button>
+  </div>
+
+  <div class="mrl-credit-results">
+    <div class="head"><span>AGENT</span><span>共享团队信号</span><span>反事实团队分</span><span>差分信用 $D_i$</span></div>
+    <div><b>A</b><span id="globalA">12</span><span id="counterA">5</span><strong id="creditA">+7</strong></div>
+    <div><b>B</b><span id="globalB">12</span><span id="counterB">8</span><strong id="creditB">+4</strong></div>
+    <div><b>C</b><span id="globalC">12</span><span id="counterC">11</span><strong id="creditC">+1</strong></div>
+  </div>
+  <p class="mrl-lab-observation" id="creditObservation">A 的边际信用最高（+7）；但三人看到的共享团队信号仍然都是 12。</p>
+  <p class="mrl-caption">真正要观察的是“同奖、不同功”：global reward 对齐团队目标，difference reward 才尝试区分个体边际影响；两者承担的教学角色不同。</p>
+</section>
+
+<section id="ctde">
+  <h2 class="mrl-sec-title"><span class="num">08</span>CTDE：训练时允许教练看全场，执行时每名队员只看自己的观察</h2>
+  <p class="mrl-sec-lead"><strong>Centralized Training, Decentralized Execution（CTDE，集中训练、分散执行）</strong>利用训练阶段能收集全局轨迹的优势，同时尊重部署时通信受限或只能局部观测的现实。</p>
+
+  <div class="mrl-ctde-flow">
+    <div class="global">
+      <span>TRAIN · CENTRALIZED</span>
+      <h3>集中式 critic / mixer</h3>
+      <p>可读取全局状态 $s$、联合动作 $\mathbf a$ 和所有 agent 的奖励，帮助区分“我做错了”与“队友改变了”。</p>
+      <code>$Q_i^{\mathrm{cent}}(s,a_1,\ldots,a_n)$</code>
+    </div>
+    <i>参数更新<br>↓</i>
+    <div class="local">
+      <span>DEPLOY · DECENTRALIZED</span>
+      <h3>各自的局部 actor</h3>
+      <p>执行时 agent $i$ 只根据自己的 $o_i$ 选动作；全局状态和队友真实动作不应偷偷进入部署策略。</p>
+      <code>$a_i\sim\pi_i(\cdot\mid o_i)$</code>
+    </div>
+  </div>
+  <p class="mrl-caption">真正要观察的是信息边界：集中式模块只参与训练信号，部署动作仍由局部 actor 产生。若 actor 在测试时需要全局状态，就不是这里定义的 decentralized execution。</p>
+
+  <p>最小数据流可以写成：</p>
+  <pre class="mrl-code"><code># rollout: each actor obeys the deployment information boundary
+actions = [actor_i.sample(local_obs[i]) for i in range(n_agents)]
+next_state, rewards, terminated, truncated, info = env.step(actions)
+
+# training only: centralized critic may inspect the joint transition
+q_i = critic_i(global_state, actions)
+continuation_i = 0.0 if terminated else next_q_i
+target_i = rewards[i] + gamma * continuation_i
+update(actor_i, critic_i, target_i)</code></pre>
+
+  <p>这里的 <code>terminated</code> 表示环境真正进入终止状态，此时后续价值必须清零；<code>truncated</code> 只表示本次采样因时间上限等外部边界停止。若截断时仍有合法的最终观测，训练循环虽然结束，价值 target 仍应保留 bootstrap。</p>
+
+  <p>CTDE 是一个信息组织范式，不是单一算法。集中式 actor–critic、价值分解和共享参数都可以与它组合，但三者不是同义词。固定上游的 PettingZoo 实验把多个 agent 槽位向量化，并用 <strong>parameter-sharing PPO（参数共享 PPO）</strong> 学一个共享策略；它能展示协作回报与联合回放，却没有仅凭“参数共享”就自动得到反事实信用或集中式 critic。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>CTDE 利用的是训练与部署的信息不对称</h3>
+      <p>训练日志可以集中收集，部署动作却可能必须独立产生。把全局信息放进 critic，而不是偷偷放进 actor，才能让训练帮助执行而不改变执行条件。</p>
+      <p class="mrl-insight-key">评估时应主动遮掉训练专用信息；否则“协作能力”可能只是测试时仍在开上帝视角。</p>
+    </div>
+  </aside>
+</section>

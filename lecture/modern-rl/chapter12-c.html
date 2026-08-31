@@ -1,0 +1,150 @@
+<section id="irl">
+  <h2 class="mrl-sec-title"><span class="num">06</span>逆强化学习：如果动作只是表面，能否反推出专家在追求什么？</h2>
+  <p class="mrl-sec-lead">DAgger 仍要求专家对每个新状态给出正确动作。如果专家无法在线回答，另一条路是从现成轨迹推断能解释行为的目标，再让策略按这个目标自己规划。</p>
+
+  <p><strong>Inverse Reinforcement Learning（IRL，逆强化学习）</strong>把普通 RL 的方向反过来：前向 RL 给定奖励 $r$ 求策略；IRL 给定专家轨迹，寻找让这些轨迹显得合理的奖励 $r_\psi(s,a)$。</p>
+
+  <div class="mrl-forward-inverse" aria-label="前向强化学习与逆强化学习的输入输出">
+    <div><span>FORWARD RL</span><strong>$r(s,a)$ 已知</strong><i>→</i><strong>求策略 $\pi$</strong></div>
+    <div><span>INVERSE RL</span><strong>专家轨迹 $\tau_E$ 已知</strong><i>→</i><strong>推断 $r_\psi$</strong></div>
+  </div>
+  <p class="mrl-caption">箭头相反并不意味着能唯一倒推：同一组专家轨迹往往可以由许多不同奖励解释，这是 IRL 的核心不适定性。</p>
+
+  <p>假设迷宫专家总走最短路。“终点 $+10$、每步 $-1$”能解释它；“每个专家经过的格子 $+1$”也能解释；把所有奖励乘上正数，有时仍保持相同的最优策略。示范因此只能约束一组<strong>行为相容</strong>的奖励，不能证明我们找到了专家心中唯一的真实目的。</p>
+
+  <p><strong>Maximum Entropy IRL（MaxEnt IRL，最大熵逆强化学习）</strong>用一个额外原则减少武断：总奖励高的轨迹更可能，但在同样能解释示范的轨迹之间保留随机性。固定环境动力学、并把转移可行性吸收到轨迹的基准分布后，可把奖励诱导的偏好简写为：</p>
+  <div class="mrl-equation">$$p(\tau\mid r_\psi)=\frac{\exp\!\left(\sum_t r_\psi(s_t,a_t)\right)}{Z(r_\psi)},\qquad Z(r_\psi)=\sum_{\tau'}\exp\!\left(\sum_t r_\psi(s'_t,a'_t)\right)$$</div>
+  <p>若三条候选轨迹累计奖励分别为 $2,1,0$，未归一化权重就是 $e^2,e^1,e^0$，因此概率约为 $0.665,0.245,0.090$。它没有强迫最高分轨迹概率等于 1，却明确偏好高奖励轨迹。困难也出现在分母：大环境里不可能枚举所有轨迹求 $Z$，而每次更新奖励后重新求策略又很昂贵。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>IRL 恢复的是能解释行为的目标，不是对专家内心的读心术</h3>
+      <p>有限示范通常无法辨认唯一奖励；环境动力学、特征选择与额外偏好都会影响答案。</p>
+      <p class="mrl-insight-key">显式奖励更容易迁移和检查，但“可解释专家”与“等于真实意图”之间仍有识别鸿沟。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="gail">
+  <h2 class="mrl-sec-title"><span class="num">07</span>生成对抗模仿学习：不先写出奖励，直接让策略的访问方式像专家</h2>
+  <p class="mrl-sec-lead">如果显式求奖励要反复解内层 RL，可以把“策略是否像专家”本身变成训练信号。这里匹配的不是单个状态上的标签，而是 rollout 产生的 state–action 访问分布。</p>
+
+  <p><strong>Generative Adversarial Imitation Learning（GAIL，生成对抗模仿学习）</strong>让判别器 $D_\phi(s,a)$ 判断一对 $(s,a)$ 来自专家的概率；策略则通过环境 rollout 生成新的 $(s,a)$，努力让判别器分不清来源。下面 $d_E(s,a)$ 与 $d_\pi(s,a)$ 分别表示专家和当前策略在 rollout 中访问各状态—动作对的频率分布：</p>
+  <div class="mrl-equation">$$\max_\phi\;\mathbb E_{(s,a)\sim d_E}[\log D_\phi(s,a)]+\mathbb E_{(s,a)\sim d_\pi}[\log(1-D_\phi(s,a))]$$</div>
+
+  <div class="mrl-adversarial-loop" aria-label="GAIL 的判别器与策略交替训练">
+    <div><span>EXPERT</span><strong>专家 $(s,a)$</strong></div><i>↘</i>
+    <div class="disc"><span>DISCRIMINATOR</span><strong>$D_\phi(s,a)$</strong><small>区分专家 / 策略</small></div><i>→</i>
+    <div><span>IMPLICIT REWARD</span><strong>$-\log(1-D_\phi)$</strong></div>
+    <div><span>POLICY</span><strong>策略 rollout</strong></div><i>↗</i>
+    <div class="policy-update"><span>FORWARD RL</span><strong>按隐式奖励更新 $\pi$</strong></div>
+  </div>
+  <p class="mrl-caption">要观察的是闭环：策略必须在环境里产生访问分布，判别器比较两种来源，再把“像专家”的程度作为隐式奖励送回策略；它不是只在固定专家数据上做一次分类。</p>
+
+  <p>若 $D$ 表示“来自专家”的概率，一种常用策略奖励是：</p>
+  <div class="mrl-equation">$$\tilde r_\phi(s,a)=-\log(1-D_\phi(s,a))$$</div>
+  <p>例如某对 $(s,a)$ 在专家中占 80 份、策略中占 20 份，理想判别器给出 $D^*=80/(80+20)=0.8$，隐式奖励为 $-\log0.2\approx1.61$；若专家从不去、策略却反复去，则 $D^*=0$，奖励为 0。策略因此被推向专家常访问、自己尚未充分访问的区域。</p>
+
+  <div class="mrl-route-compare">
+    <article><span>BC</span><h3>逐状态匹配动作</h3><p>只需离线专家数据；训练便宜，但 rollout 状态偏移不会自动进入损失。</p></article>
+    <article><span>DAgger</span><h3>在策略状态上匹配动作</h3><p>能针对恢复状态补标签；代价是反复查询在线专家。</p></article>
+    <article><span>IRL / GAIL</span><h3>解释或匹配整段访问</h3><p>不要求专家为每个新状态给动作；通常仍需要环境交互来训练策略。</p></article>
+  </div>
+  <p class="mrl-caption">选择路线时真正要比较的是：能否交互环境、能否在线询问专家、是否需要一个可解释且可迁移的显式奖励。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“GAIL 不显式输出奖励，所以不需要 RL。”</strong> 不对。判别器只提供随策略变化的隐式奖励；策略仍要通过 rollout 和前向 RL 改变自己的访问分布。它还继承了对抗训练不稳定与样本效率问题。</p>
+  </div>
+</section>
+
+<section id="meta">
+  <h2 class="mrl-sec-title"><span class="num">08</span>元强化学习：如果连任务也会变，训练目标应评价“适应以后”</h2>
+  <p class="mrl-sec-lead">模仿和 IRL 默认专家示范与部署大体属于同一个任务。换机器人摩擦系数、目标位置或用户偏好后，固定策略可能再次失配。此时要学习的不是单个任务答案，而是可快速适应的先验。</p>
+
+  <p><strong>Meta-Reinforcement Learning（Meta-RL，元强化学习）</strong>从任务分布 $\mathcal T\sim p(\mathcal T)$ 采样许多相关任务。每个任务先给少量适应经验 $\mathcal D_{\mathcal T}^{\mathrm{adapt}}$，再用同一任务的新经验评价适应后的策略：</p>
+  <div class="mrl-equation">$$\min_\theta\;\mathbb E_{\mathcal T\sim p(\mathcal T)}\left[\mathcal L_{\mathcal T}\bigl(U(\theta,\mathcal D_{\mathcal T}^{\mathrm{adapt}});\mathcal D_{\mathcal T}^{\mathrm{eval}}\bigr)\right]$$</div>
+  <table>
+    <thead><tr><th>对象</th><th>含义</th><th>为什么必须分开</th></tr></thead>
+    <tbody>
+      <tr><td>$p(\mathcal T)$</td><td>训练时反复出现的相关任务族</td><td>它定义了“快速适应什么”</td></tr>
+      <tr><td>$\mathcal D^{\mathrm{adapt}}$</td><td>新任务上允许观察的少量交互</td><td>给更新器 $U$ 识别任务</td></tr>
+      <tr><td>$U(\theta,\cdot)$</td><td>参数更新、隐状态更新或任务后验推断</td><td>规定适应发生在哪里</td></tr>
+      <tr><td>$\mathcal D^{\mathrm{eval}}$</td><td>适应后才用于打分的新数据</td><td>避免只记住适应样本</td></tr>
+    </tbody>
+  </table>
+
+  <p>一个确定性的两臂老虎机任务族就能说明“适应以后”是什么意思。任务 A 的左臂奖励固定为 1、右臂为 0；任务 B 恰好相反，且两种任务各占一半。适应前，任何固定选边策略的期望都只有 0.5。若允许第一步探测一次，并把得到的奖励写入上下文，后续就可以推断当前是哪种任务，选择对应的高奖励臂。元训练评价的是<strong>探测后余下步骤的回报</strong>，因此会奖励“先获得辨识信息，再利用”的行为。</p>
+
+  <div class="mrl-adaptation-locations">
+    <article><span>PARAMETER UPDATE</span><h3>在参数里适应</h3><p>学习一个经过少量梯度步就能在新任务变好的初始化。</p></article>
+    <article><span>RECURRENT MEMORY</span><h3>在记忆里适应</h3><p>参数不变，用循环网络的隐状态累计 $(s,a,r,\mathrm{done})$ 历史。</p></article>
+    <article><span>TASK POSTERIOR</span><h3>在任务后验里适应</h3><p>从少量上下文推断潜变量 $z$，让策略按 $\pi(a\mid s,z)$ 行动。</p></article>
+  </div>
+  <p class="mrl-caption">三种方法共享同一问题结构，差别是更新器 $U$ 把新经验写到哪里：模型参数、循环记忆，或显式任务变量。</p>
+
+  <p>以“学习一个易于微调的参数初始化”为例，一步内循环写成 $\theta'_{\mathcal T}=\theta-\alpha\nabla_\theta\mathcal L_{\mathcal T}^{\mathrm{adapt}}(\theta)$；外循环不奖励 $\theta$ 在适应前看起来多聪明，而奖励 $\theta'_{\mathcal T}$ 在评价数据上表现好。记忆路线与任务后验路线不必在测试时改参数，但同样必须从新经验中推断当前任务。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>“快速适应”来自任务族上的先验，不是面对任意新世界的魔法</h3>
+      <p>Meta-RL 把跨任务共性压进初始化、记忆或任务后验；新任务经验只需补足任务族内部的差异。</p>
+      <p class="mrl-insight-key">若测试任务离训练任务分布太远，少量经验未必足够；任务分布就是元学习的能力边界。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code-map">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把三种数据流放在一起：谁产生状态，谁提供训练信号？</h2>
+  <p class="mrl-sec-lead">算法名很多，最稳的代码阅读方法是沿数据流追问两件事：当前 batch 的状态由谁访问到，动作或目标信号又由谁给出。</p>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>路线</th><th>状态从哪里来</th><th>监督 / 奖励从哪里来</th><th>核心代码位置</th></tr></thead>
+    <tbody>
+      <tr><td>BC</td><td>固定专家数据 $s\sim d_E$</td><td>专家动作 $a^*$</td><td><code>policy.log_prob(expert_s, expert_a)</code></td></tr>
+      <tr><td>DAgger</td><td>当前策略 rollout，$s\sim d_{\pi_i}$</td><td>专家重新标注 $\pi^*(s)$</td><td><code>expert.label(visited_states)</code></td></tr>
+      <tr><td>GAIL</td><td>专家数据与当前策略 rollout</td><td>判别器隐式奖励</td><td><code>reward = -log(1 - disc(s, a))</code></td></tr>
+      <tr><td>Meta-RL</td><td>任务族中的少量新任务经验</td><td>适应后在同任务上的回报</td><td><code>adapt(context)</code> → <code>evaluate(task)</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>这张表也给出一条连续的问题链：只看专家状态时，BC 最简单；状态分布由策略改变时，DAgger 补数据；无法持续询问专家且关心整段行为时，IRL/GAIL 学目标或匹配访问；任务本身变化时，Meta-RL 把少量新经验纳入适应过程。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">10</span>检查你的理解：你改变的是动作标签、访问分布，还是任务先验？</h2>
+  <p class="mrl-sec-lead">不要用“都从数据学习”把四条路线混在一起。每题都要指出训练数据如何产生，以及方法还需要什么额外能力。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么行为克隆可以不用 reward 训练？</summary><div class="inner">因为专家动作本身充当监督标签。BC 最大化专家状态下专家动作的条件概率，目标是 $-\mathbb E_{(s,a)\sim\mathcal D_E}\log\pi_\theta(a\mid s)$；它没有因此解决部署时的序列误差。</div></details>
+    <details><summary>2. 单步错误率只有 1%，为什么 100 步任务仍不能认为有 99% 概率全程正确？</summary><div class="inner">即使乐观地假设每步独立且错误率不变，全程无错概率也只有 $0.99^{100}\approx0.366$。真实策略犯错后还会改变下一状态，进入训练数据稀少处，后续错误率可能更高。</div></details>
+    <details><summary>3. DAgger 收到状态 $s$ 时，应该把策略刚执行的动作还是专家动作写进聚合数据集？</summary><div class="inner">写入专家在该状态给出的动作 $\pi^*(s)$。策略负责暴露自己会访问的状态；专家负责提供正确标签。把错误动作本身当标签不会产生纠正。</div></details>
+    <details><summary>4. DAgger 与纯 BC 的损失函数必须不同吗？</summary><div class="inner">不必须。两者都可以使用相同的监督负对数似然；关键差别是训练状态的来源。DAgger 反复加入当前策略访问的状态及专家标注，使训练分布向部署分布靠近。</div></details>
+    <details><summary>5. 为什么一组专家轨迹通常不能唯一确定奖励函数？</summary><div class="inner">多个奖励可能诱导相同的专家最优行为，例如终点奖励、路径特征奖励或正比例缩放都可能解释同一条最短路。IRL 找到的是与示范相容的目标，额外假设决定从相容集合里选哪个。</div></details>
+    <details><summary>6. GAIL 既不要求在线专家逐状态标注，也不显式输出奖励，它还需要环境交互吗？</summary><div class="inner">通常需要。策略必须 rollout 产生自己的 state–action 访问分布，判别器才能与专家分布比较；策略还要用判别器给出的隐式奖励做前向 RL。</div></details>
+    <details><summary>7. Meta-RL 的“快”具体由什么评价？</summary><div class="inner">在从任务分布采样的新任务上，只给少量适应经验后，更新器 $U$ 产生的策略能否在同任务的新评价数据上迅速获得高回报。它不是要求一个固定策略在所有任务上都立即最优。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十二章真正建立起来的问题链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>示范动作</span><strong>BC</strong><small>复制 $a^*$</small></div><i>→</i>
+      <div><span>策略状态</span><strong>DAgger</strong><small>补恢复标签</small></div><i>→</i>
+      <div><span>行为目的</span><strong>IRL / GAIL</strong><small>奖励或访问分布</small></div><i>→</i>
+      <div><span>任务变化</span><strong>Meta-RL</strong><small>少量经验后适应</small></div>
+    </div>
+    <p>模仿学习不是“没有 reward 的普通 RL”这么简单：BC 改用动作标签，DAgger 主动修正状态覆盖，IRL/GAIL 追问行为背后的目标或访问分布，Meta-RL 则把学习对象扩展到整个任务族上的适应过程。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter13.html">第 13 章：奖励稀疏、参与者变多、任务变长以后怎么办？</a></h3>
+    <p>本章仍假设有专家示范，或训练任务族能提供足够的适应经验。下一章撤掉这些便利条件：稀疏奖励下怎样主动寻找信息，多智能体互动时怎样分配 credit，长任务又怎样用更长时间尺度的动作组织决策。</p>
+  </div>
+
+  <p class="mrl-source-note">本页依据固定上游版本 walkinglabs/hands-on-modern-rl 的 Chapter 13 “Behavior Cloning and DAgger”“Inverse RL and GAIL”“Meta-RL”重新组织，不是原项目官方译本。为控制认知负荷，本章以 BC 的 rollout 偏移和 DAgger 数据聚合为主线；更广泛的探索、多智能体 credit assignment 与层级决策留给下一章。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 12</span><span><a href="./chapter11.html">← Chapter 11</a> · <a href="./">课程目录</a> · <a href="./chapter13.html">Chapter 13 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter13_imitation_meta_rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

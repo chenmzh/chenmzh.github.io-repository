@@ -1,0 +1,112 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 12 · Learn from demonstrations, then learn to adapt</div>
+  <h1>没有明确奖励，能否从示范和任务族学习？</h1>
+  <p class="lead">上一章发现，固定数据集只覆盖有限的 state–action 区域，策略若走到数据分布之外，价值估计可能失真。现在把数据换成<strong>专家示范</strong>：它比普通离线数据更好，却仍只记录专家真正到过的地方。策略一旦自己行动，数据边界还会回来。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>只有“专家在这些状态做了什么”时，怎样学出可部署的策略？如果动作只是表面、真正想学的是专家的目的，或者部署任务本身还会变化，我们又需要把什么加入学习问题？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 07、11</span>
+    <span class="mrl-pill">数学：条件似然 + 分布匹配</span>
+    <span class="mrl-pill">实验：复制动作的偏移与迭代补标</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从复制动作到跨任务适应</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#bc"><b>01</b><span>复制动作</span><small>示范变成标签</small></a>
+      <a class="mrl-roadmap-step" href="#shift"><b>02</b><span>发现偏移</span><small>自己的错误改变输入</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#dagger-lab"><b>03</b><span>聚合纠正</span><small>在会到达处请教</small></a>
+      <a class="mrl-roadmap-step" href="#irl"><b>04</b><span>反推目的</span><small>奖励并不唯一</small></a>
+      <a class="mrl-roadmap-step" href="#gail"><b>05</b><span>匹配访问</span><small>判别器给隐式信号</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#meta"><b>06</b><span>快速适应</span><small>在任务族上学会学习</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>奖励函数缺席，不等于学习信号完全消失</h2>
+  <p class="mrl-sec-lead">很多任务里，我们写不出逐步 reward，却能观察熟练的人怎样完成任务。示范没有直接说“为什么好”，但至少给出了“在这个情境下，专家选择了什么”。</p>
+
+  <div class="mrl-signal-ladder" aria-label="从奖励到示范与任务族的三种监督条件">
+    <article><span>ORDINARY RL</span><h3>环境给奖励</h3><p>策略试动作，环境用 $r_t$ 评价结果。</p></article>
+    <i>→</i>
+    <article><span>IMITATION</span><h3>专家给示范</h3><p>数据告诉我们专家在 $s$ 时做了 $a$，但不直接给目标函数。</p></article>
+    <i>→</i>
+    <article><span>TASK FAMILY</span><h3>训练给任务族</h3><p>不同任务提供少量交互，评价的是适应以后能否迅速变好。</p></article>
+  </div>
+  <p class="mrl-caption">三栏真正改变的是训练信号：即时标量、专家选择，或跨任务的适应结果；它们不是“同一个算法换了名字”。</p>
+
+  <p>设专家数据集为 $\mathcal D_E=\{\tau^{(1)},\ldots,\tau^{(M)}\}$，一条轨迹写成 $\tau=(s_0,a_0,s_1,a_1,\ldots)$。最保守的问题是：只从这些 $(s,a)$ 对学习动作规则。这个问题不需要先猜 reward，得到的就是模仿学习的第一条基线。</p>
+</section>
+
+<section id="bc">
+  <h2 class="mrl-sec-title"><span class="num">02</span>行为克隆：先把“专家会做”写成分类问题</h2>
+  <p class="mrl-sec-lead"><strong>Behavior Cloning（BC，行为克隆）</strong>把状态当输入、专家动作当标签。它不通过环境奖励改策略，而是直接提高专家动作的条件概率。</p>
+
+  <p>对离散动作，最常见目标是负对数似然：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{BC}}(\theta)=-\mathbb E_{(s,a)\sim\mathcal D_E}\left[\log\pi_\theta(a\mid s)\right]$$</div>
+  <table>
+    <thead><tr><th>符号</th><th>准确含义</th><th>程序变量</th></tr></thead>
+    <tbody>
+      <tr><td>$\mathcal D_E$</td><td>专家轨迹拆出的状态—动作样本</td><td><code>expert_states</code>, <code>expert_actions</code></td></tr>
+      <tr><td>$\pi_\theta(a\mid s)$</td><td>当前策略在状态 $s$ 给动作 $a$ 的概率</td><td><code>policy.log_prob(states, actions)</code></td></tr>
+      <tr><td>$-\log\pi_\theta(a\mid s)$</td><td>专家动作概率越低，单样本损失越大</td><td><code>-log_prob</code></td></tr>
+      <tr><td>$\mathbb E_{\mathcal D_E}$</td><td>只在专家数据覆盖的状态上取平均</td><td><code>loss.mean()</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>一个数值例已经足够看清优化方向。专家在路口向左，旧策略给“左”概率 $0.60$，单样本损失是 $-\log0.60\approx0.511$；训练后概率升到 $0.90$，损失变成 $-\log0.90\approx0.105$。优化器做的只是让策略更同意专家。</p>
+
+  <pre class="mrl-code"><code>def behavior_cloning_step(policy, expert_batch):
+    states, expert_actions = expert_batch
+    log_prob = policy.log_prob(states, expert_actions)
+    loss = -log_prob.mean()
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()</code></pre>
+
+  <p>连续动作时可以让策略输出高斯分布并最小化负对数似然，或者在假设合适时用均方误差。形式变了，训练边界没变：它只校准<strong>专家访问过的输入</strong>。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>行为克隆简单，不是因为决策变简单，而是因为数据替我们固定了动作标签</h3>
+      <p>BC 暂时绕过 reward、return 与 Bellman target，把序列决策切成一组监督样本。</p>
+      <p class="mrl-insight-key">它优化的是专家数据上的一步预测损失；这并不自动等价于部署时整条轨迹都正确。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="shift">
+  <h2 class="mrl-sec-title"><span class="num">03</span>协变量偏移：策略的一次错误，会改变下一次考试题</h2>
+  <p class="mrl-sec-lead">普通分类器预测错一张图片，不会改变下一张测试图片。策略却会用动作推动环境：当前错误会把 agent 带到新的状态，新的状态又成为下一次输入。</p>
+
+  <p><strong>Covariate shift（协变量偏移）</strong>在这里指训练状态来自专家访问分布 $d_E(s)$，部署状态却来自学习策略自己诱导的分布 $d_{\pi_\theta}(s)$。即使两者初始接近，一次偏航也可能把策略带到专家数据没有覆盖的恢复状态。</p>
+
+  <div class="mrl-shift-story" aria-label="行为克隆部署时的分布偏移">
+    <div class="expert"><span>TRAIN</span><strong>车道中央</strong><small>专家数据密集，动作误差低</small></div>
+    <i>小误差</i>
+    <div class="edge"><span>DEPLOY</span><strong>接近边线</strong><small>数据稀少，不会恢复</small></div>
+    <i>再误差</i>
+    <div class="unknown"><span>OFF SUPPORT</span><strong>车身斜跨</strong><small>模型面对陌生输入</small></div>
+  </div>
+  <p class="mrl-caption">要观察的是因果链：不是测试集“突然变坏”，而是策略自己的动作改变了后续状态分布，使下一步进入更陌生的区域。</p>
+
+  <p>先做一个乐观计算：假设每一步都仍处于熟悉状态，单步犯错概率只有 $\epsilon$，而且各步独立。长度为 $T$ 的轨迹全程不犯错的概率是：</p>
+  <div class="mrl-equation">$$P(\text{全程无错})=(1-\epsilon)^T$$</div>
+  <p>若 $\epsilon=0.01$，十步无错概率约为 $0.99^{10}=0.904$，一百步只剩 $0.99^{100}\approx0.366$。这还没有计算离开专家分布后错误率上升，因此只是乐观下界式的直觉检查，不是完整的 BC 性能保证。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“训练集准确率 99%，所以 100 步任务也大约有 99% 成功率。”</strong> 不对。序列成功要求许多相互影响的动作连续正确；一旦动作改变了状态分布，后续误差也不再服从训练集上的 1%。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>部署分布不是外部给定的测试集，而是策略自己制造的</h3>
+      <p>动作既是预测输出，也是下一状态的原因。模型会遇到什么输入，部分取决于它之前怎样预测。</p>
+      <p class="mrl-insight-key">因此只降低 $d_E$ 上的一步误差还不够；训练数据还要覆盖学习策略真正会走到的地方。</p>
+    </div>
+  </aside>
+</section>

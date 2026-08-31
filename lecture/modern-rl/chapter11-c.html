@@ -1,0 +1,196 @@
+<section id="conservative">
+  <h2 class="mrl-sec-title"><span class="num">07</span>Conservative value：先在证据内改进，再决定要离数据多远</h2>
+  <p class="mrl-sec-lead">离线策略不能靠部署前试错纠正自己，因此价值最大化需要同时回答两个问题：这个动作估值有多高？这个估值又有多少数据支持？</p>
+
+  <p><strong>conservative value estimation（保守价值估计）</strong>的核心不是把所有价值一律减小，而是让数据外动作比数据内动作承担更大的不确定性成本。常见方法可以从两个位置介入：</p>
+
+  <div class="mrl-conservative-routes">
+    <article>
+      <span>ROUTE A · 限制策略或候选动作</span>
+      <h3>只在 behavior support 附近找更好动作</h3>
+      <p>一种做法从学到的行为分布生成候选动作，只允许小幅扰动；另一种做法在提高 Q 的同时，直接惩罚策略偏离日志动作。</p>
+      <div class="mrl-equation compact">$$\max_\pi\;\mathbb E_{s\sim\mathcal D,a\sim\pi}[\hat Q(s,a)]\quad\text{s.t.}\quad D(\pi\|\pi_\beta)\le\varepsilon$$</div>
+    </article>
+    <article>
+      <span>ROUTE B · 改造价值学习</span>
+      <h3>让 OOD 动作难以靠虚高估值获胜</h3>
+      <p>一种做法显式压低广泛候选动作相对于数据动作的 Q；另一种做法只从数据动作提取偏向高值的基线，避免在 target 中显式查询数据外动作的最大 Q。</p>
+      <div class="mrl-equation compact">$$\text{Bellman fit}\; +\; \alpha\times\text{support-aware pessimism}$$</div>
+    </article>
+  </div>
+  <p class="mrl-caption">两条路线控制的是同一条因果链的不同位置：左侧减少策略进入低支撑区域，右侧减少低支撑动作凭虚高 Q 吸引策略。实际算法常把两种约束组合使用。</p>
+
+  <table class="mrl-method-table">
+    <thead><tr><th>方法</th><th>它在什么位置保守</th><th>一句话直觉</th></tr></thead>
+    <tbody>
+      <tr><td>行为附近选动作</td><td>候选动作</td><td>只在行为数据附近挑动作</td></tr>
+      <tr><td>广泛候选价值惩罚</td><td>Q 函数</td><td>压低广泛候选动作，相对抬住数据动作</td></tr>
+      <tr><td>数据内偏高基线</td><td>价值 target</td><td>只依赖数据动作，并用偏向较高回报样本的加权回归学习 $V$，避开显式的数据外最大值</td></tr>
+      <tr><td>价值提高与动作复现</td><td>Actor 损失</td><td>提高 Q，同时别离日志动作太远</td></tr>
+    </tbody>
+  </table>
+
+  <p>保守强度也不是越大越好。过弱时会相信外推；过强时会把真正优于行为策略、但覆盖较少的动作也压掉，最终退化成近似复现日志动作。因此离线 RL 的核心权衡可以写成：</p>
+  <div class="mrl-equation">$$\text{policy improvement}\quad\longleftrightarrow\quad\text{stay close enough to evidence}.$$</div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>离线保守性不是胆小，而是把证据强度纳入优化</h3>
+      <p>在线 agent 可以用探索购买新证据；纯离线 agent 没有这个选项。它若离开 support，承担的不是“可能试错一次”，而是“永远无法在训练中核验”。</p>
+      <p class="mrl-insight-key">保守项不是取消策略改进，而是要求改进幅度与数据能支撑的可信度相匹配。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="cql">
+  <h2 class="mrl-sec-title"><span class="num">08</span>保守 Q 学习：为什么一项 logsumexp 能形成“一压一拉”？</h2>
+  <p class="mrl-sec-lead">Conservative Q-Learning（CQL，保守 Q 学习）保留 Bellman 拟合，同时加入一个相对惩罚：广泛动作的高 Q 要付费，日志里真实动作的 Q 则被托住。</p>
+
+  <p>在离散动作的教学版本中，CQL critic loss 可以写成：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{CQL}}(Q)=\mathcal L_{\mathrm{Bellman}}(Q)+\alpha\left(\mathbb E_{s\sim\mathcal D}\left[\log\sum_a e^{Q(s,a)}\right]-\mathbb E_{(s,a)\sim\mathcal D}[Q(s,a)]\right).$$</div>
+
+  <p>按作用拆开：</p>
+  <ol class="mrl-step-list">
+    <li><strong>$\log\sum_a e^{Q(s,a)}$ 对所有候选动作做 soft maximum。</strong> 某个动作 Q 越高，它对这一项的贡献越大；最小化 loss 会把高输出向下压。</li>
+    <li><strong>$-\mathbb E_{(s,a)\sim\mathcal D}Q(s,a)$ 把数据动作往上拉。</strong> 数据中实际出现的动作同时进入负项，不会和 OOD 候选受到完全相同的净下压力。</li>
+    <li><strong>$\alpha$ 决定这条 gap 有多强。</strong> $\alpha=0$ 退回普通 Bellman 拟合；过大则可能过度悲观。</li>
+  </ol>
+
+  <h3>两动作的梯度直觉</h3>
+  <p>仍设数据动作“直行”的 $Q=5$，零样本动作“强右”的 $Q=9$。保守括号为：</p>
+  <div class="mrl-equation">$$\log(e^5+e^9)-5\approx9.018-5=4.018.$$</div>
+  <p>softmax 权重分别约为 $0.018$ 与 $0.982$，所以括号对两个 Q 的导数是：</p>
+  <div class="mrl-equation">$$\frac{\partial}{\partial Q_{\mathrm{data}}}\approx0.018-1=-0.982,\qquad \frac{\partial}{\partial Q_{\mathrm{ood}}}\approx0.982.$$</div>
+  <p>梯度下降会沿导数反方向移动：把数据动作往上拉，把 OOD 高值往下压。这就是“一压一拉”的数学来源。连续动作无法枚举所有 $a$，实际实现会从随机分布与当前策略采样候选动作来近似。</p>
+
+  <div class="mrl-misconception">
+    <b>边界提醒</b>
+    <p>这项正则不能凭空恢复 OOD 动作的真实价值；它只阻止缺少证据的高值过早主导策略。离线评估本身也受 support 限制，因此超参数不能只凭训练 loss 决定，还需要独立的仿真、安全评测或可靠 holdout protocol。</p>
+  </div>
+</section>
+
+<section id="sequence">
+  <h2 class="mrl-sec-title"><span class="num">09</span>Sequence modeling：如果不做 $\max Q$，能否直接预测动作？</h2>
+  <p class="mrl-sec-lead">保守 Q 方法仍在修补 Bellman 学习。另一条路线干脆把固定轨迹排成序列，将“想要多少回报”作为条件，用监督学习预测日志动作。</p>
+
+  <p><strong>Decision Transformer（DT，决策 Transformer）</strong>先为轨迹中每个位置计算 <strong>return-to-go（RTG，剩余回报）</strong>：</p>
+  <div class="mrl-equation">$$\widehat R_t=\sum_{k=t}^{T}r_k.$$</div>
+  <p>若接下来三步奖励为 $2,1,3$，三个位置的 RTG 分别是 $6,4,3$。DT 把轨迹改排成：</p>
+  <div class="mrl-sequence-line" aria-label="Decision Transformer 的交错轨迹序列">
+    <b>$\widehat R_1$<small>目标余量</small></b><i>→</i><b>$s_1$<small>当前状态</small></b><i>→</i><b>$a_1$<small>监督动作</small></b><i>→</i><b>$\widehat R_2$</b><i>→</i><b>$s_2$</b><i>→</i><b>$a_2$</b>
+  </div>
+  <p class="mrl-caption">真正要观察的是条件方向：传统价值学习从 $(s,a)$ 预测未来回报；DT 把目标剩余回报放进上下文，从“我还想拿多少分、现在在哪里、之前做了什么”预测下一动作。</p>
+
+  <p>使用因果注意力时，模型在预测 $a_t$ 前只能看到当前与过去的信息：</p>
+  <div class="mrl-equation">$$\pi_\theta(a_t\mid\widehat R_{1:t},s_{1:t},a_{1:t-1})=\operatorname{Transformer}(\widehat R_{1:t},s_{1:t},a_{1:t-1}).$$</div>
+  <p>连续动作可直接使用均方误差训练：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{DT}}=\mathbb E_{\tau\sim\mathcal D}\left[\sum_t\|\hat a_t-a_t\|^2\right].$$</div>
+  <p>训练没有 Bellman target，也没有 $\max_aQ$。部署时给一个数据中合理的目标 RTG，每执行一步拿到 $r_t$，就更新 $\widehat R_{t+1}=\widehat R_t-r_t$，再预测下一动作。</p>
+
+  <table class="mrl-sequence-table">
+    <thead><tr><th>序列路线</th><th>建模对象</th><th>推理方式</th></tr></thead>
+    <tbody>
+      <tr><td>Decision Transformer</td><td>给定 RTG 的条件动作分布</td><td>逐步自回归动作</td></tr>
+      <tr><td>Trajectory Transformer</td><td>离散化的完整轨迹联合分布</td><td>beam search 搜索轨迹</td></tr>
+      <tr><td>Diffuser</td><td>整条连续轨迹的生成分布</td><td>从噪声迭代去噪</td></tr>
+    </tbody>
+  </table>
+
+  <p>序列建模避开了“在 OOD 动作上取最大 Q”这条故障路径，却没有消灭数据边界。若目标 RTG 高于数据中所有轨迹，或者当前状态附近从未出现高回报动作，Transformer 仍然只能外推。它更像是在学习：</p>
+  <div class="mrl-equation">$$\pi_\theta(a\mid s,\widehat R)\approx\pi_\beta(a\mid s,\text{return}\approx\widehat R).$$</div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>换掉 Bellman 方程，不等于换掉数据支撑的上限</h3>
+      <p>DT 不会被 $\max Q$ 直接诱入虚高动作，但它仍依赖固定轨迹中“状态—目标回报—动作”的共现关系。</p>
+      <p class="mrl-insight-key">离线 RL 可以换目标函数、换模型架构，却不能从没有证据的地方无条件创造可靠决策知识。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">10</span>把公式落到代码：哪里出现 support，哪里避开 max？</h2>
+  <p class="mrl-sec-lead">下面不是完整训练器，而是两条路线的最小概念代码。阅读时只追踪数据从哪里来，以及哪一行可能查询数据外动作。</p>
+
+  <div class="mrl-code-stack">
+    <div>
+      <span>CONSERVATIVE Q LEARNING · CRITIC STEP</span>
+      <pre class="mrl-code"><code>state, action, reward, next_state, terminal = dataset.sample(batch_size)
+
+with torch.no_grad():
+    next_action = actor(next_state)          # may leave dataset support
+    continuation = target_q(next_state, next_action)
+    td_target = reward + gamma * (1 - terminal) * continuation
+
+q_data = q(state, action)                   # logged actions
+bellman_loss = mse(q_data, td_target)
+q_candidates = q(state, candidate_actions) # policy + random actions
+cql_gap = logsumexp(q_candidates, dim=1).mean() - q_data.mean()
+critic_loss = bellman_loss + conservative_alpha * cql_gap</code></pre>
+    </div>
+    <div>
+      <span>DECISION TRANSFORMER · SUPERVISED STEP</span>
+      <pre class="mrl-code"><code>rtg, states, actions, mask = dataset.sample_trajectory(window)
+predicted_actions = transformer(rtg, states, actions[:, :-1])
+action_loss = masked_mse(predicted_actions, actions, mask)
+
+# deployment: keep the requested return inside observed scale
+action = model.act(target_rtg, state, history)
+next_state, reward, terminated, truncated, _ = env.step(action)
+target_rtg = target_rtg - reward</code></pre>
+    </div>
+  </div>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学或概念</th><th>程序变量</th><th>检查点</th></tr></thead>
+    <tbody>
+      <tr><td>$\mathcal D$</td><td><code>dataset</code></td><td>训练循环里没有 <code>dataset.add(...)</code></td></tr>
+      <tr><td>数据动作 $a_i$</td><td><code>action</code></td><td>它是真实日志动作，不是当前 Actor 新生成的动作</td></tr>
+      <tr><td>广泛候选动作</td><td><code>candidate_actions</code></td><td>用于暴露并惩罚数据外高 Q</td></tr>
+      <tr><td>保守强度 $\alpha$</td><td><code>conservative_alpha</code></td><td>不要与学习率或 SAC entropy coefficient 混淆</td></tr>
+      <tr><td>$\widehat R_t$</td><td><code>rtg</code>, <code>target_rtg</code></td><td>训练来自轨迹回报；部署时每步减去已获得奖励</td></tr>
+      <tr><td>因果历史</td><td><code>states</code>, <code>actions[:, :-1]</code></td><td>预测 $a_t$ 时不能偷看未来动作</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：你能沿着证据边界诊断失败吗？</h2>
+  <p class="mrl-sec-lead">先不要背算法名。对每个问题依次回答：数据由谁采、覆盖哪里、哪里发生最大化、错误如何被纠正。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么使用 replay buffer 的 TD3 通常仍不是 offline RL？</summary><div class="inner">因为普通 TD3 会继续用当前或带噪策略与环境交互，把新 transition 加入 buffer。它可以是 off-policy，却仍有在线数据回流；离线 RL 的 behavior dataset 在训练开始前就冻结。</div></details>
+    <details><summary>2. 一个动作是 OOD，能否推出它在环境里一定危险或回报低？</summary><div class="inner">不能。OOD 只表示给定状态下行为数据对该动作缺少覆盖，因而当前估值证据不足。它的真实回报可能高也可能低；纯离线训练的问题是无法通过新交互核验。</div></details>
+    <details><summary>3. 若 Q 网络在 OOD 区域的误差正负对称，为什么 $\arg\max$ 仍会产生系统性风险？</summary><div class="inner">因为最大化会从许多带噪估值中挑最高者，被选中的动作更可能携带较大的正误差。OOD 区域不确定性更大时，虚高值尤其容易胜出并进入 Bellman target。</div></details>
+    <details><summary>4. $\gamma=0.99$ 时“误差约放大 100 倍”应该怎样准确理解？</summary><div class="inner">若多层 backup 持续注入近似同方向、大小为 $\epsilon$ 的误差，几何和是 $\epsilon/(1-\gamma)=100\epsilon$。它是长时域累积的示意，不表示任何单次随机误差都必然精确变成一百倍。</div></details>
+    <details><summary>5. CQL 正则中的 logsumexp 与负的数据动作均值分别做什么？</summary><div class="inner">logsumexp 对广泛候选动作形成 soft maximum，最小化它会压低高 Q；减去数据动作的 Q 均值会相对抬住日志动作。两者共同制造数据外与数据内估值的保守 gap。</div></details>
+    <details><summary>6. 为什么保守系数并非越大越安全、越好？</summary><div class="inner">过弱会让 OOD 虚高值控制策略；过强则可能把覆盖较少但真实优质的动作也压掉，使策略只能复制 behavior policy。它调节的是改进幅度与证据可信度之间的权衡。</div></details>
+    <details><summary>7. Decision Transformer 不使用 $\max Q$，为什么仍可能在离线数据上失败？</summary><div class="inner">它仍只学到 behavior dataset 中状态、目标 RTG 与动作的条件关系。若目标 RTG 超出训练范围，或相应状态附近没有高回报动作轨迹，序列模型仍在做缺少证据的外推。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十一章建立起来的诊断链</h3>
+    <div class="mrl-summary-chain">
+      <div><span>固定日志</span><strong>训练期间没有新交互</strong><small>$\mathcal D$</small></div>
+      <i>→</i>
+      <div><span>有限支撑</span><strong>部分状态动作缺少证据</strong><small>OOD</small></div>
+      <i>→</i>
+      <div><span>价值最大化</span><strong>挑中乐观外推</strong><small>$\max\hat Q$</small></div>
+      <i>→</i>
+      <div><span>离线修正</span><strong>约束、悲观或序列建模</strong><small>CQL / DT</small></div>
+    </div>
+    <p>离线 RL 的困难不是文件不够大，而是策略优化会改变数据分布，却没有新的环境反馈验证改变后的选择。保守估值把证据强度带进优化；序列建模避开 Bellman 最大化，但两者都不能突破固定数据本身的覆盖边界。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter12.html">第 12 章：如果连明确 reward 都没有，能否从示范和任务族学习？</a></h3>
+    <p>本章假设固定日志仍保存了逐步奖励。下一章会进一步拿走这份监督：有时我们只有专家做过什么，却不知道他为什么这么做；有时还希望一个 agent 从许多任务中学会快速适应。模仿学习、逆强化学习与元强化学习将回答这组新问题。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本的 <code>docs/chapter12_offline_rl/</code> 重新组织，不是原项目官方译本。保守 Q 学习、只依赖数据动作的价值基线与回报条件序列建模保留上游主线；数据覆盖/Q 互动实验与数值审计为本讲义重新设计。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 11</span><span><a href="./chapter10.html">← Chapter 10</a> · <a href="./">课程目录</a> · <a href="./chapter12.html">Chapter 12 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter12_offline_rl" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

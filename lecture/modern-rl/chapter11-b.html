@@ -1,0 +1,92 @@
+<section id="extrapolation">
+  <h2 class="mrl-sec-title"><span class="num">05</span>Extrapolation error：最大化会主动挑中最乐观的猜测</h2>
+  <p class="mrl-sec-lead">神经网络在训练点之间能够泛化，也必然会在训练支撑之外给出数值。离线失败不是“网络偶尔猜错”这么简单，而是策略改进会搜索并利用这些猜错的地方。</p>
+
+  <p>把动作价值估计写成真实值加估计误差：</p>
+  <div class="mrl-equation">$$\hat Q(s,a)=Q_{\mathrm{true}}(s,a)+\epsilon(s,a).$$</div>
+  <p>数据密集处的 $\epsilon$ 被许多监督 target 约束；OOD 动作的 $\epsilon$ 可能很大，正负都可能。问题出在贪心选择：</p>
+  <div class="mrl-equation">$$a_{\mathrm{greedy}}=\arg\max_a\hat Q(s,a)=\arg\max_a\left[Q_{\mathrm{true}}(s,a)+\epsilon(s,a)\right].$$</div>
+  <p>$\max$ 会在所有候选动作中挑一个最大输出。即使误差本身没有系统性为正，被选中的那个动作也更可能带有较大的正误差——这和从很多次有噪声测量中专挑最高分一样。若 OOD 区域的不确定性更大，它尤其容易赢得这场“错误选美”。</p>
+
+  <h3>一个两动作数值例：没有证据的 8 分怎样进入 target？</h3>
+  <p>在下一状态 $s'$，日志充分覆盖“直行”，而从未记录“强右”：</p>
+  <table class="mrl-phantom-table">
+    <thead><tr><th>动作</th><th>日志样本数</th><th>网络输出 $\hat Q(s',a)$</th><th>部署后真实审计</th></tr></thead>
+    <tbody>
+      <tr><td>直行</td><td>120</td><td>5.0</td><td>5.0</td></tr>
+      <tr class="ood"><td>强右</td><td>0</td><td>8.0</td><td>−2.0</td></tr>
+    </tbody>
+  </table>
+  <p>训练时不知道最后一列；它只看见网络输出，于是 $\max_a\hat Q(s',a)=8$。若当前奖励 $r_t=0$、$\gamma=0.99$，Q-learning 风格的 Bellman target 是：</p>
+  <div class="mrl-equation">$$y_{\mathrm{naive}}=0+0.99\times8=7.92.$$</div>
+  <p>如果只在数据支持的动作上比较，target 应为 $0+0.99\times5=4.95$。一个 OOD 高估让这次 target 凭空增加 $2.97$；随后拟合这个 target 的网络，又可能把虚高值传到更早的 $(s_t,a_t)$。</p>
+
+  <p>这种由于在数据支撑之外外推，再被策略或 Bellman 最大化利用而产生的误差，称为 <strong>extrapolation error（外推误差）</strong>。它沿 Bellman backup 传播。若每层都近似注入同方向误差 $\epsilon_{\mathrm{ood}}$，长期影响的几何和为：</p>
+  <div class="mrl-equation">$$\epsilon_{\mathrm{ood}}+\gamma\epsilon_{\mathrm{ood}}+\gamma^2\epsilon_{\mathrm{ood}}+\cdots=\frac{\epsilon_{\mathrm{ood}}}{1-\gamma}.$$</div>
+  <p>当 $\gamma=0.99$ 时，系数是 $100$。这不是说任意一次误差都必然精确放大一百倍；它说明在长时域中，持续同向的 backup 误差没有在线反馈打断时，会累积成非常大的偏差。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>真正危险的组合是“不确定估值 × 最大化”</h3>
+      <p>函数逼近器可以在证据外犯正误差或负误差；策略改进却会系统性搜寻最高输出，因此更容易把正误差变成动作，再把动作变成新的 target。</p>
+      <p class="mrl-insight-key">离线 Q 学习不是被随机误差平均击败，而是被优化器主动找到并反复利用的误差击败。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="error-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>实验：一项没有数据的动作，怎样赢得 Q 值竞赛？</h2>
+  <p class="mrl-sec-lead">下面固定四个有日志支持的动作，只改变“强右”的网络原始估值、日志覆盖量与保守强度。先预测谁会被选，再拖动参数。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>当 OOD 动作被网络偶然高估时，朴素贪心与考虑数据支撑的保守选择会怎样不同？</dd>
+    <dt>Prediction</dt><dd>默认设置下，朴素 $\arg\max\hat Q$ 会选零样本的“强右”；足够强的支撑惩罚会让选择回到高覆盖的“直行”。</dd>
+    <dt>Experiment</dt><dd>拖动“强右原始 Q”“强右样本数”和惩罚系数 $\alpha$。教学代理分数使用 $\hat Q_{\mathrm{con}}=\hat Q_{\mathrm{raw}}-\alpha/\sqrt{n_{\mathcal D}+1}$，同时显示原始与调整后选择。</dd>
+    <dt>Observation</dt><dd id="offlineObservation">正在计算默认设置。</dd>
+    <dt>Interpretation</dt><dd>贪心规则只比较点估计，不知道哪些数字有数据约束；保守分数把证据稀缺作为选择成本，因此能阻止一个孤立虚高值立即控制策略。</dd>
+    <dt>Limitation</dt><dd>这是展示“支撑感知”因果关系的离散动作玩具，不是 CQL 的实际损失。真实离线 RL 需要同时重新训练 Q；图中的“真实审计”在训练期间不可见。</dd>
+  </dl>
+
+  <div class="mrl-viz mrl-offline-lab">
+    <div class="mrl-viz-head">
+      <div><h3>Support-aware Q audit</h3><p>同一状态下五个动作；条宽表示日志数量，表格比较原始与保守分数。</p></div>
+      <button class="mrl-btn" id="offlineReset" type="button">恢复默认</button>
+    </div>
+
+    <div class="mrl-lab-toolbar">
+      <label class="mrl-range-control"><span>强右原始 $\hat Q$ <output id="oodQValue">9.2</output></span><input id="oodQ" type="range" min="5" max="12" step="0.1" value="9.2"></label>
+      <label class="mrl-range-control"><span>强右日志样本数 <output id="oodCountValue">0</output></span><input id="oodCount" type="range" min="0" max="64" step="1" value="0"></label>
+      <label class="mrl-range-control"><span>保守系数 $\alpha$ <output id="conservativeAlphaValue">4.0</output></span><input id="conservativeAlpha" type="range" min="0" max="10" step="0.5" value="4"></label>
+    </div>
+
+    <div class="mrl-lab-decisions" aria-live="polite">
+      <article><span>NAIVE GREEDY</span><strong id="greedyChoice">—</strong><small id="greedyReason">按原始 Q 最大化</small></article>
+      <article class="conservative"><span>SUPPORT-AWARE</span><strong id="conservativeChoice">—</strong><small id="conservativeReason">原始 Q − 稀缺惩罚</small></article>
+      <article class="audit"><span>POST-HOC AUDIT</span><strong id="auditReturn">—</strong><small>教学模拟器中部署后的真实值</small></article>
+    </div>
+
+    <div class="mrl-support-bars" id="supportBars" aria-label="各动作的日志样本数"></div>
+
+    <div class="mrl-lab-table-wrap">
+      <table class="mrl-lab-table">
+        <thead><tr><th>动作</th><th>日志数 $n_{\mathcal D}$</th><th>原始 $\hat Q$</th><th>惩罚</th><th>保守分数</th><th>真实审计</th></tr></thead>
+        <tbody id="offlineActionRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <p class="mrl-caption">先看两个选择框是否分叉，再看“强右”这一行：默认时它凭 9.2 的原始输出赢得贪心选择，却因零样本承担 4.0 惩罚。把 $\alpha$ 降到 0 可隔离出最大化效应；增加样本数会降低不确定性成本，但只有真实新数据参与训练后，原始 Q 才应被纠正。</p>
+
+  <h3>默认设置手算</h3>
+  <p>“直行”有 $n_{\mathcal D}=120$、$\hat Q_{\mathrm{raw}}=6.0$；“强右”有 $n_{\mathcal D}=0$、$\hat Q_{\mathrm{raw}}=9.2$。取 $\alpha=4$：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \hat Q_{\mathrm{con}}(\text{直行})&=6.0-\frac{4}{\sqrt{121}}\approx5.64,\\
+  \hat Q_{\mathrm{con}}(\text{强右})&=9.2-\frac{4}{\sqrt{1}}=5.20.
+  \end{aligned}$$</div>
+  <p>因此原始最大值选“强右”，教学型保守分数选“直行”。如果把 $\alpha$ 设为 0，两列完全相同，保守选择也会立刻追随虚高动作；这就是最直接的反事实。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“给动作加过惩罚，就证明它真实价值低。”</strong> 不对。惩罚表达的是证据不足，不是真实失败标签。若未来允许安全采集足够的新数据，可能证实这个动作很好；但在纯离线训练中不能把这种希望当作已观察事实。</p>
+  </div>
+</section>

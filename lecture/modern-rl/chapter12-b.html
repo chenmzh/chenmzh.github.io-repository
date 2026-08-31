@@ -1,0 +1,84 @@
+<section id="dagger">
+  <h2 class="mrl-sec-title"><span class="num">04</span>数据集聚合：不要只问专家“你会去哪”，还要问“我走到这里该怎么办”</h2>
+  <p class="mrl-sec-lead"><strong>Dataset Aggregation（DAgger，数据集聚合）</strong>直接针对分布错位：让当前策略 rollout，收集它实际访问的状态，再请专家为这些状态标出正确动作。</p>
+
+  <div class="mrl-dagger-loop" aria-label="DAgger 数据聚合循环">
+    <div><span>1 · ROLLOUT</span><strong>当前策略行动</strong><small>包括偏航与恢复状态</small></div><i>→</i>
+    <div><span>2 · QUERY</span><strong>专家只给标签</strong><small>$a^*=\pi^*(s)$</small></div><i>→</i>
+    <div><span>3 · AGGREGATE</span><strong>并入旧数据</strong><small>$\mathcal D_{i+1}=\mathcal D_i\cup\mathcal D_{\pi_i}$</small></div><i>→</i>
+    <div><span>4 · RETRAIN</span><strong>重新训练策略</strong><small>下一轮再暴露新状态</small></div>
+  </div>
+  <p class="mrl-caption">真正关键的是第二步的标签来源：保存的是“当前策略到过的状态 + 专家在该状态会做的动作”，而不是把策略刚才的错误动作当成监督标签。</p>
+
+  <p>第 $i$ 轮可以写成三行：</p>
+  <div class="mrl-equation">$$
+  s\sim d_{\pi_i},\qquad
+  \mathcal D_{i+1}=\mathcal D_i\cup\{(s,\pi^*(s))\},\qquad
+  \pi_{i+1}=\arg\min_\pi\sum_{(s,a)\in\mathcal D_{i+1}}\ell(\pi(s),a).
+  $$</div>
+  <p>第一行让训练状态逐渐靠近学习策略的部署分布；第二行由专家纠正这些状态；第三行仍然只是监督学习。早期为了安全，执行动作可以来自专家与策略的混合 $\pi_i^{\mathrm{mix}}=\beta_i\pi^*+(1-\beta_i)\pi_i$，再逐渐减小 $\beta_i$。但无论谁执行动作，收集到的状态都必须由专家重新标注。</p>
+
+  <pre class="mrl-code"><code>dataset = initial_expert_data()
+policy = train_bc(dataset)
+
+for round_id in range(num_rounds):
+    visited_states = rollout(env, policy)       # 策略实际到过哪里
+    expert_actions = expert.label(visited_states)
+    dataset.extend(zip(visited_states, expert_actions))
+    policy = train_bc(dataset)                  # 仍是监督学习</code></pre>
+
+  <div class="mrl-method-boundary">
+    <article><span>DAgger 修复什么</span><h3>训练状态覆盖</h3><p>把策略会访问的偏航状态加入训练集，让恢复动作有机会被学到。</p></article>
+    <article><span>DAgger 付出什么</span><h3>在线专家查询</h3><p>专家必须能为策略制造的新状态给出动作；危险任务还需要安全接管机制。</p></article>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>DAgger 没有换掉监督学习，而是换掉了监督学习在回答的问题</h3>
+      <p>BC 问“专家通常到达的状态该做什么”；DAgger 继续追问“当前策略把自己带到的状态该做什么”。</p>
+      <p class="mrl-insight-key">改进来自输入分布的主动修正，而不是一条更复杂的分类损失。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="dagger-lab">
+  <h2 class="mrl-sec-title"><span class="num">05</span>实验：聚合恢复状态，能否阻止 rollout 越走越偏？</h2>
+  <p class="mrl-sec-lead">下面不是随机播放一条幸运或倒霉轨迹，而是跟踪许多重复 rollout 的<strong>期望状态占比</strong>。这样可以单独观察 horizon、单步误差与恢复能力之间的因果关系。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>同样的专家状态错误率下，为什么纯 BC 会逐渐积累分布外状态，而 DAgger 聚合几轮后能压低这种占比？</dd>
+    <dt>Prediction</dt><dd>增大任务长度或单步偏航率会放大 BC 的离轨占比；增加 DAgger 轮数提高恢复概率后，后半程的离轨占比会下降，但不会自动变为零。</dd>
+    <dt>Experiment</dt><dd>调节 horizon $T$、在专家覆盖区的偏航率 $\epsilon$ 与聚合轮数 $K$。页面用二状态递推比较“在支持区 / 在支持区外”的概率，并明确采用教学假设 $q_K=\min(0.90,0.10+0.10K)$。</dd>
+    <dt>Observation</dt><dd id="daggerObservation">等待实验初始化。</dd>
+    <dt>Interpretation</dt><dd>DAgger 的作用不是假设策略从不犯错，而是让恢复状态进入训练集，提高离轨后的返回概率。</dd>
+    <dt>Limitation</dt><dd>这是两状态期望模型；$q_K$ 的线性提高是为了隔离机制而设的假设，不是 DAgger 的经验定律。实验也没有计算真实动力学、专家时间、安全接管与有限模型容量。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar" aria-label="BC 与 DAgger rollout 实验控制">
+    <label class="mrl-range-control"><span>任务长度 $T$ <output id="horizonValue">60</output></span><input id="horizonInput" type="range" min="10" max="120" step="10" value="60"></label>
+    <label class="mrl-range-control"><span>单步偏航率 $\epsilon$ <output id="errorValue">0.04</output></span><input id="errorInput" type="range" min="0.01" max="0.15" step="0.01" value="0.04"></label>
+    <label class="mrl-range-control"><span>DAgger 聚合轮数 <output id="roundValue">5</output></span><input id="roundInput" type="range" min="0" max="8" step="1" value="5"></label>
+    <button class="mrl-btn" id="daggerReset" type="button">恢复默认值</button>
+  </div>
+
+  <div class="mrl-lab-model">
+    <div><span>处于专家支持区</span><strong>$p_t$</strong><small>下一步以 $\epsilon$ 概率偏航</small></div>
+    <i>⇄</i>
+    <div><span>处于支持区外</span><strong>$1-p_t$</strong><small>以恢复率 $q$ 返回</small></div>
+  </div>
+  <div class="mrl-equation">$$p_{t+1}=p_t(1-\epsilon)+(1-p_t)q$$</div>
+
+  <div class="mrl-rollout-chart" aria-label="BC 与 DAgger 的期望离轨占比曲线">
+    <div class="mrl-chart-head"><span>EXPECTED OFF-SUPPORT RATE</span><small><i class="bc-key"></i>BC，固定 $q=0.10$　<i class="dagger-key"></i>DAgger，聚合后 $q$ 提高</small></div>
+    <div class="mrl-chart-grid" id="rolloutChart"></div>
+    <div class="mrl-chart-axis"><span>step 0</span><span id="chartMidLabel">step 30</span><span id="chartEndLabel">step 60</span></div>
+  </div>
+  <p class="mrl-caption">纵向越高表示 rollout 中越多概率质量已经离开专家数据支持。应比较两条线在后半程是否分开，而不是只看第 0 步都从支持区开始。</p>
+
+  <div class="mrl-lab-results">
+    <article class="bc"><span>PURE BC</span><h3>末步离轨 <strong id="bcEndValue">—</strong></h3><dl><dt>平均离轨步数</dt><dd id="bcStepsValue">—</dd><dt>恢复概率 $q$</dt><dd>0.10</dd></dl></article>
+    <article class="dagger"><span>DAgger</span><h3>末步离轨 <strong id="daggerEndValue">—</strong></h3><dl><dt>平均离轨步数</dt><dd id="daggerStepsValue">—</dd><dt>恢复概率 $q$</dt><dd id="daggerRecoveryValue">—</dd></dl></article>
+  </div>
+  <p class="mrl-lab-note" id="daggerMechanism">—</p>
+</section>

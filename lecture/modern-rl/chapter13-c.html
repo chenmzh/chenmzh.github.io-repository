@@ -1,0 +1,185 @@
+<section id="hierarchy">
+  <h2 class="mrl-sec-title"><span class="num">09</span>层级决策：让高层选择“做什么”，让低层负责“每一步怎么做”</h2>
+  <p class="mrl-sec-lead"><strong>Hierarchical Reinforcement Learning（HRL，层级强化学习）</strong>在多个时间尺度上决策。低层仍输出原子动作；高层每隔一段时间选择子目标或时间扩展动作，从而减少高层需要直接比较的决策节点。</p>
+
+  <p>想象 DoorKey 需要 120 个原子动作。Flat policy（平坦策略）每一步都在“左转、右转、前进、拿取、开门”之间选择；层级策略可以先选择“找到钥匙”，让低层连续执行 30 步，再选择“去门口”。层级不是让物理时间消失，而是改变哪一层多久做一次决定。</p>
+
+  <div class="mrl-timescale">
+    <div>
+      <span>FLAT POLICY · 每步决策</span>
+      <div class="ticks"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p>转向 → 前进 → 前进 → 拿取 → 转向 → ……</p>
+    </div>
+    <div>
+      <span>HIERARCHICAL POLICY · 一段才决策</span>
+      <div class="options"><b>找到钥匙</b><b>走到门口</b><b>打开门</b><b>到达目标</b></div>
+      <p>每个高层选择在内部展开为若干原子动作。</p>
+    </div>
+  </div>
+  <p class="mrl-caption">真正要比较的是高层的选择次数：原子时间仍然逐步流逝，奖励仍按实际经过的 primitive steps 折扣；被压缩的是高层决策树的深度。</p>
+
+  <h3>把一段闭环策略封装成时间扩展动作</h3>
+  <p><strong>Option（时间扩展动作）</strong>不是固定动作序列，而是一段能根据中途状态继续反应的策略。一个 option $\omega$ 由三部分组成：</p>
+  <div class="mrl-equation">$$\omega=\left(\mathcal I_\omega,\pi_\omega,\beta_\omega\right)$$</div>
+  <table>
+    <thead><tr><th>组成</th><th>准确含义</th><th>“拿到钥匙” option</th></tr></thead>
+    <tbody>
+      <tr><td>$\mathcal I_\omega$</td><td>initiation set（初始集）：允许启动 option 的状态</td><td>还没拿钥匙，且钥匙可达</td></tr>
+      <tr><td>$\pi_\omega(a\mid s)$</td><td>intra-option policy（option 内策略）：执行期间怎样选原子动作</td><td>根据当前位置持续导航与拿取</td></tr>
+      <tr><td>$\beta_\omega(s)\in[0,1]$</td><td>termination function（终止函数）：到状态 $s$ 后结束的概率</td><td>拿到钥匙后接近 1；失败或超时也可终止</td></tr>
+    </tbody>
+  </table>
+
+  <p>设 option 实际执行了 $T$ 步，期间奖励为 $r_t,\ldots,r_{t+T-1}$。先把这段真实奖励折扣相加：</p>
+  <div class="mrl-equation">$$R_t^\omega=\sum_{k=0}^{T-1}\gamma^k r_{t+k}$$</div>
+  <p>若在 option 层做最优控制，<strong>Semi-Markov Decision Process（SMDP，半马尔可夫决策过程）</strong>的 backup 是：</p>
+  <div class="mrl-equation">$$\text{target}_\omega=R_t^\omega+\gamma^T(1-d_{t+T})\max_{\omega'}Q(s_{t+T},\omega')$$</div>
+  <p>“半马尔可夫”在这里最直观的含义是：一次高层 transition 可能持续随机的 $T$ 步。因为下一次高层决策发生在 $T$ 个原子步以后，后续 option 价值必须乘 $\gamma^T$，不能只乘一次 $\gamma$。其中 $d_{t+T}=1$ 只表示环境真正终止；option 自己结束并不清空后续价值，外部时间上限造成的截断若保留合法最终观测，也仍可 bootstrap。</p>
+
+  <h3>一段三步 option 的 target</h3>
+  <p>取 $\gamma=0.9$，某 option 连续三步奖励为 $(0,0,5)$；它在第三步正常结束，但整个 episode 仍继续，下一状态的最佳 option 价值是 2：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \text{target}_\omega
+  &=0+0.9(0)+0.9^2(5)+0.9^3(2)\\
+  &=4.05+1.458=5.508.
+  \end{aligned}$$</div>
+  <p>最后一步得到的 5 已经离 option 起点两步，因此乘 $\gamma^2$；option 结束后的价值离起点三步，因此乘 $\gamma^3$。时间抽象改变动作单位，没有重写折扣的物理时钟。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“一个 option 算一个动作，所以不管内部走多久都只折扣一次。”</strong> 不对。高层选择次数变少，不代表奖励更早到达；SMDP backup 必须按 option 实际持续的 primitive steps 使用 $\gamma^T$。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>Option 压缩决策，不压缩时间</h3>
+      <p>层级可以让高层只在有语义的边界选择“拿钥匙”或“开门”，从而缩短高层的决策链；内部实际经过多少步，仍完整进入奖励与折扣。</p>
+      <p class="mrl-insight-key">判断 HRL 是否有帮助，要看 option 是否稳定到达有用边界，而不是只看高层动作数变少。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="option-lab">
+  <h2 class="mrl-sec-title"><span class="num">10</span>实验：时间抽象究竟压缩了什么，又没有压缩什么？</h2>
+  <p class="mrl-sec-lead">把总任务长度记为 $H$，固定 option 持续时间记为 $T$。比较高层决策数、正确的 primitive-time 折扣，以及“每个 option 只折扣一次”的错误算法。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>增大 option 持续时间，为什么会减少高层决策数，却不应让远端奖励变得更少折扣？</dd>
+    <dt>Prediction</dt><dd>高层决策数约从 $H$ 降到 $\lceil H/T\rceil$；正确终点权重仍为 $\gamma^H$，只有错误算法才变成 $\gamma^{\lceil H/T\rceil}$。</dd>
+    <dt>Experiment</dt><dd>调节任务长度 $H$、option 时长 $T$ 和折扣 $\gamma$，并排比较三个量。</dd>
+    <dt>Observation</dt><dd>页面显示决策压缩倍数、正确终点权重和错误权重；默认设置下，两种折扣相差很大。</dd>
+    <dt>Interpretation</dt><dd>HRL 的结构收益来自更少、更有语义的高层选择；SMDP 仍按真实 elapsed time 计算回报。</dd>
+    <dt>Limitation</dt><dd>真实 option 时长通常随机，且失败、提前终止与不可达子目标会降低层级收益；这里仅展示固定时长。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar">
+    <label class="mrl-range-control"><span>任务长度 $H$ <output id="optionHorizonValue">120</output></span><input id="optionHorizon" type="range" min="20" max="500" value="120" step="10"></label>
+    <label class="mrl-range-control"><span>option 时长 $T$ <output id="optionDurationValue">10</output></span><input id="optionDuration" type="range" min="1" max="50" value="10" step="1"></label>
+    <label class="mrl-range-control"><span>折扣 $\gamma$ <output id="optionGammaValue">0.99</output></span><input id="optionGamma" type="range" min="0.90" max="1" value="0.99" step="0.005"></label>
+    <button class="mrl-btn" type="button" id="optionReset">恢复默认</button>
+  </div>
+
+  <div class="mrl-option-results">
+    <article><span>FLAT DECISIONS</span><strong id="flatDecisions">120</strong><small>每个原子步一次</small></article>
+    <article><span>HIGH-LEVEL DECISIONS</span><strong id="highDecisions">12</strong><small id="compressionValue">压缩 10.0×</small></article>
+    <article class="correct"><span>CORRECT · $\gamma^H$</span><strong id="correctDiscount">0.299</strong><small>按真实原子时间</small></article>
+    <article class="wrong"><span>WRONG · $\gamma^{\lceil H/T\rceil}$</span><strong id="wrongDiscount">0.886</strong><small>误把 option 当一瞬间</small></article>
+  </div>
+  <p class="mrl-lab-observation" id="optionObservation">高层选择减少 10.0×，但正确终点权重仍是 0.299；若每个 option 只折扣一次，会错误放大到 0.886。</p>
+  <p class="mrl-caption">真正要观察的是两条曲线没有一起“被压缩”：决策节点按 option 数减少，终点奖励仍按 $H$ 个 primitive steps 折扣。</p>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">11</span>把三种结构落到代码：bonus、counterfactual 与 duration</h2>
+  <p class="mrl-sec-lead">三种方法都可以写成很短的计算，但各自修改的是不同对象：训练奖励、个体学习信号、或高层 transition。</p>
+
+  <pre class="mrl-code"><code>import math
+
+def exploration_reward(ext_reward, visits, eta):
+    novelty = 1.0 / math.sqrt(visits + 1)
+    return ext_reward + eta * novelty
+
+def difference_reward(team_return, counterfactual_return):
+    return team_return - counterfactual_return
+
+def option_target(rewards, gamma, next_option_value, episode_terminated):
+    duration = len(rewards)
+    option_return = sum(
+        gamma ** k * reward for k, reward in enumerate(rewards)
+    )
+    continuation = 0.0 if episode_terminated else next_option_value
+    return option_return + gamma ** duration * continuation</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>代码变量</th><th>改变问题的哪一层</th></tr></thead>
+    <tbody>
+      <tr><td>$r_t^{\text{ext}}$</td><td><code>ext_reward</code></td><td>环境原始任务反馈</td></tr>
+      <tr><td>$r_t^{\text{int}}=1/\sqrt{N+1}$</td><td><code>novelty</code></td><td>探索模块产生的临时训练信号</td></tr>
+      <tr><td>$\eta$</td><td><code>eta</code></td><td>外部目标与探索奖金的权衡</td></tr>
+      <tr><td>$R_{\text{team}}(z^{-i})$</td><td><code>counterfactual_return</code></td><td>个体信用的 baseline</td></tr>
+      <tr><td>$T$</td><td><code>duration</code></td><td>高层一次 transition 经历的原子步数</td></tr>
+      <tr><td>$R_t^\omega$</td><td><code>option_return</code></td><td>option 内部奖励的逐步折扣和</td></tr>
+      <tr><td>$d_{t+T}$</td><td><code>episode_terminated</code></td><td>只在环境真正终止时清空后续价值</td></tr>
+    </tbody>
+  </table>
+
+  <h3>与固定上游实验怎样对应</h3>
+  <div class="mrl-upstream-map">
+    <article>
+      <span>MINIGRID ADVENTURE</span>
+      <h3>观察稀疏探索与长顺序</h3>
+      <p><code>MiniGrid-DoorKey-6x6-v0</code> 要求找到钥匙、携带钥匙开门再到终点。运行时使用局部 RGB 视野和 PPO，检查成功率、episode return 与回放中的交互顺序。</p>
+    </article>
+    <article>
+      <span>MULTI-AGENT GAMES</span>
+      <h3>观察联合行为，而不冒充完整 CTDE</h3>
+      <p><code>MPE/simple_spread_v3</code> 中三个 agent 覆盖地标并避免碰撞；上游实现向量化 agent 槽位、训练参数共享 PPO，并以 mean reward per agent 保存 checkpoint。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要检查的是 metric 与机制是否匹配：MiniGrid 回放要完成钥匙—门—终点顺序；多智能体回放要出现站位与避碰。参数共享实验能展示协作现象，但不能单独验证反事实信用。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>检查你的理解：你改的是奖励、信息，还是时间尺度？</h2>
+  <p class="mrl-sec-lead">三种扩展最容易被混成一袋“高级技巧”。每题都先定位结构断点，再说明公式为什么放在那里。</p>
+
+  <table class="mrl-diagnosis-table">
+    <thead><tr><th>观察到的失败</th><th>优先检查</th><th>不要过早下结论</th></tr></thead>
+    <tbody>
+      <tr><td>所有 rollout 外部奖励都为 0</td><td>状态覆盖率、新颖度与成功轨迹密度</td><td>“critic 太小”</td></tr>
+      <tr><td>团队分上升，但只有一名 agent 在做事</td><td>个体轨迹、角色行为与 credit baseline</td><td>“团队已经协作”</td></tr>
+      <tr><td>高层选了子目标，低层经常到不了</td><td>initiation、termination 与 option 成功率</td><td>“决策数变少所以一定更好”</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么稀疏奖励不等同于奖励数值很小？</summary><div class="inner">数值小可以通过缩放处理；稀疏奖励的关键是绝大多数 transition 得到相同、缺乏区分度的反馈。第一条成功轨迹出现以前，策略甚至不知道向哪个方向改变采样。</div></details>
+    <details><summary>2. 若 $\eta=0.4$、外部奖励为 0、新状态过去访问 3 次，训练奖励是多少？</summary><div class="inner">访问奖金是 $1/\sqrt{3+1}=0.5$，所以 $r^{\text{train}}=0+0.4(0.5)=0.2$。这只是训练信号，不应当被报告成环境任务得分。</div></details>
+    <details><summary>3. 为什么其他 agent 学习会让单个 agent 看到非平稳环境？</summary><div class="inner">agent $i$ 的有效转移要对其他人的联合动作按其策略概率求和。队友或对手的策略更新后，即使底层环境动力学 $P$ 不变，同一 $(s,a_i)$ 的结果分布也会变化。</div></details>
+    <details><summary>4. 团队回报为 12，没有 agent B 时团队仍得 9，B 的 difference reward 是多少？它说明什么？</summary><div class="inner">$D_B=12-9=3$。在所选反事实 baseline 下，B 的实际行为使团队回报提高了 3；它不是说 B 独占 3 分，也不保证所有 agent 的 difference reward 加起来等于 12。</div></details>
+    <details><summary>5. CTDE 中，为什么集中式 critic 能看联合动作，而部署 actor 不应该看？</summary><div class="inner">训练阶段可以汇总全局日志来降低歧义；部署时每名 agent 可能只有局部观察，也未必能通信。critic 只构造训练信号，actor 必须遵守实际执行的信息边界。</div></details>
+    <details><summary>6. 一个 option 执行 4 步后才结束，为什么后续价值乘 $\gamma^4$ 而不是 $\gamma$？</summary><div class="inner">后续 option 价值相对当前高层决策已经过去 4 个原子时间步。Option 压缩高层选择次数，不压缩真实 elapsed time；SMDP backup 因而使用 $\gamma^T$。</div></details>
+    <details><summary>7. 什么时候层级结构可能反而伤害学习？</summary><div class="inner">如果 initiation set 不合理、低层无法可靠完成子目标、termination 太早或太晚，或任务本来就很短，option 会限制可选行为并引入额外训练误差。应检查 option 成功率和高层边界是否真的有语义。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十三章留下的三把结构旋钮</h3>
+    <div class="mrl-flow">
+      <div class="box">无反馈<br><small>加可耗尽探索信号</small></div><div class="arrow">→</div>
+      <div class="box">多人归因<br><small>组织全局信息与个体信用</small></div><div class="arrow">→</div>
+      <div class="box">长决策链<br><small>用 option 改变高层粒度</small></div>
+    </div>
+    <p>Intrinsic reward 改变训练时“什么值得访问”；多智能体 credit 与 CTDE 改变“哪些信息帮助谁学习”；option 改变“高层多久做一次选择”。三者可以组合，但必须分别验证各自承诺的机制。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter14.html">第 14 章：人类偏好怎样变成可优化的训练信号？</a></h3>
+    <p>Chapter 12 已经见过从示范推断显式奖励、以及由判别器提供隐式训练信号；本章则把外部任务奖励仍由环境规则给出的场景作为主线，并额外加入可耗尽的探索信号。下一章进入大模型对齐：当“好不好”只能通过人类或 AI 对回答的比较表达时，怎样把反馈整理成训练信号，并限制策略不要为了高分偏离原模型太远？</p>
+  </div>
+
+  <p class="mrl-source-note">本页以固定版本 walkinglabs/hands-on-modern-rl@78d4e459dcd40844e030a3ce67378b8bcb9735bd 的 <code>docs/chapter14_exploration_marl_hierarchical/</code>、PettingZoo 多智能体训练场与 MiniGrid 探索训练场为知识来源重新组织，不是原项目官方译本。本章只建立 intrinsic exploration、个体信用、CTDE 与 option 时间尺度的第一层结构；工具轨迹与自博弈群体方法留给后续对应章节。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 13</span><span><a href="./chapter12.html">← Chapter 12</a> · <a href="./">课程目录</a> · <a href="./chapter14.html">Chapter 14 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter14_exploration_marl_hierarchical" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
