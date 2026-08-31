@@ -1,0 +1,170 @@
+<section id="schedule">
+  <h2 class="mrl-sec-title"><span class="num">04</span>同步与异步：把“互相等”改成“边生产边消费”</h2>
+  <p class="mrl-sec-lead">同步与异步不是“保守算法”和“激进算法”的别名，而是各阶段在时间上是否必须对齐。它们首先改变设备等待方式，其次才改变数据新鲜度。</p>
+
+  <div class="mrl-schedule-compare">
+    <article>
+      <span>SYNCHRONOUS · 同步</span>
+      <h3>这一批全部生成完，再训练</h3>
+      <div class="mrl-mini-timeline sync" aria-label="同步训练时间线">
+        <i class="gen">生成 b0</i><i class="learn">训练 b0</i><i class="gen">生成 b1</i><i class="learn">训练 b1</i>
+      </div>
+      <p>流程直观，策略版本边界清楚；但生成时训练端等待，更新时生成端等待，还必须等 batch 中最慢的 completion。</p>
+    </article>
+    <article>
+      <span>ASYNCHRONOUS · 异步</span>
+      <h3>两组设备用 buffer 解耦</h3>
+      <div class="mrl-async-lanes" aria-label="异步训练时间线">
+        <b>Rollout</b><div><i>生成 b0</i><i>生成 b1</i><i>生成 b2</i></div>
+        <b>Training</b><div class="shift"><i>训练 b0</i><i>训练 b1</i><i>训练 b2</i></div>
+      </div>
+      <p>完成的轨迹立即进队列，learner 凑够 batch 就更新；两端重叠减少空闲，但训练时拿到的轨迹可能来自旧版本策略。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">横轴是真实时间。同步时间线中生成与训练互不重叠；异步时间线里两条 lane 同时推进。收益来自重叠，不是一次 forward 或 backward 自己变快。</p>
+
+  <p>还有一种 <strong>colocated execution（共置执行）</strong>：同一组 GPU 在 rollout 格式与 training 格式之间轮换。它节省设备，但生成和训练仍不能真正重叠，还会增加模型分片格式切换。于是三种方式可以按问题选择：</p>
+
+  <table>
+    <thead><tr><th>方式</th><th>设备安排</th><th>主要收益</th><th>新代价</th></tr></thead>
+    <tbody>
+      <tr><td>同步</td><td>同组 GPU 串行</td><td>简单、数据较新、易复现</td><td>双方互等，长尾拖整批</td></tr>
+      <tr><td>共置</td><td>同组 GPU 轮换角色</td><td>预算少时复用显存</td><td>格式转换；仍无执行重叠</td></tr>
+      <tr><td>分离异步</td><td>rollout 与 training 独立</td><td>重叠执行，提高稳态吞吐</td><td>队列、权重同步、样本陈旧</td></tr>
+    </tbody>
+  </table>
+
+  <h3>权重同步不是“保存一下模型”</h3>
+  <p>训练进程产生新参数后，生成端必须接收它们。这个过程叫 <strong>weight synchronization（weight sync，权重同步）</strong>：把 learner 的某一版本 Actor 参数传播给 inference worker。传全量参数、只传 <strong>Low-Rank Adaptation（LoRA，低秩适配）</strong>产生的小型 adapter、通过 GPU 高速互联直传或写 checkpoint 再加载，花费可能相差几个数量级。</p>
+  <p>更棘手的是边界：一条长回答生成到一半时新权重到了，系统可以等当前请求完成、直接中断、在 token 间切换，或等整批结束。越强调吞吐，版本边界越难解释；越强调样本来自单一明确策略，等待越多。因此同步策略必须和轨迹元数据一起设计，不能只测传输带宽。</p>
+</section>
+
+<section id="staleness">
+  <h2 class="mrl-sec-title"><span class="num">05</span>异步没有消灭代价，只把等待换成策略陈旧代价</h2>
+  <p class="mrl-sec-lead">队列让训练端不再等最慢任务，却让“生成这条数据的策略”和“消费这条数据的策略”发生时间差。这个差必须先能度量，才谈得上容忍或修正。</p>
+
+  <p><strong>policy staleness（策略陈旧度）</strong>指一条轨迹进入更新时，其生成策略落后于当前 learner 策略的程度。最简单的工程量是版本差：</p>
+  <div class="mrl-equation">$$\Delta v=v_{\mathrm{train}}-v_{\mathrm{gen}}$$</div>
+  <p>$v_{\mathrm{gen}}$ 是 rollout 元数据中的生成版本，$v_{\mathrm{train}}$ 是消费它时的当前版本。$\Delta v=0$ 表示版本一致；$\Delta v=3$ 表示 learner 已经更新了三次。版本差容易记录，却不直接等于行为差异：三次很小的更新可能比一次异常大更新更接近原策略。</p>
+
+  <p>因此还要比较一个实际动作在新旧策略下的概率。设轨迹由行为版本 $\pi_{\theta_{\mathrm{gen}}}$ 生成，训练时当前策略为 $\pi_\theta$，对应 token/action 的概率比为：</p>
+  <div class="mrl-equation">$$\rho_t^{\mathrm{stale}}=
+  \frac{\pi_\theta(a_t\mid s_t)}
+       {\pi_{\theta_{\mathrm{gen}}}(a_t\mid s_t)}$$</div>
+  <p>若旧策略与当前策略都给这个 token 概率 $0.20$，则 $\rho=1$；若旧策略给 $0.20$、当前只给 $0.10$，则 $\rho=0.5$。这说明当前模型已经不太会产生这一步，直接把旧轨迹当成当前策略样本会引入偏差。</p>
+
+  <div class="mrl-inline-note"><strong>别和 reference policy 混淆：</strong>这里的 $\pi_{\theta_{\mathrm{gen}}}$ 是“实际生成这条轨迹的旧 Actor 版本”；对齐训练里的 reference policy 是长期冻结、用于 KL 参照的模型。一个用于追踪数据来源，一个用于约束策略偏移，二者不是同一角色。</div>
+
+  <h3>$\Delta v=0$，也不自动保证两端概率相同</h3>
+  <p>即使 rollout 与 training 标注为同一权重版本，推理引擎和训练引擎仍可能因精度、算子实现或 <strong>Mixture of Experts（MoE，混合专家）</strong>的专家路由差异算出不同 log-probability。这叫<strong>training–inference mismatch（训推不一致）</strong>。例如生成端记录 $\log\pi_{\mathrm{gen}}=-1.61$，训练端重算为 $\log\pi_{\mathrm{train}}=-1.80$，则</p>
+  <div class="mrl-equation">$$\rho=\exp(-1.80-(-1.61))=\exp(-0.19)\approx0.83.$$</div>
+  <p>时间上没有落后，概率比却已偏离 1。因此版本检查负责发现“用了旧权重”，两端 logprob 对齐测试负责发现“同权重算出了不同概率”；PPO clipping 约束策略更新幅度，不能自动修复生成端已经记录错位的行为概率。</p>
+
+  <p>生产系统通常组合三道边界：</p>
+  <ol>
+    <li><strong>浅 buffer：</strong>先限制队列最多容纳几批，让经验不会无限排队。</li>
+    <li><strong>版本过滤：</strong>保存 <code>policy_version</code>，超过最大 $\Delta v$ 就丢弃或重采。</li>
+    <li><strong>截断修正：</strong>在算法允许时按新旧策略概率比调整权重，并限制极端比率，避免少数 token 产生爆炸更新。</li>
+  </ol>
+  <p>它们分别在系统、数据和统计层控制风险。异步不是“允许任意 off-policy 数据”，而是在吞吐与新鲜度之间写下一个可监控、可拒绝的契约。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>buffer depth 既是性能旋钮，也是统计旋钮</h3>
+      <p>深队列能吸收短时抖动，让 learner 不断粮；同一个深度也延长了数据从生成到消费的时间，使行为策略与当前策略分离。</p>
+      <p class="mrl-insight-key">提高异步度时，吞吐曲线必须与版本差、概率比和丢弃率一起报告。否则“更快”可能只是更快地消费旧策略数据。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="bottleneck-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>实验：加速一个环节，瓶颈会不会真的移动？</h2>
+  <p class="mrl-sec-lead">固定每批 512 条 completion、每条平均 2048 个 response token。调节两端吞吐、奖励耗时、同步等待与队列深度，观察端到端节奏和策略陈旧怎样同时变化。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>训练吞吐翻倍，是否一定能把整条 RL 流水线提速一倍？异步重叠又会付出多少策略陈旧代价？</dd>
+    <dt>Prediction</dt><dd>默认配置中 rollout 最慢；只加速 training 几乎不改变异步批次间隔。提高 rollout 吞吐会移动瓶颈；加深 buffer 不提高瓶颈速率，却增大版本差。</dd>
+    <dt>Experiment</dt><dd>先记下默认结果，点击“训练 ×2”与“Rollout ×2”比较；再选择“深队列”，观察相同物理吞吐下的 $\Delta v$ 与丢弃风险。</dd>
+    <dt>Observation</dt><dd id="pipelineObservation">正在计算默认配置……</dd>
+    <dt>Interpretation</dt><dd>串行总时间由各段相加；异步稳态间隔由最慢 stage 决定。队列只能把时间抖动隔开，不能违反生产—消费速率守恒。</dd>
+    <dt>Limitation</dt><dd>这是固定平均长度、忽略冷启动、通信抖动与多 epoch 更新的确定性模型；真实集群应以 profiler、长度分位数和真实 policy version 为准。</dd>
+  </dl>
+
+  <div class="mrl-viz mrl-pipeline-lab">
+    <div class="mrl-viz-head">
+      <div><h3>一批工作的速率账本</h3><p>工作量固定为 1,048,576 response tokens</p></div>
+      <button class="mrl-btn" id="pipelineReset" type="button">恢复默认</button>
+    </div>
+
+    <div class="mrl-lab-toolbar" role="group" aria-label="瓶颈反事实预设">
+      <button class="mrl-btn" type="button" data-pipeline-preset="train">训练 ×2</button>
+      <button class="mrl-btn" type="button" data-pipeline-preset="rollout">Rollout ×2</button>
+      <button class="mrl-btn" type="button" data-pipeline-preset="queue">深队列</button>
+    </div>
+
+    <div class="mrl-pipeline-controls">
+      <label class="mrl-range-control"><span>Rollout 吞吐 <output id="rolloutRateValue">24k tok/s</output></span><input id="rolloutRate" type="range" min="8000" max="80000" step="1000" value="24000"></label>
+      <label class="mrl-range-control"><span>Training 吞吐 <output id="trainRateValue">80k tok/s</output></span><input id="trainRate" type="range" min="16000" max="160000" step="2000" value="80000"></label>
+      <label class="mrl-range-control"><span>Reward / verifier <output id="rewardTimeValue">4.0 s</output></span><input id="rewardTime" type="range" min="0" max="30" step="0.5" value="4"></label>
+      <label class="mrl-range-control"><span>权重同步等待 <output id="syncTimeValue">3.0 s</output></span><input id="syncTime" type="range" min="0" max="20" step="0.5" value="3"></label>
+      <label class="mrl-range-control"><span>队列深度 <output id="queueDepthValue">2 batches</output></span><input id="queueDepth" type="range" min="0" max="8" step="1" value="2"></label>
+      <label class="mrl-range-control"><span>当前策略动作概率 <output id="currentProbValue">0.10</output></span><input id="currentProb" type="range" min="0.05" max="0.40" step="0.01" value="0.10"></label>
+    </div>
+
+    <div class="mrl-stage-bars" aria-label="流水线阶段耗时对照">
+      <div><span>Rollout + sync</span><i><b id="rolloutStageBar"></b></i><strong id="rolloutStageValue">46.7 s</strong></div>
+      <div><span>Reward</span><i><b id="rewardStageBar"></b></i><strong id="rewardStageValue">4.0 s</strong></div>
+      <div><span>Training</span><i><b id="trainStageBar"></b></i><strong id="trainStageValue">13.1 s</strong></div>
+    </div>
+
+    <div class="mrl-pipeline-results">
+      <article><span>SERIAL STEP</span><strong id="serialStepValue">63.8 s</strong><small>四段顺次完成</small></article>
+      <article><span>ASYNC CADENCE</span><strong id="asyncCadenceValue">46.7 s</strong><small>理想稳态批次间隔</small></article>
+      <article><span>BOTTLENECK</span><strong id="bottleneckValue">Rollout</strong><small id="speedupValue">重叠上界 1.37×</small></article>
+      <article><span>USEFUL THROUGHPUT</span><strong id="systemThroughputValue">22.5k tok/s</strong><small>由最慢 stage 限制</small></article>
+      <article><span>GPU ACTIVE SHARE</span><strong id="utilizationValue">R 93.6% · T 28.1%</strong><small>忙碌时间 / 稳态窗口</small></article>
+      <article><span>STALENESS</span><strong id="stalenessValue">Δv ≈ 3</strong><small id="ratioValue">ρ = 0.50（旧概率 0.20）</small></article>
+    </div>
+  </div>
+  <p class="mrl-caption">先比较三条 stage bar，再读结果：最长 bar 决定异步稳态间隔。把 training 调快而最长 bar 不变，就是“优化了非瓶颈”；把 queue 调深而三条 bar 不变，却让 $\Delta v$ 上升，就是吞吐与新鲜度的分离。</p>
+  <p>实验里的陈旧度使用一个刻意保守的课堂近似：</p>
+  <div class="mrl-equation">$$\Delta v_{\mathrm{approx}}=q+\left\lceil\frac{T_w}{T_t}\right\rceil$$</div>
+  <p>它把队列前方已有的 $q$ 个 batch，与权重同步期间 learner 可能前进的版本数相加。真实系统是否能在同步时继续更新、一次 batch 更新几次、何时切换权重都由实现决定，所以线上必须记录真实 <code>v_train - v_gen</code>，不能用近似替代日志。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“异步速度上界是所有阶段吞吐之和。”</strong> 不对。不同阶段处理的是同一批数据的不同工序，不能把 token/s 相加。流水线每隔多久能产出一批，仍受最慢 stage 的服务时间限制。</p>
+  </div>
+</section>
+
+<section id="utilization">
+  <h2 class="mrl-sec-title"><span class="num">07</span>GPU utilization 是症状，不是终极目标</h2>
+  <p class="mrl-sec-lead">“GPU 99%”可能表示真正做了有用矩阵乘，也可能表示 kernel 很忙却没有产生可用于学习的新鲜轨迹。先把几个常见比例放回因果链。</p>
+
+  <p>最直观的 <strong>GPU utilization（GPU 利用率）</strong>是采样窗口内设备有 kernel 执行的时间比例。课堂里用 active share 近似：</p>
+  <div class="mrl-equation">$$U_i=\frac{T_{i,\mathrm{busy}}}{T_{\mathrm{window}}}$$</div>
+  <p>若异步批次间隔为 46.7 秒、training 只忙 13.1 秒，那么训练端 active share 约为 $28.1\%$。它没有说明 backward kernel 慢，而是说明 learner 大部分窗口里在等 rollout。此时继续优化训练 kernel，反而会让它更早做完、等待更久。</p>
+
+  <p><strong>Model FLOPs Utilization（MFU，模型浮点运算利用率）</strong>进一步比较实际模型 FLOPs 与硬件峰值 FLOPs：</p>
+  <div class="mrl-equation">$$\mathrm{MFU}=\frac{\text{实际模型 FLOPs}}{\text{峰值 FLOPs}\times\text{墙钟时间}}$$</div>
+  <p>MFU 低可能来自通信、padding、数据加载、同步或负载不均；MFU 高也只说明计算单元忙，不证明 reward 正确、样本新鲜或验证集变好。要把指标分成三层读：</p>
+
+  <table>
+    <thead><tr><th>层</th><th>先看什么</th><th>它能回答</th><th>它不能证明</th></tr></thead>
+    <tbody>
+      <tr><td>学习结果</td><td>独立评测、成功率、回归集</td><td>模型是否真的变好</td><td>系统为何慢</td></tr>
+      <tr><td>数据与策略</td><td>reward、KL、entropy、$\Delta v$、丢弃率</td><td>学习信号是否健康、新鲜</td><td>哪张卡在等待</td></tr>
+      <tr><td>系统效率</td><td>stage time、tokens/s、queue depth、GPU/MFU</td><td>时间花在哪里</td><td>高 reward 是否代表真能力</td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>高利用率是约束下的手段，端到端有效学习才是目标</h3>
+      <p>把低利用率归因到具体等待以后，才知道该加 rollout GPU、缩短 verifier、平衡序列长度，还是优化通信。单独追求“卡更忙”甚至可能生成更多过期或无学习信号的数据。</p>
+      <p class="mrl-insight-key">最终应优化“单位墙钟时间带来的独立评测增益”，吞吐、MFU 和 GPU utilization 只是解释这个目标的中间指标。</p>
+    </div>
+  </aside>
+</section>

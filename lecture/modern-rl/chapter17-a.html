@@ -1,0 +1,156 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 17 · Reasoning models and inference-time compute</div>
+  <h1>为什么增加思考 token 和采样次数能改善推理？</h1>
+  <p class="lead">Chapter 16 已经用 GRPO 与 RLVR 让“得到可验证正确结果的轨迹”更常出现。可训练结束后，模型参数就固定了：面对同一道难题，我们还能不能靠多写一段草稿、多采几条候选，把偶然走错的机会降下来？本章把这件事变成一笔可以计算的<strong>质量—成本账</strong>。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>增加思考 token 或采样次数，究竟在什么假设下提高成功率？为什么候选更多不等于交付结果一定更好，又该在什么时候停止加计算？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 70–90 min</span>
+    <span class="mrl-pill">先修：Chapter 14–16</span>
+    <span class="mrl-pill">数学：补事件 + 独立采样</span>
+    <span class="mrl-pill">实验：多次采样覆盖率、相关错误与成本曲线</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从训练后的策略，到部署时的预算分配</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#reasoning"><b>01</b><span>留出草稿</span><small>中间步骤用于尝试与检查</small></a>
+      <a class="mrl-roadmap-step" href="#rlvr"><b>02</b><span>连接训练</span><small>可验证奖励提高好轨迹概率</small></a>
+      <a class="mrl-roadmap-step" href="#pass-k"><b>03</b><span>多采候选</span><small>推导多次采样覆盖率</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#scaling-lab"><b>04</b><span>拨动预算</span><small>质量、成本与相关性</small></a>
+      <a class="mrl-roadmap-step" href="#selection"><b>05</b><span>聚合答案</span><small>候选重排与投票</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#routing"><b>06</b><span>决定何时停</span><small>混合与自适应思考</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>训练完了，单次回答仍可能只是“这次没发挥好”</h2>
+  <p class="mrl-sec-lead">把模型训练得更强，与让固定模型在当前题上发挥得更充分，是两个发生在不同时间尺度的问题。</p>
+
+  <p>假设一个模型已经会用因式分解解 $x^2-5x+6=0$，但随机生成时，有时写出正确的 $(x-2)(x-3)$，有时把符号抄错。第一次答错不一定表示模型完全没有这项知识；也可能只是这次采样走进了低概率的错误路径。</p>
+
+  <div class="mrl-compute-split">
+    <article>
+      <span>TRAINING COMPUTE</span>
+      <h3>改变参数，扩大能力集合</h3>
+      <p>继续预训练、监督微调或强化学习，让模型学会原本不会的方法，并提高好轨迹的生成概率。</p>
+      <strong>回答“模型会不会？”</strong>
+    </article>
+    <article>
+      <span>INFERENCE-TIME COMPUTE</span>
+      <h3>固定参数，重新分配当前预算</h3>
+      <p>在同一道题上生成更长草稿、更多候选或更多轮检查，让模型更接近已有能力上限。</p>
+      <strong>回答“这次怎样发挥出来？”</strong>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要观察的是“参数是否更新”：左边改变策略本身；右边保持同一个模型，只改变当前请求消耗的计算量。</p>
+
+  <p><strong>test-time compute / inference-time compute（测试时／推理时计算）</strong>，指模型参数已经固定后，为一次请求投入的生成、检查、采样和聚合计算。两种说法在本章同义；“test-time”强调研究评测，“inference-time”更贴近部署。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“多采样是在偷偷继续训练模型。”</strong> 不对。训练会更新参数 $\theta$；推理时扩展保持 $\theta$ 不变，只从同一分布 $\pi_\theta(\cdot\mid x)$ 多取样或延长当前轨迹。请求结束后，模型没有因此永久学会新知识。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>训练计算提高上限，推理计算减少“没发挥出来”</h3>
+      <p>增加当前请求的计算，最擅长修复选错路线、漏掉检查和偶然算错；它很难补出模型分布里根本不存在的知识。</p>
+      <p class="mrl-insight-key">先区分“完全不会”和“偶尔会”，才能判断下一份算力应该花在训练，还是花在当前题的多次尝试上。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="reasoning">
+  <h2 class="mrl-sec-title"><span class="num">02</span>推理模型：先把一部分 token 当草稿，再把答案交出去</h2>
+  <p class="mrl-sec-lead">传统短答像“看到题目立刻落笔”；推理模型则允许先列条件、试路线、检查矛盾，再组织最终答案。</p>
+
+  <p><strong>reasoning model（推理模型）</strong>是被训练为在最终答案前分配较长中间计算、检查或工具反馈的语言模型。<strong>Chain-of-Thought（CoT，思维链）</strong>是把问题连接到答案的一串中间推理步骤；它可以表现为可见文本，也可以只是服务内部使用的推理 token。</p>
+
+  <div class="mrl-reasoning-flow" aria-label="直接回答和推理回答的生成流程">
+    <article>
+      <span>DIRECT ANSWER</span>
+      <div class="mrl-token-track"><b>问题</b><i>→</i><strong>答案</strong></div>
+      <p>路径短、延迟低；第一步方向错时，没有显式检查空间。</p>
+    </article>
+    <article>
+      <span>REASONING MODEL</span>
+      <div class="mrl-token-track"><b>问题</b><i>→</i><em>列条件 · 尝试 · 验算</em><i>→</i><strong>答案</strong></div>
+      <p>中间计算为纠错提供机会，但更长不自动意味着更正确。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">因果差别不是“有没有写解释”，而是最终作答之前是否真的分配了可用于尝试和检查的计算；面向用户的整理解说也不等同于原始内部推理。</p>
+
+  <p>例如分解 $x^2-5x+6$，一条有用的短思维链可以是：</p>
+  <ol>
+    <li>寻找乘积为 $6$、和为 $-5$ 的两个数：$-2,-3$。</li>
+    <li>写成 $(x-2)(x-3)=0$。</li>
+    <li>得到 $x=2$ 或 $x=3$，再代回原式验证两者都成立。</li>
+  </ol>
+  <p>这里第三步确实减少了符号错误；若模型把同一个乘法再算十遍，却从不检查题设条件，新增 token 只是重复，不是有效计算。因此本章关注的不是“文本越长越好”，而是<strong>新增预算是否创造了新的候选、证据或纠错机会</strong>。</p>
+
+  <div class="mrl-inline-note"><strong>可见性边界：</strong>本讲义为了教学，会展示可以独立核查的推导；真实产品可以隐藏原始内部 CoT，只提供最终答案与整理后的依据。展示多少与推理是否正确是两个不同问题。</div>
+</section>
+
+<section id="rlvr">
+  <h2 class="mrl-sec-title"><span class="num">03</span>从 Chapter 16 接过来：RLVR 把偶尔成功的轨迹变得更常见</h2>
+  <p class="mrl-sec-lead">Chapter 16 已经正式解释了 outcome verifier 与组内相对优势。本章只沿用它们的结论，不重讲 GRPO 更新式。</p>
+
+  <p>设模型面对问题 $x$ 时可能生成若干类轨迹 $z$：直接猜、列式后计算、换一种方法、最后验算。把选择第 $z$ 类轨迹的概率写成 $\pi_\theta(z\mid x)$，该类轨迹最终通过验证的概率写成 $s(z)$，则单次平均成功率可以写成：</p>
+  <div class="mrl-equation">$$p(x)=\sum_z \pi_\theta(z\mid x)\,s(z).$$</div>
+
+  <p>这个式子只是全概率公式：模型先按 $\pi_\theta$ 生成一种轨迹，再以 $s(z)$ 的概率成功。RLVR 给最终结果提供可验证奖励，使更常成功的整条轨迹获得更高概率，从而改变上式里的 $\pi_\theta$。</p>
+
+  <table class="mrl-trajectory-table">
+    <thead><tr><th>轨迹类型 $z$</th><th>训练前概率</th><th>该类成功率 $s(z)$</th><th>对单次成功率的贡献</th></tr></thead>
+    <tbody>
+      <tr><td>直接猜</td><td>$0.60$</td><td>$0.05$</td><td>$0.030$</td></tr>
+      <tr><td>列式但不检查</td><td>$0.30$</td><td>$0.30$</td><td>$0.090$</td></tr>
+      <tr><td>推导并验算</td><td>$0.10$</td><td>$0.70$</td><td>$0.070$</td></tr>
+    </tbody>
+  </table>
+  <p>训练前单次成功率为 $0.03+0.09+0.07=0.19$。若结果奖励把三类概率重排为 $(0.25,0.35,0.40)$，而各类内部成功率暂时不变，则：</p>
+  <div class="mrl-equation">$$p_{\text{after}}=0.25(0.05)+0.35(0.30)+0.40(0.70)=0.3975.$$</div>
+
+  <p>成功率提高，不要求奖励函数逐字写着“请验算”；只要“推导并验算”更容易得到最终奖励，它的整条轨迹概率就会被提高。但这不等于 RL 从零创造了验算能力：基座模型必须先以非零概率生成过这种行为，验证器才有机会选中并放大它。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>所谓“推理涌现”，常常包含一次概率重排</h3>
+      <p>没有逐步 CoT 标签时，反思和验算仍可能在 RL 后稳定出现；但要判断 RL 是“创造”还是“激活”，必须先检查基座模型多次采样时是否已经偶尔产生正确轨迹。</p>
+      <p class="mrl-insight-key">RLVR 提高的是通过结果验证的轨迹概率；预训练知识、采样覆盖和验证器共同决定有哪些轨迹可被强化。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="compute">
+  <h2 class="mrl-sec-title"><span class="num">04</span>预算有两个基本方向：把一条路走深，或从多个起点重走</h2>
+  <p class="mrl-sec-lead">“多给 4,000 个 token”还不是完整方案。它们可以连在一条推理链后面，也可以拆给多条独立候选。</p>
+
+  <div class="mrl-budget-modes">
+    <article>
+      <span>DEPTH · 更多思考 token</span>
+      <h3>一条链继续推导与修订</h3>
+      <p>保留已有中间状态，适合证明、复杂代码和多步规划。早期路线选错时，也可能沿错误前缀越走越远。</p>
+      <code>1 path × 4,000 tokens</code>
+    </article>
+    <article>
+      <span>BREADTH · 更多采样次数</span>
+      <h3>从题目重新生成多条候选</h3>
+      <p>覆盖不同起点，适合存在偶然采样错误、候选可以并行且最终结果可聚合的任务。</p>
+      <code>8 paths × 500 tokens</code>
+    </article>
+  </div>
+  <p class="mrl-caption">相同总 token 预算不代表相同效果：需要连续依赖时，深度保留上下文；首步路线容易选错时，广度提供不同起点。</p>
+
+  <p>这里要区分三个成本：<strong>总计算量</strong>近似随生成 token 总数增长；<strong>墙钟延迟</strong>取决于这些路径能否并行；<strong>验证成本</strong>来自执行测试、规则检查或评分模型。八条并行候选可能等待时间接近一条，却仍消耗约八倍生成计算。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“并行生成八条，所以成本仍是一条。”</strong> 并行只把总工作摊到多块硬件上，主要缩短墙钟时间；八条候选的总 token、显存占用和后续验证工作并不会消失。</p>
+  </div>
+
+  <p>下一步先把“广度”算清楚：若单条候选有概率 $p$ 正确，采 $k$ 条以后，至少看见一次正确答案的概率是多少？这个量会给多采样一个最理想的质量上限。</p>
+</section>

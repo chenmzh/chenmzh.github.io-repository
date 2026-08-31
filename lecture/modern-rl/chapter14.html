@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hands-On Modern RL 第十四章：从示范、偏好比较和自然语言原则出发，理解人类或 AI 反馈怎样经过评分模型变成受约束的策略训练信号。">
+  <meta name="theme-color" content="#f7f7f3">
+  <title>第 14 章 · 怎样把人类或 AI 的反馈变成训练信号？ | Modern RL</title>
+  <link rel="stylesheet" href="../iml26/katex/katex.min.css">
+  <link rel="stylesheet" href="./minimal.css?v=2">
+  <link rel="stylesheet" href="./editorial.css?v=1">
+  <link rel="stylesheet" href="./chapter01-insights.css?v=1">
+  <link rel="stylesheet" href="./chapter01-terms.css?v=1">
+  <link rel="stylesheet" href="./chapter14.css?v=1">
+</head>
+<body class="mrl-page">
+  <header class="mrl-min-header">
+    <a class="mrl-min-brand" href="./">
+      <small>Hands-On Modern Reinforcement Learning</small>
+      <span>Chapter 14 · 从比较与原则学习奖励</span>
+    </a>
+    <nav class="mrl-min-links" aria-label="页面导航">
+      <a href="./">目录</a>
+      <a href="./chapter13.html">上一章</a>
+      <a href="./chapter15.html">下一章</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter15_rlhf/standard-rlhf-pipeline.md" target="_blank" rel="noopener">原章 ↗</a>
+    </nav>
+  </header>
+
+  <div class="mrl-chapter-layout">
+    <nav class="mrl-toc" aria-label="本章目录">
+      <p class="mrl-rail-label">Chapter 14</p>
+      <a href="#start">奖励从哪里来</a>
+      <a href="#llm-trajectory">把回答写成轨迹</a>
+      <a href="#sft">先学会像助手回答</a>
+      <a href="#preference">把比较变成数据</a>
+      <a href="#reward-model">让模型学会排序</a>
+      <a href="#ppo-loop">把分数接回受限策略更新</a>
+      <a href="#reference-policy">两种“旧模型”的职责</a>
+      <a href="#signal-lab">实验：反馈如何穿过流水线</a>
+      <a href="#cai">用自然语言原则生成反馈</a>
+      <a href="#feedback-sources">反馈来源不等于目标</a>
+      <a href="#code">公式落到三份代码</a>
+      <a href="#takeaways">理解检查</a>
+      <div class="mrl-progress">
+        <span class="mrl-small">Reading progress</span>
+        <div class="mrl-progress-track"><div class="mrl-progress-fill" id="readingProgress"></div></div>
+      </div>
+    </nav>
+
+    <main class="mrl-article" id="chapterContent" aria-live="polite">
+      <section class="mrl-chapter-hero">
+        <div class="mrl-eyebrow">Loading chapter…</div>
+        <h1>正在加载第十四章</h1>
+      </section>
+    </main>
+  </div>
+
+  <script src="../iml26/katex/katex.min.js"></script>
+  <script src="../iml26/katex/auto-render.min.js"></script>
+  <script src="./chapter14.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<section id="selection">
+  <h2 class="mrl-sec-title"><span class="num">07</span>候选里出现正确答案以后，还要把它识别出来</h2>
+  <p class="mrl-sec-lead">pass@k 假设评测者事后知道哪些候选正确。真实服务必须在看不到标准答案时，决定最终交付哪一条。</p>
+
+  <p><strong>best-of-N（$N$ 个候选择优）</strong>是生成 $N$ 条候选，用验证器或评分器给它们打分，再返回得分最高者。若 $C$ 表示“候选集中至少有一条正确”，$S$ 表示“选择器从含正确答案的候选集中选中正确者”，则：</p>
+  <div class="mrl-equation">$$P(\text{最终答对})=P(C)\,P(S\mid C).$$</div>
+  <p>在实验的简化记号里，$P(C)$ 是相关覆盖率，$P(S\mid C)=v$，所以交付正确率为 $vP(C)$。若 $p=0.2,k=8,\rho=0$，覆盖率约 $83.22\%$；选择器可靠度只有 $v=0.75$ 时，最终正确率只有 $62.42\%$。正确答案“曾经出现”不代表用户“最终收到”。</p>
+
+  <div class="mrl-selection-pipeline">
+    <div><span>GENERATE</span><strong>$N$ 条候选</strong><small>提高覆盖</small></div><i>→</i>
+    <div><span>NORMALIZE</span><strong>抽取答案</strong><small>统一格式</small></div><i>→</i>
+    <div><span>SCORE</span><strong>验证或排序</strong><small>可能误判</small></div><i>→</i>
+    <div><span>DELIVER</span><strong>返回一条</strong><small>产品指标</small></div>
+  </div>
+  <p class="mrl-caption">最容易忽略的是中间两步：格式抽取失败或评分器误排，都会把 pass@k 的候选覆盖损失掉。</p>
+
+  <h3>没有可靠验证器时：让多条推理对最终答案投票</h3>
+  <p><strong>self-consistency（自洽投票）</strong>是从多条不同思维链中抽取最终答案，选择出现次数最多的答案。它依赖一个直觉：不同路径可能在中间用不同方法，但正确结论更容易被重复到达。</p>
+
+  <div class="mrl-vote-example">
+    <div><span>五条候选</span><code>12 · 12 · 9 · 12 · 15</code></div>
+    <div><span>归一化计数</span><code>12 → 3 票；9 → 1 票；15 → 1 票</code></div>
+    <div><span>最终交付</span><strong>12</strong></div>
+  </div>
+
+  <p>自洽投票与 pass@k 回答的不是同一问题：只要五条里出现一次正确答案，pass@5 就记成功；投票则要求正确答案形成多数或至少成为众数。如果模型有系统性误解，五条轨迹可能一致投给同一个错误答案；“意见一致”只能提供稳定性证据，不能替代外部真值。</p>
+
+  <table class="mrl-method-table">
+    <thead><tr><th>方法</th><th>需要什么信号</th><th>衡量／返回什么</th><th>典型失败</th></tr></thead>
+    <tbody>
+      <tr><td>pass@k</td><td>事后正确性验证</td><td>候选是否至少覆盖一次正确</td><td>不能说明部署时怎样选</td></tr>
+      <tr><td>best-of-N</td><td>能比较候选的评分器</td><td>返回评分最高的一条</td><td>评分器把漂亮的错答排第一</td></tr>
+      <tr><td>self-consistency</td><td>可归一化的最终答案</td><td>返回众数答案</td><td>相关的系统性错误形成多数</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“self-consistency 得到 4:1，所以答案有 80% 概率正确。”</strong> 票数是这组相关样本中的频数，不是经过校准的正确概率。五条回答可能都继承同一个错误前提。</p>
+  </div>
+</section>
+
+<section id="routing">
+  <h2 class="mrl-sec-title"><span class="num">08</span>不是每道题都值得多想：模式、预算和停止条件</h2>
+  <p class="mrl-sec-lead">“把 $k$ 永远设成 32、把思维链永远拉满”会让简单题白白变慢，也可能让难题重复同一种错误。</p>
+
+  <p><strong>Hybrid Thinking（混合思考）</strong>让同一个模型支持“直接回答”和“展开思考”两种模式：简单翻译走短路径，竞赛证明走长路径。它解决的是离散路由问题——<strong>这次要不要进入思考模式</strong>。</p>
+  <p><strong>adaptive thinking（自适应思考）</strong>进一步让系统根据当前证据动态决定还要投入多少计算：已经通过外部检查就提前停止；候选仍冲突且新增路径带来新证据，就继续；接近硬上限时收束并预留最终答案空间。它解决的是序贯决策问题——<strong>下一份计算的预期收益是否仍大于成本</strong>。</p>
+
+  <div class="mrl-routing-grid">
+    <article><span>FIXED BUDGET</span><h3>每题同样多</h3><p>成本最容易预测；简单题浪费，难题可能不够。</p></article>
+    <article><span>HYBRID THINKING</span><h3>快／慢二选一</h3><p>减少明显简单题的延迟；路由误判会损失质量或费用。</p></article>
+    <article><span>ADAPTIVE THINKING</span><h3>边做边决定</h3><p>根据验证结果和候选分歧继续或停止；尾部成本更难预测。</p></article>
+  </div>
+  <p class="mrl-caption">三者的控制粒度逐步变细：预设一个数、先选一种模式、再根据中途反馈连续调整；粒度越细，对停止规则和成本监控要求越高。</p>
+
+  <h3>把“答对”和“少算”写进同一笔教学账</h3>
+  <p>一种通用的成本敏感抽象是：</p>
+  <div class="mrl-equation">$$r_{\text{total}}=r_{\text{task}}-\lambda C,$$</div>
+  <p>$r_{\text{task}}$ 是任务是否完成，$C$ 可以是推理 token、采样数、工具时间或费用，$\lambda$ 是把一单位成本折算成多少奖励损失的汇率。这个式子用于说明权衡，<strong>不是任何具体产品公开的训练配方</strong>。</p>
+
+  <table class="mrl-cost-table">
+    <thead><tr><th>请求与方案</th><th>$r_{\text{task}}$</th><th>成本 $C$</th><th>$\lambda=0.0002$ 时的净奖励</th></tr></thead>
+    <tbody>
+      <tr><td>翻译 hello，200 token</td><td>$1$</td><td>$200$</td><td>$1-0.0002(200)=0.96$</td></tr>
+      <tr><td>翻译 hello，3,000 token</td><td>$1$</td><td>$3{,}000$</td><td>$1-0.0002(3000)=0.40$</td></tr>
+      <tr><td>数学题直接答错，200 token</td><td>$0$</td><td>$200$</td><td>$0-0.0002(200)=-0.04$</td></tr>
+      <tr><td>数学题长思考答对，3,000 token</td><td>$1$</td><td>$3{,}000$</td><td>$1-0.0002(3000)=0.40$</td></tr>
+    </tbody>
+  </table>
+
+  <p>同样的长思考，在翻译题上把净奖励从 $0.96$ 降到 $0.40$，在数学题上却把答错的 $-0.04$ 提到 $0.40$。因此自适应系统不应只给输入打一次“难度分”，而要持续追问：<strong>当前证据够不够？下一步计算还可能改变结论吗？</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>自适应思考的核心是停止策略，不是静态难度标签</h3>
+      <p>短题可能是尚未解决的猜想，长文可能只需抽取第二句话。真正有用的信号来自执行过程：是否已验证、候选是否仍冲突、新采样是否还带来不同证据。</p>
+      <p class="mrl-insight-key">预算控制从“一开始给多少”升级为“看到当前状态后，还值不值得继续”。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把概率账本写成代码：生成、覆盖、选择必须分层</h2>
+  <p class="mrl-sec-lead">下面的最小代码复现页面实验使用的模型。它不会调用真实 LLM，只把每一层概率的含义固定下来。</p>
+
+  <pre class="mrl-code"><code>from math import ceil, log
+
+def independent_coverage(p, k):
+    return 1 - (1 - p) ** k
+
+def correlated_coverage(p, k, rho):
+    # rho: 所有候选共享一次成败的混合概率
+    return rho * p + (1 - rho) * independent_coverage(p, k)
+
+def delivered_accuracy(p, k, rho, selector_reliability):
+    coverage = correlated_coverage(p, k, rho)
+    return coverage * selector_reliability
+
+def samples_for_target(p, target_coverage):
+    return ceil(log(1 - target_coverage) / log(1 - p))
+
+p = 0.20
+k = 8
+rho = 0.40
+v = 0.90
+tokens_per_sample = 500
+
+print(independent_coverage(p, k))   # 0.8322
+print(correlated_coverage(p, k, rho))  # 0.5793
+print(delivered_accuracy(p, k, rho, v)) # 0.5214
+print(k * tokens_per_sample)        # 4000 token</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学对象</th><th>程序变量</th><th>它回答的问题</th></tr></thead>
+    <tbody>
+      <tr><td>$p$</td><td><code>p</code></td><td>一条候选的边际正确率是多少？</td></tr>
+      <tr><td>$k$ / $N$</td><td><code>k</code></td><td>这次共生成多少条候选？</td></tr>
+      <tr><td>$1-(1-p)^k$</td><td><code>independent_coverage</code></td><td>独立候选里至少出现一次正确的概率？</td></tr>
+      <tr><td>$\rho$</td><td><code>rho</code></td><td>候选有多大概率共享同一次成败？</td></tr>
+      <tr><td>$v=P(S\mid C)$</td><td><code>selector_reliability</code></td><td>已经有正确候选时，选择器能否挑中？</td></tr>
+      <tr><td>$kL$</td><td><code>k * tokens_per_sample</code></td><td>生成侧总 token 预算是多少？</td></tr>
+    </tbody>
+  </table>
+
+  <p>真实 best-of-N 系统还需要实际生成 <code>candidates</code>、计算 <code>scores</code>、抽取规范化答案并记录验证器调用。页面故意不把这些藏进一个“accuracy”变量：只有分开记录覆盖率与选择率，才能定位失败发生在生成端还是评价端。</p>
+</section>
+
+<section id="limits">
+  <h2 class="mrl-sec-title"><span class="num">10</span>什么时候继续加计算不会再救你？</h2>
+  <p class="mrl-sec-lead">推理时扩展是一种部署旋钮，不是把任何固定模型变成无限强模型的定律。</p>
+
+  <div class="mrl-limit-list">
+    <article><span>01 · $p\approx0$</span><h3>模型产不出正确候选</h3><p>有限次采样只会产生更多相似错误；应补训练、工具或知识，而不是盲目增加 $k$。</p></article>
+    <article><span>02 · 高相关错误</span><h3>数量增加，思路没有增加</h3><p>独立公式会高估覆盖率。应直接测量候选间的错误重合，而不是把采样数当有效样本数。</p></article>
+    <article><span>03 · 选择器失真</span><h3>正确答案出现却被错答压过</h3><p>best-of-N 的收益受验证器上限约束；评分器偏爱格式、长度或自信语气时会系统性误排。</p></article>
+    <article><span>04 · 无效长链</span><h3>token 增长，证据没有增长</h3><p>重复、绕圈和预算耗尽前的仓促收尾都会增加成本而不提升质量。</p></article>
+  </div>
+  <p class="mrl-caption">四类失败分别落在候选能力、联合多样性、选择信号和计算利用率；只有先定位瓶颈，增加预算才有明确作用点。</p>
+
+  <p>比较系统时也必须控制变量：模型版本、工具权限、每题 token、候选数、验证器和超时任一项改变，都可能影响分数。只报告“开启深度思考后提升了多少”，不能单独证明提升来自 CoT 长度还是来自更多候选、代码执行或更强选择器。</p>
+
+  <p>到这里，我们已经能计算“正确轨迹有没有出现”，也知道选择器会形成第二个瓶颈。但只看最终答案的 verifier 往往要走到结尾才知道整条路是否失败：某个中间步骤已经偏离时，怎样尽早评价并把预算转向更好的分支？步骤级过程评价与正式搜索机制留给 Chapter 18。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：你增加的是计算量，还是有效机会？</h2>
+  <p class="mrl-sec-lead">每题都要指出使用了什么假设。脱离独立性、选择器和成本谈“多采样更好”，结论是不完整的。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 训练计算与推理时计算最根本的区别是什么？</summary><div class="inner">训练计算会更新参数，改变模型以后面对所有请求时的策略分布；推理时计算保持参数固定，只为当前请求增加生成、检查、采样或聚合预算。前者主要提高能力上限，后者主要减少已有能力这次没有发挥出来的概率。</div></details>
+    <details><summary>2. 为什么观察到 RL 后出现长 CoT，不能立刻断言 RL 从零创造了推理？</summary><div class="inner">基座模型可能已经以低概率生成过推导、反思和验算轨迹。RLVR 用结果奖励提高成功轨迹的概率，使这些行为稳定出现。要区分创造与激活，需要先对基座模型多次采样，检查正确轨迹是否原本就在支持集里。</div></details>
+    <details><summary>3. 若单条正确率 $p=0.25$，独立采样 4 条的 pass@4 是多少？</summary><div class="inner">四条全部错误的概率是 $(1-0.25)^4=0.75^4\approx0.3164$，所以 $\operatorname{pass@4}=1-0.3164\approx0.6836$，即约 $68.36\%$。</div></details>
+    <details><summary>4. pass@8 已经是 90%，为什么最终产品准确率仍可能只有 60%？</summary><div class="inner">pass@8 只表示候选集中至少出现一条正确答案。产品还要抽取、评分并选择；若选择器在含正确候选时只有约 $2/3$ 概率挑中，最终正确率就是约 $0.9\times2/3=0.6$。</div></details>
+    <details><summary>5. 为什么把同一个提示重复 32 次不一定获得独立公式预测的收益？</summary><div class="inner">候选会共享模型知识、提示偏置和高概率错误路线，正确性并不独立。正相关错误使“全部失败”的概率高于独立模型预测；极端情况下 32 条完全同涨同跌，覆盖率仍只有单条的 $p$。</div></details>
+    <details><summary>6. self-consistency 的 7:1 投票能否解释为答案有 87.5% 概率正确？</summary><div class="inner">不能。票数只是当前一组相关样本的频数，不是经过校准的后验概率；模型可能因为同一个错误前提而高度一致。自洽投票需要用外部有答案的数据评测和校准。</div></details>
+    <details><summary>7. 自适应思考为什么更像停止策略，而不是一次难度分类？</summary><div class="inner">任务的可解性会随中间证据变化：验证通过可以提前停，候选冲突可能需要新工具，新增采样持续重复则应停止。因此每一步都要依据当前状态比较下一份计算的预期收益与成本，而不是只在开头贴一个“难题”标签。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十七章建立起来的部署账本</h3>
+    <div class="mrl-summary-chain">
+      <div><span>TRAIN</span><strong>提高单条成功率 $p$</strong><small>改变参数</small></div><i>→</i>
+      <div><span>SAMPLE</span><strong>增加覆盖与多样性</strong><small>pass@k</small></div><i>→</i>
+      <div><span>SELECT</span><strong>识别正确候选</strong><small>best-of-N / 投票</small></div><i>→</i>
+      <div><span>STOP</span><strong>边际收益低于成本</strong><small>adaptive budget</small></div>
+    </div>
+    <p>增加推理 token 与候选数，只在它们创造新路线、检查或证据时改善质量。pass@k 给出理想覆盖，候选相关性压低覆盖，选择器再决定有多少覆盖真正交付给用户；混合与自适应思考负责把预算放到值得的请求上。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter18.html">第 18 章：只看最终答案，为什么还不够？</a></h3>
+    <p>本章只能在候选完成后判断“有没有正确结果”，也把选择器可靠度压成一个数字。下一章会打开这只黑盒：给中间步骤提供过程反馈，并用这些反馈把搜索预算导向更有希望的分支。</p>
+  </div>
+
+  <p class="mrl-source-note">本页以固定上游版本 walkinglabs/hands-on-modern-rl 的 <code>docs/chapter19_reasoning/</code> 为知识来源重新组织，不是原项目官方译本。本章正式解释推理模型、CoT、推理时计算、pass@k、best-of-N、自洽投票与自适应预算；步骤级过程评价与推理时搜索的算法细节留给 Chapter 18。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 17</span><span><a href="./chapter16.html">← Chapter 16</a> · <a href="./">课程目录</a> · <a href="./chapter18.html">Chapter 18 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter19_reasoning" target="_blank" rel="noopener">固定上游来源 ↗</a></span></footer>

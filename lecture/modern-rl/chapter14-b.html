@@ -1,0 +1,137 @@
+<section id="ppo-loop">
+  <h2 class="mrl-sec-title"><span class="num">06</span>PPO-RLHF：让当前策略在自己生成的回答上继续练习</h2>
+  <p class="mrl-sec-lead">SFT 只能模仿已有示范，Reward Model 只能打分。经典 RLHF 的第三阶段把两者接回 <strong>Proximal Policy Optimization（PPO，近端策略优化）</strong>：当前策略生成回答，RM 给奖励，Critic 估计 advantage，PPO 小步更新。</p>
+
+  <div class="mrl-role-grid">
+    <article class="actor"><span>TRAINABLE</span><h3>Actor · $\pi_\theta$</h3><p>从 SFT 模型初始化；生成回答，也是最终被更新的语言模型。</p></article>
+    <article><span>FROZEN</span><h3>Reference · $\pi_{\mathrm{ref}}$</h3><p>通常冻结一份 SFT 起点；计算 KL 边界，不参与梯度更新。</p></article>
+    <article><span>FROZEN</span><h3>Reward Model · $r_\phi$</h3><p>从偏好对学得；读取完整回答并输出序列级分数。</p></article>
+    <article class="critic"><span>TRAINABLE</span><h3>Critic · $V_\psi$</h3><p>估计各 token 前缀的价值，帮助得到低方差 advantage。</p></article>
+  </div>
+  <p class="mrl-caption">四个角色中只有 Actor 是最后要交付的策略；Reference 与 RM 负责只读评分，Critic 是训练期降噪工具。角色分开理解，比把它们统称为“四个 LLM”更准确。</p>
+
+  <h3>一批 rollout 的六步闭环</h3>
+  <ol class="mrl-numbered-flow">
+    <li><b>采 prompt</b><span>从训练 prompt 集取一批 $x$。</span></li>
+    <li><b>生成</b><span>Actor 采样 $y\sim\pi_\theta(\cdot\mid x)$。</span></li>
+    <li><b>评分</b><span>RM 计算 $r_\phi(x,y)$。</span></li>
+    <li><b>守边界</b><span>Reference 对同一段 $y$ 计算 log-prob，形成 KL 代价。</span></li>
+    <li><b>分功劳</b><span>Critic 与 GAE 把整段结果变成 token 级 advantage。</span></li>
+    <li><b>小步更新</b><span>PPO 用 Chapter 09 的 ratio 与 clipping 更新 Actor 和 Critic。</span></li>
+  </ol>
+
+  <p>如果把 Critic、GAE 和 PPO 裁剪先折叠起来，只看“什么目标值得追”，经典 RLHF 常写成带 KL 正则的期望目标：</p>
+  <div class="mrl-equation">$$\max_\theta\;
+  \mathbb E_{x\sim\mathcal D,\,y\sim\pi_\theta(\cdot\mid x)}
+  \left[r_\phi(x,y)-\beta D_{\mathrm{KL}}\!\left(\pi_\theta(\cdot\mid x)\,\|\,\pi_{\mathrm{ref}}(\cdot\mid x)\right)\right].$$</div>
+  <p>$r_\phi$ 提供“往哪里走”的偏好方向；$\beta\ge0$ 决定偏离 SFT 锚点要付多大代价。它们共同形成奖励，不替代 PPO 的 clipped surrogate objective；真正更新时仍需要 old policy ratio 与 advantage。</p>
+
+  <h3>KL 怎样落到一段实际回答上？</h3>
+  <p>自回归模型对完整回答的概率可分解成 token 条件概率的乘积：</p>
+  <div class="mrl-equation">$$\log\pi_\theta(y\mid x)
+  =\sum_{t=1}^{T}\log\pi_\theta(y_t\mid x,y_{&lt;t}).$$</div>
+  <p>因此，对 Actor 已经采样出的回答 $y$，可以计算序列 log-ratio：</p>
+  <div class="mrl-equation">$$\widehat k(x,y)=
+  \log\pi_\theta(y\mid x)-\log\pi_{\mathrm{ref}}(y\mid x)
+  =\sum_{t=1}^{T}\left[\log\pi_\theta(y_t\mid s_t)-\log\pi_{\mathrm{ref}}(y_t\mid s_t)\right].$$</div>
+  <p>在 $y\sim\pi_\theta$ 下对 $\widehat k$ 求期望，才得到非负的 sequence-level KL。<strong>单条样本的 $\widehat k$ 可以为负</strong>，所以不要把某个 token 的 log-prob 差单独叫作“完整 KL 散度”。</p>
+
+  <p>若一段简化回答的 Actor log-prob 为 $-1.2$，Reference log-prob 为 $-1.6$，则 $\widehat k=0.4$。取 $\beta=0.05$，样本 KL 代价为 $0.05\times0.4=0.02$；若 RM 给 $1.3$，用于构造回报的样本值为：</p>
+  <div class="mrl-equation">$$\widehat R_{\mathrm{total}}=1.3-0.05(0.4)=1.28.$$</div>
+  <p>这还不是策略梯度的最终正负标签。Critic 会把 reward 与基线比较得到 advantage，PPO 再根据 advantage 和概率比决定每个 token 的更新。</p>
+</section>
+
+<section id="reference-policy">
+  <h2 class="mrl-sec-title"><span class="num">07</span>Reference policy 与 old policy：都“旧”，时间尺度完全不同</h2>
+  <p class="mrl-sec-lead">Chapter 09 已经用 $\pi_{\theta_{\mathrm{old}}}$ 构造 PPO 概率比。本章又出现 $\pi_{\mathrm{ref}}$。如果把二者混为一个模型，KL 正则与 PPO 裁剪的职责就会一起消失。</p>
+
+  <table class="mrl-policy-table">
+    <thead><tr><th></th><th>old policy · $\pi_{\theta_{\mathrm{old}}}$</th><th>reference policy · $\pi_{\mathrm{ref}}$</th></tr></thead>
+    <tbody>
+      <tr><td>从哪里来</td><td>采这批 rollout 时的 Actor 快照</td><td>通常是冻结的 SFT 起点</td></tr>
+      <tr><td>比较什么</td><td>同一动作在更新前后概率的变化</td><td>当前 Actor 与原助手分布的距离</td></tr>
+      <tr><td>进入哪条式子</td><td>$\rho_t=\pi_\theta(a_t\mid s_t)/\pi_{\theta_{\mathrm{old}}}(a_t\mid s_t)$</td><td>$D_{\mathrm{KL}}(\pi_\theta\|\pi_{\mathrm{ref}})$</td></tr>
+      <tr><td>何时刷新</td><td>下一批 rollout 前通常随 Actor 刷新</td><td>经典流程中跨许多批保持冻结</td></tr>
+      <tr><td>主要问题</td><td>这一次 PPO update 是否走太猛</td><td>整段 RLHF 是否离 SFT 能力边界太远</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-policy-timeline" aria-label="old policy 与 reference policy 的时间尺度">
+    <div class="anchor"><span>训练开始</span><strong>冻结 SFT → reference</strong></div>
+    <i>→</i>
+    <div><span>rollout batch 1</span><strong>Actor snapshot → old₁</strong></div>
+    <i>→</i>
+    <div><span>rollout batch 2</span><strong>更新后 Actor → old₂</strong></div>
+    <i>→</i>
+    <div><span>rollout batch 3</span><strong>再次刷新 old₃</strong></div>
+  </div>
+  <p class="mrl-caption">沿时间轴真正要看的是：old policy 随 batch 向前移动，而 reference 仍停在训练起点。一个限制局部更新步幅，一个限制全程语义漂移。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>PPO clip 与 reference KL 是两个不同尺度的安全带</h3>
+      <p>clip 问“这一个 batch 的策略概率改了多少”；reference KL 问“整个 RLHF 过程离原来的 SFT 助手有多远”。</p>
+      <p class="mrl-insight-key">即使新策略紧贴 old policy，小步累积很多次仍可能离 SFT 很远；因此局部裁剪不能替代长期锚点。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="signal-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>互动实验：换掉反馈来源，训练信号在哪一层发生变化？</h2>
+  <p class="mrl-sec-lead">用一个受控的小例子追踪“候选回答 → 偏好标签 → RM 一步更新 → PPO 奖励”。这里的人类多数票与 AI judge 都是教学设定，不代表所有真实标注者都会这样判断。</p>
+
+  <div class="mrl-viz mrl-signal-lab" id="signalLab">
+    <div class="mrl-viz-head">
+      <div><h3>Feedback Signal Tracer</h3><p>同一对回答，只改变标签来源、AI judge 的规则，以及 RM/KL 强度。</p></div>
+      <button class="mrl-btn" id="signalReset" type="button">恢复默认值</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>“反馈由谁产生”会直接改变 PPO 公式吗？显式自然语言原则怎样通过偏好标签间接改变 Actor 收到的奖励？</dd>
+      <dt>Prediction</dt><dd>只要 chosen/rejected 标签相同，人类与 AI 来源会产生相同的这一步 RM loss 和更新；在本例中，AI judge 缺少“允许低风险科普”的规则时会把偏好翻转，进而把回答 A 的 RM 梯度从上推变成下压。</dd>
+      <dt>Experiment</dt><dd>切换 Human / AI；在 AI 模式勾选或取消比例原则；调节 RM 学习率 $\eta$ 与 KL 系数 $\beta$，观察四段数据流和数值。</dd>
+      <dt>Observation</dt><dd id="signalObservation">正在计算当前设定下的反馈路径。</dd>
+      <dt>Interpretation</dt><dd>反馈来源首先决定偏好数据怎样产生；RM 把标签压成分数，PPO 只读取 RM 分数与 KL。若两个来源交付完全相同的数据，下游算法不能凭空知道标签是谁给的。</dd>
+      <dt>Limitation</dt><dd>实验只做一个偏好对上的一次理想化梯度步，固定了候选回答和初始 RM 分数；真实系统有大量样本、标注分歧、模型泛化、Critic 与 token-level PPO 更新。</dd>
+    </dl>
+
+    <div class="mrl-answer-cards">
+      <article class="answer-a">
+        <span>RESPONSE A · ACTOR SAMPLE</span>
+        <h4>安全科普</h4>
+        <p>解释网络钓鱼的高层原理、常见识别信号与防护方法，不提供实施步骤。</p>
+      </article>
+      <article class="answer-b">
+        <span>RESPONSE B</span>
+        <h4>一律拒绝</h4>
+        <p>“这是敏感话题，我不能讨论任何相关内容。”</p>
+      </article>
+    </div>
+
+    <div class="mrl-signal-controls">
+      <label><span>偏好标签来源</span><select id="feedbackSource"><option value="human">Human feedback</option><option value="ai">AI feedback</option></select></label>
+      <label class="mrl-check-control"><input id="constitutionRule" type="checkbox" checked><span>AI judge 的原则集合包含“允许安全科普，拒绝强度应与实际风险相称”</span></label>
+      <label class="mrl-range-control"><span>RM 学习率 $\eta$ <output id="rmLearningRateValue">0.50</output></span><input id="rmLearningRate" type="range" min="0" max="1" step="0.05" value="0.5"></label>
+      <label class="mrl-range-control"><span>KL 系数 $\beta$ <output id="klBetaValue">0.05</output></span><input id="klBeta" type="range" min="0" max="0.5" step="0.01" value="0.05"></label>
+    </div>
+
+    <div class="mrl-signal-pipeline" aria-label="从 SFT 候选到 PPO 奖励的数据流">
+      <article><span>1 · SFT POLICY</span><strong>生成 A 与 B</strong><small>$r_A=0.40,\ r_B=0.20$</small></article>
+      <i>→</i>
+      <article class="feedback"><span>2 · FEEDBACK</span><strong id="signalChosen">A chosen</strong><small id="signalRuleStatus">人类多数票</small></article>
+      <i>→</i>
+      <article><span>3 · REWARD MODEL</span><strong id="signalScores">$r'_A=0.63,\ r'_B=-0.03$</strong><small>一次 pairwise update</small></article>
+      <i>→</i>
+      <article class="actor"><span>4 · PPO INPUT</span><strong id="signalTotalReward">$\widehat R_A=0.61$</strong><small>回答 A 的样本奖励</small></article>
+    </div>
+    <p class="mrl-caption">沿箭头观察因果链：规则本身不直接进入 PPO；它先改变 AI judge 的偏好标签，标签改变 RM 梯度，更新后的 RM 分数才进入 Actor 的奖励。Human 与“有该规则的 AI”标签相同时，数值结果应完全重合。</p>
+
+    <div class="mrl-signal-results">
+      <article><span>PAIR PROBABILITY</span><h4 id="signalProbability">0.550</h4><small>$P(\text{chosen}\succ\text{rejected})$</small></article>
+      <article><span>PAIR LOSS</span><h4 id="signalLoss">0.598</h4><small>$-\log P$</small></article>
+      <article><span>A SCORE AFTER STEP</span><h4 id="signalRAfter">+0.625</h4><small id="signalDirection">RM 梯度上推 A</small></article>
+      <article><span>SAMPLE KL COST</span><h4 id="signalPenalty">0.020</h4><small>$\beta(-1.2+1.6)$</small></article>
+    </div>
+  </div>
+</section>

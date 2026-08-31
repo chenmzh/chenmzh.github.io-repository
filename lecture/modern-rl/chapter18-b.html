@@ -1,0 +1,155 @@
+<section id="three-verifiers">
+  <h2 class="mrl-sec-title"><span class="num">05</span>三种过程反馈：给分、给理由，或者按规则检查</h2>
+  <p class="mrl-sec-lead">“PRM 会判断步骤”仍然太粗。反馈从哪里来，决定它的吞吐量、可检查性和适用边界。</p>
+
+  <div class="mrl-verifier-grid">
+    <article>
+      <span>DISCRIMINATIVE PRM</span>
+      <h3>判别式：一次前向得到类别概率</h3>
+      <p>输入问题与当前前缀，输出 good / bad / neutral。它像高速质检器，适合给大量步骤批量打分。</p>
+      <dl><dt>输出</dt><dd>概率或标量</dd><dt>优势</dt><dd>吞吐量高，容易排序</dd><dt>风险</dt><dd>标签昂贵，只给分不解释</dd></dl>
+    </article>
+    <article>
+      <span>GENERATIVE PRM</span>
+      <h3>生成式：先写检查依据，再给判断</h3>
+      <p>评价模型重算关键步骤，用自然语言指出错误原因，最后输出可抽取的 CORRECT / INCORRECT。</p>
+      <dl><dt>输出</dt><dd>检查文字 + 判断</dd><dt>优势</dt><dd>可读、便于调试</dd><dt>风险</dt><dd>自回归生成慢，也会流畅地解释错</dd></dl>
+    </article>
+    <article>
+      <span>FORMAL VERIFIER</span>
+      <h3>形式化：在选定规则系统内确定检查</h3>
+      <p>把可形式化步骤交给 Lean 等检查器；同一形式命题与证明项会得到可复现的接受或拒绝。</p>
+      <dl><dt>输出</dt><dd>$0/1$ 与失败状态</dd><dt>优势</dt><dd>规则内确定，无标注概率噪声</dd><dt>风险</dt><dd>自然语言到形式命题可能翻错</dd></dl>
+    </article>
+  </div>
+  <p class="mrl-caption">三栏真正要比较的是判断依据：判别式从标签分布学边界，生成式显式写出检查过程，形式化方法验证一个已经写好的形式命题；它们的“可信”不是同一种含义。</p>
+
+  <h3>一个步骤分别会怎样被检查？</h3>
+  <p>当前前缀包含 $4k^2=2q^2$，候选步骤却写“所以 $4k=q^2$”。</p>
+  <div class="mrl-verifier-output">
+    <div><span>判别式</span><code>bad: 0.96</code><small>很快，但没有错误原因</small></div>
+    <div><span>生成式</span><code>两边除以 2 应得 2k²=q²；平方不能只在左侧消失。INCORRECT</code><small>可以复核理由，但评价文字也可能错</small></div>
+    <div><span>形式化</span><code>type mismatch / goal not closed</code><small>只保证当前形式规则下不成立</small></div>
+  </div>
+  <p class="mrl-caption">同一个低分背后可能是统计分类、自然语言复核或规则检查。部署前必须保留反馈类型，否则无法知道“0.1”究竟能否跨领域比较。</p>
+
+  <div class="mrl-inline-note"><strong>本章边界：</strong>这里只建立数学推理中的过程反馈。以后遇到专门任务时，验证器还要服从该环境的状态和证据合同；本章不展开那些领域实现。</div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>形式检查消除了判定噪声，却没有消除“检查错题”的风险</h3>
+      <p>Lean 接受证明，只说明翻译后的形式命题在所选公理与内核下被证明；若自动形式化漏了条件，它会非常确定地验证一个不同的问题。</p>
+      <p class="mrl-insight-key">评价链至少有两层：输入是否忠实，以及推理是否满足规则。后一层再强，也不能替前一层背书。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="aggregation">
+  <h2 class="mrl-sec-title"><span class="num">06</span>一条路径有很多步骤分：怎样压成可排序的一个数？</h2>
+  <p class="mrl-sec-lead">PRM 给出 $p_1,\ldots,p_T$ 后，还要定义 path score。聚合规则不是排版细节，而是在声明系统怎样看待一处低分。</p>
+
+  <div class="mrl-equation">$$S_{\text{mean}}(\tau)=\frac1T\sum_{i=1}^T p_i,\qquad
+  S_{\min}(\tau)=\min_i p_i,\qquad
+  S_{\Pi}(\tau)=\prod_{i=1}^T p_i.$$</div>
+
+  <ul>
+    <li><strong>Mean（平均）</strong>允许高分步骤补偿低分步骤，抗单点噪声，却可能稀释致命错误。</li>
+    <li><strong>Min（最低分）</strong>把最弱一步当瓶颈，适合严格逻辑链，却容易被一次误判整条否决。</li>
+    <li><strong>Product（乘积）</strong>让多个中等不确定性累积；只有在额外独立假设下，才可解释为整条路径全对的概率。</li>
+  </ul>
+
+  <p>把三条四步路径代入。三条最后都写出正确结论，所以结果验证器一律给 1：</p>
+  <table class="mrl-score-table">
+    <thead><tr><th>路径</th><th>步骤分数</th><th>Outcome</th><th>Mean</th><th>Min</th><th>Product</th></tr></thead>
+    <tbody>
+      <tr class="is-flawed"><td>甲 · 漏平方</td><td>$[.97,.08,.31,.88]$</td><td>1</td><td>.56</td><td>.08</td><td>.021</td></tr>
+      <tr class="is-correct"><td>乙 · 正确反证</td><td>$[.96,.94,.93,.97]$</td><td>1</td><td>.95</td><td>.93</td><td>.814</td></tr>
+      <tr><td>丙 · 论证缺口</td><td>$[.90,.55,.52,.91]$</td><td>1</td><td>.72</td><td>.52</td><td>.234</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">Outcome 一栏完全打平；三种过程聚合都把乙排第一，但惩罚方式不同。甲的 .08 是可定位断点，不能被末尾 .88 的流畅结论洗掉。</p>
+
+  <p>以甲为例，平均分是 $(.97+.08+.31+.88)/4=.56$，最低分是 $.08$，乘积约为 $.97\times.08\times.31\times.88=.021$。数值能排序，却不证明 PRM 判断正确。真正上线前要用独立的步骤标注集检查校准，并在目标领域重新选择聚合规则。</p>
+</section>
+
+<section id="path-lab">
+  <h2 class="mrl-sec-title"><span class="num">07</span>互动实验：同一个正确终局，过程反馈怎样改写搜索预算？</h2>
+  <p class="mrl-sec-lead">下面三条路径最后都写“$\sqrt{2}$ 是无理数”。生成器最先提出甲；拖动预算，比较只在终点检查的完整路径枚举，与能在低分步骤后剪枝的 verifier-guided search（验证器引导搜索）。</p>
+
+  <div class="mrl-viz mrl-path-lab" id="pathLab">
+    <div class="mrl-viz-head">
+      <div><h3>Same Outcome, Different Reasoning</h3><p>每消耗 1 单位预算，只能生成并检查一个推理步骤。</p></div>
+      <button class="mrl-btn" id="pathReset" type="button">恢复默认值</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>当多条路径终局相同，过程评价能否比结果评价更早排除首错，并把同一预算转移到正确前缀？</dd>
+      <dt>Prediction</dt><dd>Outcome-only 必须写完整条路径才得分，且三条终局都为 1；PRM-guided 会在甲的第 2 步看到 0.08，立即剪枝，并在 6 单位预算内完成乙。</dd>
+      <dt>Experiment</dt><dd>把步骤预算从 2 调到 12；对照两栏实际展开的步骤、完成路径、选择结果和未使用预算。</dd>
+      <dt>Observation</dt><dd id="pathObservation">正在计算当前预算下的搜索轨迹。</dd>
+      <dt>Interpretation</dt><dd>PRM 没有创造新解法；它把原本会浪费在错误后缀上的计算，重新分给另一条前缀。Outcome 打平时，额外完整采样仍需要独立 tie-breaker。</dd>
+      <dt>Limitation</dt><dd>分数与生成顺序是合成教学数据，且假设第 2 步低分可信。真实 PRM 可能误杀正确前缀；搜索收益必须与 evaluator 误差、延迟和总 token 一起测。</dd>
+    </dl>
+
+    <label class="mrl-budget-control">
+      <span>生成—检查步骤预算 <output id="pathBudgetValue">8</output></span>
+      <input id="pathBudget" type="range" min="2" max="12" step="1" value="8">
+    </label>
+
+    <div class="mrl-path-cards" aria-label="三条具有相同结论的推理路径">
+      <article class="is-flawed">
+        <header><span>路径甲</span><strong>结论碰巧正确</strong><small>Outcome = 1 · Min = .08</small></header>
+        <ol>
+          <li><b>.97</b>假设 $\sqrt2=p/q$，且 $p,q$ 互质。</li>
+          <li class="is-error"><b>.08</b>由 $p^2=2q^2$ 写成 $p=q$。<em>首错</em></li>
+          <li><b>.31</b>声称 $p,q$ 都是偶数。</li>
+          <li><b>.88</b>写出“所以 $\sqrt2$ 无理”。</li>
+        </ol>
+      </article>
+      <article class="is-correct">
+        <header><span>路径乙</span><strong>正确反证</strong><small>Outcome = 1 · Min = .93</small></header>
+        <ol>
+          <li><b>.96</b>假设 $\sqrt2=p/q$，且 $p,q$ 互质。</li>
+          <li><b>.94</b>$p^2=2q^2$，所以 $p$ 为偶数。</li>
+          <li><b>.93</b>令 $p=2k$，推出 $q^2=2k^2$，故 $q$ 偶。</li>
+          <li><b>.97</b>与互质矛盾，所以假设不成立。</li>
+        </ol>
+      </article>
+      <article>
+        <header><span>路径丙</span><strong>论证留有缺口</strong><small>Outcome = 1 · Min = .52</small></header>
+        <ol>
+          <li><b>.90</b>写出 $\sqrt2\approx1.414213\ldots$。</li>
+          <li><b>.55</b>直接声称小数不会循环。</li>
+          <li><b>.52</b>没有证明“任何分数的小数都循环”。</li>
+          <li><b>.91</b>写出“所以 $\sqrt2$ 无理”。</li>
+        </ol>
+      </article>
+    </div>
+
+    <div class="mrl-search-compare">
+      <article>
+        <span>OUTCOME-ONLY · COMPLETE THEN SCORE</span>
+        <h4>完整路径枚举 <strong id="outcomeSelection">路径甲</strong></h4>
+        <dl><dt>已完成路径</dt><dd id="outcomeCompleted">甲、乙</dd><dt>已用预算</dt><dd id="outcomeUsed">8 / 8</dd><dt>选择依据</dt><dd id="outcomeReason">终局都为 1；按最早完成打破平局</dd></dl>
+        <ol class="mrl-search-trace" id="outcomeTrace"></ol>
+      </article>
+      <article class="is-process">
+        <span>PRM-GUIDED · SCORE PREFIXES</span>
+        <h4>前缀引导搜索 <strong id="processSelection">路径乙</strong></h4>
+        <dl><dt>已完成路径</dt><dd id="processCompleted">乙</dd><dt>已用预算</dt><dd id="processUsed">6 / 8</dd><dt>停止原因</dt><dd id="processReason">完成高分路径，剩余预算 2</dd></dl>
+        <ol class="mrl-search-trace" id="processTrace"></ol>
+      </article>
+    </div>
+    <p class="mrl-caption">拖到预算 6：左栏只完成了先到的错误论证，右栏却在甲的首错处停止并完成乙。因果差异来自“中途是否获得可信反馈”，不是 PRM 生成了更聪明的步骤。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>搜索预算的单位不该只写成“采样条数”</h3>
+      <p>Best-of-$N$ 把预算花在完整轨迹；过程引导搜索把预算花在节点扩展与前缀评价。同样是 8 个步骤单位，产生的完成路径数量与错误后缀成本完全不同。</p>
+      <p class="mrl-insight-key">公平比较必须同时报告：生成 token、验证 token 或调用、完成候选数、墙钟延迟，以及最终选择正确率。</p>
+    </div>
+  </aside>
+</section>

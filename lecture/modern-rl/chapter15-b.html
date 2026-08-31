@@ -1,0 +1,118 @@
+<section id="bradley-terry">
+  <h2 class="mrl-sec-title"><span class="num">04</span>成对比较模型：人类选择概率只依赖奖励差</h2>
+  <p class="mrl-sec-lead">偏好标签不是连续分数。要用最大似然训练，我们先需要一个概率模型：如果回答 $y_w$ 的潜在奖励更高，人类选它的概率应该更大。</p>
+
+  <p><strong>Bradley–Terry model（BT，布拉德利–特里成对比较模型）</strong>先把每个回答的潜在奖励 $r(x,y)$ 变成正权重 $e^{r(x,y)}$，再把两个权重归一化：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  P(y_w\succ y_l\mid x)
+  &=\frac{e^{r(x,y_w)}}{e^{r(x,y_w)}+e^{r(x,y_l)}}\\
+  &=\frac{1}{1+e^{r(x,y_l)-r(x,y_w)}}\\
+  &=\sigma\!\left(r(x,y_w)-r(x,y_l)\right),
+  \end{aligned}$$</div>
+  <p>其中 $\sigma(z)=1/(1+e^{-z})$。推导第二行只是把分子、分母同时除以 $e^{r(x,y_w)}$；第三行认出 sigmoid。于是：</p>
+  <table class="mrl-bt-table">
+    <thead><tr><th>奖励差 $r_w-r_l$</th><th>偏好概率</th><th>人话</th></tr></thead>
+    <tbody>
+      <tr><td>$0$</td><td>$0.500$</td><td>模型认为两者难分</td></tr>
+      <tr><td>$1$</td><td>$0.731$</td><td>chosen 更可能被选</td></tr>
+      <tr><td>$2$</td><td>$0.881$</td><td>偏好证据更强</td></tr>
+      <tr><td>$-1$</td><td>$0.269$</td><td>排序方向与标签相反</td></tr>
+    </tbody>
+  </table>
+  <p>BT 只能从比较中识别奖励差。如果给同一 prompt 下所有回答的奖励都加上 $c(x)$，差值不变，偏好概率也不变。这一点马上会让 DPO 推导里的归一化常数自动消失。</p>
+</section>
+
+<section id="kl-solution">
+  <h2 class="mrl-sec-title"><span class="num">05</span>从 KL 正则目标反解：奖励藏在 policy/reference 的 log-ratio 里</h2>
+  <p class="mrl-sec-lead">Chapter 14 已经说明，对齐既想提高奖励，又不想让语言模型远离训练起点。本节不再讨论 RM 怎样拟合，只把这个目标当作数学起点。</p>
+
+  <p>固定一个 prompt $x$，把待求的回答分布简写成 $q(y)$。KL 正则化目标是：</p>
+  <div class="mrl-equation">$$\max_q\;\sum_y q(y)r(x,y)-\beta\sum_y q(y)\log\frac{q(y)}{\pi_{\mathrm{ref}}(y\mid x)},\qquad \sum_yq(y)=1.$$</div>
+  <p>$\pi_{\mathrm{ref}}$ 是训练期间冻结的 <strong>reference policy（参考策略）</strong>，通常来自对齐开始前的 SFT checkpoint；它不是 Chapter 09 中每轮收集数据后更新的 old policy，也不是负责打分的 reward model。$\beta&gt;0$ 是 KL 惩罚系数：在这个原始目标里，越大越不愿偏离 reference。</p>
+
+  <h3>第一步：在概率和为 1 的约束下求最优分布</h3>
+  <p>引入拉格朗日乘子 $\lambda$：</p>
+  <div class="mrl-equation">$$\mathcal J(q,\lambda)=\sum_yq(y)r(x,y)-\beta\sum_yq(y)\log\frac{q(y)}{\pi_{\mathrm{ref}}(y\mid x)}+\lambda\left(\sum_yq(y)-1\right).$$</div>
+  <p>对某个 $q(y)$ 求导。这里用到 $\frac{d}{dq}[q\log(q/c)]=\log(q/c)+1$：</p>
+  <div class="mrl-equation">$$\frac{\partial\mathcal J}{\partial q(y)}=r(x,y)-\beta\left(\log\frac{q(y)}{\pi_{\mathrm{ref}}(y\mid x)}+1\right)+\lambda=0.$$</div>
+  <p>移项、取指数，并用 $Z(x)$ 吸收所有与具体回答 $y$ 无关的常数：</p>
+  <div class="mrl-equation">$$q^*(y\mid x)=\frac{1}{Z(x)}\pi_{\mathrm{ref}}(y\mid x)\exp\!\left(\frac{r(x,y)}{\beta}\right),$$</div>
+  <div class="mrl-equation">$$Z(x)=\sum_y\pi_{\mathrm{ref}}(y\mid x)\exp\!\left(\frac{r(x,y)}{\beta}\right).$$</div>
+  <p>直觉上，reference 提供语言分布的底座，$e^{r/\beta}$ 再按奖励重加权。对固定奖励，$\beta$ 越大，指数里的差别越小，$q^*$ 越靠近 reference。</p>
+
+  <h3>第二步：把闭式解反过来读</h3>
+  <p>对闭式解取对数并整理：</p>
+  <div class="mrl-equation">$$r(x,y)=\beta\log\frac{q^*(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}+\beta\log Z(x).$$</div>
+  <p>对同一 prompt 的 chosen 与 rejected 做差，$\beta\log Z(x)$ 完全相同，因此抵消：</p>
+  <div class="mrl-equation">$$r(x,y_w)-r(x,y_l)=\beta\left[\log\frac{q^*(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}-\log\frac{q^*(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}\right].$$</div>
+  <p>实际训练不知道 $q^*$，便用正在学习的 $\pi_\theta$ 参数化它。定义回答的 log-ratio：</p>
+  <div class="mrl-equation">$$\ell_\theta(x,y)=\log\frac{\pi_\theta(y\mid x)}{\pi_{\mathrm{ref}}(y\mid x)}=\log\pi_\theta(y\mid x)-\log\pi_{\mathrm{ref}}(y\mid x).$$</div>
+  <p>于是 $\tilde r_\theta(x,y)=\beta\ell_\theta(x,y)$ 常被叫作 <strong>implicit reward（隐式奖励）</strong>。严格地说，它只确定到一个仅依赖 $x$ 的加法常数；偏好比较只用差值，所以这个不可辨认常数没有影响。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>Reference 不是给回答判善恶，而是定义“从哪里改变”</h3>
+      <p>$\ell_\theta&gt;0$ 只说明当前策略比 reference 更愿意生成该回答，不说明回答绝对优秀；好坏信息来自同一 prompt 下 chosen 与 rejected 的 log-ratio 差。</p>
+      <p class="mrl-insight-key">隐式奖励的坐标原点由 reference 决定，排序方向由偏好数据决定。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="dpo-objective">
+  <h2 class="mrl-sec-title"><span class="num">06</span>代回 BT：显式 reward 消失，DPO loss 出现</h2>
+  <p class="mrl-sec-lead">现在只做一次代换：把 BT 模型里的奖励差，换成上节得到的两个 log-ratio 之差。</p>
+
+  <p>先把 chosen 与 rejected 的相对变化写成 <strong>preference margin（偏好间隔）</strong>：</p>
+  <div class="mrl-equation">$$\Delta_\theta=\ell_w-\ell_l=\left(p_w-p_w^0\right)-\left(p_l-p_l^0\right).$$</div>
+  <p>其中 $\ell_w=\ell_\theta(x,y_w)$、$\ell_l=\ell_\theta(x,y_l)$。代入 BT：</p>
+  <div class="mrl-equation">$$P_\theta(y_w\succ y_l\mid x)=\sigma(\beta\Delta_\theta).$$</div>
+  <p>数据告诉我们 observed label 是“chosen 胜”。最大似然希望上式尽量接近 1；改写成最小化负对数，得到单样本 DPO loss：</p>
+  <div class="mrl-equation">$$L_{\mathrm{DPO}}=-\log\sigma\!\left(\beta\left[\log\frac{\pi_\theta(y_w\mid x)}{\pi_{\mathrm{ref}}(y_w\mid x)}-\log\frac{\pi_\theta(y_l\mid x)}{\pi_{\mathrm{ref}}(y_l\mid x)}\right]\right).$$</div>
+  <p>对数据集取平均，就是训练目标：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{DPO}}(\theta)=\mathbb E_{(x,y_w,y_l)\sim\mathcal D}\left[L_{\mathrm{DPO}}\right].$$</div>
+
+  <div class="mrl-formula-ladder" aria-label="DPO 损失的数据流">
+    <div><span>四条 log-prob</span><strong>$p_w,p_l,p_w^0,p_l^0$</strong><small>2 models × 2 responses</small></div><i>→</i>
+    <div><span>两个 log-ratio</span><strong>$\ell_w=p_w-p_w^0$<br>$\ell_l=p_l-p_l^0$</strong><small>相对 reference 的变化</small></div><i>→</i>
+    <div><span>偏好 logit</span><strong>$z=\beta(\ell_w-\ell_l)$</strong><small>chosen 相对领先多少</small></div><i>→</i>
+    <div><span>训练损失</span><strong>$-\log\sigma(z)$</strong><small>让 observed preference 更可能</small></div>
+  </div>
+  <p class="mrl-caption">不要只看“提高 chosen”。损失真正观察的是两次相对变化之差：chosen 可以上升、rejected 可以下降，或两者同时发生；只要 $\Delta_\theta$ 增大，偏好标签就更可能。</p>
+
+  <p>求导能把更新方向说得更精确。因为 $L=-\log\sigma(\beta\Delta)$：</p>
+  <div class="mrl-equation">$$\frac{\partial L}{\partial\Delta}=-\beta\,\sigma(-\beta\Delta)=-\beta\left[1-\sigma(\beta\Delta)\right].$$</div>
+  <p>导数始终为负，所以梯度下降会增大 $\Delta$：提高 chosen log-ratio，降低 rejected log-ratio。若排序已经很正确且 $\beta\Delta$ 很大，$\sigma(-\beta\Delta)$ 接近 0，梯度自然饱和。</p>
+
+  <div class="mrl-misconception">
+    <b>两个看似冲突的 beta 说法</b>
+    <p>在原始 KL 目标里，较大的 $\beta$ 表示更强的 reference 约束；在 DPO loss 里，固定当前 $\Delta$ 时，$\beta$ 又会乘在 logit 上改变置信度与梯度。这不是两套定义：闭式解给出同一奖励差对应 $\Delta=(r_w-r_l)/\beta$，因此更强约束下所需的策略 log-ratio 变化更小。$\beta$ 不是学习率，也不能只凭“越大更新越猛”判断训练结果。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>DPO 学的是相对 margin，不保证 chosen 单独上升</h3>
+      <p>损失只直接约束 $\ell_w-\ell_l$。它可能主要通过压低 rejected 来完成排序，也可能让两者绝对 log-prob 都下降、但 rejected 下降更多。</p>
+      <p class="mrl-insight-key">因此评估时要同时看 chosen reward、rejected reward、margin 与真实生成质量，不能只看 loss。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="number-example">
+  <h2 class="mrl-sec-title"><span class="num">07</span>四条 log-prob 手算：从 −8.0 到 0.387 的 loss</h2>
+  <p class="mrl-sec-lead">负的 log-prob 很常见。真正重要的是按模型与回答正确配对，逐层做减法。</p>
+
+  <table class="mrl-number-table">
+    <thead><tr><th>完整回答</th><th>Policy log-prob</th><th>Reference log-prob</th><th>log-ratio</th></tr></thead>
+    <tbody>
+      <tr><td>chosen $y_w$</td><td>$p_w=-6.0$</td><td>$p_w^0=-7.0$</td><td>$\ell_w=(-6)-(-7)=1.0$</td></tr>
+      <tr><td>rejected $y_l$</td><td>$p_l=-8.0$</td><td>$p_l^0=-7.5$</td><td>$\ell_l=(-8)-(-7.5)=-0.5$</td></tr>
+    </tbody>
+  </table>
+  <p>取 $\beta=0.5$，依次计算：</p>
+  <div class="mrl-equation">$$\Delta=1.0-(-0.5)=1.5,\qquad z=\beta\Delta=0.75.$$</div>
+  <div class="mrl-equation">$$P(y_w\succ y_l\mid x)=\sigma(0.75)\approx0.679,$$</div>
+  <div class="mrl-equation">$$L=-\log(0.679)\approx0.387,\qquad \frac{\partial L}{\partial\Delta}=-0.5(1-0.679)\approx-0.160.$$</div>
+  <p>初始 policy 若与 reference 完全相同，则 $\ell_w=\ell_l=0$，所以 $P=0.5$、$L=\log2\approx0.693$。现在 loss 已降到 0.387，说明当前策略相对训练起点更符合这条偏好；负梯度仍会继续把 $\Delta$ 往右推。</p>
+</section>

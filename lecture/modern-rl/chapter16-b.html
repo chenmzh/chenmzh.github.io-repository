@@ -1,0 +1,146 @@
+<section id="edge-cases">
+  <h2 class="mrl-sec-title"><span class="num">05</span>二值奖励最重要的边界：全对与全错都没有相对信号</h2>
+  <p class="mrl-sec-lead">可验证结果常写成 $0/1$。它很清楚，却也很稀疏：一组里至少要同时出现不同结果，组内比较才知道该偏向谁。</p>
+
+  <p>设一组 $G$ 条回答中有 $m$ 条通过，令通过率 $p=m/G$。二值 reward 的组均值就是：</p>
+  <div class="mrl-equation">$$\bar r=p$$</div>
+  <p>因为 $r_i\in\{0,1\}$，方差可逐步化简：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  s^2
+  &=p(1-p)^2+(1-p)(0-p)^2\\
+  &=p(1-2p+p^2)+(1-p)p^2\\
+  &=p-p^2=p(1-p).
+  \end{aligned}$$</div>
+  <p>因此，在 $0&lt;p&lt;1$ 时，通过与未通过样本的优势分别是：</p>
+  <div class="mrl-equation">$$\hat A_{\mathrm{pass}}=\sqrt{\frac{1-p}{p}},\qquad
+  \hat A_{\mathrm{fail}}=-\sqrt{\frac{p}{1-p}}$$</div>
+
+  <table class="mrl-sparse-table">
+    <thead><tr><th>四条回答中通过数</th><th>$p$</th><th>通过样本优势</th><th>失败样本优势</th><th>能否区分</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>0</td><td>—</td><td>全部置 0</td><td>不能：全错</td></tr>
+      <tr><td>1</td><td>0.25</td><td>$+\sqrt3\approx+1.732$</td><td>$-1/\sqrt3\approx-0.577$</td><td>能</td></tr>
+      <tr><td>2</td><td>0.50</td><td>$+1$</td><td>$-1$</td><td>能</td></tr>
+      <tr><td>3</td><td>0.75</td><td>$+0.577$</td><td>$-1.732$</td><td>能</td></tr>
+      <tr><td>4</td><td>1</td><td>全部置 0</td><td>—</td><td>不能：全对</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正要观察的不是平均 reward 越高梯度越大，而是组内是否存在可比较的差异：全对表示这组已经没有相对改进对象；全错则表示验证器只说“都失败”，却没有告诉策略哪条更接近成功。</p>
+
+  <p>代码不能真的让 $0/(0+10^{-8})$ 产生方向；常见做法是在 $s$ 小于阈值时把整组优势显式设为 0 或跳过更新。扩大 group size 会增加看到“至少一次成功”的机会，但 rollout 计算也按 $G$ 增长。这里已经埋下下一章的问题：<strong>采样次数本身也是一种推理计算预算。</strong></p>
+</section>
+
+<section id="clip">
+  <h2 class="mrl-sec-title"><span class="num">06</span>有了相对优势以后，仍要防止一批旧回答把策略推得太远</h2>
+  <p class="mrl-sec-lead">组内优势回答“往哪个方向改”；PPO-style ratio 与 clip 回答“这一批由旧策略生成的数据，最多允许改多猛”。</p>
+
+  <p>原始 GRPO 保留逐 token 概率。第 $i$ 条回答第 $t$ 个 token 的新旧策略比值是：</p>
+  <div class="mrl-equation">$$\rho_{i,t}(\theta)=
+  \frac{\pi_\theta(y_{i,t}\mid x,y_{i,&lt;t})}
+  {\pi_{\mathrm{old}}(y_{i,t}\mid x,y_{i,&lt;t})}
+  =\exp\!\left(\ell_{i,t}^{\theta}-\ell_{i,t}^{\mathrm{old}}\right)$$</div>
+  <p>$\rho=1$ 表示当前策略与采样时相同，$\rho=1.2$ 表示当前策略给这个已采 token 的条件概率提高了 20%。回答只得到一个结果优势 $\hat A_i$，所以这一个数广播给回答里的所有 token；但每个 token 的 $\rho_{i,t}$ 仍分别计算。</p>
+
+  <p>对单个 token，裁剪目标写成：</p>
+  <div class="mrl-equation mrl-equation-feature">$$j_{i,t}(\theta)=\min\!\left(
+  \rho_{i,t}\hat A_i,
+  \operatorname{clip}(\rho_{i,t},1-\epsilon_{\mathrm{clip}},1+\epsilon_{\mathrm{clip}})\hat A_i
+  \right)$$</div>
+  <p>这里最大化 $j_{i,t}$；实现训练 loss 时再取负号。取 $\epsilon_{\mathrm{clip}}=0.2$，看两个方向：</p>
+
+  <div class="mrl-clip-cases">
+    <article>
+      <span>POSITIVE ADVANTAGE</span>
+      <h3>$\hat A=+1,\ \rho=1.35$</h3>
+      <p>未裁剪项为 $1.35$，裁剪项为 $1.20$，取较小者 $1.20$。高分回答已经被大幅增概率，继续奖励被封顶。</p>
+    </article>
+    <article>
+      <span>NEGATIVE ADVANTAGE</span>
+      <h3>$\hat A=-1,\ \rho=0.65$</h3>
+      <p>未裁剪项为 $-0.65$，裁剪项为 $0.80\times(-1)=-0.80$，取较小者 $-0.80$。低分回答已经被大幅降概率，目标不给进一步收益。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两栏要一起看：clip 同时限制“把好回答抬得过快”和“把坏回答压得过快”。优势给方向，概率比给偏离程度，二者缺一不可。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“既然整段回答只有一个 reward，就应该先把所有 token 概率连乘成回答级 ratio。”</strong> 原始 DeepSeekMath GRPO 不是这样做的。它先保留逐 token log-prob，逐 token 计算 ratio 与 clip，再对每段回答的有效 token 求平均。把 ratio 连乘会引入明显的回答长度效应。</p>
+  </div>
+</section>
+
+<section id="reference">
+  <h2 class="mrl-sec-title"><span class="num">07</span>old policy 负责说明数据从哪来，reference policy 负责说明别漂到哪去</h2>
+  <p class="mrl-sec-lead">两者都可能是冻结的模型副本，也都出现在 log-prob 里，但职责不同。把它们混成一个“旧模型”，后面的 ratio 与 KL 就失去解释。</p>
+
+  <div class="mrl-policy-roles">
+    <article>
+      <span>DATA SNAPSHOT</span>
+      <h3>$\pi_{\mathrm{old}}$ · 采样时策略</h3>
+      <p>它生成本批 $y_i$。当前策略与它比较形成 $\rho_{i,t}$，判断一份旧数据对当前更新是否已经过时。</p>
+    </article>
+    <article class="current">
+      <span>TRAINABLE</span>
+      <h3>$\pi_\theta$ · 当前策略</h3>
+      <p>唯一被梯度更新的模型。它要提高正优势回答的概率、降低负优势回答的概率。</p>
+    </article>
+    <article>
+      <span>BEHAVIOR ANCHOR</span>
+      <h3>$\pi_{\mathrm{ref}}$ · 参考策略</h3>
+      <p>通常来自对齐前或阶段起点的冻结模型。它不说明数据由谁生成，而是惩罚当前策略离语言与行为锚点太远。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">沿左栏到中栏读出 importance ratio，沿右栏到中栏读出 KL anchor。old 会随 rollout 批次刷新；reference 通常在一个训练阶段内保持冻结，二者不能仅因某一时刻参数相同就混为同一概念。</p>
+
+  <p>沿用 Chapter 14 的 KL 直觉。原始 GRPO 对每个 token 可使用非负估计：</p>
+  <div class="mrl-equation">$$\Delta_{i,t}=\ell_{i,t}^{\mathrm{ref}}-\ell_{i,t}^{\theta},\qquad
+  \widehat D_{i,t}=\exp(\Delta_{i,t})-\Delta_{i,t}-1$$</div>
+  <p>为什么它不会给出负惩罚？令 $g(\Delta)=e^\Delta-\Delta-1$，则：</p>
+  <div class="mrl-equation">$$g'(\Delta)=e^\Delta-1,\qquad g''(\Delta)=e^\Delta&gt;0$$</div>
+  <p>所以 $g$ 是凸函数，唯一驻点 $\Delta=0$ 是全局最小点，且 $g(0)=0$。当当前策略与 reference 在该 token 上一致时惩罚为 0；偏离任一方向，惩罚都为正。若 $\Delta=0.2$，则：</p>
+  <div class="mrl-equation">$$\widehat D=e^{0.2}-0.2-1\approx0.0214$$</div>
+  <p>它不是“让策略永远等于 reference”。总目标会用系数 $\beta$ 权衡学习新高分行为与保留锚点；$\beta$ 越大，离开 reference 越贵。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>old 与 reference 分别回答“证据是否过期”和“行为是否漂移”</h3>
+      <p>概率比值关心当前策略相对采样策略变了多少；KL 关心当前策略相对长期锚点变了多少。一个约束数据复用，一个约束行为漂移。</p>
+      <p class="mrl-insight-key">同一份 log-prob 表里出现两个冻结模型，不代表它们扮演同一个角色。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="objective">
+  <h2 class="mrl-sec-title"><span class="num">08</span>完整 GRPO 目标：先回答，再 token，最后回到 prompt</h2>
+  <p class="mrl-sec-lead">长公式并没有新增神秘部件，只是在三个平均层级里组合“相对优势、保守更新、参考锚点”。按索引从里向外读即可。</p>
+
+  <div class="mrl-equation mrl-equation-wide">$$\mathcal J_{\mathrm{GRPO}}(\theta)=
+  \mathbb E_{x_j}\!\left[
+  \frac{1}{G}\sum_{i=1}^{G}\frac{1}{T_{j,i}}\sum_{t=1}^{T_{j,i}}
+  \left(
+  \min\!\left[\rho_{j,i,t}\hat A_{j,i},
+  \operatorname{clip}(\rho_{j,i,t},1-\epsilon_{\mathrm{clip}},1+\epsilon_{\mathrm{clip}})\hat A_{j,i}\right]
+  -\beta\widehat D_{j,i,t}
+  \right)
+  \right]$$</div>
+
+  <ol class="mrl-formula-reading">
+    <li><strong>最内层 token：</strong>对第 $t$ 个生成 token 计算新旧 ratio、clip 与 reference KL。</li>
+    <li><strong>一段回答：</strong>结果奖励只产生一个 $\hat A_{j,i}$，广播到回答的 token；再用 $1/T_{j,i}$ 对有效 token 求平均，避免长回答仅因 token 多就拥有更大权重。</li>
+    <li><strong>同题一组：</strong>用 $1/G$ 平均 $G$ 条回答，它们共享 prompt，却有不同采样结果。</li>
+    <li><strong>许多 prompt：</strong>最外层对题目分布取期望；训练代码用一个 prompt batch 的均值近似。</li>
+  </ol>
+
+  <table class="mrl-symbol-map">
+    <thead><tr><th>数学对象</th><th>代码常见形状</th><th>含义</th></tr></thead>
+    <tbody>
+      <tr><td>$r_{j,i}$</td><td><code>[B, G]</code></td><td>每个 prompt 的每条回答一个 reward</td></tr>
+      <tr><td>$\hat A_{j,i}$</td><td><code>[B, G]</code></td><td>回答级组内相对优势</td></tr>
+      <tr><td>$\ell^\theta,\ell^{\mathrm{old}},\ell^{\mathrm{ref}}$</td><td><code>[B·G, T]</code></td><td>回答 token 的逐位置 log-prob</td></tr>
+      <tr><td>completion mask</td><td><code>[B·G, T]</code></td><td>排除 prompt 与 padding，只平均生成 token</td></tr>
+      <tr><td>$\mathcal L$</td><td>scalar</td><td>优化器最小化 $\mathcal L=-\mathcal J$</td></tr>
+    </tbody>
+  </table>
+
+  <p>因此，“没有 Critic”只删掉 value loss 与 value model。rollout policy、当前 policy、reference、reward/verifier、逐 token log-prob、mask 与 optimizer 都还在。GRPO 是更轻的 Actor 侧结构，不是“只算一次 z-score 就训练完”。</p>
+</section>

@@ -1,0 +1,129 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 18 · Process rewards and inference-time search</div>
+  <h1>只看最终答案为什么不足？</h1>
+  <p class="lead">上一章说明：多采样、延长思考或增加推理预算，可以提高“候选集合里至少出现一次正确答案”的概率。但覆盖率不是交付质量。候选真的出现以后，系统还要判断<strong>哪条推理值得继续、哪条答案值得提交</strong>。如果只在最后看答案，第一处错误可能早已被后面的流畅文字掩盖。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把一个终局分数拆成可定位的步骤反馈，并让验证器在有限预算下决定继续、剪枝、回退或选择哪条推理路径？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 16–17</span>
+    <span class="mrl-pill">数学：条件概率 + 分数聚合</span>
+    <span class="mrl-pill">实验：同终局路径的预算分配</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从终局判定到前缀搜索</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#outcome-process"><b>01</b><span>先看盲点</span><small>答对不等于推对</small></a>
+      <a class="mrl-roadmap-step" href="#credit"><b>02</b><span>定位首错</span><small>把信用放回步骤</small></a>
+      <a class="mrl-roadmap-step" href="#three-verifiers"><b>03</b><span>选择尺子</span><small>分类、解释或规则</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#path-lab"><b>04</b><span>比较路径</span><small>同终局、不同过程</small></a>
+      <a class="mrl-roadmap-step" href="#search-structures"><b>05</b><span>分配预算</span><small>保留、剪枝、回退</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#limits"><b>06</b><span>检查尺子</span><small>别把分数当真理</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>Chapter 17 提高了覆盖率，却没有自动解决选择</h2>
+  <p class="mrl-sec-lead">多生成几条路径，只保证搜索空间变宽；如果选择器看不出中间错误，更多候选也可能只是带来更多“结论碰巧正确”的坏证明。</p>
+
+  <p>Chapter 16 建立过 <strong>outcome verifier（结果验证器）</strong>：完整回答结束后，检查最终答案是否满足一个可验证条件。Chapter 17 又把推理时计算写成多采样和 Best-of-$N$。两章留下的接口可以压缩成：</p>
+  <div class="mrl-coverage-chain">
+    <div><span>GENERATOR</span><strong>生成 $N$ 条候选</strong><small>扩大可能解法的覆盖</small></div>
+    <i>→</i>
+    <div><span>COVERAGE</span><strong>至少一条可能正确</strong><small>候选集合的性质</small></div>
+    <i>→</i>
+    <div class="is-gap"><span>SELECTOR</span><strong>究竟提交哪一条？</strong><small>还需要可靠的比较信号</small></div>
+  </div>
+  <p class="mrl-caption">真正的缺口在最后一栏：候选覆盖只说明“答案可能已经在里面”，不会替选择器识别一条结论正确但论证无效的路径。</p>
+
+  <p>设问题是“证明 $\sqrt{2}$ 是无理数”。模型可能写出正确反证，也可能在中间漏掉平方，最后仍抄出“所以 $\sqrt{2}$ 是无理数”。如果结果验证器只比较最后一句与参考结论，两条路径都会得到 1 分。继续增加采样，只会让这两类路径一起增加。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>搜索有两种成功：覆盖正确候选，以及识别正确候选</h3>
+      <p>pass@$k$ 主要度量前者；最终交付是否正确还取决于 verifier 与 selector。两者任一失败，更多采样都不保证结果更好。</p>
+      <p class="mrl-insight-key">推理时扩展不是“把 $N$ 调大”一个旋钮，而是生成覆盖、评价可靠性与预算分配三个部件的乘积。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="outcome-process">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先区分“答对”与“推对”：监督信号看的是不同对象</h2>
+  <p class="mrl-sec-lead"><strong>Outcome supervision（结果监督）</strong>给完整轨迹一个终局标签；<strong>process supervision（过程监督）</strong>在每个可判断的推理步骤后给反馈。它们不是同一个分数的精细与粗糙版本，而是在测不同事件。</p>
+
+  <div class="mrl-supervision-pair">
+    <article>
+      <span>OUTCOME SUPERVISION</span>
+      <h3>整件事完成了吗？</h3>
+      <div class="mrl-equation">$$r_{\text{out}}=v(q,y_{1:T})$$</div>
+      <p>问题 $q$ 与完整回答 $y_{1:T}$ 进入验证器 $v$，输出一个终局分数。它便宜、边界清楚，却不指出错误最早在哪里发生。</p>
+    </article>
+    <article>
+      <span>PROCESS SUPERVISION</span>
+      <h3>走到这里仍然成立吗？</h3>
+      <div class="mrl-equation">$$r_i^{\text{proc}}=v_i(q,y_{\le i})$$</div>
+      <p>第 $i$ 步的评价必须看到截至该步的前缀 $y_{\le i}$。同一句“所以 $p$ 是偶数”脱离前提没有真假可言。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">左栏在轨迹完成后回答“有没有到终点”；右栏在前缀生成时回答“当前路径还值得继续吗”。只有右栏能把预算从首个低分步骤之后移走。</p>
+
+  <p>为什么过程评价不能只看当前一句？因为推理步骤是带上下文的动作。由 $p^2=2q^2$ 推出“$p$ 是偶数”成立；凭空说“$p$ 是偶数”则没有依据。反过来，也不应把完整结局提前展示给步骤标注员，否则“最后答对了”会造成后见偏差。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“结果奖励乘上不同折扣，就变成了过程监督。”</strong> 不对。折扣、GAE 或 token-level loss 都在重新分配同一个终局信号；过程监督新增的是对步骤本身的独立判断。一个终点 1 分无论怎样平滑，都不会凭空说出“第 3 步漏了平方”。</p>
+  </div>
+</section>
+
+<section id="credit">
+  <h2 class="mrl-sec-title"><span class="num">03</span>Step-level credit：把功劳与责任放回真正发生的位置</h2>
+  <p class="mrl-sec-lead"><strong>Step-level credit assignment（步骤级信用分配）</strong>不是让每一步都拿到同样奖励，而是识别哪些前缀保持了可行性、哪一步第一次破坏了逻辑链。</p>
+
+  <p>把一条四步推理记作轨迹 $\tau=(s_1,s_2,s_3,s_4)$。结果监督只产生一个数字 $r_{\text{out}}$；过程监督产生一个向量：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\mathbf r_{\text{proc}}(\tau)=(r_1,r_2,r_3,r_4).$$</div>
+  <p>例如两条路径的终局分数都是 1，但步骤反馈可能是：</p>
+  <table class="mrl-credit-table">
+    <thead><tr><th>路径</th><th>终局奖励</th><th>步骤分数</th><th>第一次应改变预算的位置</th></tr></thead>
+    <tbody>
+      <tr><td>正确反证</td><td>1</td><td>$[0.96,0.94,0.93,0.97]$</td><td>没有明显断点，继续</td></tr>
+      <tr><td>漏掉平方</td><td>1</td><td>$[0.97,0.08,0.31,0.88]$</td><td>第 2 步后剪枝或回退</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正要观察的不是末尾两个“1”，而是第二条路径在第 2 步从 0.97 跌到 0.08；过程反馈把“最后哪里不对”改写成“预算何时应停止继续投入”。</p>
+
+  <p>步骤奖励仍要决定怎样进入训练。可以把每步分数直接视为密集奖励，也可以只把它用于推理时的重排序与剪枝；即使一个步骤包含多个 token，还要另行决定是整步共享分数、只在步骤末尾发放，还是再通过优势估计传播。<strong>步骤级标签不会自动给出 token 级真相。</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>过程奖励最先改变的往往不是梯度，而是计算去向</h3>
+      <p>同一套步骤分数既可以训练策略，也可以在推理时停止坏前缀。后者不改模型参数，却能立即避免在已知错误后继续生成。</p>
+      <p class="mrl-insight-key">先问“这个分数在哪一层生效”：训练奖励、完整候选重排，还是搜索节点优先级。三者不能只用“用了步骤分”一句话带过。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="prm">
+  <h2 class="mrl-sec-title"><span class="num">04</span>步骤评分模型：把“这一步还能继续吗”变成可学习的概率</h2>
+  <p class="mrl-sec-lead"><strong>Process Reward Model（PRM，过程奖励模型）</strong>读取问题和截至当前步骤的推理前缀，输出当前步骤正确或可继续的分数。</p>
+
+  <div class="mrl-equation">$$p_i=P_\phi(c_i=1\mid q,y_{\le i})$$</div>
+  <p>$q$ 是问题，$y_{\le i}$ 是到第 $i$ 步为止的回答，$c_i=1$ 表示当前步骤在给定前缀下被判断为正确，$\phi$ 是评价模型参数。$p_i=0.93$ 不是“这一步有 93% 的数学真理”，而是模型在其训练分布和标签定义下给出的置信分。</p>
+
+  <table>
+    <thead><tr><th>数学对象</th><th>程序变量</th><th>真正代表什么</th></tr></thead>
+    <tbody>
+      <tr><td>$q$</td><td><code>prompt</code></td><td>原问题与必要约束</td></tr>
+      <tr><td>$y_{\le i}$</td><td><code>prefix</code></td><td>从开头到当前步骤的完整上下文</td></tr>
+      <tr><td>$p_i$</td><td><code>step_score</code></td><td>当前步骤标签的模型概率或标量分</td></tr>
+      <tr><td>$\tau$</td><td><code>candidate.steps</code></td><td>一条完整或部分推理路径</td></tr>
+      <tr><td>$S(\tau)$</td><td><code>path_score</code></td><td>把多步分数汇总后的排序依据</td></tr>
+    </tbody>
+  </table>
+
+  <p>如果 PRM 做三分类 good / bad / neutral，常见训练目标是交叉熵。对人工标签 $y_{i,c}$ 和模型概率 $p_\phi(c\mid q,y_{\le i})$：</p>
+  <div class="mrl-equation">$$\mathcal L_{\text{PRM}}=-\sum_i\sum_{c\in\{g,b,n\}}y_{i,c}\log p_\phi(c\mid q,y_{\le i}).$$</div>
+  <p>若正确类别的概率只有 $0.10$，这一项损失是 $-\log0.10\approx2.30$；概率为 $0.90$ 时损失约 $0.11$。因此训练会更强烈地纠正自信的错判。但交叉熵只让模型贴近标签：步骤切分错、标签错或领域变了，训练得更充分也可能只是更自信地复制偏差。</p>
+</section>

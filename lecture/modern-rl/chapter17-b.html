@@ -1,0 +1,122 @@
+<section id="pass-k">
+  <h2 class="mrl-sec-title"><span class="num">05</span>多次采样覆盖率：先不问能否选中，只问候选里有没有正确答案</h2>
+  <p class="mrl-sec-lead">多采样的第一笔账不是“最后交付对不对”，而是“$k$ 条候选中至少有一条正确”的覆盖率。</p>
+
+  <p><strong>pass@k（$k$ 次采样通过率）</strong>是在每道题生成至多 $k$ 条候选，只要其中至少一条通过验证，就把这道题记为成功的评测指标。先作一个关键假设：每条候选相互独立，且单条正确概率都为 $p$。</p>
+
+  <div class="mrl-derivation">
+    <div><span>STEP 1 · 单条失败</span><strong>一条候选错误的概率是 $1-p$。</strong></div>
+    <div><span>STEP 2 · 全部失败</span><strong>独立性让概率可以相乘：$P(\text{前 }k\text{ 条全错})=(1-p)^k$。</strong></div>
+    <div><span>STEP 3 · 取补事件</span><strong>“至少一条正确”与“全部错误”互为补事件，因此：</strong></div>
+  </div>
+  <div class="mrl-equation mrl-equation-feature">$$\operatorname{pass@}k=1-(1-p)^k.$$</div>
+
+  <p>取 $p=0.20$。一条候选只有 20% 概率正确，但重复独立尝试会迅速提高“至少看见一次正确”的概率：</p>
+  <table class="mrl-pass-table">
+    <thead><tr><th>采样数 $k$</th><th>全部失败 $(1-p)^k$</th><th>$\operatorname{pass@}k$</th><th>再加一条的边际覆盖</th></tr></thead>
+    <tbody>
+      <tr><td>$1$</td><td>$80.00\%$</td><td>$20.00\%$</td><td>$16.00$ 个百分点</td></tr>
+      <tr><td>$2$</td><td>$64.00\%$</td><td>$36.00\%$</td><td>$12.80$ 个百分点</td></tr>
+      <tr><td>$4$</td><td>$40.96\%$</td><td>$59.04\%$</td><td>$8.19$ 个百分点</td></tr>
+      <tr><td>$8$</td><td>$16.78\%$</td><td>$83.22\%$</td><td>$3.36$ 个百分点</td></tr>
+      <tr><td>$16$</td><td>$2.81\%$</td><td>$97.19\%$</td><td>$0.56$ 个百分点</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正要观察的是边际收益递减：采样成本每次近似增加一份，而“前面恰好全错、这一条恰好答对”的机会越来越小。</p>
+
+  <h3>为什么下一条候选越来越不值钱？</h3>
+  <p>从 $k$ 条增加到 $k+1$ 条，新候选只有在前 $k$ 条全部错误、自己又正确时才带来新覆盖，因此：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  \Delta_k
+  &=\operatorname{pass@}(k+1)-\operatorname{pass@}k\\
+  &=\left[1-(1-p)^{k+1}\right]-\left[1-(1-p)^k\right]\\
+  &=p(1-p)^k.
+  \end{aligned}$$</div>
+  <p>当 $p=0.2,k=8$，第 9 条候选最多新增 $0.2\times0.8^8\approx3.36$ 个百分点；到 $k=16$，第 17 条只新增约 $0.56$ 个百分点。若每条都花同样成本，这就是自然的停止信号。</p>
+
+  <p>反过来，若希望覆盖率至少达到 $q$，可从 $1-(1-p)^k\ge q$ 解出所需采样数：</p>
+  <div class="mrl-equation">$$k\ge \frac{\log(1-q)}{\log(1-p)},\qquad
+  k_{\min}=\left\lceil\frac{\log(1-q)}{\log(1-p)}\right\rceil,$$</div>
+  <p>其中 $0\lt p\lt1$。例如 $p=0.2$、目标 $q=0.9$，得到 $k_{\min}=\lceil\log(0.1)/\log(0.8)\rceil=11$。这只是理想独立采样下的预算下界；候选高度相关时会更差。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>pass@k 是候选覆盖上限，不是产品交付正确率</h3>
+      <p>它相当于有一个知道正确答案的“神谕”事后检查 $k$ 条候选。真实系统还要从候选里选一条给用户，选择器可能错过已经出现的正确答案。</p>
+      <p class="mrl-insight-key">“生成出来了”和“识别并交付了”必须分成两个概率事件；多采样只直接改善前者。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="scaling-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>实验：预算翻倍时，质量、成本与错误相关性怎样一起变化？</h2>
+  <p class="mrl-sec-lead">下面固定模型参数，只调单条成功率、候选数、每条长度、错误相关性和选择器可靠度。曲线横轴是总生成 token，纵轴是成功概率。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>增加候选数 $k$ 时，独立覆盖率、相关采样覆盖率与最终交付正确率怎样变化？</dd>
+    <dt>Prediction</dt><dd>$k$ 增大会让成本线性增长、独立覆盖率逐渐饱和；相关性越高，新增候选越像重复同一个错误，曲线越平。</dd>
+    <dt>Experiment</dt><dd>调节单条正确率 $p$、候选数 $k$、每条 token 数 $L$、共享错误概率 $\rho$ 与选择器可靠度 $v$，比较三条质量曲线。</dd>
+    <dt>Observation</dt><dd id="scalingObservation">等待实验加载。</dd>
+    <dt>Interpretation</dt><dd>并行候选只有同时增加“数量”和“差异”才有价值；正确候选出现后，选择器仍决定它能否进入最终答案。</dd>
+    <dt>Limitation</dt><dd>相关曲线来自页面明示的混合概率模型，选择器也被简化为常数 $v$；真实样本的相关结构、长度与成功率会随任务改变。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar">
+    <div class="mrl-lab-controls">
+      <label class="mrl-range-control"><span>单条正确率 $p$ <output id="sampleProbabilityValue">0.20</output></span><input id="sampleProbability" type="range" min="0.02" max="0.80" step="0.01" value="0.20"></label>
+      <label class="mrl-range-control"><span>候选数 $k$ <output id="sampleCountValue">8</output></span><input id="sampleCount" type="range" min="1" max="32" step="1" value="8"></label>
+      <label class="mrl-range-control"><span>每条长度 $L$ <output id="tokensPerSampleValue">500 token</output></span><input id="tokensPerSample" type="range" min="100" max="2000" step="100" value="500"></label>
+      <label class="mrl-range-control"><span>共享错误相关性 $\rho$ <output id="sampleCorrelationValue">0.40</output></span><input id="sampleCorrelation" type="range" min="0" max="1" step="0.05" value="0.40"></label>
+      <label class="mrl-range-control"><span>选择器可靠度 $v$ <output id="selectorReliabilityValue">0.90</output></span><input id="selectorReliability" type="range" min="0.50" max="1" step="0.01" value="0.90"></label>
+    </div>
+    <div class="mrl-lab-actions"><button class="mrl-btn" id="scalingReset" type="button">恢复默认</button></div>
+  </div>
+
+  <div class="mrl-lab-results" aria-live="polite">
+    <article><span>INDEPENDENT COVERAGE</span><strong id="independentCoverage">83.22%</strong><small>$1-(1-p)^k$</small></article>
+    <article><span>CORRELATED COVERAGE</span><strong id="correlatedCoverage">57.93%</strong><small>$\rho p+(1-\rho)[1-(1-p)^k]$</small></article>
+    <article><span>DELIVERED ACCURACY</span><strong id="deliveredAccuracy">52.14%</strong><small>$v\times$ 相关覆盖率</small></article>
+    <article><span>GENERATION COST</span><strong id="generationCost">4,000</strong><small>token，不含验证器</small></article>
+  </div>
+
+  <figure class="mrl-scaling-figure">
+    <div class="mrl-chart-legend" aria-hidden="true">
+      <span class="independent">独立候选覆盖率</span>
+      <span class="correlated">相关候选覆盖率</span>
+      <span class="delivered">选择后交付率</span>
+    </div>
+    <svg id="scalingChart" viewBox="0 0 720 300" role="img" aria-labelledby="scalingChartTitle scalingChartDescription">
+      <title id="scalingChartTitle">生成预算与成功概率曲线</title>
+      <desc id="scalingChartDescription">随着候选数增加，总 token 线性增加，覆盖率边际收益递减；相关性和选择器错误进一步压低实际交付成功率。</desc>
+      <g id="chartGrid"></g>
+      <path id="independentPath" class="chart-line independent" d=""></path>
+      <path id="correlatedPath" class="chart-line correlated" d=""></path>
+      <path id="deliveredPath" class="chart-line delivered" d=""></path>
+      <line id="currentBudgetLine" class="current-budget" x1="0" y1="24" x2="0" y2="254"></line>
+      <circle id="currentIndependentPoint" class="chart-point independent" cx="0" cy="0" r="5"></circle>
+      <circle id="currentCorrelatedPoint" class="chart-point correlated" cx="0" cy="0" r="5"></circle>
+      <circle id="currentDeliveredPoint" class="chart-point delivered" cx="0" cy="0" r="5"></circle>
+      <text id="budgetAxisStart" x="56" y="282">0</text>
+      <text id="budgetAxisEnd" x="692" y="282">16k token</text>
+      <text class="axis-label" x="374" y="298">总生成预算 $kL$</text>
+      <text class="axis-label y" transform="translate(14 174) rotate(-90)">成功概率</text>
+    </svg>
+    <figcaption class="mrl-caption">横向增加预算时，独立曲线最高；让 $\rho$ 增大，可直接看到“多条同质答案”怎样失去覆盖收益；再降低 $v$，会看到正确候选已经出现却没被选中的差距。</figcaption>
+  </figure>
+
+  <h3>相关样本为什么不能直接套独立公式？</h3>
+  <p>本实验采用一个可以精确计算的混合模型。以概率 $\rho$，所有候选共享同一个“这道题会不会做对”的结果；以概率 $1-\rho$，才各自独立采样。每条候选的边际正确率仍是 $p$，任意两条正确性指标的相关系数恰好为 $\rho$，覆盖率为：</p>
+  <div class="mrl-equation">$$P_{\rho}(\text{至少一条正确})
+  =\rho p+(1-\rho)\left[1-(1-p)^k\right].$$</div>
+  <p>检查两个端点：$\rho=0$ 时回到独立公式；$\rho=1$ 时所有回答完全同涨同跌，覆盖率退化成 $p$，无论采多少条都像只采一条。真实模型的错误结构未必符合这个混合模型，但它严格说明了一个事实：<strong>只知道每条的 $p$，无法推出联合覆盖率；还必须知道候选之间怎样共同犯错。</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>多样性本身就是一种推理资源</h3>
+      <p>把同一条错误思路换十种措辞，不等于获得十次独立机会。温度、提示、工具和解题视角是否真的改变错误模式，比候选计数本身更重要。</p>
+      <p class="mrl-insight-key">有效预算不是 $k$ 的标签，而是能够覆盖多少彼此不同的失败模式。</p>
+    </div>
+  </aside>
+</section>

@@ -1,0 +1,142 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 19 · Industrial-scale LLM reinforcement learning</div>
+  <h1>算法进入大规模集群后，真正瓶颈在哪里？</h1>
+  <p class="lead">上一章已经能用过程奖励与搜索比较多条推理路径。可是一旦每道题要采样多条长回答，真正拖慢训练的往往不再是 PPO 或 GRPO 的那一行损失，而是<strong>谁生产轨迹、谁消费 token、谁在等新权重</strong>。本章把“算法”放进一条会排队、会空转、会过期的真实流水线。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样从每段耗时、生产/消费速率和策略版本差，定位大模型 RL 的系统瓶颈？提高吞吐时，怎样避免把新鲜的 on-policy 数据换成大量陈旧经验？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–110 min</span>
+    <span class="mrl-pill">先修：Chapter 14–18</span>
+    <span class="mrl-pill">数学：速率、队列与概率比</span>
+    <span class="mrl-pill">实验：吞吐—等待—陈旧度反事实</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从算法步骤到可观测的训练系统</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#workers"><b>01</b><span>拆开角色</span><small>谁生成，谁更新</small></a>
+      <a class="mrl-roadmap-step" href="#throughput"><b>02</b><span>统一单位</span><small>token、batch 与时间</small></a>
+      <a class="mrl-roadmap-step" href="#schedule"><b>03</b><span>重叠执行</span><small>等待换成队列</small></a>
+      <a class="mrl-roadmap-step" href="#staleness"><b>04</b><span>计算代价</span><small>旧策略样本有多旧</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#bottleneck-lab"><b>05</b><span>搬动瓶颈</span><small>做吞吐反事实</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#operations"><b>06</b><span>形成闭环</span><small>恢复、评测、追踪</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>搜索出了更好的路径，为什么训练机仍可能大半时间在等？</h2>
+  <p class="mrl-sec-lead">Chapter 18 解决的是“多条候选路径里怎样选”；本章先问一个更朴素的问题：这些候选路径来得够不够快，而且到训练时还新不新鲜？</p>
+
+  <p>取一个小而真实的训练轮次：64 道题，每道题生成 8 条回答，一共 512 条 rollout。假设生成用 45 秒，验证器打分用 4 秒，参数更新用 12 秒。若全部串行，一轮至少需要：</p>
+  <div class="mrl-equation">$$T_{\mathrm{step}}=T_{\mathrm{rollout}}+T_{\mathrm{reward}}+T_{\mathrm{train}}+T_{\mathrm{sync}}$$</div>
+  <p>即使暂时忽略权重同步，前三项也已经是 $45+4+12=61$ 秒。若把反向传播加速一倍，训练只需 6 秒，总时间却只从 61 秒降到 55 秒，提速约 $1.11\times$。原因不是训练优化做错了，而是 45 秒的生成阶段仍在原地。</p>
+
+  <div class="mrl-stage-ledger" aria-label="同步训练一步的耗时账本">
+    <div class="rollout"><span>Rollout</span><strong>45 s</strong><small>生成 512 条回答</small></div>
+    <div class="reward"><span>Reward</span><strong>4 s</strong><small>验证与打分</small></div>
+    <div class="train"><span>Training</span><strong>12 s</strong><small>反向 + 更新</small></div>
+  </div>
+  <p class="mrl-caption">真正要观察的是耗时占比而不是哪段代码最“高级”：生成占 73.8%，因此只优化训练 kernel 不会显著改变端到端 step time。</p>
+
+  <p>这就是工业 RL 与普通监督学习的第一处分叉：监督学习从固定数据集读取样本；RL 的训练样本由当前策略在线生产。参数一变，下一批回答、奖励分布和 token 长度也会跟着变。系统不仅要算梯度，还要不断完成：</p>
+  <div class="mrl-flow mrl-industrial-flow">
+    <div class="box">任务 / prompt</div><div class="arrow">→</div>
+    <div class="box">生成 rollout</div><div class="arrow">→</div>
+    <div class="box">验证与奖励</div><div class="arrow">→</div>
+    <div class="box">训练更新</div><div class="arrow">→</div>
+    <div class="box">同步新权重</div>
+  </div>
+  <p class="mrl-caption">顺着实线看样本流，最后再沿“同步新权重”回到生成端。任何一段变慢都会让相邻设备排队或断粮；这条闭环才是本章的分析对象。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“多买 GPU 就会线性加速。”</strong> 只有新 GPU 被放到当前瓶颈上，并且没有制造更重的通信、同步或长尾等待时，端到端吞吐才会接近线性提高。把卡加到非瓶颈阶段，通常只是让更多设备更快做完、然后一起等待。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>工业规模首先改变的是执行图，不是目标函数</h3>
+      <p>PPO 仍用 Critic/GAE 与 clipped objective，GRPO 仍用组内相对信号；放大以后新增的是独立进程、队列、权重版本与失败恢复。</p>
+      <p class="mrl-insight-key">先把一轮训练画成时间线，再决定优化算法、kernel 还是系统。否则很容易把非瓶颈加速得漂亮，却没有缩短一次有效更新所需的墙钟时间。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="workers">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先拆出三类 worker：生产样本、消费样本、给策略行动</h2>
+  <p class="mrl-sec-lead">worker 不是某一种框架专有名词，而是一个长期运行、反复承担同类职责的进程。先按职责拆开，框架名才不会遮住数据究竟怎样流动。</p>
+
+  <div class="mrl-worker-map">
+    <article>
+      <span>PRODUCER</span>
+      <h3>Rollout worker（轨迹生成进程）</h3>
+      <p>读取 prompt，用某一版本的策略生成 completion；记录 token、mask、采样参数、旧 log-probability 和策略版本，再把轨迹交给奖励端。</p>
+    </article>
+    <article>
+      <span>CONSUMER</span>
+      <h3>Training worker（训练进程）</h3>
+      <p>从 buffer 取出已评分的 batch，计算 PPO/GRPO 所需统计量、反向传播并更新参数；它消费的是 token batch，不直接面对用户。</p>
+    </article>
+    <article>
+      <span>ACTION SERVICE</span>
+      <h3>Inference worker（推理进程）</h3>
+      <p>执行模型前向并逐 token 采样。它可以被 rollout worker 调用；规模扩大后常由专用生成引擎承担，以管理 <strong>key–value cache（KV cache，键值缓存）</strong>、连续批处理和长尾请求。键值缓存复用此前 token 的注意力中间量，避免每生成一个新 token 都重算整个前缀。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要分清的是职责而非进程名：rollout 负责组织“要生成哪些训练样本”，inference 负责高吞吐执行模型前向，training 负责把已评分样本变成参数更新；小实验里三者可以挤在一个 Python 进程中。</p>
+
+  <p>为什么把 rollout 与 inference 分开说？因为它们处在不同抽象层。rollout worker 知道“每道题采样 8 条”“何时算一条轨迹结束”“使用哪个 policy version”；inference worker 更关心 prefill、逐 token decode、KV cache 与 batch 调度。前者定义训练样本，后者高效执行生成。两者可以一一对应，也可以许多 rollout 任务共享一组 inference engine。</p>
+
+  <h3>PPO 与 GRPO 在这里发生了什么变化？</h3>
+  <p>本章不重新推导算法，只回顾它们占用了哪些系统角色。PPO 通常还要运行 Critic，并计算 reference log-probability、奖励、优势与策略更新；GRPO 省掉 Critic，用同一 prompt 下多条回答的相对奖励构造学习信号。二者都没有省掉最昂贵的共同环节：<strong>先由当前策略生成大量 token，再把新权重送回生成端。</strong></p>
+
+  <table class="mrl-role-table">
+    <thead><tr><th>系统职责</th><th>PPO</th><th>GRPO</th><th>本章关心的量</th></tr></thead>
+    <tbody>
+      <tr><td>生成轨迹</td><td>Actor rollout</td><td>每题成组 rollout</td><td><code>rollout_tokens_per_s</code>、尾长度</td></tr>
+      <tr><td>给出学习信号</td><td>reward + Critic/GAE</td><td>reward + 组内相对化</td><td><code>reward_s</code>、有效样本率</td></tr>
+      <tr><td>更新策略</td><td>clipped policy update</td><td>group-relative policy update</td><td><code>train_tokens_per_s</code>、通信时间</td></tr>
+      <tr><td>回流参数</td><td colspan="2">把 learner 的新 Actor 权重同步到生成端</td><td><code>weight_sync_s</code>、<code>policy_version</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>所以，选择 PPO 或 GRPO 会改变训练端的模型数量与统计量，却不能替代系统测量。若 80% 时间耗在 decode，争论两种 advantage estimator 谁更省几毫秒，并没有回答眼前的瓶颈。</p>
+</section>
+
+<section id="throughput">
+  <h2 class="mrl-sec-title"><span class="num">03</span>统一单位以后，瓶颈才可以被计算</h2>
+  <p class="mrl-sec-lead">“rollout 很慢”“训练很快”不是诊断。先把工作量、速率与时间写成同一套量纲，才知道哪个反事实真能缩短一轮。</p>
+
+  <p>假设一批有 $P$ 个 prompt，每个 prompt 采样 $G$ 条 completion，平均每条生成 $L$ 个 response token，则生成工作量近似为：</p>
+  <div class="mrl-equation">$$N_{\mathrm{tok}}=P\times G\times L$$</div>
+  <p>若 rollout 端的生成吞吐为 $v_r$ token/s，训练端消费吞吐为 $v_t$ token/s，两段的理想时间分别是：</p>
+  <div class="mrl-equation">$$T_r=\frac{N_{\mathrm{tok}}}{v_r},\qquad T_t=\frac{N_{\mathrm{tok}}}{v_t}$$</div>
+  <p>这里刻意使用相同的 response token 工作量做课堂近似，方便比较速率；真实训练还会计算 prompt token、reference forward、多个 epoch、padding 与通信，所以必须从 profiler 读取每段实测时间，而不是把这个估算当成账单。</p>
+
+  <h3>串行时看“总和”，流水线稳态看“最大值”</h3>
+  <p>同步执行时，各阶段不能重叠，一批的时间近似相加。把 rollout 与权重同步看成生产端阶段、训练与奖励各看成一段，异步流水线填满后的理想批次间隔近似由最慢一段决定：</p>
+  <div class="mrl-equation">$$
+  T_{\mathrm{sync}}=T_r+T_{\mathrm{reward}}+T_t+T_w,
+  \qquad
+  T_{\mathrm{pipe}}\approx\max(T_r+T_w,\;T_{\mathrm{reward}},\;T_t)
+  $$</div>
+  <p>$T_w$ 是生成端停下来接收新权重的时间。第一式回答“一批从头到尾多久”；第二式回答“流水线填满后，平均隔多久交付一批”。后者只是理想上界：队列抖动、长尾 completion、跨机通信和显存抢占都会让真实间隔更长。</p>
+
+  <p>如果把批次统一为“已评分 rollout batch”，生产率为 $\lambda_r$ batch/s，训练消费率为 $\mu_t$ batch/s，队列深度 $q$ 的变化可以写成最小守恒关系：</p>
+  <div class="mrl-equation">$$\frac{dq}{dt}=\lambda_r-\mu_t$$</div>
+  <ul>
+    <li>$\lambda_r&lt;\mu_t$：训练端会断粮，training GPU 等样本。</li>
+    <li>$\lambda_r&gt;\mu_t$：buffer 会不断变深，暂时不丢吞吐，却让样本越来越旧。</li>
+    <li>$\lambda_r\approx\mu_t$：长期稳态才可能既不饿死 learner，也不无限积压。</li>
+  </ul>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>系统吞吐由瓶颈速率守恒，不由最快设备决定</h3>
+      <p>生产者比消费者慢，learner 无数据可学；生产者比消费者快，队列积压并让策略数据逐渐陈旧。只有两端速率接近，额外算力才真正转化为新鲜样本吞吐。</p>
+      <p class="mrl-insight-key">监控时同时画 rollout 产出率、training 消费率和 buffer depth。只看某一组 GPU 的 tokens/s，会漏掉数据是在断流还是在过期。</p>
+    </div>
+  </aside>
+</section>

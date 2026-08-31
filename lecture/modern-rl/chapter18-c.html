@@ -1,0 +1,169 @@
+<section id="search">
+  <h2 class="mrl-sec-title"><span class="num">08</span>从完整候选重排，到“边生成、边检查、边改道”</h2>
+  <p class="mrl-sec-lead">PRM 可以只在所有候选写完后重排，也可以在每个前缀处改变下一次生成去向。两种用法消耗的计算结构不同。</p>
+
+  <div class="mrl-search-modes">
+    <article>
+      <span>BEST-OF-$N$ + RE-RANKING</span>
+      <h3>先完成，再比较</h3>
+      <p>独立生成 $N$ 条完整路径，给每条每步评分，再按 $S(\tau)$ 选择最高者。并行简单，却会完整写完已经出错的后缀。</p>
+      <div><b>生成</b><i>→</i><b>生成</b><i>→</i><b>结束</b><i>→</i><strong>PRM 重排</strong></div>
+    </article>
+    <article>
+      <span>VERIFIER-GUIDED SEARCH</span>
+      <h3>评分前缀，再决定扩展</h3>
+      <p>每生成一步就评价当前前缀。高分节点继续分叉，低分节点暂停、剪枝或回到祖先节点换路。</p>
+      <div><b>生成一步</b><i>→</i><strong>PRM</strong><i>→</i><b>扩展 / 回退</b></div>
+    </article>
+  </div>
+  <p class="mrl-caption">两栏使用同一个生成器和同一个 PRM；真正改变的是评价发生的时间。只有右栏能在坏路径尚未完成时，把后续预算移到别的节点。</p>
+
+  <p>把推理前缀视为搜索状态 $h_i=(q,y_{\le i})$，生成下一步是动作，PRM 分数近似“从这里继续能否保持正确”。于是搜索树的边不是一次性生成整条回答，而是逐步调用：</p>
+  <div class="mrl-equation">$$h_i\xrightarrow{\text{generate next step}}h_{i+1},\qquad p_{i+1}=\text{PRM}_\phi(h_{i+1}).$$</div>
+  <p>这与经典 RL 的状态价值很像，但不能直接画等号：PRM 通常评价“当前步骤是否正确”，不一定是当前节点最终成功率；若把二者混用，搜索优先级就会失去可解释性。</p>
+</section>
+
+<section id="search-structures">
+  <h2 class="mrl-sec-title"><span class="num">09</span>固定宽度与树搜索：固定保留，还是允许回头？</h2>
+  <p class="mrl-sec-lead"><strong>Beam Search（集束搜索）</strong>每层固定保留前 $K$ 个前缀；更一般的 tree search（树搜索）保存父子关系，让系统从旧节点继续尝试其他分支。</p>
+
+  <h3>Beam Search：每层只留下前 $K$ 个</h3>
+  <p>设第 $d$ 层保留集合为 $\mathcal B_d$，每个前缀扩展 $M$ 个下一步候选。按路径分数取前 $K$ 个：</p>
+  <div class="mrl-equation">$$\mathcal B_{d+1}=\operatorname{TopK}_{h'\in\operatorname{Expand}(\mathcal B_d,M)}S(h').$$</div>
+  <p>若 $K=2$，第一轮三个前缀得分分别为 $0.91,0.62,0.21$，只保留前两个；下一轮从这两个前缀各扩展两个候选，再在四个新节点里留两个。计算约随 $K\times M\times D$ 增长，其中 $D$ 是最大步骤数。</p>
+
+  <div class="mrl-beam-demo" aria-label="宽度为二的集束搜索示意">
+    <div><span>ROOT</span><strong>题目</strong><small>共享一次</small></div>
+    <i>→</i>
+    <div class="keep"><span>.91 · KEEP</span><strong>前缀 A</strong><small>继续扩展</small></div>
+    <div class="keep"><span>.62 · KEEP</span><strong>前缀 B</strong><small>保留第二名</small></div>
+    <div class="drop"><span>.21 · DROP</span><strong>前缀 C</strong><small>永久离开 beam</small></div>
+  </div>
+  <p class="mrl-caption">固定宽度让成本容易控制，但被删掉的 C 不会回来；如果早期 .21 是 PRM 误判，正确答案可能被不可逆地剪掉。</p>
+
+  <h3>保留节点，让搜索可以回退</h3>
+  <p><strong>Tree of Thoughts（ToT，思维树）</strong>把一段有语义的 thought 当作节点，支持深度优先、广度优先、剪枝与回到祖先节点重新分叉。优势是失败后不必从题目开头重写；代价是若每层都保留 $B$ 个分支，完整树最多有 $O(B^D)$ 个节点。$B=4,D=5$ 已是 $4^5=1024$ 个叶级组合，必须设置节点上限。</p>
+
+  <h3>高分路径多试，访问少的路径也保留机会</h3>
+  <p><strong>Monte Carlo Tree Search（MCTS，蒙特卡洛树搜索）</strong>用访问次数平衡 exploitation（利用）与 exploration（探索）。常见的 <strong>Upper Confidence Bound（UCB，置信上界）</strong>选择分数把“当前平均回报”和“还没充分尝试的不确定性奖励”相加：</p>
+  <div class="mrl-equation">$$\operatorname{UCB}(n)=Q(n)+c\sqrt{\frac{\ln N(\operatorname{parent}(n))}{N(n)}}.$$</div>
+  <p>$Q(n)$ 是已观察到的平均回报，$N(n)$ 是节点访问次数，$c$ 控制探索强度。设父节点访问 100 次、$c=\sqrt{2}$：节点 A 的 $Q=.8,N=50$，UCB 约 $1.23$；节点 C 的 $Q=.6,N=5$，UCB 约 $1.96$。虽然 C 当前均分低，访问太少带来的探索项让它先获得一次机会。随着访问增加，若 $Q$ 仍低，探索红利会自然衰减。</p>
+
+  <table class="mrl-search-table">
+    <thead><tr><th>方法</th><th>怎样保留节点</th><th>能否回到旧前缀</th><th>主要失败方式</th></tr></thead>
+    <tbody>
+      <tr><td>Best-of-$N$</td><td>保留 $N$ 条完整路径</td><td>否</td><td>坏后缀也完整生成</td></tr>
+      <tr><td>Beam Search</td><td>每层固定前 $K$ 个</td><td>淘汰后不能</td><td>早期误判永久误杀</td></tr>
+      <tr><td>ToT</td><td>显式树 + 宽深预算</td><td>可以</td><td>节点数指数增长</td></tr>
+      <tr><td>MCTS</td><td>按平均分与访问次数分配</td><td>可以</td><td>rollout 昂贵，错误反馈被反复放大</td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>搜索算法优化的是“把下一单位计算花在哪里”</h3>
+      <p>Beam 的答案是当前前 $K$ 名；ToT 的答案是保留可回退的树；MCTS 的答案还考虑哪些节点尚未被充分尝试。</p>
+      <p class="mrl-insight-key">它们都依赖评价器。如果 PRM 系统性偏爱一类错误，搜索不会纠正这把尺子，反而会把更多算力集中到错误方向。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">10</span>把公式落到搜索循环：生成器提案，PRM 排序，预算负责停止</h2>
+  <p class="mrl-sec-lead">下面是受限 Beam Search 的概念代码。它不绑定框架，刻意把生成、评分、保留和停止写成四个独立接口。</p>
+
+  <div class="mrl-code-map">
+    <pre class="mrl-code"><code>beam = [Node(prefix="", score=1.0)]
+completed = []
+used = 0
+
+while beam and used &lt; step_budget:
+    candidates = []
+    for node in beam:
+        if used &gt;= step_budget:
+            break
+        for next_step in generator.expand(prompt, node.prefix, width=M):
+            if used &gt;= step_budget:
+                break
+            prefix = node.prefix + next_step
+            step_score = prm.score(prompt, prefix)
+            path_score = min(node.score, step_score)
+            candidates.append(Node(prefix, path_score))
+            used += 1
+    completed.extend(n for n in candidates if is_complete(n.prefix))
+    alive = [n for n in candidates if not is_complete(n.prefix)]
+    beam = sorted(alive, key=lambda n: n.score, reverse=True)[:K]
+
+return select(completed, outcome_verifier)</code></pre>
+    <table>
+      <thead><tr><th>代码</th><th>对应数学/概念</th><th>必须显式记录</th></tr></thead>
+      <tbody>
+        <tr><td><code>node.prefix</code></td><td>$h_i=(q,y_{\le i})$</td><td>步骤边界与父节点</td></tr>
+        <tr><td><code>prm.score(...)</code></td><td>$p_i$</td><td>评价器版本与分数语义</td></tr>
+        <tr><td><code>min(node.score, step_score)</code></td><td>$S_{\min}$</td><td>聚合规则，不要暗藏在模型里</td></tr>
+        <tr><td><code>[:K]</code></td><td>$\operatorname{TopK}$</td><td>beam width 与 tie-break</td></tr>
+        <tr><td><code>step_budget</code></td><td>节点扩展预算</td><td>生成与验证各自的成本</td></tr>
+        <tr><td><code>outcome_verifier</code></td><td>$r_{\text{out}}$</td><td>最后仍需确认任务是否完成</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>为什么最后还保留结果验证器？因为 PRM 可能奖励“每一步看起来合理”，却没有真正完成任务。过程分负责路径质量与早停，结果分负责终局合同；二者测量对象不同，通常应分别监控，而不是不加说明地相加。</p>
+</section>
+
+<section id="limits">
+  <h2 class="mrl-sec-title"><span class="num">11</span>评价器不是地面真理：越会搜索，越要审计尺子</h2>
+  <p class="mrl-sec-lead">PRM 给了密集反馈，也增加了一条新的失败链。搜索器会反复查询并优化这把尺子，所以小偏差可能被放大成稳定偏好。</p>
+
+  <div class="mrl-risk-grid">
+    <article><span>SEGMENTATION</span><h3>步骤怎样切？</h3><p>切太短，看不出完整推导；切太长，一个低分覆盖多个动作，仍然定位不到首错。</p></article>
+    <article><span>CALIBRATION</span><h3>0.9 真表示可靠吗？</h3><p>新领域、长前缀或不同生成器会改变分布；训练集上的分数不能直接当部署概率。</p></article>
+    <article><span>DEPENDENCE</span><h3>生成器与评价器会共错吗？</h3><p>相近模型可能共享同一种盲点。多采样若只是重复同源错误，投票和搜索都不会自动恢复真相。</p></article>
+    <article><span>OPTIMIZATION</span><h3>路径在变好，还是更会讨分？</h3><p>策略或搜索可能学会迎合 PRM 的表面偏好。过程分提高时，独立终局正确率与人工审计不能消失。</p></article>
+  </div>
+  <p class="mrl-caption">四格构成一条因果链：步骤定义决定标签，标签训练出分数，分数引导搜索，搜索又集中暴露评分漏洞。任何一格失真，更多预算都可能让偏差更稳定。</p>
+
+  <p>什么时候 PRM 值得这笔成本？至少同时检查三件事：步骤能稳定切分；中间错误会向后传播、早停能省下显著计算；评价器在目标分布上比生成器更可靠。短回答、终局容易验证且重采样很便宜时，结果监督可能已经足够。</p>
+
+  <div class="mrl-inline-note"><strong>保留给后续章节：</strong>本章只指出“评价器可能被过度优化”这一局部风险；系统性的奖励投机与评测失败将在 Chapter 26 建立完整分类。下一章先解决更迫近的工程问题：当生成与逐步评分进入大规模集群，吞吐、等待和参数更新怎样互相牵制。</div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>检查你的理解：你能把反馈来源与搜索结构分开吗？</h2>
+  <p class="mrl-sec-lead">先遮住答案，尝试用“评价什么、何时评价、怎样分配下一单位预算”完整作答。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么 Chapter 17 的 pass@$k$ 提高，不保证最终交付正确？</summary><div class="inner">pass@$k$ 主要描述 $k$ 个候选里至少有一个正确解的覆盖概率。系统仍需要 selector 找到它；若 verifier 无法区分正确过程与碰巧同终局的错误过程，覆盖提升可能无法转化为 selected accuracy。</div></details>
+    <details><summary>2. 折扣回报或 token-level loss 为什么不等于过程监督？</summary><div class="inner">它们重新分配的是同一个终局奖励，不能新增“第几步本身对不对”的信息。过程监督要有独立步骤标签或检查器，输入至少包含问题与截至当前步的前缀。</div></details>
+    <details><summary>3. 三条路径 Outcome 都是 1，为什么 $S_{\min}$ 仍能把正确反证排第一？</summary><div class="inner">正确路径最低步骤分为 .93；漏平方路径在首错处只有 .08；有论证缺口的路径最低为 .52。$S_{\min}$ 把最弱步骤当作逻辑瓶颈，因此排序为正确路径、缺口路径、漏平方路径。但排序成立依赖 PRM 分数本身可信。</div></details>
+    <details><summary>4. 判别式、生成式、形式化过程反馈的关键差别是什么？</summary><div class="inner">判别式从标签数据学类别概率，速度快但不解释；生成式写检查理由再给标签，可读但推理慢且会解释错；形式化检查器按选定规则验证形式命题，结果可复现，但自然语言到形式命题的翻译可能不忠实。</div></details>
+    <details><summary>5. Beam Search 宽度 $K$ 增大一定更好吗？</summary><div class="inner">不一定。更大 $K$ 降低早期误杀风险，也让每层生成与评分成本近似增加。若 PRM 系统性偏错，保留更多同类高分错误也不会修复评价器。应在固定总预算下比较最终选择正确率、延迟与成本。</div></details>
+    <details><summary>6. 为什么 PRM-guided search 完成高分路径后仍保留 outcome verifier？</summary><div class="inner">PRM 判断步骤是否合理或可继续，不保证任务最终合同已满足。结果验证器确认终局是否完成，两种信号应分别监控；否则系统可能得到一条每步看似顺畅、最终却没有回答问题的路径。</div></details>
+    <details><summary>7. 同一预算下，Best-of-$N$ 与树搜索该怎样公平比较？</summary><div class="inner">不能只比 $N$ 或节点数。至少记录生成 token、验证 token/调用、完成候选数、墙钟延迟、并行硬件与 selected accuracy。树搜索可能少写坏后缀，却增加串行评分与状态管理。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十八章建立起来的闭环</h3>
+    <div class="mrl-summary-chain">
+      <div><span>终局监督</span><strong>任务完成了吗</strong><small>Outcome verifier</small></div>
+      <i>→</i>
+      <div><span>步骤监督</span><strong>前缀仍可靠吗</strong><small>PRM / formal check</small></div>
+      <i>→</i>
+      <div><span>路径聚合</span><strong>怎样比较多步分数</strong><small>mean / min / product</small></div>
+      <i>→</i>
+      <div><span>预算分配</span><strong>继续、剪枝或回退</strong><small>Beam / tree search</small></div>
+    </div>
+    <p>结果监督告诉系统有没有完成，过程监督告诉系统哪里开始不值得继续；聚合规则把多步反馈变成排序，搜索算法再据此决定下一单位计算花在哪里。最后仍要用独立终局指标检查：被优化的是任务，还是评价器的偏好。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 19 章：这些生成与评分循环放进集群后，瓶颈在哪里？</h3>
+    <p>本章默认一次“生成下一步—调用 PRM—更新搜索树”可以即时完成。工业规模下，rollout、逐步评分、训练更新与参数同步由不同资源承担；等待、吞吐和过期数据会重新定义什么叫高效。下一章把算法闭环放回真实系统。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中 “结果奖励与过程奖励”“判别式、生成式与形式化过程反馈”“推理时搜索”材料重新组织，不是原项目官方译本。互动实验中的路径分数与预算轨迹是为说明机制构造的合成教学数据，不是论文实验结果。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 18</span><span><a href="./chapter17.html">← Chapter 17</a> · <a href="./">课程目录</a> · <a href="./chapter19.html">Chapter 19 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter20_prm_search" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

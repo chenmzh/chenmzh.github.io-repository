@@ -1,0 +1,114 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 15 · Direct preference learning</div>
+  <h1>能否不用在线 RL，直接从偏好对学习？</h1>
+  <p class="lead">Chapter 14 把人类或 AI 的比较交给 reward model（奖励模型），再用 PPO 和 KL 约束优化语言模型。可训练信号最初明明就是“回答 A 比回答 B 好”，为什么一定要先把它压成一个分数，再启动在线采样、Critic 和策略更新？本章沿着同一份偏好数据，推导一条更短的路。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把一条 <code>prompt / chosen / rejected</code> 偏好样本，直接变成可反向传播到语言模型的损失？reference policy、$\beta$ 和所谓“隐式奖励”各自在约束什么？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 80–110 min</span>
+    <span class="mrl-pill">先修：Chapter 09、14</span>
+    <span class="mrl-pill">数学：条件概率 + 对数 + 拉格朗日法</span>
+    <span class="mrl-pill">实验：log-ratio margin 与梯度</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从一次比较到一个可训练目标</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#preference-pair"><b>01</b><span>读懂标签</span><small>chosen 只是相对胜者</small></a>
+      <a class="mrl-roadmap-step" href="#bradley-terry"><b>02</b><span>比较概率</span><small>奖励差进入 sigmoid</small></a>
+      <a class="mrl-roadmap-step" href="#kl-solution"><b>03</b><span>反解奖励</span><small>策略相对 reference 的变化</small></a>
+      <a class="mrl-roadmap-step" href="#dpo-objective"><b>04</b><span>消去评分器</span><small>得到直接偏好损失</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#ratio-lab"><b>05</b><span>拨动旋钮</span><small>margin、beta、gradient</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#family"><b>06</b><span>辨认家族</span><small>按数据与约束选方法</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>把 Chapter 14 的长流水线压回一条偏好对</h2>
+  <p class="mrl-sec-lead">这里不重讲奖励模型怎样训练。我们只拿走上一章已经交付的一个事实：同一 prompt 下，比较者指出两个回答中更偏好哪一个。</p>
+
+  <div class="mrl-route-compare" aria-label="显式奖励与直接偏好训练路线对照">
+    <article>
+      <span>CHAPTER 14 · 显式奖励路线</span>
+      <h3>偏好对 → Reward Model → 在线 rollout → PPO</h3>
+      <p>先学习标量奖励，再让策略生成新回答，由奖励、Critic 与 KL 共同构造策略更新。</p>
+    </article>
+    <i>对照</i>
+    <article class="direct">
+      <span>CHAPTER 15 · 直接偏好路线</span>
+      <h3>偏好对 → Policy/Reference log-prob → 对比损失</h3>
+      <p>不单独训练评分模型，不在每个优化步重新 rollout，也不需要 Critic；直接在固定偏好数据上做梯度下降。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">真正要观察的是训练信号的路径长度：直接路线没有否定“偏好”或“约束”，而是把显式 reward 与在线策略优化代数化为一项离线对比损失。</p>
+
+  <p><strong>Direct Preference Optimization（DPO，直接偏好优化）</strong>是一种离线偏好优化方法：它用已经收集好的偏好对训练策略，而不是边生成、边打分、边更新。这里的“direct”不是“只提高 chosen 的概率”，也不是“完全没有奖励”；它指的是<strong>偏好标签直接进入策略损失</strong>。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>DPO 简化的是训练路线，不是学习目标</h3>
+      <p>它仍在学习“哪些回答更值得出现”，也仍需要一个 reference policy 防止概率变化失去尺度。被跳过的是显式 RM、Critic 和训练期在线 rollout。</p>
+      <p class="mrl-insight-key">“不用在线 RL”不等于“不优化策略”，而是把策略优化改写成固定数据上的可微分类问题。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="preference-pair">
+  <h2 class="mrl-sec-title"><span class="num">02</span>chosen 与 rejected：标签只说“这一次更喜欢谁”</h2>
+  <p class="mrl-sec-lead">一条 DPO 训练样本是偏好三元组 $(x,y_w,y_l)$。三个字段必须共享同一个上下文，比较才有意义。</p>
+
+  <div class="mrl-preference-card">
+    <header><span>PROMPT · $x$</span><strong>“同事的代码很差，我该怎么反馈？”</strong></header>
+    <div class="mrl-preference-grid">
+      <article class="chosen">
+        <span>CHOSEN · $y_w$</span>
+        <p>先指出一个具体、可复现的问题，再说明影响并给出可操作建议；把评价落在代码上，不评价人。</p>
+      </article>
+      <article class="rejected">
+        <span>REJECTED · $y_l$</span>
+        <p>直接告诉他写得太烂，让他全部重写；这样最省时间。</p>
+      </article>
+    </div>
+  </div>
+  <p class="mrl-caption">请观察“同一个 $x$”与“一次相对排序”：chosen 是这对回答里的胜者，不是宇宙中绝对正确的标准答案；rejected 也不必是乱码，困难样本往往是两者都像样但有细微质量差。</p>
+
+  <table>
+    <thead><tr><th>数据字段</th><th>数学符号</th><th>它提供的证据</th><th>它没有承诺什么</th></tr></thead>
+    <tbody>
+      <tr><td><code>prompt</code></td><td>$x$</td><td>比较发生的共同条件</td><td>不能跨 prompt 直接比较回答概率</td></tr>
+      <tr><td><code>chosen</code></td><td>$y_w$</td><td>在本次比较中被偏好</td><td>不保证事实、风格、安全各维度都完美</td></tr>
+      <tr><td><code>rejected</code></td><td>$y_l$</td><td>在本次比较中落败</td><td>不等于“概率必须降到零”</td></tr>
+    </tbody>
+  </table>
+
+  <p>这也是为什么数据策划比算法名字更根本。若标注者偏爱冗长回答，DPO 学到的可能是“更长”；若 chosen 与 rejected 同时改变事实性、礼貌程度和格式，我们很难知道模型到底学到了哪一条差异。偏好标签是监督信号，不是天然真理。</p>
+</section>
+
+<section id="sequence-prob">
+  <h2 class="mrl-sec-title"><span class="num">03</span>一个回答的概率，是回答 token 的 log-prob 之和</h2>
+  <p class="mrl-sec-lead">DPO 比较的是完整回答 $y$，不是只看第一个 token。先把语言模型的序列概率写清楚，后面的四条 log-prob 才不会混。</p>
+
+  <p>若回答 $y=(y_1,\ldots,y_T)$，自回归语言模型按链式法则给出：</p>
+  <div class="mrl-equation">$$\pi_\theta(y\mid x)=\prod_{t=1}^{T}\pi_\theta(y_t\mid x,y_{&lt;t})$$</div>
+  <p>连乘许多小概率容易数值下溢，取自然对数后，乘法变成加法：</p>
+  <div class="mrl-equation">$$\log\pi_\theta(y\mid x)=\sum_{t=1}^{T}\log\pi_\theta(y_t\mid x,y_{&lt;t})$$</div>
+  <p>代码会把 <code>prompt + response</code> 一起送入模型，但求和时只保留 response token；prompt 只是条件，不应被当作模型要学习偏好的答案。chosen 和 rejected 长度不同还会让“求和 log-prob”带有长度效应，这会在家族方法里成为一个设计分叉。</p>
+
+  <div class="mrl-four-logps" aria-label="DPO 的四条序列对数概率">
+    <div><span>POLICY × CHOSEN</span><strong>$p_w=\log\pi_\theta(y_w\mid x)$</strong></div>
+    <div><span>POLICY × REJECTED</span><strong>$p_l=\log\pi_\theta(y_l\mid x)$</strong></div>
+    <div><span>REFERENCE × CHOSEN</span><strong>$p_w^0=\log\pi_{\mathrm{ref}}(y_w\mid x)$</strong></div>
+    <div><span>REFERENCE × REJECTED</span><strong>$p_l^0=\log\pi_{\mathrm{ref}}(y_l\mid x)$</strong></div>
+  </div>
+  <p class="mrl-caption">真正要追踪的是“2 个模型 × 2 个回答”得到的四个数。DPO 不直接比较 $p_w$ 与 $p_l$，而是先分别减去对应 reference 值，问训练相对起点改变了多少。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>低概率不等于坏回答，变化方向才是 DPO 的坐标</h3>
+      <p>一段正确但罕见的技术回答可能有很负的序列 log-prob。reference 也会感受到它的长度和罕见词；比较 policy 相对 reference 的变化，比只看绝对概率更接近“这次训练把它往哪推”。</p>
+      <p class="mrl-insight-key">记忆四数法：当前模型两条、参考模型两条；各自相减，再做 chosen 减 rejected。</p>
+    </div>
+  </aside>
+</section>

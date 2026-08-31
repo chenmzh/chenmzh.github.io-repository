@@ -28,7 +28,7 @@
     <p class="mrl-index-note">每章遵循同一个原则：先提出一个真实问题，再引入必要抽象；术语第一次出现时先解释，公式需要能翻译回环境里的量，实验需要能回答一个具体问题。内容参考 walkinglabs/hands-on-modern-rl 的主线，但讲解结构重新组织。</p>
 
     <section class="mrl-index-section" id="chapters">
-      <header><h2>Chapters</h2><span>01–13 published</span></header>
+      <header><h2>Chapters</h2><span>01–19 published</span></header>
       <div class="mrl-chapter-list">
         <a class="mrl-chapter-row" href="./chapter01.html">
           <span class="mrl-row-num">01</span>
@@ -95,9 +95,39 @@
           <span><span class="mrl-row-title">奖励稀疏、多个智能体、任务很长时怎么办？</span><span class="mrl-row-copy">分别处理主动发现未知区域、团队结果归因给个体，以及把一串底层动作组织成更长时间尺度决策的问题。</span></span>
           <span class="mrl-row-state live">READ →</span>
         </a>
-        <div class="mrl-chapter-row">
+        <a class="mrl-chapter-row" href="./chapter14.html">
           <span class="mrl-row-num">14</span>
           <span><span class="mrl-row-title">怎样把人类或 AI 的反馈变成训练信号？</span><span class="mrl-row-copy">当“好不好”只能通过成对比较、文字原则或另一个模型表达，怎样把反馈变成可学习的奖励，并限制策略不要偏离太远。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter15.html">
+          <span class="mrl-row-num">15</span>
+          <span><span class="mrl-row-title">能否不用在线强化学习，直接从偏好对学习？</span><span class="mrl-row-copy">从“回答 A 胜过回答 B”的概率模型出发，把奖励提升与参考模型约束合成一个可直接训练的相对目标。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter16.html">
+          <span class="mrl-row-num">16</span>
+          <span><span class="mrl-row-title">没有价值网络，怎样用组内结果学习？</span><span class="mrl-row-copy">对同一道题采样一组回答，用组内相对结果代替单独训练的评价网络，并分清可验证结果与过程信用的边界。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter17.html">
+          <span class="mrl-row-num">17</span>
+          <span><span class="mrl-row-title">为什么增加思考长度和采样次数能改善推理？</span><span class="mrl-row-copy">把推理时计算当作有限预算，比较延长单条推理、多采候选、投票与自适应分配怎样交换质量和成本。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter18.html">
+          <span class="mrl-row-num">18</span>
+          <span><span class="mrl-row-title">只看最终答案，为什么还不足以选对推理？</span><span class="mrl-row-copy">把评价从终局放回中间步骤，比较不同的步骤聚合方式，再用过程分数决定哪些推理分支值得继续搜索。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <a class="mrl-chapter-row" href="./chapter19.html">
+          <span class="mrl-row-num">19</span>
+          <span><span class="mrl-row-title">算法进入大规模集群后，真正瓶颈在哪里？</span><span class="mrl-row-copy">沿着轨迹生成、评分、训练和权重同步的生产流水线，理解吞吐、等待与过期数据怎样共同决定训练效率。</span></span>
+          <span class="mrl-row-state live">READ →</span>
+        </a>
+        <div class="mrl-chapter-row">
+          <span class="mrl-row-num">20</span>
+          <span><span class="mrl-row-title">语言模型怎样学会多轮调用工具？</span><span class="mrl-row-copy">当动作会触发搜索、代码或外部接口并返回新观察，怎样表示轨迹、设计环境，并把长程结果归因到中间工具决策。</span></span>
           <span class="mrl-row-state">NEXT</span>
         </div>
       </div>

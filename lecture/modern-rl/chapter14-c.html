@@ -1,0 +1,175 @@
+<section id="cai">
+  <h2 class="mrl-sec-title"><span class="num">09</span>先把“按什么原则判断”写出来</h2>
+  <p class="mrl-sec-lead"><strong>Constitutional AI（CAI，宪法式人工智能）</strong>给模型一组自然语言原则，让 AI 依据这些原则批评、修订或比较回答。这里的 <strong>Constitution（宪法／原则集合）</strong>不是模型权重，也不是一个总分，而是可阅读、可讨论的评判准则集合。</p>
+
+  <p>例如，一条原则可以同时要求：“不要协助实际伤害；如果请求只是合法科普，则应在安全边界内尽量提供帮助。”它比笼统的“保持安全”多给了一层冲突处理：敏感话题不自动等于高风险行动。</p>
+
+  <div class="mrl-cai-branches">
+    <article>
+      <span>SUPERVISED BRANCH · SL-CAI</span>
+      <h3>批评 → 修订 → 再做 SFT</h3>
+      <ol><li>模型先生成原回答 $y_0$；</li><li>按原则 $c_k$ 生成 self-critique；</li><li>根据批评得到 revision $y^*$；</li><li>把 $(x,y^*)$ 当作新的示范。</li></ol>
+    </article>
+    <article>
+      <span>REINFORCEMENT BRANCH · RL-CAI</span>
+      <h3>比较 → 偏好对 → RM → PPO</h3>
+      <ol><li>同一 prompt 采样 $y_1,y_2$；</li><li>AI judge 按 $c_k$ 选优；</li><li>偏好对训练 Reward Model；</li><li>按相同 PPO/KL 流程更新 Actor。</li></ol>
+    </article>
+  </div>
+  <p class="mrl-caption">两条分支共同的因果变量是 Constitution；左边把“修订后的文本”变成监督标签，右边把“AI 的比较选择”变成偏好标签。它们不是同一个训练目标。</p>
+
+  <h3>Self-critique 与 self-revision 是两个条件生成步骤</h3>
+  <p><strong>Self-critique（自我批评）</strong>先产出对原回答的文本诊断；<strong>self-revision（自我修订）</strong>再读取诊断和原则，生成修正版：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  q&\sim\pi(\cdot\mid x,y_0,c_k,\text{“critique”}),\\
+  y^*&\sim\pi(\cdot\mid x,y_0,q,c_k,\text{“revision”}).
+  \end{aligned}$$</div>
+  <p>$q$ 是一段解释“哪里违背原则”的文字，不是 reward；$y^*$ 才能作为新的 assistant 示范进入 SFT：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{SL\text{-}CAI}}
+  =-\mathbb E_{(x,y^*)}\log\pi_\theta(y^*\mid x).$$</div>
+
+  <p><strong>Reinforcement Learning from AI Feedback（RLAIF，从 AI 反馈中进行强化学习）</strong>则把偏好标签的生产者从人类换成 AI judge。若 judge 按 Constitution 比较，就得到 CAI 的强化学习分支；但 RLAIF 也可以使用别的 rubric，因此：</p>
+  <div class="mrl-set-relation" aria-label="CAI 与 RLAIF 的关系">
+    <span>RLAIF</span><strong>描述“反馈由 AI 产生”</strong><i>+</i><span>Constitution</span><strong>描述“AI 按哪些显式原则判断”</strong><i>=</i><span>RL-CAI</span><strong>CAI 的强化学习路线</strong>
+  </div>
+
+  <p>RL-CAI 产生的数据仍是 $(x,y_w,y_l)$，训练的 RM loss 与 PPO/KL 目标也没有换：</p>
+  <div class="mrl-equation">$$\mathcal D_{\mathrm{AI}}=\{(x,y_w,y_l;c_k)\},\qquad
+  \mathcal L_{\mathrm{RM}}=-\mathbb E_{\mathcal D_{\mathrm{AI}}}
+  \log\sigma(r_w-r_l).$$</div>
+  <p>分号后的 $c_k$ 最好作为可追溯元数据保存；训练公式只看到 chosen/rejected，但审计需要知道 judge 当时依据了哪条原则。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>Constitution 不是替人类消失，而是改变人类介入的位置</h3>
+      <p>人不必逐条比较海量回答，但仍要选择原则、构造边界案例、检查 judge 是否正确应用规则，并处理原则冲突。</p>
+      <p class="mrl-insight-key">自动化的是反馈生产，不是价值选择本身；显式原则的意义在于让价值选择更可见、更可审计。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="feedback-sources">
+  <h2 class="mrl-sec-title"><span class="num">10</span>反馈来源、判断依据与目标维度分属不同层</h2>
+  <p class="mrl-sec-lead">反馈“由谁给”、判断“依据什么”、系统“想优化什么”是三类问题。<strong>Helpful, Harmless, Honest（HHH，有帮助、无害、诚实）</strong>是通用助手研究中的三项目标维度，不是第四种反馈来源。把这些层压成同一个“alignment signal”，就会误以为换一个 judge 等于换了目标。</p>
+
+  <table class="mrl-source-layer-table">
+    <thead><tr><th>对象</th><th>主要来源</th><th>进入流水线的位置</th><th>它不是什么</th></tr></thead>
+    <tbody>
+      <tr><td>Human feedback</td><td>人类标注者的成对比较</td><td>直接形成 $\mathcal D_{\mathrm{pref}}$</td><td>不是一个固定数学 reward</td></tr>
+      <tr><td>AI feedback</td><td>AI judge 对候选回答的选择或批评</td><td>形成 $\mathcal D_{\mathrm{AI}}$ 或修订数据</td><td>不天然等于正确或安全</td></tr>
+      <tr><td>Constitution</td><td>由人类选择、编写或汇集的自然语言原则；上游材料举出人权、行业安全规范与研究准则等来源</td><td>作为 critique / revision / judge prompt 的 rubric</td><td>不是标注者，也不是 RM</td></tr>
+      <tr><td>HHH 目标维度</td><td>Anthropic 早期对通用助手目标的研究框架</td><td>组织评估维度与原则设计</td><td>不是一种训练算法或第三类反馈来源</td></tr>
+    </tbody>
+  </table>
+
+  <p>这三个维度随后成为原则式对齐讨论的重要背景。它们与 Constitution 的关系更像“目标类别”与“可执行条款”，而不是“总原则”与“三个 loss”。</p>
+
+  <div class="mrl-hhh-grid">
+    <article><span>HELPFUL</span><h3>真正解决请求</h3><p>回答相关、具体、遵循格式；不能把“多写”自动当作更有帮助。</p><small>可由偏好比较近似</small></article>
+    <article><span>HARMLESS</span><h3>控制现实伤害</h3><p>风险越高边界越强，但不是对所有敏感词一律拒绝。</p><small>Constitution 可显式写冲突规则</small></article>
+    <article><span>HONEST</span><h3>不假装知道</h3><p>区分事实、推测与不确定；主观 judge 只能近似这一目标。</p><small>可检查任务的硬验证留给 Chapter 16</small></article>
+  </div>
+  <p class="mrl-caption">三栏真正要比较的是不同目标的证据需求：helpfulness 常依赖用户偏好，harmlessness 依赖风险准则，honesty 还需要事实或不确定性证据。一个总分会隐藏这些来源差异。</p>
+
+  <h3>同一个 PPO 循环，可以接不同来源的偏好</h3>
+  <table>
+    <thead><tr><th>路线</th><th>谁选 $y_w$</th><th>依据</th><th>下游是否仍可用 RM + PPO/KL</th></tr></thead>
+    <tbody>
+      <tr><td>RLHF</td><td>人类标注者</td><td>标注指南、任务知识与个人判断</td><td>是</td></tr>
+      <tr><td>一般 RLAIF</td><td>AI judge</td><td>judge prompt / rubric</td><td>是</td></tr>
+      <tr><td>RL-CAI</td><td>AI judge</td><td>显式 Constitution 原则</td><td>是</td></tr>
+      <tr><td>SL-CAI</td><td>没有成对“裁判”这一必需步骤</td><td>critique + revision</td><td>直接产生 SFT 数据，不等同于 PPO 分支</td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>反馈来源、评判准则与优化目标必须分别记账</h3>
+      <p>“AI 给标签”只说明数据生产者；“按 Constitution”说明 rubric；“追求 HHH”说明希望实现的目标维度。三者可以组合，却不能互相推出。</p>
+      <p class="mrl-insight-key">只有分别保存 source、rubric、label 与模型版本，实验才可能回答：变化来自谁判断、按什么判断，还是优化器怎样使用判断。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">11</span>从公式回到上游代码：三个脚本，三个数据契约</h2>
+  <p class="mrl-sec-lead">固定上游代码把经典 RLHF 拆成三份教学脚本。读代码时不要先找框架 API，而要先问每份脚本消费什么数据、产出什么 artifact。</p>
+
+  <div class="mrl-code-contracts">
+    <article>
+      <span>1 · <code>sft_pipeline.py</code></span>
+      <h3>示范 → SFT policy</h3>
+      <p><code>generate_sft_data()</code> 构造 instruction/response；<code>format_sft_dataset()</code> 应用 chat template；<code>SFTTrainer</code> 提高示范 token 概率。</p>
+      <pre><code>sft_pairs = generate_sft_data()
+train_dataset = format_sft_dataset(sft_pairs, tokenizer)
+trainer = SFTTrainer(model=model, train_dataset=train_dataset, ...)</code></pre>
+    </article>
+    <article>
+      <span>2 · <code>reward_model_training.py</code></span>
+      <h3>偏好对 → scalar scorer</h3>
+      <p><code>PreferenceDataset</code> 把同一 prompt 分别与 chosen/rejected 拼接；<code>RewardModel.forward()</code> 取最后有效 token 隐状态，经 <code>value_head</code> 输出分数。</p>
+      <pre><code>r_chosen = model(chosen_ids, chosen_mask)
+r_rejected = model(rejected_ids, rejected_mask)
+loss = -log(sigmoid(r_chosen - r_rejected))</code></pre>
+    </article>
+    <article>
+      <span>3 · <code>rlhf_ppo_train.py</code></span>
+      <h3>prompt → rollout → PPO update</h3>
+      <p><code>policy_model</code> 生成，冻结的 <code>reference_model</code> 算 KL，<code>reward_model.score()</code> 打分，<code>PPOTrainer.train_step()</code> 保存 old log-prob 并做 clipped update。</p>
+      <pre><code>response = generate_response(policy_model, tokenizer, prompt)
+reward = reward_model.score(prompt, response)
+old_log_probs = compute_log_probs(policy_model, ...)
+total_loss = policy_loss + kl_coef * kl</code></pre>
+    </article>
+  </div>
+
+  <p class="mrl-inline-note"><strong>实现边界：</strong>上游 <code>sft_pipeline.py</code> 展示了 chat template 与 SFTTrainer，但没有显式构造 assistant-only loss mask；本章公式给出的是规范的数据契约。<code>rlhf_ppo_train.py</code> 同样是教学简化版：它可以使用规则评分模拟 RM，并用 batch reward 标准化近似 advantage。生产级 PPO-RLHF 通常还需要严格的 assistant mask、真正的 Critic/GAE、token reward、分布式 rollout 和评估闭环。</p>
+
+  <table>
+    <thead><tr><th>公式符号</th><th>上游变量 / 类</th><th>检查它是否正确的最小证据</th></tr></thead>
+    <tbody>
+      <tr><td>$\mathcal D_{\mathrm{SFT}}$</td><td><code>sft_pairs</code>, <code>train_dataset</code></td><td>同一 chat template；真实训练还应核对 assistant-only mask</td></tr>
+      <tr><td>$(x,y_w,y_l)$</td><td><code>pairs</code>, <code>PreferenceDataset</code></td><td>chosen/rejected 共享 prompt，标签可追溯</td></tr>
+      <tr><td>$r_\phi(x,y)$</td><td><code>RewardModel</code>, <code>value_head</code></td><td>留出偏好对上 chosen 排名更高</td></tr>
+      <tr><td>$\pi_\theta$</td><td><code>policy_model</code></td><td>生成与梯度更新都作用于它</td></tr>
+      <tr><td>$\pi_{\mathrm{ref}}$</td><td><code>reference_model</code></td><td>冻结参数，仅用于 log-prob / KL</td></tr>
+      <tr><td>$\pi_{\theta_{\mathrm{old}}}$</td><td><code>old_log_probs</code></td><td>在更新前由本批 rollout 策略保存</td></tr>
+      <tr><td>$\beta$</td><td><code>kl_coef</code></td><td>改变它应改变 KL 代价，而不改变 RM 原始分数</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>理解检查：你能沿着一条反馈追到策略梯度吗？</h2>
+  <p class="mrl-sec-lead">不要只背“SFT → RM → PPO”。尝试明确每条箭头上流动的数据、谁生成它、下一阶段怎样使用它。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. SFT 与 Reward Model 都看到了好回答，训练目标为什么仍然不同？</summary><div class="inner">SFT 把一个示范回答当作 token 级监督标签，提高它在给定 prompt 下的条件概率；RM 同时读取 chosen 与 rejected，只学习同一 prompt 下的相对分数次序。SFT 产出生成策略，RM 产出评分器。</div></details>
+    <details><summary>2. 若 $r_w=2.0,r_l=0.5$，为什么不能说 chosen 的“绝对质量是 2 分”？</summary><div class="inner">Bradley–Terry loss 只依赖差值 $r_w-r_l$。两个分数同时加任意常数，偏好概率和 loss 都不变。因此 RM 分数首先是当前数据分布中的相对排序坐标，不能脱离比较对象解释成统一绝对质量。</div></details>
+    <details><summary>3. Reference policy 和 old policy 最关键的区别是什么？</summary><div class="inner">old policy 是采当前 rollout batch 时的 Actor 快照，用于 PPO ratio 和局部裁剪，通常随 batch 刷新；Reference 通常是跨训练冻结的 SFT 锚点，用于 KL 正则和长期漂移控制。局部小步不保证长期不漂移。</div></details>
+    <details><summary>4. 为什么单条回答的 $\log\pi_\theta(y\mid x)-\log\pi_{ref}(y\mid x)$ 可能为负，而 KL 仍然非负？</summary><div class="inner">单条 log-ratio 是一个采样值；某些回答可以被 Reference 赋更高概率，所以它为负。对 $y\sim\pi_\theta$ 的所有可能回答取期望后才得到 $D_{KL}(\pi_\theta\|\pi_{ref})$，该期望非负。</div></details>
+    <details><summary>5. RLAIF 与 Constitutional AI 是同义词吗？</summary><div class="inner">不是。RLAIF 说明偏好或评价由 AI 产生；CAI 说明 AI 按显式自然语言原则进行批评、修订或比较。AI judge 按 Constitution 生成偏好并接入 RM/PPO 时，是 RL-CAI，也属于 RLAIF；RLAIF 还可以使用别的 rubric。</div></details>
+    <details><summary>6. 互动实验中，人类与 AI 给出相同 chosen 标签时，为什么下游数值相同？</summary><div class="inner">当前 RM loss 只读取 chosen/rejected 与两项分数，不读取“human”或“AI”字符串。相同标签和分数产生相同 loss、梯度与更新后 RM 分数。来源差异只有通过标签分布、置信度、rubric 或元数据影响训练，不能由 PPO 自行猜出。</div></details>
+    <details><summary>7. HHH、Constitution 与 human/AI feedback 分别属于哪一层？</summary><div class="inner">HHH 是希望实现的有帮助、无害、诚实三个目标维度；Constitution 是把目标落实为可供批评和判断的自然语言规则；human/AI feedback 是偏好数据或修订数据的生产来源。目标、准则和来源必须分别记录。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>本章带走的主链</h3>
+    <p><strong>SFT</strong>用示范给策略一个助手起点；<strong>偏好数据</strong>保存同一 prompt 下的相对判断；<strong>Reward Model</strong>用 Bradley–Terry loss 把判断变成可调用分数；<strong>PPO</strong>把分数与 Critic advantage 接回 token 策略更新；<strong>Reference KL</strong>提供跨训练的 SFT 锚点。CAI 与 RLAIF 改变的首先是反馈数据怎样生成，而不是这条下游数学链。</p>
+  </div>
+
+  <div class="mrl-next">
+    <h3>下一章：显式 Reward Model 和在线 PPO 都是必需的吗？</h3>
+    <p>经典 RLHF 要维护 Actor、Critic、Reference 与 Reward Model，还要不断生成 rollout。可是我们手里已经有 $(x,y_w,y_l)$。下一章将追问：能否直接从偏好对更新策略，把 Reward Model 隐含进目标里，并省掉在线 PPO 循环？这正是直接偏好学习路线的出发点。</p>
+    <p><a href="./chapter15.html">继续 Chapter 15 · 直接偏好学习 →</a></p>
+  </div>
+
+  <p class="mrl-source-note">本章依据固定上游版本 <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter15_rlhf" target="_blank" rel="noopener"><code>docs/chapter15_rlhf/</code></a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter21_cai_rlvr/hhh-practice.md" target="_blank" rel="noopener"><code>hhh-practice.md</code></a> 与 <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter08_rlhf" target="_blank" rel="noopener"><code>code/chapter08_rlhf/</code></a> 重新组织；这是面向初学者的中文解释，不是逐句翻译。HHH 历史语境可对照 <a href="https://arxiv.org/abs/2112.00861" target="_blank" rel="noopener">Askell et al. (2021)</a>，CAI 方法可对照 <a href="https://arxiv.org/abs/2212.08073" target="_blank" rel="noopener">Bai et al. (2022)</a>。</p>
+
+  <footer class="mrl-footer">
+    <span>Hands-On Modern RL · Chapter 14</span>
+    <span><a href="./chapter13.html">← Chapter 13</a> · <a href="./">课程目录</a> · <a href="./chapter15.html">Chapter 15 →</a></span>
+  </footer>
+</section>

@@ -1,0 +1,197 @@
+<section id="rlvr">
+  <h2 class="mrl-sec-title"><span class="num">09</span>可验证结果奖励：让可执行规则检查结果</h2>
+  <p class="mrl-sec-lead">GRPO 规定怎样由一组 reward 更新策略，却不规定 reward 必须来自哪里。数学答案可自动判定时，可以把学习到的 Reward Model 换成规则验证器。</p>
+
+  <p><strong>Reinforcement Learning with Verifiable Rewards（RLVR，可验证奖励强化学习）</strong>指用可自动复查的规则结果作为强化学习奖励。对数学题，最小 <strong>outcome verifier（结果验证器）</strong>通常做两件事：从完整回答中提取最终答案，再与 ground truth 做等价判断：</p>
+  <div class="mrl-equation">$$R_{\mathrm{verify}}(x,y)=
+  \mathbf 1\!\left[\operatorname{equiv}\!\left(\operatorname{extract}(y),a^*(x)\right)\right]$$</div>
+  <p>$a^*(x)$ 是标准答案，$\operatorname{extract}$ 找到模型声明的最终答案，$\operatorname{equiv}$ 判断两种表示是否数学等价。这里的“verifiable”表示判定过程可重复执行、可写边界样例检查，不表示验证器自动等于任务真理。</p>
+
+  <div class="mrl-algorithm-reward">
+    <div class="axis-head"><span>策略怎样更新？</span><strong>Algorithm axis</strong></div>
+    <div class="axis-body">
+      <article><span>GRPO</span><p>同题组内优势；不训练 Critic。</p></article>
+      <article><span>PPO</span><p>Critic / GAE；同样可以接规则奖励。</p></article>
+    </div>
+    <div class="axis-head reward"><span>奖励从哪里来？</span><strong>Reward axis</strong></div>
+    <div class="axis-body">
+      <article><span>RLVR</span><p>规则 outcome verifier。</p></article>
+      <article><span>RLHF</span><p>偏好 Reward Model 或人工反馈。</p></article>
+    </div>
+  </div>
+  <p class="mrl-caption">横向问优化算法，纵向问奖励来源。GRPO 常与 RLVR 搭配，却不是同义词：GRPO 也能使用 Reward Model；RLVR 也能把规则 reward 接到 PPO 或其他策略优化器。</p>
+
+  <p>一个教学级数学 verifier 至少要过三类检查：</p>
+  <table>
+    <thead><tr><th>检查</th><th>要避免什么</th><th>边界样例</th></tr></thead>
+    <tbody>
+      <tr><td>提取位置</td><td>误把草稿或被否定的候选当最终答案</td><td>“先猜 $7/8$，复核后答案 $9/8$”</td></tr>
+      <tr><td>表示等价</td><td>把正确的另一种写法判错</td><td>$7/8$、$0.875$、$14/16$</td></tr>
+      <tr><td>缺失处理</td><td>解析失败却默认为通过</td><td>无最终答案、括号不完整、多个冲突答案</td></tr>
+    </tbody>
+  </table>
+
+  <p>误把正确答案判错叫 <strong>false negative（假阴性）</strong>；误把错误答案判对叫 <strong>false positive（假阳性）</strong>。在 RL 里，后者尤其危险，因为被奖励的错误样本会被主动增概率。更复杂的代码测试验证器留到 Chapter 21；验证器漏洞如何在强优化下形成系统性失败，则留到 Chapter 26。本章只看一个局部机制：<strong>一次判定错误怎样改变整组相对优势。</strong></p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>GRPO 与 RLVR 是两条正交选择</h3>
+      <p>一个决定 advantage 和 policy loss 怎样构造，另一个决定 reward 的证据来自规则还是学习到的评分器。把两者拆开，才能准确定位失败发生在优化器还是裁判。</p>
+      <p class="mrl-insight-key">先问“分数从哪来”，再问“分数怎样变成梯度”。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="verifier-lab">
+  <h2 class="mrl-sec-title"><span class="num">10</span>实验：只换验证器或组内结果，优势会怎样整体重排？</h2>
+  <p class="mrl-sec-lead">下面不训练真实模型，只把 GRPO 更新前最关键的数据管线摊开：同一 prompt 的四条回答 → verifier reward → 组均值与标准差 → 相对优势。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>同一组回答不变时，严格字符串、语义等价和“取第一个数字”的缺陷验证器，会怎样改变 reward 与 advantage？当四条回答全对或全错时又会怎样？</dd>
+    <dt>Prediction</dt><dd>假阴性会错误压低正确回答；假阳性会强化错误回答，而且它还会改变组均值与标准差，进而改写其他样本的优势。全同 reward 会让组内标准差为 0，整组没有相对梯度。</dd>
+    <dt>Experiment</dt><dd>切换回答组情形与 verifier。表格使用总体标准差重新计算 $\bar r$、$s$ 与 $\hat A_i$，同时用人工真值统计 false positive / false negative。</dd>
+    <dt>Observation</dt><dd id="verifierObservation">默认的等价判断正确接受 $7/8$ 与 $0.875$，拒绝两条错误回答；reward 为 $[1,1,0,0]$，优势为 $[+1,+1,-1,-1]$。</dd>
+    <dt>Interpretation</dt><dd>GRPO 并不知道“正确”是什么，只忠实放大 verifier 提供的相对顺序。裁判错一条，不只污染一条 label，还会通过组内统计量影响整组更新尺度。</dd>
+    <dt>Limitation</dt><dd>这是四条合成回答和简化答案解析器，只演示 outcome reward 的局部数据流；没有模拟 token 梯度、PPO clip、真实模型采样、过程奖励或验证器的系统安全边界。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar" aria-label="GRPO 验证器实验控制">
+    <label class="mrl-control" for="groupPreset">回答组情形
+      <select id="groupPreset">
+        <option value="mixed">两对两错：有相对信号</option>
+        <option value="all-correct">四条都正确：已全部通过</option>
+        <option value="all-wrong">四条都错误：奖励稀疏</option>
+      </select>
+    </label>
+    <label class="mrl-control" for="verifierMode">Outcome verifier
+      <select id="verifierMode">
+        <option value="equivalent">最终答案 + 数值等价</option>
+        <option value="exact">最终答案 + 严格字符串</option>
+        <option value="first-number">缺陷：读取第一个数字</option>
+      </select>
+    </label>
+    <button class="mrl-btn" id="verifierReset" type="button">恢复默认</button>
+  </div>
+
+  <div class="mrl-lab-summary" aria-live="polite">
+    <div><span>GROUP MEAN</span><strong id="groupMeanValue">0.500</strong></div>
+    <div><span>GROUP STD</span><strong id="groupStdValue">0.500</strong></div>
+    <div><span>LABEL ERRORS</span><strong id="labelErrorValue">0</strong></div>
+    <div><span>NONZERO ADV</span><strong id="activeAdvValue">4 / 4</strong></div>
+  </div>
+
+  <div class="mrl-lab-table-wrap">
+    <table class="mrl-lab-table">
+      <thead><tr><th>回答</th><th>模型输出摘要</th><th>人工真值</th><th>verifier 提取</th><th>$r_i$</th><th>$\hat A_i$</th><th>相对方向</th></tr></thead>
+      <tbody id="verifierRows">
+        <tr><td>$y_1$</td><td>合并后得到 <code>\boxed{7/8}</code></td><td>正确</td><td><code>7/8</code></td><td>1</td><td>+1.000</td><td><span class="mrl-adv-bar positive" style="--bar-size:100%"></span></td></tr>
+        <tr><td>$y_2$</td><td>小数形式 <code>\boxed{0.875}</code></td><td>正确</td><td><code>0.875</code></td><td>1</td><td>+1.000</td><td><span class="mrl-adv-bar positive" style="--bar-size:100%"></span></td></tr>
+        <tr><td>$y_3$</td><td>计算结果 <code>\boxed{9/8}</code></td><td>错误</td><td><code>9/8</code></td><td>0</td><td>−1.000</td><td><span class="mrl-adv-bar negative" style="--bar-size:100%"></span></td></tr>
+        <tr><td>$y_4$</td><td>先猜 7/8；复核后 <code>\boxed{9/8}</code></td><td>错误</td><td><code>9/8</code></td><td>0</td><td>−1.000</td><td><span class="mrl-adv-bar negative" style="--bar-size:100%"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="mrl-caption">先看“人工真值”和 verifier reward 是否一致，再看优势栏。真正的因果链是：解析/判定规则改变 reward → reward 改变组统计量 → 组统计量同时改变四条回答的训练方向与尺度。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>可执行只保证判定可重复，不保证判定含义正确</h3>
+      <p>字符串比较每次都会给同样结果，却会拒绝数学等价表示；读取第一个数字也很稳定，却可能奖励已经被模型否定的草稿。确定性是好 verifier 的必要条件，不是充分条件。</p>
+      <p class="mrl-insight-key">训练前先用反例测试裁判；训练中同时记录通过率、解析失败与误判类型。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">11</span>把公式落到代码：保留回答轴，也保留 token 轴</h2>
+  <p class="mrl-sec-lead">下面是与上游手写代码地图一致的概念骨架。每一行都能回指一层公式；省略模型加载、分布式 rollout 与 optimizer 细节。</p>
+
+  <pre class="mrl-code mrl-code-block"><code># [A] 当前批次由 old policy 对每个 prompt 采 G 条回答
+responses, mask = generate_many(policy_old, prompts, num_generations=G)
+
+# [B] RLVR: outcome verifier 给每段回答一个 reward
+rewards = verifier(prompts, responses)              # [B * G]
+grouped = rewards.view(batch_size, G)                # [B, G]
+
+# [C] 同一 prompt 内构造 group-relative advantage
+mean = grouped.mean(dim=1, keepdim=True)
+std = grouped.std(dim=1, keepdim=True, correction=0)  # 与公式一致：除以 G
+advantages = (grouped - mean) / (std + 1e-4)         # [B, G]
+advantages = where(std &lt; 1e-4, 0.0, advantages).view(-1)
+
+# [D/E] 逐 token ratio 与 PPO-style clip
+old_logps = per_token_logps(policy_old, prompts, responses).detach()
+new_logps = per_token_logps(policy, prompts, responses)
+ratio = exp(new_logps - old_logps)                   # [B * G, T]
+adv = advantages[:, None]                            # 回答优势广播到 token
+surrogate = minimum(
+    ratio * adv,
+    clip(ratio, 1 - clip_eps, 1 + clip_eps) * adv,
+)
+
+# [F] 当前 policy 相对冻结 reference 的逐 token KL
+ref_logps = per_token_logps(reference, prompts, responses).detach()
+delta = ref_logps - new_logps
+per_token_kl = exp(delta) - delta - 1
+
+# [G] 先按每段回答有效 token 平均，再按回答平均
+objective = masked_sequence_mean(
+    surrogate - beta * per_token_kl, mask
+).mean()
+loss = -objective</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>代码变量</th><th>数学</th><th>最常见错误</th></tr></thead>
+    <tbody>
+      <tr><td><code>grouped</code></td><td>$r_{j,i}$</td><td>跨不同 prompt 做一次全局归一化</td></tr>
+      <tr><td><code>advantages</code></td><td>$\hat A_{j,i}$</td><td>标准差为 0 时仍制造巨大数值</td></tr>
+      <tr><td><code>ratio</code></td><td>$\rho_{j,i,t}$</td><td>先把 token log-prob 求和再只裁一次</td></tr>
+      <tr><td><code>ref_logps</code></td><td>$\ell^{\mathrm{ref}}$</td><td>把 reference 与本批 old policy 混同</td></tr>
+      <tr><td><code>mask</code></td><td>有效回答 token</td><td>把 prompt 或 padding 也算进回答 loss</td></tr>
+      <tr><td><code>loss</code></td><td>$-\mathcal J$</td><td>忘记优化器最小化，需要取负号</td></tr>
+    </tbody>
+  </table>
+
+  <p>上游的 <code>grpo_mechanism.py</code> 单独验证组内标准化；<code>rule_based_reward.py</code> 展示答案提取、格式与启发式评分；<code>grpo_math_reasoning.py</code> 明确标注自己是省略 old-policy ratio、clip 和 reference KL 的简化 group-relative REINFORCE。阅读实验结果时要先认清代码实现了完整 GRPO，还是只演示其中一段机制。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>检查你的理解：你能把“裁判”与“更新器”分开吗？</h2>
+  <p class="mrl-sec-lead">先遮住答案。若能从一组 reward 手算优势，并解释 old、reference、verifier 各自负责什么，就已经掌握本章主线。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. GRPO 为什么必须让同一个 prompt 生成多条回答，而不是直接把整个 batch 的奖励一起标准化？</summary><div class="inner">同一 prompt 固定了题目条件，组内差异才主要反映回答采样差异。跨 prompt 混合会把题目难度也塞进 advantage：简单题的普通回答可能压过难题的优质回答，失去“相对同题预期”的含义。</div></details>
+    <details><summary>2. “GRPO 不需要 Critic”是否等于“不需要 baseline”？</summary><div class="inner">不等于。GRPO 仍执行奖励减基线，只是用同题 $G$ 条回答的组均值作为临时样本基线，不训练单独的价值网络。它减少 Critic 的显存与训练成本，同时付出同题多次 rollout 的采样成本。</div></details>
+    <details><summary>3. 四条二值 reward 为 $[1,0,0,0]$ 时，总体标准差口径下优势是多少？</summary><div class="inner">$p=1/4$，通过样本优势为 $\sqrt{(1-p)/p}=\sqrt3\approx1.732$；三个失败样本各为 $-\sqrt{p/(1-p)}=-1/\sqrt3\approx-0.577$。优势之和为 0。</div></details>
+    <details><summary>4. 为什么 $[1,1,1,1]$ 与 $[0,0,0,0]$ 都通常跳过更新？两者语义一样吗？</summary><div class="inner">两组标准差都为 0，组内没有相对排序，所以优势置 0。语义不一样：全对可能表示这道题已掌握；全错表示结果奖励过于稀疏，无法指出哪条更接近成功。算法层面同为零梯度，数据诊断层面必须分开记录。</div></details>
+    <details><summary>5. $\pi_{\mathrm{old}}$ 与 $\pi_{\mathrm{ref}}$ 各自回答什么问题？</summary><div class="inner">old policy 生成本批数据，与当前 policy 形成 importance ratio，回答“证据是否已经过期”；reference policy 是较长期冻结的行为锚点，与当前 policy 形成 KL，回答“行为是否漂得太远”。</div></details>
+    <details><summary>6. 为什么 GRPO 与 RLVR 不能当作同义词？</summary><div class="inner">GRPO 是策略优化算法，规定组内 advantage、ratio、clip 与 KL 怎样形成 loss；RLVR 是奖励来源，规定用规则 verifier 给结果打分。GRPO 可以接 Reward Model，RLVR 的规则 reward 也可以接 PPO 等其他算法。</div></details>
+    <details><summary>7. 一个确定性的 verifier 是否一定适合 RLVR？</summary><div class="inner">不一定。确定性只保证同样输入重复得到同样判定；严格字符串比较会稳定地产生假阴性，读取第一个数字会稳定地产生假阳性。还要检查最终答案提取、等价表示、边界输入和误判方向。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十六章建立起来的数据流</h3>
+    <div class="mrl-summary-chain">
+      <div><span>同一 prompt</span><strong>从 old policy 采 $G$ 条</strong><small>GROUP ROLLOUT</small></div>
+      <i>→</i>
+      <div><span>结果裁判</span><strong>verifier 给 $r_{j,i}$</strong><small>RLVR</small></div>
+      <i>→</i>
+      <div><span>相对比较</span><strong>组均值与标准差</strong><small>ADVANTAGE</small></div>
+      <i>→</i>
+      <div><span>保守优化</span><strong>token ratio + clip + KL</strong><small>GRPO</small></div>
+    </div>
+    <p>同题组采样提供临时 baseline，结果验证器提供 reward，组内标准化提供方向，PPO-style clip 和 reference KL 限制步幅。任何一环都不能被“GRPO 不要 Critic”这句口号省略。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter17.html">第 17 章：既然同题多采样有价值，推理时多花计算能换来什么？</a></h3>
+    <p>本章为了训练，对同一个 prompt 生成 $G$ 条回答；即使暂时不更新参数，多采几条、从中选一条，也可能提高最终成功率。下一章会把采样次数、思考 token 与成功概率放在同一条计算预算曲线上。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 “GRPO 训练机制”“构建 RLVR 奖励”、GRPO/RLVR 代码速查与 <code>code/chapter09_grpo_rlvr/</code> 示例重新组织，不是原项目官方译本。章节只建立数学 outcome verifier；步骤级过程奖励、repository/test verifier 与系统性 reward failure 分别留给 Chapter 18、21、26。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 16</span><span><a href="./chapter15.html">← Chapter 15</a> · <a href="./">课程目录</a> · <a href="./chapter17.html">Chapter 17 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter18_grpo" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

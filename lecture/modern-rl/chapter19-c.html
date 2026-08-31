@@ -1,0 +1,234 @@
+<section id="data-pipeline">
+  <h2 class="mrl-sec-title"><span class="num">08</span>token pipeline：训练数据不是一段文本，而是一条带血缘的记录</h2>
+  <p class="mrl-sec-lead">规模化以后，“把 response 存下来”远远不够。训练必须知道哪些 token 参与 loss、谁生成了它们、为什么得到这个 reward，以及环境是否可重放。</p>
+
+  <p><strong>data/token pipeline（数据与 token 流水线）</strong>是轨迹从任务进入生成端，到被编码、评分、组成训练 batch，再进入归档或回流的全过程。称为 token pipeline，是因为 LLM 的更新最终发生在 token 位置上：prompt token 通常只提供上下文，response token 才参与策略损失；padding、工具结果、截断位置与无效输出必须用 mask 区分。</p>
+
+  <div class="mrl-lineage-flow" aria-label="一条 rollout 的数据血缘">
+    <div><span>01 · TASK</span><strong>prompt + task version</strong><small>来源、难度、模板、环境</small></div><i>→</i>
+    <div><span>02 · GENERATE</span><strong>tokens + masks</strong><small>logprob、finish reason、policy version</small></div><i>→</i>
+    <div><span>03 · SCORE</span><strong>reward components</strong><small>规则、verifier、judge 与版本</small></div><i>→</i>
+    <div><span>04 · LEARN</span><strong>batch + update</strong><small>lag、loss、checkpoint</small></div>
+  </div>
+  <p class="mrl-caption">顺着箭头检查一条样本能否被复算：同一任务版本、生成策略、采样参数、token/mask 与奖励版本都必须可追踪；缺任一项，异常梯度就很难回到具体原因。</p>
+
+  <table class="mrl-lineage-table">
+    <thead><tr><th>记录层</th><th>最小字段</th><th>字段缺失会怎样</th></tr></thead>
+    <tbody>
+      <tr><td>任务</td><td><code>prompt_id</code>、来源、难度、模板/环境版本</td><td>不知道提升来自哪类数据，也无法重跑同一任务</td></tr>
+      <tr><td>生成</td><td><code>token_ids</code>、<code>response_mask</code>、采样参数、<code>finish_reason</code></td><td>截断 token 可能被当正常结束，prompt/padding 可能误入 loss</td></tr>
+      <tr><td>策略</td><td><code>policy_version</code>、生成时 old logprob</td><td>无法计算陈旧度，也无法判断训推概率差</td></tr>
+      <tr><td>奖励</td><td>分项 reward、聚合权重、verifier/judge 版本、错误码</td><td>高分可能来自服务故障或某个分项被绕过</td></tr>
+      <tr><td>系统</td><td>worker、时间戳、seed、运行环境/checkpoint 标识</td><td>同一故障无法定位到节点，也无法重放</td></tr>
+    </tbody>
+  </table>
+
+  <h3>数据吞吐不等于有效 token 吞吐</h3>
+  <p>假设生成端每秒输出 30k token，但其中 20% 因超长截断无效、10% 因 verifier/环境错误被隔离，那么进入学习的有效吞吐至多是：</p>
+  <div class="mrl-equation">$$v_{\mathrm{useful}}=30\mathrm{k}\times(1-0.20-0.10)=21\mathrm{k}\ \text{token/s}$$</div>
+  <p>这只是互斥错误类别下的简化例子；若一条轨迹同时超长且验证失败，不能重复相减。真实系统应直接统计最终通过质量门的数据量。被过滤轨迹也不应静默删除：环境超时用于修沙箱，格式错误用于补 SFT，奖励异常用于查 verifier，只有明确的数据状态才能形成闭环。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“reward 已经是一个标量，存总分就够了。”</strong> 不够。若总分突然变高，你必须知道是答案正确率上升、格式分增加、长度惩罚失效，还是 judge 版本改变。没有分项与版本，reward 曲线不能成为可审计证据。</p>
+  </div>
+</section>
+
+<section id="operations">
+  <h2 class="mrl-sec-title"><span class="num">09</span>长训练要能恢复、能比较、能在出事前停下</h2>
+  <p class="mrl-sec-lead">集群跑得久以后，重启、评测和告警不是外围运维；它们决定一条结果能不能复现，以及异常是否会污染之后数小时的数据。</p>
+
+  <h3>Checkpoint：保存“可继续训练的状态”，不只是模型权重</h3>
+  <p><strong>checkpoint（检查点）</strong>是在某一训练时刻保存的可恢复状态。只保存 Actor 权重可以做推理，却未必能无缝续训。恢复训练通常还需要优化器状态、学习率调度、混合精度 scaler、随机数状态、数据游标和当前 policy version；异步系统还要说明 buffer 如何处理。</p>
+
+  <div class="mrl-checkpoint-contract">
+    <article><span>MODEL</span><strong>Actor / adapter 权重</strong><small>恢复当前策略</small></article>
+    <article><span>OPTIMIZATION</span><strong>optimizer + scheduler</strong><small>恢复动量与学习率阶段</small></article>
+    <article><span>DATA</span><strong>cursor + policy version</strong><small>解释下一批从哪里开始</small></article>
+    <article><span>CONTRACT</span><strong>reward / environment version</strong><small>保证恢复后的世界没有变</small></article>
+  </div>
+  <p class="mrl-caption">四栏真正要检查的是一致切面：模型、优化器、数据位置和任务世界必须属于同一训练时刻。混搭 checkpoint 可能成功启动，却不会复现原来的学习轨迹。</p>
+
+  <p>这也解释了 checkpoint 与 weight sync 的区别：weight sync 是把最新推理所需参数快速送到 rollout 端；checkpoint 是把故障后恢复所需状态持久化。前者追求低延迟，后者追求完整与一致。</p>
+
+  <h3>Evaluation worker：把“训练分变高”与“真实能力变好”分开</h3>
+  <p><strong>evaluation worker（评测进程）</strong>周期性加载一个明确 checkpoint，在固定且独立的任务集上运行固定协议。它不反向传播，也不直接消费训练 buffer；它回答的是这个版本是否值得保留或发布。</p>
+  <p>一个可信比较至少锁定模型权重、聊天模板、推理引擎、temperature、最大长度、工具权限、verifier 版本与任务集版本。否则两个 checkpoint 的分数差可能来自配置差，而不是能力差。训练 reward 与独立评测分离，是比 loss 更早暴露 reward hacking 的信号。</p>
+
+  <h3>Monitoring：用三层面板定位，不用一个红灯猜原因</h3>
+  <p><strong>monitoring（监控）</strong>是持续采集指标、样本与告警条件，使训练在明显失稳或系统异常时及时停下。最小面板应把三层放在同一时间轴：</p>
+  <div class="mrl-monitor-grid">
+    <article><span>OUTCOME</span><h3>模型结果</h3><p>独立评测、任务成功率、通用能力回归、安全集。</p></article>
+    <article><span>LEARNING</span><h3>策略与数据</h3><p>reward 分项、KL、entropy、长度、优势方差、$\Delta v$、样本丢弃率。</p></article>
+    <article><span>SYSTEM</span><h3>流水线健康</h3><p>各 stage time、tokens/s、queue depth、sync time、GPU/MFU，以及 Out of Memory（OOM，内存／显存不足）等错误。</p></article>
+  </div>
+  <p class="mrl-caption">阅读顺序从左到右：先确认独立能力是否变化，再定位学习信号，最后解释系统原因。系统更快但 outcome 不涨，不算训练成功。</p>
+
+  <p>例如，queue depth 持续上升、$\Delta v$ 上升而 rollout tokens/s 很高，说明生产快于消费；不是 rollout 还不够快。又如 reward 上升、独立成功率不变且 response 长度贴住上限，应该先抽查输出与奖励规则，而不是继续堆 GPU。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>工业训练的产物是一条可追踪闭环，不只是一个权重文件</h3>
+      <p>checkpoint 让状态可恢复，评测契约让版本可比较，监控与轨迹血缘让失败可定位；三者共同决定“某次提升”能否被相信和复现。</p>
+      <p class="mrl-insight-key">没有数据、环境、奖励和模型版本的对应关系，规模越大只会越快地产生不可解释的结果。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">10</span>把公式落到系统变量：一次异步更新需要哪些字段？</h2>
+  <p class="mrl-sec-lead">下面是概念代码，不绑定 veRL、OpenRLHF 或其他框架。算法 loss 被压缩成一行，重点放在样本版本、队列边界、权重回流和评测 checkpoint。</p>
+  <p>先冻结分组合同：一次“对同一 prompt 生成 $G$ 条回答”叫一个生成组，系统为它分配全局唯一的 <code>group_id</code>；组内每条轨迹再用 <code>member_index</code> 标记自己是第 $0$ 到第 $G-1$ 个成员。<code>prompt_id</code> 说明题目身份，<code>policy_version</code> 说明实际生成该轨迹的 Actor 版本，四者不能互相替代。</p>
+
+  <div class="mrl-code-stack">
+    <div>
+      <span>PRODUCER · ROLLOUT SIDE</span>
+      <pre class="mrl-code"><code>actor_version, rollout_weights = weight_store.latest()
+group_specs = [
+    {
+        "group_id": new_group_id(),
+        "prompt_id": task.id,
+        "group_size": group_size,
+    }
+    for task in prompts
+]
+trajectories = rollout_worker.generate(
+    prompts,
+    group_specs=group_specs,
+    weights=rollout_weights,
+    policy_version=actor_version,
+    num_generations=group_size,
+)
+scored = reward_worker.score(trajectories)
+
+buffer.put({
+    "group_ids": scored.group_ids,
+    "prompt_ids": scored.prompt_ids,
+    "member_indices": scored.member_indices,
+    "group_sizes": scored.group_sizes,
+    "policy_versions": scored.policy_versions,
+    "token_ids": scored.token_ids,
+    "response_mask": scored.response_mask,
+    "old_logprobs": scored.logprobs,
+    "rewards": scored.reward_components,
+    "finish_reason": scored.finish_reason,
+})</code></pre>
+    </div>
+    <div>
+      <span>CONSUMER · TRAINING SIDE</span>
+      <pre class="mrl-code"><code>batch = buffer.get()  # 可以混合多个 producer 批次
+
+if objective_name == "grpo":
+    groups = restore_groups(
+        batch,
+        key=("group_ids", "prompt_ids", "policy_versions"),
+    )
+    reject_group_ids_with_multiple_keys(groups)
+
+    fresh_groups = []
+    for group in groups:
+        group_size = group.one("group_sizes")
+        expected = list(range(group_size))
+        observed = sorted(group["member_indices"])
+        if observed != expected or len(group) != group_size:
+            metrics.count("incomplete_group_dropped")
+            continue
+
+        policy_version = group.one("policy_versions")
+        if trainer.version - policy_version &gt; max_policy_lag:
+            metrics.count("stale_group_dropped")
+            continue
+        fresh_groups.append(group)
+
+    if not fresh_groups:
+        continue
+    loss = grpo_objective(fresh_groups)  # 只在完整同题组内标准化
+else:
+    fresh_batch = drop_stale_trajectories(
+        batch,
+        current_version=trainer.version,
+        max_lag=max_policy_lag,
+    )
+    if not fresh_batch:
+        continue
+    loss = ppo_objective(fresh_batch)
+trainer.backward(loss)
+trainer.step()
+
+weight_store.publish(
+    version=trainer.version,
+    weights=trainer.rollout_weights(),
+)</code></pre>
+    </div>
+    <div>
+      <span>CONTROL PLANE · RECOVERY AND EVALUATION</span>
+      <pre class="mrl-code"><code>if step % checkpoint_every == 0:
+    checkpoint.save(
+        actor=trainer.actor,
+        optimizer=trainer.optimizer,
+        scheduler=trainer.scheduler,
+        policy_version=trainer.version,
+        data_cursor=task_stream.cursor,
+        reward_version=reward_worker.version,
+    )
+
+if step % evaluate_every == 0:
+    evaluation_queue.put(checkpoint.latest_id())</code></pre>
+    </div>
+  </div>
+
+  <p>生成端在整组回答开始前只读取一次 <code>actor_version</code>，并为每次“同题生成 $G$ 条回答”分配全局唯一的 <code>group_id</code>。每条轨迹都携带同一组的 <code>prompt_id</code>、自己的 <code>member_index</code>（取值为 $0,\ldots,G-1$）、<code>group_size</code> 与实际生成它的 <code>policy_version</code>。因此队列即使合批或打乱，训练端仍可按 <code>(group_id, prompt_id, policy_version)</code> 恢复候选组；若同一 <code>group_id</code> 对应多个键、成员索引不是完整的 $0,\ldots,G-1$，或策略版本超出容忍范围，就显式拒绝，绝不跨题或跨策略版本计算组内均值与标准差。</p>
+
+  <table>
+    <thead><tr><th>本章数学/概念</th><th>程序变量</th><th>应持续记录</th></tr></thead>
+    <tbody>
+      <tr><td>$v_r,v_t$</td><td><code>rollout_tokens_per_s</code>, <code>train_tokens_per_s</code></td><td>总 token 与有效 token 分开</td></tr>
+      <tr><td>$T_r,T_t,T_w$</td><td><code>rollout_s</code>, <code>train_s</code>, <code>weight_sync_s</code></td><td>均值之外保留 p50/p95/p99</td></tr>
+      <tr><td>$q$</td><td><code>buffer.depth</code></td><td>深度趋势与 producer/consumer 速率</td></tr>
+      <tr><td>$\Delta v$</td><td><code>trainer.version - group.one("policy_versions")</code></td><td>分布、拒绝阈值、丢弃率</td></tr>
+      <tr><td>$\rho_t^{\mathrm{stale}}$</td><td><code>exp(new_logprob - old_logprob)</code></td><td>极端分位数与是否截断</td></tr>
+      <tr><td>同题回答组</td><td><code>group_ids</code>, <code>prompt_ids</code>, <code>member_indices</code>, <code>group_sizes</code>, <code>policy_versions</code></td><td>唯一组实例、成员完整、同一生成版本、禁止跨题标准化</td></tr>
+      <tr><td>可恢复状态</td><td><code>checkpoint.save(...)</code></td><td>模型、优化、数据、奖励版本的一致切面</td></tr>
+    </tbody>
+  </table>
+
+  <p>真实系统还必须对 buffer 的持久化语义做明确选择：恢复时是清空旧队列，还是连同轨迹与版本一起恢复。两种都可以，但不能悄悄继续消费不知道由哪个策略生成的数据。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：你能从时间线定位瓶颈吗？</h2>
+  <p class="mrl-sec-lead">先遮住答案，尽量用“工作量—速率—时间—版本”的链条回答，而不是报出一个框架名。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 一轮 rollout 45 秒、reward 4 秒、training 12 秒。为什么把 training 加速两倍只能把 61 秒缩到 55 秒？</summary><div class="inner">因为同步 step time 是各段耗时之和。training 从 12 秒变成 6 秒只省 6 秒，45 秒 rollout 完全没变；生成仍占主导。先优化最大时间项，才可能得到显著端到端收益。</div></details>
+    <details><summary>2. rollout worker 与 inference worker 都“生成回答”，为什么仍要区分？</summary><div class="inner">rollout worker 定义训练样本：挑任务、决定每题采几条、管理终止与 policy version；inference worker 高吞吐执行模型前向与采样，管理 prefill/decode、KV cache 和 batch。小系统可合并，大系统中职责与扩展瓶颈不同。</div></details>
+    <details><summary>3. 为什么异步稳态批次间隔近似看最大 stage time，而不是把 tokens/s 相加？</summary><div class="inner">各 stage 是同一数据必须依次经过的工序，不是共同生成同一种可直接合并的结果。流水线填满后，快阶段会等慢阶段，因此交付间隔受服务时间最长的一段限制。</div></details>
+    <details><summary>4. buffer depth 持续增长说明什么？应先增加哪一端算力？</summary><div class="inner">由 $dq/dt=\lambda_r-\mu_t$，持续增长说明 rollout 生产率大于 training 消费率。此时再加 rollout 算力只会积压更快；应检查 training/reward 消费、通信或减小生产速率，并同时观察 staleness 与丢弃率。</div></details>
+    <details><summary>5. policy version 差 3 是否必然比差 1 更危险？</summary><div class="inner">不必然。版本差是工程近似，实际行为差还取决于每次更新幅度。要同时看新旧策略对样本动作的 log-probability 或概率比；三次小更新可能比一次异常大更新更接近。</div></details>
+    <details><summary>6. 为什么 GPU utilization 很高仍不能证明系统训练得好？</summary><div class="inner">它只说明观察窗口里设备在执行 kernel，不能证明 token 有效、样本新鲜、reward 正确或独立评测提高。最终要把 outcome、学习/数据和系统三层指标放在同一时间轴解释。</div></details>
+    <details><summary>7. weight sync 与 checkpoint 的目标有什么不同？</summary><div class="inner">weight sync 把推理所需的最新 Actor 参数尽快送到 rollout 端；checkpoint 持久化故障恢复所需的一致状态，通常还含优化器、scheduler、随机状态、数据游标和版本契约。一个追求低延迟回流，一个追求完整恢复。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第十九章建立起来的系统坐标系</h3>
+    <div class="mrl-summary-chain mrl-summary-chain-five">
+      <div><span>角色</span><strong>rollout 生产<br>training 消费</strong><small>worker boundary</small></div><i>→</i>
+      <div><span>速率</span><strong>工作量 ÷ 吞吐</strong><small>stage time</small></div><i>→</i>
+      <div><span>调度</span><strong>串行求和<br>流水线看最大值</strong><small>sync / async</small></div><i>→</i>
+      <div><span>代价</span><strong>队列越深<br>策略越陈旧</strong><small>policy lag</small></div><i>→</i>
+      <div><span>可信闭环</span><strong>血缘、恢复<br>评测、监控</strong><small>operability</small></div>
+    </div>
+    <p>先用 profiler 和速率守恒找出当前瓶颈，再决定怎样放置 GPU 与重叠阶段；吞吐提高后，用 policy version、概率比与质量门守住数据新鲜度；最后让 checkpoint、独立评测和监控把一次大规模训练变成可恢复、可比较的实验。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3>第 20 章：当 rollout 走出文本框，怎样变成多轮工具轨迹？</h3>
+    <p>本章默认一条 completion 可以被生成、评分和入队。下一章中，动作会调用搜索、代码和外部工具，环境要返回新 observation；轨迹长度、环境状态与跨轮 credit assignment 会一起进入训练系统。</p>
+  </div>
+
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的“工业级大模型强化学习”与“工业训练附录”重新组织，重点采用 rollout/训练编排、异步训练、数据工程、训练指标、监控与恢复材料，不是原项目官方译本。吞吐—等待—陈旧度实验与数值推导为本讲义重新设计。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 19</span><span><a href="./chapter18.html">← Chapter 18</a> · <a href="./">课程目录</a> · <a href="./chapter20.html">Chapter 20 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/appendix_industrial_training" target="_blank" rel="noopener">原项目附录 ↗</a></span></footer>

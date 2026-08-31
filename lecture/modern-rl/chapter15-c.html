@@ -1,0 +1,170 @@
+<section id="ratio-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>实验：同一个 log-ratio margin，beta 怎样改变 loss 与梯度？</h2>
+  <p class="mrl-sec-lead">不运行大模型，也能把 DPO 的核心机制看完整。下面把四条 log-prob 已经做完的两次减法直接暴露出来，让你操纵 $\ell_w$、$\ell_l$ 与 $\beta$。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>chosen/rejected 的 log-ratio 差 $\Delta$ 与 $\beta$，怎样共同决定偏好概率、DPO loss 和梯度强度？</dd>
+    <dt>Prediction</dt><dd>提高 $\ell_w$ 或降低 $\ell_l$ 会增大 $\Delta$，使偏好概率上升、loss 下降；改变 $\beta$ 会缩放 logit，但梯度还会受 sigmoid 饱和影响，不能把它当学习率。</dd>
+    <dt>Experiment</dt><dd>先保持默认值，核对上一节的手算；再令 $\ell_w=\ell_l$，最后交换二者。每种情况下把 $\beta$ 从小调大，比较 $L$ 与 $\partial L/\partial\Delta$。</dd>
+    <dt>Observation</dt><dd id="ratioObservation">默认 $\Delta=1.50$、$\beta=0.50$：模型给 chosen 胜出的概率约 0.679，loss 约 0.387，margin 梯度约 −0.160。</dd>
+    <dt>Interpretation</dt><dd id="ratioInterpretation">梯度为负意味着梯度下降会增大 chosen 相对 rejected 的 log-ratio；当正 margin 已很大时，sigmoid 饱和会让梯度趋近 0。</dd>
+    <dt>Limitation</dt><dd>这是单条偏好样本、序列 log-prob 已知的损失面切片；真实训练还受 token 长度、batch 中偏好噪声、优化器、模型参数共享和数据覆盖影响。</dd>
+  </dl>
+
+  <div class="mrl-lab-toolbar" aria-label="DPO log-ratio 实验参数">
+    <label class="mrl-ratio-control">
+      <span>chosen log-ratio $\ell_w$ <output id="chosenRatioValue">+1.00</output></span>
+      <input id="chosenRatio" type="range" min="-3" max="3" step="0.1" value="1" aria-label="chosen log-ratio">
+    </label>
+    <label class="mrl-ratio-control">
+      <span>rejected log-ratio $\ell_l$ <output id="rejectedRatioValue">−0.50</output></span>
+      <input id="rejectedRatio" type="range" min="-3" max="3" step="0.1" value="-0.5" aria-label="rejected log-ratio">
+    </label>
+    <label class="mrl-ratio-control">
+      <span>KL / logit 系数 $\beta$ <output id="betaValue">0.50</output></span>
+      <input id="dpoBeta" type="range" min="0.05" max="2" step="0.05" value="0.5" aria-label="beta">
+    </label>
+    <button class="mrl-btn" id="ratioReset" type="button">恢复手算值</button>
+  </div>
+
+  <div class="mrl-ratio-axis" aria-label="chosen 与 rejected log-ratio 数轴">
+    <div class="axis-line"></div>
+    <span class="axis-label min">−3</span><span class="axis-label zero">0</span><span class="axis-label max">+3</span>
+    <div class="ratio-marker chosen" id="chosenMarker"><b>chosen</b><span>+1.00</span></div>
+    <div class="ratio-marker rejected" id="rejectedMarker"><b>rejected</b><span>−0.50</span></div>
+  </div>
+  <p class="mrl-caption">看两枚标记的水平距离，而不是它们是否都位于 0 的右边：DPO 的单样本排序信号只由 $\Delta=\ell_w-\ell_l$ 决定。</p>
+
+  <div class="mrl-lab-results" aria-live="polite">
+    <article><span>LOG-RATIO MARGIN</span><strong id="deltaValue">+1.50</strong><small>$\Delta=\ell_w-\ell_l$</small></article>
+    <article><span>SCALED LOGIT</span><strong id="scaledMarginValue">+0.75</strong><small>$z=\beta\Delta$</small></article>
+    <article><span>PREFERENCE PROB.</span><strong id="preferenceValue">0.679</strong><small>$\sigma(z)$</small></article>
+    <article><span>DPO LOSS</span><strong id="lossValue">0.387</strong><small>$-\log\sigma(z)$</small></article>
+    <article><span>MARGIN GRADIENT</span><strong id="gradientValue">−0.160</strong><small>$-\beta[1-\sigma(z)]$</small></article>
+  </div>
+
+  <div class="mrl-prob-meter" aria-label="chosen 偏好概率">
+    <div class="meter-head"><span>rejected 更可能</span><strong id="probabilityLabel">chosen 67.9%</strong><span>chosen 更可能</span></div>
+    <div class="meter-track"><div class="meter-fill" id="probabilityFill"></div><i></i></div>
+  </div>
+  <p class="mrl-caption">中线是 50%。把两个 log-ratio 设成相等时，无论二者共同多大，$\Delta=0$，模型对该标签仍只给 50%；交换二者后，较大的 $\beta$ 会更确信错误排序，loss 与纠错梯度都会上升。</p>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>公式落到代码：四次序列打分，只有 policy 接收梯度</h2>
+  <p class="mrl-sec-lead">上游脚本用 TRL 的 <code>DPOTrainer</code> 封装训练。要读懂日志和排错，仍应能把 trainer 展开成最小数据流。</p>
+
+  <pre><code># batch 提供同一个 prompt 下的一对回答
+policy_chosen = sequence_logprob(policy, x, chosen)      # p_w
+policy_rejected = sequence_logprob(policy, x, rejected)  # p_l
+
+with torch.no_grad():
+    ref_chosen = sequence_logprob(reference, x, chosen)      # p_w^0
+    ref_rejected = sequence_logprob(reference, x, rejected)  # p_l^0
+
+chosen_logratio = policy_chosen - ref_chosen
+rejected_logratio = policy_rejected - ref_rejected
+dpo_logits = beta * (chosen_logratio - rejected_logratio)
+loss = -F.logsigmoid(dpo_logits).mean()
+
+optimizer.zero_grad()
+loss.backward()      # reference 没有梯度
+optimizer.step()     # 只更新 policy</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>公式</th><th>最小实现变量</th><th>上游训练脚本里的入口</th><th>常见错误</th></tr></thead>
+    <tbody>
+      <tr><td>$(x,y_w,y_l)$</td><td><code>prompt</code>, <code>chosen</code>, <code>rejected</code></td><td><code>Dataset.from_dict(data_dict)</code></td><td>把 chosen/rejected 颠倒或来自不同 prompt</td></tr>
+      <tr><td>$\log\pi(y\mid x)$</td><td><code>sequence_logprob(...)</code></td><td>由 <code>DPOTrainer</code> 内部计算</td><td>把 prompt token 也计入回答 loss，或误用单个 token 概率</td></tr>
+      <tr><td>$\ell_w,\ell_l$</td><td><code>chosen_logratio</code>, <code>rejected_logratio</code></td><td>policy 与冻结 reference 的 log-prob 差</td><td>只拿 raw policy log-prob 做好减坏</td></tr>
+      <tr><td>$\beta$</td><td><code>beta</code></td><td><code>DPOConfig(beta=0.1)</code></td><td>把它当学习率，或脱离 margin 单独解释</td></tr>
+      <tr><td>$-\log\sigma(\beta\Delta)$</td><td><code>-F.logsigmoid(dpo_logits)</code></td><td><code>DPOTrainer.train()</code></td><td>先算 sigmoid 再取 log，造成不必要的数值不稳定</td></tr>
+    </tbody>
+  </table>
+
+  <p>训练日志中，<code>rewards/chosen</code> 与 <code>rewards/rejected</code> 对应 $\beta\ell_w$ 和 $\beta\ell_l$ 的 batch 统计；二者之差是 reward margin，chosen 高于 rejected 的样本比例是 reward accuracy。loss 下降只说明训练偏好似然改善，最终仍要在留出 prompt 上检查事实性、安全性、风格与能力是否真的更好。</p>
+
+  <div class="mrl-source-links">
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter17_dpo/1-generate_data.py" target="_blank" rel="noopener"><span>DATA</span><strong>生成偏好三元组</strong><small>1-generate_data.py ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter17_dpo/3-train_dpo.py" target="_blank" rel="noopener"><span>TRAIN</span><strong>配置 DPOTrainer</strong><small>3-train_dpo.py ↗</small></a>
+    <a href="https://github.com/walkinglabs/hands-on-modern-rl/blob/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/appendix_code_cheatsheet/dpo-family.md" target="_blank" rel="noopener"><span>CHEATSHEET</span><strong>家族 loss 代码映射</strong><small>dpo-family.md ↗</small></a>
+  </div>
+</section>
+
+<section id="family">
+  <h2 class="mrl-sec-title"><span class="num">10</span>DPO 家族：每个分支都在放松一个不同约束</h2>
+  <p class="mrl-sec-lead">下面只建立选型坐标，不再推导五套损失。问清楚“我有什么数据、是否能放下 reference、希望 margin 怎样停止”，比背算法年份更有用。</p>
+
+  <table class="mrl-family-table">
+    <thead><tr><th>方法</th><th>反馈数据</th><th>需要 reference</th><th>相对 DPO 改了什么</th><th>先问哪一个现实问题</th></tr></thead>
+    <tbody>
+      <tr><td><strong>DPO（直接偏好优化）</strong></td><td>chosen/rejected 对</td><td>是</td><td>$-\log\sigma(\beta\Delta)$</td><td>有稳定偏好对，先用经典基线能否工作？</td></tr>
+      <tr><td><strong>Identity Preference Optimization（IPO，恒等偏好优化）</strong></td><td>chosen/rejected 对</td><td>是</td><td>用平方损失把 $\Delta$ 推向有限目标 $1/(2\beta)$，避免噪声偏好被无限拉开</td><td>是否担心 noisy pair 被无限拉开？</td></tr>
+      <tr><td><strong>Kahneman–Tversky Optimization（KTO，卡尼曼–特沃斯基优化）</strong></td><td>单条 desirable / undesirable 标签</td><td>是</td><td>不要求同 prompt 的成对比较，引入反馈基线与好坏权重</td><td>产品日志只有点赞/点踩怎么办？</td></tr>
+      <tr><td><strong>Simple Preference Optimization（SimPO，简单偏好优化）</strong></td><td>chosen/rejected 对</td><td>否</td><td>用长度归一化的 policy log-prob 与目标 margin 取代 reference</td><td>reference 的显存与前向成本是否成为瓶颈？</td></tr>
+      <tr><td><strong>Odds Ratio Preference Optimization（ORPO，优势比偏好优化）</strong></td><td>chosen/rejected 对</td><td>否</td><td>把 chosen 的监督似然与 chosen/rejected odds-ratio 惩罚合在一起</td><td>是否想在一阶段同时保留 SFT 与偏好排序信号？</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">这不是“越往下越先进”的排行榜。各行删除或更换的组件不同：KTO 改数据形态，SimPO/ORPO 去 reference，IPO 改 margin 的目标形状；选择取决于真实约束。</p>
+
+  <p>家族名会继续增加，但本章只保留一个不变骨架：<strong>回答概率怎样被比较、比较相对谁、标签来自什么数据生成过程</strong>。如果说不清这三点，即使能背 loss，也无法判断训练曲线究竟在奖励什么。</p>
+</section>
+
+<section id="limits">
+  <h2 class="mrl-sec-title"><span class="num">11</span>离线偏好不是免费的 RL 替代品</h2>
+  <p class="mrl-sec-lead">DPO 把工程链路缩短了，也把上限更直接地交给了固定数据。它不会自动发现数据里从未出现的更好回答。</p>
+
+  <div class="mrl-limit-grid">
+    <article><span>DATA SUPPORT</span><h3>只能比较数据里出现过的方向</h3><p>固定 pairs 没有训练期探索。若数据缺少某类任务或失败模式，loss 无法凭空提供纠正证据。</p></article>
+    <article><span>LABEL NOISE</span><h3>比较者偏差会成为策略偏差</h3><p>标注歧义、位置偏差、长度偏好与 self-preference 都可能被模型当作目标学习。</p></article>
+    <article><span>RELATIVE SIGNAL</span><h3>“更好”不等于“足够好”</h3><p>若一对回答都错误，chosen 仍会胜出。相对排序不能替代绝对正确性、安全红线或任务验证。</p></article>
+    <article><span>REFERENCE DRIFT</span><h3>有 reference 不等于永不偏离</h3><p>reference 定义相对坐标和正则来源，但有限数据、超参和反复优化仍可能损伤通用能力。</p></article>
+  </div>
+  <p class="mrl-caption">四格的共同因果链是“数据决定可见差异 → 损失放大这些差异 → 生成行为继承其盲区”。算法简化不能修复偏好数据没有表达的目标。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>偏好 loss 衡量标签拟合，任务成功需要额外证据</h3>
+      <p>较低 DPO loss 可以与事实性退化、回答变长或安全性下降同时发生，因为 pair 标签可能没有隔离这些维度。</p>
+      <p class="mrl-insight-key">最小评估单元不是一条 training loss 曲线，而是留出偏好准确率、chosen/rejected 动态和真实任务行为的联合检查。</p>
+    </div>
+  </aside>
+
+  <h3>从 Chapter 14 到 Chapter 16：反馈还可以更客观吗？</h3>
+  <div class="mrl-bridge-chain">
+    <div><span>CHAPTER 14</span><strong>显式学习谁更偏好</strong><small>RM + PPO / KL</small></div><i>→</i>
+    <div class="current"><span>CHAPTER 15</span><strong>把偏好对直接变成损失</strong><small>DPO log-ratio</small></div><i>→</i>
+    <div><span>CHAPTER 16</span><strong>当结果能被规则验证</strong><small>无需 Critic 怎样比较一组回答？</small></div>
+  </div>
+  <p>偏好适合礼貌、风格与帮助性，却可能主观且昂贵。数学题、代码测试等任务有时能给出可验证的结果信号；下一章将追问：如果同时采样一组回答，又不训练 Critic，怎样从组内相对结果与 verifier 构造学习信号？</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">12</span>理解检查：你能从偏好概率重新推出 loss 吗？</h2>
+  <div class="mrl-summary-chain">
+    <div><span>DATA</span><strong>同一 prompt 的偏好对</strong><small>$(x,y_w,y_l)$</small></div><i>→</i>
+    <div><span>REFERENCE</span><strong>比较相对训练起点的变化</strong><small>$\ell=\log\pi_\theta/\pi_{ref}$</small></div><i>→</i>
+    <div><span>MARGIN</span><strong>chosen 变化减 rejected 变化</strong><small>$\Delta=\ell_w-\ell_l$</small></div><i>→</i>
+    <div><span>LIKELIHOOD</span><strong>让观察到的偏好更可能</strong><small>$-\log\sigma(\beta\Delta)$</small></div>
+  </div>
+
+  <div class="mrl-quiz">
+    <details><summary>1. chosen 是否等于“绝对正确答案”？</summary><div class="inner">不等于。chosen 只表示在同一 prompt 的这一对回答里被比较者偏好。两条回答可能都不完美，标签也可能混入长度、风格或标注者偏差。</div></details>
+    <details><summary>2. 为什么 DPO 需要“2 个模型 × 2 个回答”的四条 log-prob？</summary><div class="inner">policy 和 reference 都要分别给 chosen、rejected 计算序列 log-prob。先做 policy−reference 得到两条相对变化，再做 chosen−rejected 得到偏好 margin；只看 policy 的绝对概率会失去训练起点的坐标。</div></details>
+    <details><summary>3. Bradley–Terry 模型中，两个回答奖励相等时 chosen 胜出的概率是多少？</summary><div class="inner">奖励差为 0，所以 $P=\sigma(0)=0.5$。标签说 chosen 胜，但当前模型尚没有区分两者的证据。</div></details>
+    <details><summary>4. 为什么反解奖励时的 $\beta\log Z(x)$ 可以消失？</summary><div class="inner">$Z(x)$ 只依赖共同 prompt，对 $y_w$ 和 $y_l$ 完全相同。BT 只使用奖励差，因此两个相同的 $\beta\log Z(x)$ 相减为 0。</div></details>
+    <details><summary>5. 若 $\pi_\theta=\pi_{ref}$，一条偏好样本的 DPO loss 是多少？</summary><div class="inner">两条 log-ratio 都为 0，$\Delta=0$，偏好概率为 0.5，因此 $L=-\log0.5=\log2\approx0.693$。这表示策略相对 reference 尚未学习这条排序。</div></details>
+    <details><summary>6. “beta 越大，就等于学习率越大”为什么错？</summary><div class="inner">$\beta$ 是原始目标的 KL 惩罚系数，同时在 DPO loss 中缩放 margin logit。固定 $\Delta$ 时它改变偏好置信度和梯度，但梯度还会 sigmoid 饱和；优化器学习率则直接控制参数步长，两者不是同一对象。</div></details>
+    <details><summary>7. 只有大量点赞/点踩而没有配对回答时，为什么标准 DPO 不直接匹配？</summary><div class="inner">标准 DPO 的 $\Delta$ 需要同一 prompt 下 chosen 与 rejected 的成对差。单条 desirable/undesirable 反馈缺少配对项，更接近 KTO 所处理的数据形态；无论采用哪种方法，都仍需审查反馈偏差。</div></details>
+  </div>
+
+  <div class="mrl-next-chapter">
+    <span>Next · Chapter 16</span>
+    <h3>如果正确性可以验证，还需要主观偏好与 Critic 吗？</h3>
+    <p>DPO 在固定 chosen/rejected 上学习相对排序。下一章将把反馈换成一组采样结果与 verifier，考察没有 Critic 时怎样构造组内学习信号，以及验证器又会带来哪些新失败。</p>
+    <a class="mrl-btn primary" href="./chapter16.html">进入 Chapter 16 →</a>
+  </div>
+
+  <footer class="mrl-chapter-footer"><span>Chapter 15 · DPO Family</span><span><a href="./chapter14.html">← Chapter 14</a> · <a href="./">课程目录</a> · <a href="./chapter16.html">Chapter 16 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter17_dpo" target="_blank" rel="noopener">原项目 ↗</a></span></footer>
+</section>

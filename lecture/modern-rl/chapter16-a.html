@@ -1,0 +1,152 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 16 · Learning from relative, verifiable outcomes</div>
+  <h1>没有 Critic，怎样用组内结果学习？</h1>
+  <p class="lead">上一章的 DPO 把一份固定偏好数据变成直接优化目标，省掉了在线 rollout。但推理训练常常没有现成的 chosen/rejected：模型今天刚学会一种新解法，明天就应该亲自多试几次，再从结果里继续学习。本章重新打开在线循环，并追问：<strong>若不训练 Critic，谁来判断一次回答“比预期好多少”？</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>同一道题采样多条回答时，怎样把组内结果变成相对优势，再用可复查的结果验证器提供奖励？验证器若漏判、误判，或者所有样本同分，训练信号会怎样改变？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：PPO、RLHF、DPO</span>
+    <span class="mrl-pill">数学：标准化 + 概率比 + KL</span>
+    <span class="mrl-pill">实验：同题四答与验证器反事实</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从组内对照到可验证奖励</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#group-sampling"><b>01</b><span>同题多答</span><small>制造可比的组</small></a>
+      <a class="mrl-roadmap-step" href="#advantage"><b>02</b><span>相对优势</span><small>组均值代替 Critic</small></a>
+      <a class="mrl-roadmap-step" href="#clip"><b>03</b><span>保守更新</span><small>逐 token ratio + clip</small></a>
+      <a class="mrl-roadmap-step" href="#rlvr"><b>04</b><span>结果验证</span><small>规则提供 reward</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#verifier-lab"><b>05</b><span>改变裁判</span><small>观察整组梯度</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#takeaways"><b>06</b><span>连接推理</span><small>为什么要多采样</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>固定偏好读一份答案册，组内在线更新让当前模型重新下场</h2>
+  <p class="mrl-sec-lead">固定偏好对适合离线学习；但若反馈可以自动获得，当前策略自己生成的新失败与新成功就是最贴近它的训练数据。</p>
+
+  <div class="mrl-two-paths">
+    <article>
+      <span>CHAPTER 15 · OFFLINE</span>
+      <h3>DPO：已有 chosen / rejected</h3>
+      <p>训练数据已经固定。模型学习提高 chosen 相对 rejected 的概率，不需要在每次更新前重新生成回答。</p>
+    </article>
+    <article>
+      <span>CHAPTER 16 · ONLINE</span>
+      <h3>同题组内在线更新：当前策略多次采样</h3>
+      <p>每轮用采样策略生成一组回答，现场评分，再让高于同组平均的回答更可能、低于平均的回答更少出现。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两条路线真正不同的是训练证据的生成时机：固定偏好路线复用已有比较；在线组内路线每轮从当前附近的策略分布重新采样，因此能跟着模型的新能力与新错误移动。</p>
+
+  <p><strong>Group Relative Policy Optimization（GRPO，组相对策略优化）</strong>是一种在线策略优化方法：对同一个 prompt 采样 $G$ 条回答，用组内奖励构造优势，再沿用 PPO 风格的概率比值、裁剪与参考策略约束更新 policy。这里“group relative”不是把整个 batch 混在一起排名，而是只在<strong>共享同一个 prompt</strong>的回答之间做对照。</p>
+
+  <p>GRPO 回顾 PPO，但不重新讲一遍 PPO。Chapter 09 已经解释过“旧策略数据不能被新策略无限利用”，Chapter 14 已经解释过对齐中的 reference policy 与 KL。这里真正新增的是一件事：<strong>advantage 不再由 Critic 预测，而由同题样本的组内统计量构造。</strong></p>
+</section>
+
+<section id="llm-trajectory">
+  <h2 class="mrl-sec-title"><span class="num">02</span>语言模型写一段回答，就是走完一条 token 轨迹</h2>
+  <p class="mrl-sec-lead">要看懂 GRPO 的两个尺度，先把“一段回答一个结果”和“每个 token 一个动作”同时放在桌面上。</p>
+
+  <table class="mrl-role-table">
+    <thead><tr><th>强化学习对象</th><th>在语言模型里</th><th>本章记号</th></tr></thead>
+    <tbody>
+      <tr><td>状态</td><td>prompt 加已经生成的前缀</td><td>$(x,y_{&lt;t})$</td></tr>
+      <tr><td>动作</td><td>当前位置选择的下一个 token</td><td>$y_t$</td></tr>
+      <tr><td>策略</td><td>给定前缀的下一个 token 分布</td><td>$\pi_\theta(y_t\mid x,y_{&lt;t})$</td></tr>
+      <tr><td>轨迹</td><td>一段完整回答</td><td>$y=(y_1,\ldots,y_T)$</td></tr>
+      <tr><td>结果奖励</td><td>整段回答最终是否通过检查</td><td>$R(x,y)$</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-token-line" aria-label="语言模型回答的 token 轨迹">
+    <div><span>STATE</span><b>题目 $x$</b><small>初始上下文</small></div><i>→</i>
+    <div><span>ACTION 1</span><b>$y_1$</b><small>$\log\pi(y_1\mid x)$</small></div><i>→</i>
+    <div><span>ACTION 2</span><b>$y_2$</b><small>$\log\pi(y_2\mid x,y_1)$</small></div><i>→</i>
+    <div><span>…</span><b>$y_T$</b><small>完整回答</small></div><i>→</i>
+    <div class="outcome"><span>OUTCOME</span><b>$R(x,y)$</b><small>一个结果分数</small></div>
+  </div>
+  <p class="mrl-caption">真正要观察的是两个粒度：结果验证器通常只给整段回答一个奖励，但策略更新仍要修改回答中逐 token 的条件概率；因此一个回答级优势会广播到它的所有有效 token。</p>
+
+  <p>这也暴露了本章的边界：若只知道最终答案对错，我们不能可靠地断言某一个中间 token 究竟对最终结果贡献了多少。Chapter 18 才会正式讨论步骤级的过程奖励；本章坚持使用 <strong>outcome-level（结果级）</strong> 信号。</p>
+</section>
+
+<section id="group-sampling">
+  <h2 class="mrl-sec-title"><span class="num">03</span>同一道题多答，不是为了立刻选最好，而是为了制造基线</h2>
+  <p class="mrl-sec-lead">一条回答得 1 分，并不能单独说明它是否“超出这个 prompt 的预期”。同题多答让难度条件保持不变，只比较生成随机性带来的结果差异。</p>
+
+  <p>对第 $j$ 个 prompt $x_j$，采样策略 $\pi_{\mathrm{old}}$ 一次生成 $G$ 条回答：</p>
+  <div class="mrl-equation">$$y_{j,i}\sim\pi_{\mathrm{old}}(\cdot\mid x_j),\qquad i=1,\ldots,G$$</div>
+  <p>再由奖励函数逐条给出标量：</p>
+  <div class="mrl-equation">$$r_{j,i}=R(x_j,y_{j,i})$$</div>
+
+  <div class="mrl-group-flow" aria-label="同一个 prompt 的四条采样回答">
+    <div class="prompt"><span>PROMPT $x_j$</span><strong>$\frac34+\frac18=?$</strong><small>同一道题，共享难度</small></div>
+    <i>→</i>
+    <div class="samples">
+      <div><span>$y_{j,1}$</span><b>$r=1$</b></div>
+      <div><span>$y_{j,2}$</span><b>$r=1$</b></div>
+      <div><span>$y_{j,3}$</span><b>$r=0$</b></div>
+      <div><span>$y_{j,4}$</span><b>$r=0$</b></div>
+    </div>
+    <i>→</i>
+    <div class="baseline"><span>TEMPORARY BASELINE</span><strong>$\bar r_j=0.5$</strong><small>只服务这道题这一组</small></div>
+  </div>
+  <p class="mrl-caption">四条回答没有和其他题目比较；把 prompt 固定以后，组均值主要吸收“这道题本来有多难”，剩余差值才表示本次回答相对同题样本是更好还是更差。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>“同题”是组内比较成立的控制变量</h3>
+      <p>若把一道简单算术题的 1 分与一道竞赛题的 0 分直接比较，差异同时混入题目难度与回答质量。GRPO 把 prompt 固定，让组内差别更多来自策略对同一条件的不同采样。</p>
+      <p class="mrl-insight-key">group 不是随意凑出的 batch；分组键必须是同一个 prompt。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="advantage">
+  <h2 class="mrl-sec-title"><span class="num">04</span>组内相对优势：先减本组平均，再统一本组尺度</h2>
+  <p class="mrl-sec-lead">GRPO 不训练一个网络猜 baseline，而是让这一组已经发生的结果临时提供 baseline。它省掉 Critic，却没有省掉“奖励减基线”的思想。</p>
+
+  <p><strong>group-relative advantage（组内相对优势）</strong>回答：“第 $i$ 条回答比同题组的平均结果高或低多少个组内标准差？”先定义组均值：</p>
+  <div class="mrl-equation">$$\bar r_j=\frac{1}{G}\sum_{i=1}^{G}r_{j,i}$$</div>
+  <p>再定义本讲义数值例采用的总体标准差：</p>
+  <div class="mrl-equation">$$s_j=\sqrt{\frac{1}{G}\sum_{i=1}^{G}(r_{j,i}-\bar r_j)^2}$$</div>
+  <p>最后做 <strong>group-wise normalization（组内标准化）</strong>：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\hat A_{j,i}=\frac{r_{j,i}-\bar r_j}{s_j+\varepsilon_{\mathrm{num}}}$$</div>
+  <p>$\varepsilon_{\mathrm{num}}$ 只是防止分母为 0 的极小数，不是后面 PPO clip 的裁剪宽度。不同代码库可能用总体标准差、带 Bessel 校正的样本标准差，或只减均值；它们改变数值尺度，但不改变“高于组均值为正、低于组均值为负”的核心方向。复现实验时必须核对实现口径。</p>
+
+  <h3>四条二值奖励，逐步手算</h3>
+  <p>沿用 $[1,1,0,0]$。第一步，均值为：</p>
+  <div class="mrl-equation">$$\bar r=\frac{1+1+0+0}{4}=0.5$$</div>
+  <p>第二步，每个奖励离均值都是 $0.5$，所以：</p>
+  <div class="mrl-equation">$$s=\sqrt{\frac{(0.5)^2+(0.5)^2+(-0.5)^2+(-0.5)^2}{4}}=0.5$$</div>
+  <p>第三步，代入优势：</p>
+  <div class="mrl-equation">$$\hat A=\left[\frac{1-0.5}{0.5},\frac{1-0.5}{0.5},\frac{0-0.5}{0.5},\frac{0-0.5}{0.5}\right]=[+1,+1,-1,-1]$$</div>
+
+  <table class="mrl-adv-table">
+    <thead><tr><th>回答</th><th>reward</th><th>$r_i-\bar r$</th><th>$\hat A_i$</th><th>更新直觉</th></tr></thead>
+    <tbody>
+      <tr><td>$y_1$</td><td>1</td><td>+0.5</td><td>+1</td><td>提高其 token 的概率</td></tr>
+      <tr><td>$y_2$</td><td>1</td><td>+0.5</td><td>+1</td><td>提高其 token 的概率</td></tr>
+      <tr><td>$y_3$</td><td>0</td><td>−0.5</td><td>−1</td><td>降低其 token 的概率</td></tr>
+      <tr><td>$y_4$</td><td>0</td><td>−0.5</td><td>−1</td><td>降低其 token 的概率</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“GRPO 没有 Critic，所以不需要 baseline。”</strong> 不对。GRPO 仍然要把奖励与某个基准比较，只是把一个可训练的 $V_\phi$ 换成同题有限样本的 $\bar r_j$。组均值是临时样本基线，不是真实价值函数，也不会预测未采样前缀的长期价值。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>GRPO 省掉的是 Critic 网络，不是比较基线</h3>
+      <p>Critic 用参数跨许多状态学习预期回报；组均值只在当前 prompt 的当前采样组内现场计算。前者增加模型与训练成本，后者增加同题 rollout 成本。</p>
+      <p class="mrl-insight-key">显存压力被削减，并不意味着信息免费：GRPO 用更多采样换掉了一个价值模型。</p>
+    </div>
+  </aside>
+</section>

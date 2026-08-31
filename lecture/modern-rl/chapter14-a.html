@@ -1,0 +1,170 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 14 · Learning a reward from feedback</div>
+  <h1>怎样把人类或 AI 的反馈变成训练信号？</h1>
+  <p class="lead">上一章把探索、多个智能体和长任务放进了同一张决策图：奖励稀疏时，关键是怎样发现有价值的行为、又怎样分配功劳。到了大语言模型，问题再向前一步——一段回答可以看作很长的 token 轨迹，可是环境不会自动弹出一个“好回答 +1”。本章要搭起那条缺失的桥：<strong>把示范、比较与原则逐步变成策略能够优化的数。</strong></p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>示范学习、偏好比较、评分模型与受约束策略更新，各自把什么输入变成什么产物？如果反馈来自 AI 而不是人类，究竟替换了流水线中的哪一段？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 85–115 min</span>
+    <span class="mrl-pill">先修：Chapter 08–09、13</span>
+    <span class="mrl-pill">数学：交叉熵 + 成对选择概率 + 分布约束</span>
+    <span class="mrl-pill">实验：反馈来源与规则的反事实</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从示范行为到可优化偏好</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#sft"><b>01</b><span>学会回答</span><small>模仿高质量示范</small></a>
+      <a class="mrl-roadmap-step" href="#preference"><b>02</b><span>收集比较</span><small>chosen / rejected</small></a>
+      <a class="mrl-roadmap-step" href="#reward-model"><b>03</b><span>训练裁判</span><small>排序变成标量</small></a>
+      <a class="mrl-roadmap-step" href="#ppo-loop"><b>04</b><span>优化策略</span><small>评分减去偏移代价</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#signal-lab"><b>05</b><span>追踪信号</span><small>规则怎样改变梯度</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#cai"><b>06</b><span>扩展反馈</span><small>原则驱动的 AI 比较</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>语言模型会续写，不等于它知道什么叫“好助手”</h2>
+  <p class="mrl-sec-lead">预训练告诉模型哪段文字常见；对齐训练还要告诉它，面对同一个用户请求，哪些行为更值得保留。</p>
+
+  <p>基座语言模型的训练目标是预测下一个 token。它能学会语言、知识和代码模式，却没有被单独要求“服从用户意图、承认不确定、控制风险”。例如用户说“只用三句话解释强化学习”，续写一篇教材、接着模拟一段论坛对话，在预训练分布里都可能自然；但只有一部分续写像可靠助手。</p>
+
+  <p><strong>Reinforcement Learning from Human Feedback（RLHF，从人类反馈中进行强化学习）</strong>不是一个单独的 loss，也不包括从零预训练。经典流程从已有基座模型出发，依次产生三件可检查的产物：</p>
+
+  <div class="mrl-artifact-chain" aria-label="经典 RLHF 的三阶段产物">
+    <article><span>STAGE 1</span><strong>示范微调后的模型</strong><small>示范教它怎样回答</small></article>
+    <i>→</i>
+    <article><span>STAGE 2</span><strong>偏好评分模型</strong><small>比较教它怎样评分</small></article>
+    <i>→</i>
+    <article><span>STAGE 3</span><strong>受约束更新后的策略</strong><small>按分数小步改行为</small></article>
+  </div>
+  <p class="mrl-caption">真正应观察的是每段箭头的数据契约：示范回答训练策略，成对比较训练评分器，评分器再为策略自己的新回答提供奖励；三种数据不能互相偷换。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>这条反馈流水线的核心不是“人给一个分”，而是两次接口转换</h3>
+      <p>人类首先提供相对偏好，评分模型把偏好压成可重复调用的标量；受约束的策略更新再把这个标量变成 token 概率的更新方向。</p>
+      <p class="mrl-insight-key">只说“用人类反馈训练”会藏掉最重要的误差来源：偏好数据可能有噪声，评分器也可能把偏好学错。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="llm-trajectory">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先把一段回答重新写成 RL 轨迹</h2>
+  <p class="mrl-sec-lead">PPO 能接入语言模型，不是因为“LLM 很像 RL”，而是因为自回归生成本身就是一串条件决策。</p>
+
+  <p>给定 prompt $x$，已经生成的前缀是 $y_{&lt;t}$。第 $t$ 步的状态、动作与策略可以写成：</p>
+  <div class="mrl-equation">$$s_t=(x,y_{&lt;t}),\qquad a_t=y_t,\qquad \pi_\theta(a_t\mid s_t)=P_\theta(y_t\mid x,y_{&lt;t}).$$</div>
+
+  <table class="mrl-mapping-table">
+    <thead><tr><th>RL 对象</th><th>语言模型中的对应物</th><th>这一章真正困难的地方</th></tr></thead>
+    <tbody>
+      <tr><td>状态 $s_t$</td><td>prompt 与已生成前缀</td><td>上下文很长，状态空间巨大</td></tr>
+      <tr><td>动作 $a_t$</td><td>词表中的下一个 token</td><td>每个位置都有大量候选</td></tr>
+      <tr><td>转移</td><td>把选中的 token 拼到前缀</td><td>几乎确定，真正难点不在动力学</td></tr>
+      <tr><td>episode</td><td>从 prompt 到 EOS 的完整回答</td><td>常有几十至数百步</td></tr>
+      <tr><td>奖励</td><td>对完整 $(x,y)$ 的偏好分数</td><td>通常结束后才出现，而且没有天然真值</td></tr>
+    </tbody>
+  </table>
+
+  <p>一个 sequence-level score（序列级分数）只说整段回答好不好，并没有指出哪个 token 立功。Chapter 08–09 已经介绍 advantage、GAE 与 PPO 裁剪如何把延迟回报传回多个动作；本章不重新推导它们，而是专注于更靠前的问题：<strong>整段回答的 reward 到底怎样制造出来？</strong></p>
+</section>
+
+<section id="sft">
+  <h2 class="mrl-sec-title"><span class="num">03</span>监督微调：先给策略一个能工作的行为起点</h2>
+  <p class="mrl-sec-lead"><strong>Supervised Fine-Tuning（SFT，监督微调）</strong>把高质量的“指令—回答”当作监督样本。它先教模型怎样像助手行动，还没有比较两个回答谁更好。</p>
+
+  <p>设 $\mathcal D_{\mathrm{SFT}}$ 中每条数据包含 prompt $x$ 与示范回答 $y=(y_1,\ldots,y_T)$。规范的对话 SFT 只对 assistant 应生成的 token 计算负对数似然：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{SFT}}(\theta)
+  =-\mathbb E_{(x,y)\sim\mathcal D_{\mathrm{SFT}}}
+  \left[\sum_{t=1}^{T}\log\pi_\theta(y_t\mid x,y_{&lt;t})\right].$$</div>
+
+  <p>逐步读这条式子：</p>
+  <ol>
+    <li>$x$ 与此前正确 token $y_{&lt;t}$ 作为上下文，不是本步要预测的标签；</li>
+    <li>模型给示范中的真实 token $y_t$ 一个概率；</li>
+    <li>真实 token 概率越大，$-\log$ 越小；</li>
+    <li>对回答位置求和、再对训练样本平均，得到 SFT loss。</li>
+  </ol>
+
+  <h3>一个三 token 手算例</h3>
+  <p>简化地说，示范回答只有三个目标 token。模型起初给它们的条件概率依次为 $0.80,0.50,0.25$，那么整段负对数似然是：</p>
+  <div class="mrl-equation">$$-\log(0.80\times0.50\times0.25)=-\log(0.10)\approx2.303.$$</div>
+  <p>训练后概率变为 $0.90,0.70,0.50$，loss 变成 $-\log(0.315)\approx1.155$。这说明模型更会复现示范，但它仍未见过“另一个回答为什么更差”。</p>
+
+  <table>
+    <thead><tr><th>数学对象</th><th>代码里的位置</th><th>作用</th></tr></thead>
+    <tbody>
+      <tr><td>$(x,y)$</td><td><code>instruction</code>, <code>response</code></td><td>一条高质量示范</td></tr>
+      <tr><td>对话格式</td><td><code>tokenizer.apply_chat_template(...)</code></td><td>固定 user / assistant 边界</td></tr>
+      <tr><td>$\mathcal D_{\mathrm{SFT}}$</td><td><code>train_dataset</code></td><td>送入 SFTTrainer 的样本集</td></tr>
+      <tr><td>$\mathcal L_{\mathrm{SFT}}$</td><td><code>SFTTrainer.train()</code></td><td>提高示范回答 token 的概率</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“SFT 是 RLHF 中的强化学习阶段。”</strong> 不对。SFT 是监督学习，也是经典 RLHF 的起点。真正按学习到的 reward 更新策略发生在后面的 PPO 阶段。</p>
+  </div>
+</section>
+
+<section id="preference">
+  <h2 class="mrl-sec-title"><span class="num">04</span>Preference data：人更容易比较，而不是发明绝对分数</h2>
+  <p class="mrl-sec-lead"><strong>Preference data（偏好数据）</strong>通常写成 $(x,y_w,y_l)$：同一个 prompt 下，$y_w$ 是 chosen（更偏好的回答），$y_l$ 是 rejected（较不偏好的回答）。</p>
+
+  <div class="mrl-response-pair">
+    <article class="chosen">
+      <span>CHOSEN · $y_w$</span>
+      <h3>准确、直接、有边界</h3>
+      <p>先解释核心机制，再给一个最小例子；不知道的地方明确说明不确定。</p>
+    </article>
+    <article class="rejected">
+      <span>REJECTED · $y_l$</span>
+      <h3>流畅，却没有解决问题</h3>
+      <p>重复用户问题、堆叠礼貌套话，最后没有给出可检查的答案。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">要观察的不是 chosen 是否“完美”，而是同一 prompt 下的相对次序。标注没有定义跨 prompt 的统一十分制，也没有证明 chosen 中每句话都正确。</p>
+
+  <p>比较比绝对打分更稳：两位标注者可能对“7 分”与“8 分”的尺度理解不同，却更容易同意 A 比 B 好。但这个便利也带来边界：偏好标签只保留了顺序，选择理由、标注者分歧与 rubric（评判准则）必须另存元数据，否则后面无法解释 Reward Model 学到了什么。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>偏好对消除了绝对分数尺度，却没有消除价值判断</h3>
+      <p>chosen/rejected 不要求大家共享“8 分”的含义，但仍然要求人或 AI 决定准确性、帮助性、安全性之间怎样权衡。</p>
+      <p class="mrl-insight-key">数据格式更简单，不代表目标更客观；rubric 和来源仍是训练信号的一部分。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="reward-model">
+  <h2 class="mrl-sec-title"><span class="num">05</span>偏好评分模型：把相对次序变成可以反复调用的标量</h2>
+  <p class="mrl-sec-lead"><strong>Reward Model（RM，奖励模型）</strong>读取 prompt 与完整回答，输出标量 $r_\phi(x,y)$。单个分数没有天然单位；真正有训练意义的是同一 prompt 下的分数差。</p>
+
+  <p><strong>Bradley–Terry model（Bradley–Terry 模型，成对偏好概率模型）</strong>用两项潜在分数之差描述谁更可能胜出：分数更高的回答被选择的概率更大，而两个分数共同平移不改变比较结果。因此 chosen 胜过 rejected 的概率为：</p>
+  <div class="mrl-equation">$$\begin{aligned}
+  P(y_w\succ y_l\mid x)
+  &=\frac{e^{r_\phi(x,y_w)}}{e^{r_\phi(x,y_w)}+e^{r_\phi(x,y_l)}}\\
+  &=\frac{1}{1+e^{-[r_\phi(x,y_w)-r_\phi(x,y_l)]}}\\
+  &=\sigma\!\left(r_\phi(x,y_w)-r_\phi(x,y_l)\right).
+  \end{aligned}$$</div>
+  <p>第二行同时把分子分母除以 $e^{r_\phi(x,y_w)}$，于是绝对平移会消失：两个分数同时加 100，偏好概率不变。这正说明 RM 首先学的是排序，而不是有物理意义的“质量温度计”。</p>
+
+  <p>对真实标签做最大似然，等价于最小化成对负对数似然：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{RM}}(\phi)
+  =-\mathbb E_{(x,y_w,y_l)\sim\mathcal D_{\mathrm{pref}}}
+  \log\sigma\!\left(r_\phi(x,y_w)-r_\phi(x,y_l)\right).$$</div>
+
+  <h3>分数差如何决定梯度强弱？</h3>
+  <p>若 $r_w=2.0,r_l=0.5$，则差值为 $1.5$：</p>
+  <div class="mrl-equation">$$P(y_w\succ y_l)=\sigma(1.5)\approx0.818,
+  \qquad \mathcal L_{\mathrm{RM}}=-\log0.818\approx0.201.$$</div>
+  <p>若顺序打反，$r_w=0.5,r_l=2.0$，概率变为 $\sigma(-1.5)\approx0.182$，loss 约为 $1.704$。更大的损失会产生更强修正，把 chosen 分数推高、rejected 分数压低。</p>
+
+  <p>上游实现用语言模型最后一个有效 token 的隐藏状态表示整段 $(x,y)$，再经线性 <code>value_head</code> 输出一个标量。训练时同一参数分别前向 chosen 与 rejected，核心代码与公式逐项对应：</p>
+  <pre><code>r_chosen = model(chosen_ids, chosen_mask)
+r_rejected = model(rejected_ids, rejected_mask)
+loss = -torch.log(torch.sigmoid(r_chosen - r_rejected)).mean()</code></pre>
+</section>

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Hands-On Modern RL 第十五章：从成对偏好概率出发，理解怎样相对参考模型直接训练策略，以及偏好标签、约束强度与隐式奖励的作用。">
+  <meta name="theme-color" content="#f7f7f3">
+  <title>第 15 章 · 能否不用在线 RL，直接从偏好对学习？ | Modern RL</title>
+  <link rel="stylesheet" href="../iml26/katex/katex.min.css">
+  <link rel="stylesheet" href="./minimal.css?v=2">
+  <link rel="stylesheet" href="./editorial.css?v=1">
+  <link rel="stylesheet" href="./chapter01-insights.css?v=1">
+  <link rel="stylesheet" href="./chapter01-terms.css?v=1">
+  <link rel="stylesheet" href="./chapter15.css?v=1">
+</head>
+<body class="mrl-page">
+  <header class="mrl-min-header">
+    <a class="mrl-min-brand" href="./">
+      <small>Hands-On Modern Reinforcement Learning</small>
+      <span>Chapter 15 · 能否不用在线 RL，直接从偏好对学习？</span>
+    </a>
+    <nav class="mrl-min-links" aria-label="页面导航">
+      <a href="./">目录</a>
+      <a href="./chapter14.html">上一章</a>
+      <a href="./chapter16.html">下一章</a>
+      <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter17_dpo" target="_blank" rel="noopener">原章 ↗</a>
+    </nav>
+  </header>
+
+  <div class="mrl-chapter-layout">
+    <nav class="mrl-toc" aria-label="本章目录">
+      <p class="mrl-rail-label">Chapter 15</p>
+      <a href="#start">跳过在线循环</a>
+      <a href="#preference-pair">偏好对究竟说了什么</a>
+      <a href="#sequence-prob">整段回答的概率</a>
+      <a href="#bradley-terry">从奖励差到偏好概率</a>
+      <a href="#kl-solution">从 KL 目标反解奖励</a>
+      <a href="#dpo-objective">直接偏好目标逐步落地</a>
+      <a href="#number-example">一组四数手算</a>
+      <a href="#ratio-lab">实验：相对变化与约束强度</a>
+      <a href="#code">公式落到训练代码</a>
+      <a href="#family">家族不是排行榜</a>
+      <a href="#limits">离线偏好的边界</a>
+      <a href="#takeaways">理解检查</a>
+      <div class="mrl-progress">
+        <span class="mrl-small">Reading progress</span>
+        <div class="mrl-progress-track"><div class="mrl-progress-fill" id="readingProgress"></div></div>
+      </div>
+    </nav>
+
+    <main class="mrl-article" id="chapterContent" aria-live="polite">
+      <section class="mrl-chapter-hero">
+        <div class="mrl-eyebrow">Loading chapter…</div>
+        <h1>正在加载第十五章</h1>
+      </section>
+    </main>
+  </div>
+
+  <script src="../iml26/katex/katex.min.js"></script>
+  <script src="../iml26/katex/auto-render.min.js"></script>
+  <script src="./chapter15.js?v=1"></script>
+</body>
+</html>
