@@ -7,9 +7,14 @@
   async function loadChapter() {
     const host = $('#chapterContent');
     if (!host) return false;
-    const files = ['./chapter01-a.html?v=2', './chapter01-b.html?v=2', './chapter01-c.html?v=2'];
+    const files = ['./chapter01-a.html?v=3', './chapter01-b.html?v=3', './chapter01-c.html?v=3'];
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
     try {
-      const responses = await Promise.all(files.map(url => fetch(url, { cache: 'no-cache' })));
+      const responses = await Promise.all(files.map(url => fetch(url, {
+        cache: 'no-store',
+        signal: controller.signal
+      })));
       const bad = responses.find(r => !r.ok);
       if (bad) throw new Error(`HTTP ${bad.status}`);
       const parts = await Promise.all(responses.map(r => r.text()));
@@ -24,6 +29,8 @@
           <p class="mrl-small">${String(err)}</p>
         </section>`;
       return false;
+    } finally {
+      window.clearTimeout(timeout);
     }
   }
 
