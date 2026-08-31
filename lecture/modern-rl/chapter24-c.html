@@ -1,0 +1,169 @@
+<section id="gradient">
+  <h2 class="mrl-sec-title"><span class="num">07</span>奖励给整条响应，policy loss 仍落在生成 token 上</h2>
+  <p class="mrl-sec-lead">视觉 token 提供条件，响应 token 承担动作概率。视觉编码器是否跟着更新，不由奖励名称决定，而由计算图与参数冻结策略决定。</p>
+
+  <p>为看清梯度落点，先写一个不含 clipping 与 KL 项的最小 policy-gradient 目标。对一条响应 $y_{1:T}$：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\mathcal L_{\mathrm{PG}}(\theta)=-\frac{1}{T}\sum_{t=1}^{T}A(\tau)\log\pi_\theta(y_t\mid I,q,y_{&lt;t})$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>含义</th><th>它是不是被采样的 action</th></tr></thead>
+    <tbody>
+      <tr><td>$I,q$</td><td>整条响应共享的图像与问题条件</td><td>不是</td></tr>
+      <tr><td>$y_t$</td><td>第 $t$ 个生成 token</td><td>是</td></tr>
+      <tr><td>$A(\tau)$</td><td>由整条结构化响应的奖励得到的优势</td><td>不是；它是更新权重</td></tr>
+      <tr><td>$\theta$</td><td>允许优化的模型参数</td><td>取决于冻结配置</td></tr>
+    </tbody>
+  </table>
+
+  <p>若 $A(\tau)&gt;0$，梯度会提高这条响应 token 序列的概率；若 $A(\tau)&lt;0$，则压低它。图像 $I$ 没有出现在求和下标里，却出现在每个 token 的条件中，所以奖励仍能通过语言模型、投影层回传到视觉特征。</p>
+
+  <div class="mrl-gradient-modes">
+    <div>
+      <span>FROZEN VISION</span>
+      <h3>冻结视觉编码器</h3>
+      <p>视觉特征参与前向计算，但视觉编码器参数不更新；主要调整投影层与语言模型。</p>
+    </div>
+    <div>
+      <span>DIFFERENTIAL LEARNING RATE</span>
+      <h3>视觉端较小学习率</h3>
+      <p>例如视觉端 $10^{-7}$、语言端 $10^{-6}$，让两端都能改变，但视觉更新尺度更保守。</p>
+    </div>
+    <div>
+      <span>FULL UPDATE</span>
+      <h3>全参数联合更新</h3>
+      <p>表达能力最大，显存与稳定性压力也更高；需要监控视觉能力是否退化。</p>
+    </div>
+  </div>
+  <p class="mrl-caption">同一条 grounding reward 在三种配置下走过相同的前向路径，却更新不同参数集合；决定边界的是 optimizer 收到哪些参数，而不是 reward 的名字里有没有“视觉”。</p>
+
+  <p>数值上，若某个视觉层与语言层得到的梯度范数都为 $0.02$，学习率分别为 $10^{-7}$ 与 $10^{-6}$，忽略优化器动量时，一步参数位移尺度约为 $2\times10^{-9}$ 与 $2\times10^{-8}$。前者只有后者的十分之一；若视觉层被冻结，则不是“更小”，而是严格为 0。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>视觉条件影响 token 概率；是否改写视觉表示是另一项训练选择</h3>
+      <p>Policy loss 直接评价响应 token，但这些概率依赖视觉特征。梯度能否继续进入视觉编码器，要看参数是否解冻以及 optimizer 是否包含它们。</p>
+      <p class="mrl-insight-key">“用了视觉奖励”不等于“更新了视觉编码器”；检查参数组比猜测梯度路径可靠。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">08</span>从公式落到程序：验证器先返回三项，训练器再组合总分</h2>
+  <p class="mrl-sec-lead">上游代码把几何图像生成、奖励函数和 GRPO 模拟拆成三个脚本。本章把它压缩为一条可审计的数据流。</p>
+
+  <pre class="mrl-code"><code>def verify_multimodal(image, response, label):
+    parsed = parse_structured_response(response)
+    r_format = float(parsed.is_valid)
+    r_answer = float(parsed.answer == label.answer)
+    r_ground = evidence_recall(
+        predicted=parsed.evidence_ids,
+        expected=label.evidence_ids,
+        image=image,
+    )
+    return {
+        "format": r_format,
+        "answer": r_answer,
+        "grounding": r_ground,
+    }
+
+parts = verify_multimodal(image, response, label)
+reward = (
+    0.15 * parts["format"]
+    + 0.45 * parts["answer"]
+    + 0.40 * parts["grounding"]
+)
+advantage = (reward - group_mean) / (group_std + 1e-8)</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>教学对象</th><th>程序位置</th><th>上游对应</th><th>检查点</th></tr></thead>
+    <tbody>
+      <tr><td>视觉 observation $I$</td><td><code>image</code></td><td><code>geometry_counting_dataset.py</code></td><td>图像与标签是否同一条样本</td></tr>
+      <tr><td>结构化 action $z$</td><td><code>response</code> → <code>parsed</code></td><td>response template / parser</td><td>解析失败不能悄悄补默认值</td></tr>
+      <tr><td>$R_{\mathrm{fmt}}$</td><td><code>parsed.is_valid</code></td><td><code>reward_format</code></td><td>只检查 schema，不冒充 correctness</td></tr>
+      <tr><td>$R_{\mathrm{ans}}$</td><td><code>parsed.answer == label.answer</code></td><td><code>reward_correctness</code></td><td>比较的是最终答案</td></tr>
+      <tr><td>$R_{\mathrm{grd}}$</td><td><code>evidence_recall(..., image)</code></td><td><code>reward_visual_grounding</code></td><td>必须读取视觉证据或视觉标注</td></tr>
+      <tr><td>$A_i$</td><td><code>advantage</code></td><td><code>simulate_grpo_training</code></td><td>同一图、同一问题内做组间比较</td></tr>
+    </tbody>
+  </table>
+
+  <p>真实训练中，<code>evidence_recall</code>可以换成 IoU、点距离、OCR 匹配或领域规则。关键契约不变：grounding scorer 必须真的读取与图像相关的证据。只在 response 里搜索“蓝色”“左边”等词，最多测到语言表面特征，无法证明这些词指向了正确像素。</p>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把图片换掉再问一次：视觉依赖要靠反事实与分项指标共同检查</h2>
+  <p class="mrl-sec-lead">一个高总奖励不等于每一条能力都可靠。最小评估集合应让答案、证据和图像依赖分别暴露出来。</p>
+
+  <div class="mrl-audit-grid">
+    <article>
+      <span>ORIGINAL IMAGE</span>
+      <h3>原图正确率</h3>
+      <p>回答标准任务，测最终任务成功率。</p>
+    </article>
+    <article>
+      <span>SWAPPED IMAGE</span>
+      <h3>换图敏感度</h3>
+      <p>保留问题、替换图像；正确答案应随图改变。</p>
+    </article>
+    <article>
+      <span>BLANK IMAGE</span>
+      <h3>无图基线</h3>
+      <p>遮掉视觉输入；若正确率几乎不降，可能主要依赖语言先验。</p>
+    </article>
+    <article>
+      <span>EVIDENCE SCORE</span>
+      <h3>证据落地率</h3>
+      <p>核对框、点、OCR 或对象 ID，而不是只读最终答案。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">原图正确率回答“会不会做题”，换图与无图对照回答“是否依赖图像”，证据分回答“依赖了图中的哪里”；三者不能相互替代。</p>
+
+  <p>例如原图准确率为 82%，遮图后仍有 78%，而证据 IoU 只有 0.21。最谨慎的解释不是“视觉 RL 已成功”，而是：最终答案看起来不错，但性能大部分可能来自题目先验，空间落地仍弱。反过来，证据 IoU 高而答案错误，则说明视觉定位可能正确，计数或后续推理仍有缺口。</p>
+
+  <div class="mrl-misconception">
+    <b>本章的范围边界</b>
+    <p>这里仅指出本任务里的三个局部失败：格式分上升但答案不升、答案猜中却不看图、证据 verifier 自己有噪声。怎样把这些现象组织成系统性的奖励投机类型学，留到 Chapter 26；本章不提前建立那套分类。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>视觉能力不是一个总分，而是一组可被反事实拆开的因果主张</h3>
+      <p>模型应当在图片改变时改变答案，在证据缺失时降低 grounding 分，并在格式失败时明确暴露解析错误。分项指标与换图对照共同约束解释。</p>
+      <p class="mrl-insight-key">如果移除图片几乎不影响输出，就不能只凭原图准确率声称模型“学会了看”。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">10</span>检查你的理解：你奖励的是答案，还是视觉证据支持下的答案？</h2>
+  <p class="mrl-sec-lead">每道题都要求指出被测量的对象。把 observation、action、reward 与 verifier 混在一起，会让训练日志看起来合理却无法解释。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 图像 patch token 为什么不是这个单轮任务里的 action？</summary><div class="inner">它们由视觉编码器从输入图像产生，是策略生成响应时的条件 observation。策略实际采样的是响应 token $y_t$。只有模型生成裁剪、框选或工具调用命令时，这些结构化输出才成为额外动作。</div></details>
+    <details><summary>2. 单轮视觉问答没有多个环境 step，为什么仍能写 trajectory？</summary><div class="inner">因为语言生成本身是序列决策：$\tau=(I,q,y_1,\ldots,y_T)$ 记录初始多模态 observation 与逐 token action。若加入工具调用，轨迹还会交错出现新 observation。</div></details>
+    <details><summary>3. 格式奖励为 1，能否推出答案正确或视觉证据正确？</summary><div class="inner">不能。它只说明输出符合 schema、可被解析。内容可以完全错误，证据也可能指向错误区域；因此格式、答案、grounding 必须分项保存。</div></details>
+    <details><summary>4. 响应 A 和 D 都回答 3，为什么纯答案奖励区分不了它们？</summary><div class="inner">答案 verifier 只比较最终数值与标签，两者的 $R_{\mathrm{ans}}$ 都是 1。它没有读取证据 ID 或图像；加入 multimodal verifier 后，A 的 grounding 为 1，D 为 0，差异才进入奖励。</div></details>
+    <details><summary>5. 两个面积都为 16 的框，交集面积为 12，IoU 是多少？</summary><div class="inner">并集面积是 $16+16-12=20$，所以 $\operatorname{IoU}=12/20=0.60$。减去一次交集是为了避免把重叠区域重复计入并集。</div></details>
+    <details><summary>6. 使用视觉定位证据奖励，视觉编码器就一定会更新吗？</summary><div class="inner">不一定。奖励会影响响应 token 的优势与 policy loss，但梯度能否更新视觉编码器取决于该模块是否解冻、计算图是否连通，以及 optimizer 是否包含它的参数。</div></details>
+    <details><summary>7. 原图准确率很高，为何还要做换图和遮图测试？</summary><div class="inner">模型可能靠语言先验或数据偏置猜对。换图测试要求输出随视觉内容改变，遮图基线测量没有视觉时还能做多好；两者能帮助判断正确答案是否真的依赖图片。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>第二十四章建立的多模态核验链</h3>
+    <div class="mrl-flow mrl-vlm-flow">
+      <div class="box">$(I,q)$ observation</div><div class="arrow">→</div><div class="box">$y_{1:T}$ action</div><div class="arrow">→</div><div class="box">结构化 trajectory</div><div class="arrow">→</div><div class="box">三项 verifier</div><div class="arrow">→</div><div class="box">可解释 reward</div>
+    </div>
+    <p>多模态 RL 的核心不是在文本 RL 旁边再放一张图片，而是让视觉 observation 真正进入 rollout 条件，并让 verifier 能分别核对输出格式、最终答案与图像证据。</p>
+  </div>
+
+  <div class="mrl-next">
+    <span class="mrl-eyebrow">Next chapter</span>
+    <h3><a href="./chapter25.html">第 25 章：当输出不再只是文字，RL 的轨迹会怎么变？</a></h3>
+    <p>本章的图像主要是 observation，输出仍以文字、证据 ID 或边界框为主。下一章会把边界推向音频、具身行动与视觉生成：当 action 变成声学序列、物理控制或去噪步骤时，rollout、reward 与 credit assignment 都要重新定义。</p>
+  </div>
+
+  <p class="mrl-source-note">本页依据 fixed commit 的<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter26_vlm" target="_blank" rel="noopener">视觉语言模型 RL 文档</a>与<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter11_vlm_rl" target="_blank" rel="noopener">几何计数和分项奖励代码</a>重新组织，不是原项目官方译本。Chapter 16 的 outcome verifier 仅作回顾；系统性的奖励投机分类留给 Chapter 26。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 24</span><span><a href="./chapter23.html">← Chapter 23</a> · <a href="./">课程目录</a> · <a href="./chapter25.html">Chapter 25 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter26_vlm" target="_blank" rel="noopener">固定上游 ↗</a></span></footer>

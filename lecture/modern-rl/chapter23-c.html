@@ -1,0 +1,137 @@
+<section id="training">
+  <h2 class="mrl-sec-title"><span class="num">08</span>训练放在可重置沙箱里：先模仿定位，再在线学习完整任务</h2>
+  <p class="mrl-sec-lead">GUI 在线强化学习会主动制造失败轨迹。训练环境必须隔离真实账号与文件，并能把每条轨迹恢复到相同初态。</p>
+
+  <p>Virtual Machine（VM，虚拟机）快照可以在每次 rollout 前恢复应用、文件与账号状态，使不同策略从同一个起点比较；沙箱则限制网络、凭据与宿主文件访问。</p>
+
+  <div class="mrl-training-flow">
+    <div><span>01 · VISUAL SFT</span><strong>截图—元素—坐标样本</strong><small>学会基本识别与定位</small></div><i>→</i>
+    <div><span>02 · TRAJECTORY SFT</span><strong>人类演示与成功轨迹</strong><small>学会动作顺序与格式</small></div><i>→</i>
+    <div><span>03 · SANDBOX ROLLOUT</span><strong>VM 快照 + 当前策略交互</strong><small>学习恢复、等待和停止</small></div><i>→</i>
+    <div><span>04 · STATE VERIFIER</span><strong>读取应用状态而非成功文案</strong><small>返回任务与安全分项</small></div>
+  </div>
+  <p class="mrl-caption">训练链的依赖关系是：没有视觉与演示冷启动，在线轨迹几乎都在前几步失败；没有可重置快照和结构化验证器，reward 又无法可靠表示任务是否真正完成。</p>
+
+  <p>最简单的终点奖励是 $r_T=\mathbb 1[\text{task completed}]$。长任务还可以加入格式、进度与非法动作信号：</p>
+  <div class="mrl-equation">$$r_t=r_{\mathrm{task},t}+\lambda r_{\mathrm{progress},t}-\mu r_{\mathrm{invalid},t}.$$</div>
+  <p>但进度验证器也会犯错。例如页面出现“操作已受理”并不保证后台改对了订单；若 verifier 只匹配成功文案，策略会学会制造文案而不是完成任务。可靠验证应读取结构化应用状态，并检查对象、参数和副作用。</p>
+
+  <table>
+    <thead><tr><th>训练对象</th><th>数据/环境</th><th>它解决什么</th><th>它不保证什么</th></tr></thead>
+    <tbody>
+      <tr><td>Grounding SFT</td><td>截图与目标区域</td><td>元素识别、坐标定位</td><td>动作时机与任务规划</td></tr>
+      <tr><td>轨迹 SFT</td><td>演示或筛选成功轨迹</td><td>动作顺序、恢复模板</td><td>新界面上的探索能力</td></tr>
+      <tr><td>在线 RL</td><td>可重置沙箱 rollout</td><td>多步任务成功率</td><td>真实世界自动获得授权</td></tr>
+      <tr><td>部署门禁</td><td>权限、风险、确认、审计</td><td>限制真实副作用</td><td>提高模型视觉能力</td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body"><h3>训练提高策略能力，门禁限制能力的后果</h3><p>安全数据可以让模型更常主动停下，但运行时仍必须独立检查授权、动作对象与确认。反过来，门禁也不能替代定位和规划训练。</p><p class="mrl-insight-key">模型行为与系统执行是两层控制；把它们压成同一个 reward，会同时失去可学习性和安全性。</p></div>
+  </aside>
+</section>
+
+<section id="evaluation">
+  <h2 class="mrl-sec-title"><span class="num">09</span>评测不要只报成功率：沿轨迹找到第一处分叉</h2>
+  <p class="mrl-sec-lead">任务失败可能发生在看、想、点、等、验或安全门禁的任何一层。只有逐步保存截图、原始输出、解析动作和应用状态，才能知道该改哪里。</p>
+
+  <table class="mrl-failure-table">
+    <thead><tr><th>失败类型</th><th>轨迹证据</th><th>应优先修什么</th></tr></thead>
+    <tbody>
+      <tr><td>视觉定位</td><td>动作类型正确，坐标落在目标外</td><td>跨分辨率 grounding 数据</td></tr>
+      <tr><td>任务规划</td><td>点中了元素，但当前子目标不该做</td><td>带任务上下文的轨迹</td></tr>
+      <tr><td>状态检查</td><td>界面仍在加载却重复点击</td><td>等待、预期变化与历史</td></tr>
+      <tr><td>动作解析</td><td>坐标越界、组合键或参数非法</td><td>动作格式与 parser</td></tr>
+      <tr><td>验证器</td><td>显示成功但后台对象/参数错误</td><td>结构化状态断言</td></tr>
+      <tr><td>安全边界</td><td>越权动作被执行或合法任务被误拒</td><td>授权、确认与安全切片</td></tr>
+      <tr><td>环境故障</td><td>VM 崩溃、应用卡死、网络中断</td><td>沙箱基础设施</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">分类的目的不是给失败贴标签，而是找到第一处因果分叉：早期误点会改变后面所有截图，不能把后续连锁错误都重复算成规划失败。</p>
+
+  <p>至少同时报告：任务成功率、目标区域命中率、平均动作数、无效动作率、环境错误率、单步延迟，以及安全切片中的确认遵循率、越权副作用率和合法任务误拒绝率。一个“什么也不做”的 Agent 攻击成功率为 0，却没有任何任务效用，因此安全与效用必须成对测量。</p>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">10</span>把环境与门禁写成两层代码</h2>
+  <p class="mrl-sec-lead">环境负责截图、执行与 reset；门禁在执行之前拦截动作。训练策略不能绕过门禁直接访问鼠标键盘注入器。</p>
+
+  <pre class="mrl-code"><code>class GUIEnv:
+    def reset(self, task_id):
+        self.vm.restore_snapshot(task_id)
+        self.task = self.tasks[task_id]
+        return self.vm.screenshot()
+
+    def step(self, proposal, authorization, confirmation):
+        decision = safety_gate(
+            action=proposal,
+            authorization=authorization,
+            confirmation=confirmation,
+        )
+        if decision == "pause_for_confirmation":
+            return self.vm.screenshot(), 0.0, False, {
+                "gate": decision,
+                "termination_reason": None,
+            }
+        if decision == "abort":
+            return self.vm.screenshot(), 0.0, True, {
+                "gate": "abort",
+                "termination_reason": "safety_abort",
+            }
+
+        self.vm.execute(proposal)
+        observation = self.vm.screenshot()
+        completed = self.task.verifier(self.vm.app_state)
+        return observation, float(completed), completed, {
+            "gate": "executed",
+            "termination_reason": "task_complete" if completed else None,
+        }</code></pre>
+
+  <pre class="mrl-code"><code>def safety_gate(action, authorization, confirmation):
+    if action.source_is_untrusted_instruction:
+        return "abort"
+    if not authorization.allows(action.capability, action.target):
+        return "abort"
+    if action.risk in {"high", "critical"}:
+        if confirmation.state == "approved" and confirmation.matches(action):
+            return "execute"
+        if confirmation.state == "pending":
+            return "pause_for_confirmation"
+        return "abort"  # 明确拒绝、过期或对象不匹配的批准
+    return "execute"</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>概念</th><th>程序变量</th><th>检查边界</th></tr></thead>
+    <tbody>
+      <tr><td>像素观察 $o_t$</td><td><code>observation</code></td><td>截图尺寸、时间与应用标识</td></tr>
+      <tr><td>动作 $a_t=(k_t,\eta_t)$</td><td><code>proposal</code></td><td>类型、坐标、对象与来源</td></tr>
+      <tr><td>授权集合 $\mathcal A(C)$</td><td><code>authorization</code></td><td>能力、对象、参数与有效期</td></tr>
+      <tr><td>高风险确认</td><td><code>confirmation</code></td><td>必须精确绑定当前动作</td></tr>
+      <tr><td>真正任务状态</td><td><code>vm.app_state</code></td><td>不能只读截图中的成功文字</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception"><b>不可越过的边界</b><p><strong>不要让训练策略在真实账号上“探索安全边界”。</strong> 高风险轨迹要在隔离账号、桩执行器或可重置 VM 中生成；部署时只有明确授权且经过门禁的具体动作才能影响真实系统。</p></div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：从一次点击定位失败与风险边界</h2>
+  <p class="mrl-sec-lead">先遮住答案，尝试说清楚“模型错在哪里”和“系统应在哪一层阻断”。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么当前截图不能直接当作完整 Markov state？</summary><div class="inner">截图看不到网络请求、焦点、剪贴板、权限、后台上传等隐藏状态；相同像素可能分别对应“正在处理”和“根本没点中”。策略需要动作历史、时间与后续观察辅助判断。</div></details>
+    <details><summary>2. <code>click</code> 为什么是混合动作？</summary><div class="inner">动作类型 <code>click</code> 是离散选择，坐标、按键类型等参数又属于另一参数空间。GUI 策略必须同时预测要做什么以及作用在哪里。</div></details>
+    <details><summary>3. 坐标准确点中“提交”，为什么仍可能是规划失败？</summary><div class="inner">字段可能尚未填写、当前任务可能只要求查看，或界面还在处理上一请求。Grounding 只回答元素在哪里，不回答此刻是否应该执行该动作。</div></details>
+    <details><summary>4. 模型有 98% 把握时，为什么转账仍可能需要确认？</summary><div class="inner">风险同时由错误概率和失败损失决定。2% 乘以巨大且不可逆的损失仍然不可接受；确认还用于验证用户是否授权了具体收款人和金额。</div></details>
+    <details><summary>5. PDF 要求 Agent 转发邮件，用户随后点击“批准”就一定可以执行吗？</summary><div class="inner">不一定。低信任来源不能扩大用户原始授权；确认必须针对授权范围内、由系统清楚描述的具体动作。若原目标只是总结 PDF，跨应用转发邮件应直接中止。</div></details>
+    <details><summary>6. 为什么在线 RL 与部署门禁不能互相替代？</summary><div class="inner">在线 RL 在可重置环境中提高定位、规划与恢复能力；门禁在真实执行前限制授权和副作用。训练不能保证模型永不犯错，门禁也不能教会模型识别新界面。</div></details>
+  </div>
+
+  <div class="mrl-takeaway"><h3>第二十三章建立起来的双闭环</h3><div class="mrl-summary-chain"><div>截图 + 历史</div><i>→</i><div>动作类型 + 参数</div><i>→</i><div>授权 / 风险 / 确认门禁</div><i>→</i><div>新截图 + 应用状态验证</div></div><p>策略闭环负责从视觉反馈中完成任务，安全闭环负责限制动作何时能影响真实系统。前者追求能力，后者约束副作用；二者都必须保存可回放轨迹。</p></div>
+
+  <div class="mrl-next"><span class="mrl-eyebrow">Next chapter</span><h3><a href="./chapter24.html">第 24 章：多模态输入怎样改变 rollout、reward 与 verifier？</a></h3><p>本章让视觉输入服务于界面动作；下一章会把问题扩展到更一般的视觉语言任务，检查模型是否真正依据图像内容推理，以及格式、答案和视觉 grounding 奖励如何分别验证。</p></div>
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 GUI Agent training 与安全材料重新组织，不是原项目官方译本。期望损失、门禁分段函数和互动实验是教学化抽象；具体产品的权限策略、训练配方与风险阈值应以其公开系统说明为准。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 23</span><span><a href="./chapter22.html">← Chapter 22</a> · <a href="./">课程目录</a> · <a href="./chapter24.html">Chapter 24 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter25_computer_use" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

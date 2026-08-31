@@ -1,0 +1,85 @@
+<section id="evidence">
+  <h2 class="mrl-sec-title"><span class="num">04</span>把“有据可查”拆成覆盖率与来源归因</h2>
+  <p class="mrl-sec-lead">一条引用可能很可靠，却只覆盖报告的一小部分；一篇报告也可能引用很多，但多数来源并不支持相邻论断。两种失败需要两个方向的比率。</p>
+
+  <p>设评测任务列出 $m$ 个必须回答的原子事实，第 $i$ 个事实被正确证据支持时 $e_i=1$，否则为 0。<strong>evidence coverage（证据覆盖率）</strong>回答“该有证据的事实覆盖了多少”：</p>
+  <div class="mrl-equation">$$S_{\mathrm{coverage}}=\frac{1}{m}\sum_{i=1}^{m}e_i.$$</div>
+  <p>再设报告实际给出了 $n$ 条带引用论断，第 $j$ 条引用真的支持相邻论断时 $c_j=1$。<strong>source attribution（来源归因）</strong>分数回答“已经给出的引用有多少用对了”：</p>
+  <div class="mrl-equation">$$S_{\mathrm{attribution}}=\frac{1}{n}\sum_{j=1}^{n}c_j.$$</div>
+
+  <div class="mrl-evidence-example">
+    <div><span>REQUIRED CLAIMS</span><strong>4 项</strong><small>身份、单位、本科学校、毕业年份</small></div>
+    <div><span>SUPPORTED</span><strong>3 项</strong><small>$S_{\mathrm{coverage}}=3/4=0.75$</small></div>
+    <div><span>CITED CLAIMS</span><strong>4 条中 3 条用对</strong><small>$S_{\mathrm{attribution}}=3/4=0.75$</small></div>
+  </div>
+  <p class="mrl-caption">覆盖率沿“任务要求 → 已支持事实”检查遗漏；归因分数沿“报告引用 → 是否真的支持”检查错配。两个 0.75 看似相同，诊断方向完全不同。</p>
+
+  <p>如果 $n=0$，不能把归因分数定义为 1 来奖励“完全不引用”。教学实验把它记为 0，并同时保留覆盖率。实际系统还应分别记录 URL 可访问性、引文蕴含关系、实体一致性和来源时效；一个加权总分只能用于排序，不能替代这些分项。</p>
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body"><h3>Coverage 像证据的 recall，attribution 像引用的 precision</h3><p>只优化前者会诱导引用堆砌，只优化后者又可能让模型只引用一条最容易验证的边角事实。</p><p class="mrl-insight-key">研究质量是一个指标向量；任何单项最优都可能牺牲另一条必要边界。</p></div>
+  </aside>
+</section>
+
+<section id="long-horizon">
+  <h2 class="mrl-sec-title"><span class="num">05</span>轨迹一长，困难不只是“步数变多”</h2>
+  <p class="mrl-sec-lead">研究型智能体要持续判断“还缺什么证据、下一次查什么、什么时候信息已经足够”。早期的一次实体误认会污染几十步后的综合结论。</p>
+
+  <div class="mrl-long-grid">
+    <article><span>PARTIAL OBSERVABILITY</span><h3>页面不是完整世界</h3><p>搜索摘要可能截断限定词，正文抽取会丢表头，动态网页还可能只返回加载占位。</p></article>
+    <article><span>CONTEXT PRESSURE</span><h3>证据会挤满上下文</h3><p>完整保留每个页面成本太高；过度压缩笔记又会丢掉人物、时间和出处。</p></article>
+    <article><span>CREDIT ASSIGNMENT</span><h3>终点奖励离查询很远</h3><p>答案错了，可能源于第 2 步查询过宽，也可能是第 18 步把引文绑错了。</p></article>
+    <article><span>STOPPING</span><h3>继续搜也可能变差</h3><p>太早停止会漏证据；无限搜索会增加成本、重复来源和被低质量信息带偏的机会。</p></article>
+  </div>
+  <p class="mrl-caption">四个难点沿同一条因果链传播：不完整观察影响笔记，笔记影响后续查询，查询影响最终证据；停止策略还决定这条链会继续变好还是只增加成本。</p>
+
+  <p>若只在最后给二值结果奖励，最简单的设定是 $r_{t&lt;T}=0$、$r_T=\mathbb 1[\hat y=y]$。它能保持目标清晰，却很难解释中间步骤。可以加入可核验的过程信号，但必须保留分项：</p>
+  <div class="mrl-equation">$$R(\tau)=w_aS_{\mathrm{answer}}+w_eS_{\mathrm{attribution}}+w_cS_{\mathrm{coverage}}+w_bS_{\mathrm{budget}}.$$</div>
+  <p>权重 $w$ 体现应用偏好，不是自然常数。更重要的是，检索器返回的文字属于环境，不应被当成策略生成 token 直接优化；训练实现通常需要 mask 环境 token，只让策略自己产生的查询、动作与回答进入策略损失。</p>
+</section>
+
+<section id="evidence-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>互动实验：同一个正确答案，三条轨迹应得同分吗？</h2>
+  <p class="mrl-sec-lead">三条教学轨迹都提交正确短答案。选择轨迹并改变工具预算，观察答案、证据与成本为什么不能相互替代。</p>
+
+  <div class="mrl-viz mrl-evidence-lab" id="evidenceLab">
+    <div class="mrl-viz-head">
+      <div><h3>Evidence Chain Evaluator</h3><p>任务固定包含 4 个必须支持的原子事实；教学总分仅帮助观察权衡。</p></div>
+      <button class="mrl-btn" id="evidenceReset" type="button">重置</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>当最终短答案都正确时，没有证据、错误归因和完整证据链是否应该得到相同评价？</dd>
+      <dt>Prediction</dt><dd>不应该。答案分相同，但证据覆盖和来源归因会区分“碰巧答对”与“可验证地答对”；预算只应作为额外约束。</dd>
+      <dt>Experiment</dt><dd>在三条固定轨迹间切换，并把最大工具预算从 4 调到 16 步；比较四维指标与教学总分。</dd>
+      <dt>Observation</dt><dd id="evidenceObservation">等待实验载入。</dd>
+      <dt>Interpretation</dt><dd id="evidenceInterpretation">等待实验载入。</dd>
+      <dt>Limitation</dt><dd>轨迹和权重是为理解指标而构造的静态教学数据；真实评测必须保存网页版本、引文片段、judge 版本和失败类型。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar" aria-label="证据轨迹实验控制">
+      <fieldset class="mrl-route-picker">
+        <legend>选择轨迹</legend>
+        <label><input type="radio" name="researchRoute" value="memory" checked> 直接猜</label>
+        <label><input type="radio" name="researchRoute" value="single"> 单源速答</label>
+        <label><input type="radio" name="researchRoute" value="chain"> 证据闭环</label>
+      </fieldset>
+      <label class="mrl-range-control"><span>最大工具步数 <output id="researchBudgetValue">10</output></span><input id="researchBudget" type="range" min="4" max="16" step="1" value="10"></label>
+    </div>
+
+    <div class="mrl-route-trace" id="researchTrace" aria-live="polite"></div>
+    <div class="mrl-score-grid">
+      <article><span>ANSWER</span><strong id="answerScore">1.00</strong><small>短答案正确性</small></article>
+      <article><span>COVERAGE</span><strong id="coverageScore">0.00</strong><small>被支持事实 / 4</small></article>
+      <article><span>ATTRIBUTION</span><strong id="attributionScore">0.00</strong><small>用对引用 / 已给引用</small></article>
+      <article><span>WITHIN BUDGET</span><strong id="budgetScore">1.00</strong><small id="stepReadout">0 / 10 steps</small></article>
+      <article class="total"><span>TEACHING SCORE</span><strong id="researchTotal">0.50</strong><small>.40A + .25C + .25R + .10B</small></article>
+    </div>
+    <p class="mrl-caption">先横向比较四个分项，再看总分：调低预算只会改变成本维度，不会把缺失的证据凭空补回来，也不会让错误引用变正确。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body"><h3>预算约束回答“是否值得”，证据指标回答“是否可信”</h3><p>一条证据完备但超预算的轨迹需要优化效率；一条低成本却无证据的轨迹需要修复研究方法。它们不是同一种失败。</p><p class="mrl-insight-key">先保存分项再聚合，才能知道下一轮应改停止策略、检索器还是引用验证器。</p></div>
+  </aside>
+</section>

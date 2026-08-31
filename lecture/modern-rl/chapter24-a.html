@@ -1,0 +1,120 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 24 · Vision changes what reward must verify</div>
+  <h1>答案对了，模型真的看图了吗？</h1>
+  <p class="lead">上一章把模型放进屏幕环境：它既要读懂像素，也要执行可能不可逆的点击。本章先把“行动”按住，只研究更基础的一层——当问题同时包含图像与文字时，RL 怎样区分<strong>答对了</strong>、<strong>格式可用</strong>和<strong>视觉证据真的支持答案</strong>。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>同一道看图计数题，两个 rollout 都回答“3”，一个准确标出了三处圆形，另一个没看图只是猜中。若 outcome reward 都给 1，训练如何知道该强化谁？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 60–80 min</span>
+    <span class="mrl-pill">先修：Chapter 16、23</span>
+    <span class="mrl-pill">数学：加权奖励 + 区域重叠率</span>
+    <span class="mrl-pill">实验：答对 vs 看对</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从多模态条件到可验证的视觉证据</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#why-image"><b>01</b><span>发现缺口</span><small>正确答案可能来自猜测</small></a>
+      <a class="mrl-roadmap-step" href="#objects"><b>02</b><span>分清对象</span><small>图像不是生成动作</small></a>
+      <a class="mrl-roadmap-step" href="#reward"><b>03</b><span>拆开奖励</span><small>格式、答案、定位</small></a>
+      <a class="mrl-roadmap-step" href="#verifier"><b>04</b><span>跨模态核验</span><small>证据是否来自图中</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#grounding-lab"><b>05</b><span>对照实验</span><small>同答案，不同证据</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#gradient"><b>06</b><span>落到更新</span><small>谁被奖励，谁会改变</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="why-image">
+  <h2 class="mrl-sec-title"><span class="num">01</span>文本题只要核对答案；看图题还要问答案从哪里来</h2>
+  <p class="mrl-sec-lead">图像让问题多了一条因果链：像素必须先影响内部表征，再影响生成的证据与答案。只核对终点，无法观察这条链有没有真正工作。</p>
+
+  <p><strong>Vision-Language Model（VLM，视觉语言模型）</strong>是同时以图像和语言为条件、再生成语言或结构化输出的模型。直觉上，它像“能看图的语言模型”；但在 RL 中，关键变化不只是输入多了图片，而是<strong>奖励必须能分辨模型是否利用了图片</strong>。</p>
+
+  <div class="mrl-vlm-cases" aria-label="相同答案可能对应不同视觉依据">
+    <div class="grounded">
+      <span>ROLLOUT A · 有完整图像证据</span>
+      <h3>“圆形有 3 个”</h3>
+      <p>同时给出三处证据区域，且都覆盖图中的圆形。</p>
+      <strong>答案对 · 证据对</strong>
+    </div>
+    <div class="guessing">
+      <span>ROLLOUT B · guessed</span>
+      <h3>“圆形有 3 个”</h3>
+      <p>没有证据；把图片换掉后仍然回答 3。</p>
+      <strong>答案对 · 看图未知</strong>
+    </div>
+  </div>
+  <p class="mrl-caption">只看最后一行，两条 rollout 完全相同；加入证据区域与换图对照后，模型是否依赖视觉输入才变成可观察差异。</p>
+
+  <p>Chapter 16 的 outcome verifier（结果验证器）已经解决“最终结果是否正确”：例如把最后答案与标准答案比较。本章只把它当作已知部件，不重新展开 RLVR 或 GRPO。新的困难是：<strong>最终结果正确，并不蕴含视觉依据正确。</strong></p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“看图题答对了，就证明视觉模块学会了。”</strong> 不一定。数据偏置、题型先验或碰巧猜中，都能产生正确答案。必须把图像改变时的响应、证据位置或跨模态一致性也纳入评估。</p>
+  </div>
+</section>
+
+<section id="objects">
+  <h2 class="mrl-sec-title"><span class="num">02</span>先把五个对象分开：图像是 observation，不是 action</h2>
+  <p class="mrl-sec-lead">多模态不会自动改写 RL 的基本语法；它先改变模型看到了什么，再迫使我们重新规定输出、轨迹和核验接口。</p>
+
+  <p>设图片为 $I$、文字问题为 $q$。对一个单轮视觉问答任务，可以把初始 <strong>observation（观察）</strong>写成：</p>
+  <div class="mrl-equation">$$o_0=(I,q)$$</div>
+  <p>视觉编码器把 $I$ 变成视觉 token，文字 tokenizer 把 $q$ 变成文本 token；两者共同作为条件送进语言模型。模型真正逐步采样的 <strong>action（动作）</strong>仍是响应 token：</p>
+  <div class="mrl-equation">$$a_t=y_t\sim\pi_\theta(\cdot\mid I,q,y_{&lt;t})$$</div>
+
+  <p>若输出要求 JSON、边界框或 <code>&lt;evidence&gt;</code> 字段，这叫 <strong>structured action（结构化动作）</strong>：语义上它是一条可解析的动作记录，生成时通常仍被序列化为 token。图片的 patch token 是输入条件，不是模型这次采样出来的动作。</p>
+
+  <table class="mrl-object-table">
+    <thead><tr><th>对象</th><th>本章记号</th><th>几何计数例子</th><th>谁产生它</th></tr></thead>
+    <tbody>
+      <tr><td>视觉 observation</td><td>$I$</td><td>含圆形、方形和三角形的画布</td><td>数据集或环境</td></tr>
+      <tr><td>文字 observation</td><td>$q$</td><td>“蓝色圆形有几个？”</td><td>数据集或环境</td></tr>
+      <tr><td>文本 / 结构化 action</td><td>$y_{1:T}$</td><td>证据 ID、推理字段、答案字段</td><td>策略采样</td></tr>
+      <tr><td>trajectory</td><td>$\tau$</td><td>图像、问题与整段响应的联合记录</td><td>rollout 过程</td></tr>
+      <tr><td>reward</td><td>$R(\tau)$</td><td>格式、答案与视觉定位分数</td><td>验证器</td></tr>
+    </tbody>
+  </table>
+
+  <p>因此单轮 <strong>trajectory（轨迹）</strong>可以写成：</p>
+  <div class="mrl-equation mrl-equation-feature">$$\tau=(I,q,y_1,y_2,\ldots,y_T)$$</div>
+  <p>它虽然没有像机器人那样走很多环境步，却仍是一条 token 级决策序列。若允许模型调用 <code>crop(x_1,y_1,x_2,y_2)</code> 放大局部区域，轨迹才会变成交错的“生成工具动作 → 得到新图像 observation → 继续生成”。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>多模态首先改变条件信息，不一定改变动作空间</h3>
+      <p>视觉 token 进入策略的条件；响应 token 才是被采样并由 policy loss 直接计分的动作。只有当模型调用裁剪、框选或外部工具时，结构化命令才额外成为环境层面的动作。</p>
+      <p class="mrl-insight-key">先问“谁是 observation、谁是 action”，再谈 rollout 与 reward，许多多模态概念就不会混在一起。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="rollout">
+  <h2 class="mrl-sec-title"><span class="num">03</span>同图同问采样一组响应：rollout 变长，比较对象也变丰富</h2>
+  <p class="mrl-sec-lead">视觉输入增加了条件 token 和显存开销；更重要的是，同一个最终答案之下，现在还能比较证据区域、结构格式与跨模态一致性。</p>
+
+  <div class="mrl-vlm-pipeline" aria-label="视觉语言模型 rollout 流程">
+    <div><span>IMAGE</span><strong>$I$</strong><small>像素 / patch</small></div>
+    <i>→</i>
+    <div><span>VISION</span><strong>$v_{1:M}$</strong><small>视觉编码器</small></div>
+    <i>↘</i>
+    <div class="merge"><span>CONDITION</span><strong>$[v_{1:M};x_{1:N}]$</strong><small>视觉 + 问题</small></div>
+    <i>→</i>
+    <div><span>ROLLOUT</span><strong>$y_{1:T}^{(i)}$</strong><small>响应 token</small></div>
+    <i>→</i>
+    <div><span>VERIFY</span><strong>$R_i$</strong><small>三项分数</small></div>
+  </div>
+  <p class="mrl-caption">图像先被编码成条件 token，策略再逐 token 生成响应；验证器需要回看原图与结构化输出，才能判断“证据是否支持答案”。</p>
+
+  <p>若对同一个 $(I,q)$ 采样 $G$ 条响应，Chapter 16 已学过的组内相对优势仍可复用：</p>
+  <div class="mrl-equation">$$A_i=\frac{R_i-\bar R}{\sigma_R+\varepsilon},\qquad i=1,\ldots,G$$</div>
+  <p>$R_i$ 是第 $i$ 条响应的总奖励，$\bar R$ 与 $\sigma_R$ 是这一组的均值和标准差。这里的新问题不在归一化公式，而在<strong>$R_i$ 应该测什么</strong>。若四条响应都碰巧答对“3”，纯答案奖励让 $\sigma_R=0$；奖励无法告诉策略哪条证据更可信。</p>
+
+  <div class="mrl-rollout-ledger">
+    <div><span>同一个 $(I,q)$</span><strong>4 条 rollout</strong><small>答案可能同为 3</small></div>
+    <div><span>仅答案分</span><strong>$[1,1,1,1]$</strong><small>组内没有区分度</small></div>
+    <div><span>落地分单列</span><strong>$R_{\mathrm{grd}}=[1,.67,1,0]$</strong><small>证据质量出现差异</small></div>
+  </div>
+
+  <p>若输入图像缩放为 $448\times448$，视觉编码器以 $14\times14$ patch 切分，那么合并前最多有 $(448/14)^2=1024$ 个 patch 位置。实际模型可能继续合并、压缩或动态分辨率编码；这个数值例子只说明：<strong>视觉条件会显著挤占序列长度和显存，但它仍不是 1024 个被策略采样的 action。</strong></p>
+</section>

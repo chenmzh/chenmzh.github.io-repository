@@ -1,0 +1,208 @@
+<section id="harness">
+  <h2 class="mrl-sec-title"><span class="num">07</span>在策略与真实世界之间加入可审计编排层</h2>
+  <p class="mrl-sec-lead">多轮公式描述“策略与环境交互”，工程上还需要一个可审计的中间层，把模型文本变成受控动作，再把真实结果变成结构化观测。</p>
+
+  <p><strong>harness（运行编排层）</strong>负责解析动作、校验工具名和参数、执行允许的调用、记录 observation、计算奖励并判断是否终止。<strong>environment（环境）</strong>是动作真正作用的任务世界，例如一个模拟目录服务、受控 API 或沙箱。二者分工如下：</p>
+
+  <div class="mrl-harness-stack" aria-label="策略、运行编排层与环境的职责边界">
+    <article><span>POLICY</span><h3>提出候选动作</h3><p><code>catalog.search({sku:"MX-8"})</code></p><small>能建议，不能自行授予权限</small></article>
+    <div class="mrl-harness-gate"><b>HARNESS</b><span>schema → permission → budget → execute → log</span></div>
+    <article><span>ENVIRONMENT</span><h3>执行并返回事实</h3><p><code>{price:120, stock:7}</code></p><small>返回值、错误和状态变化都要保真</small></article>
+  </div>
+  <p class="mrl-caption">真正要看的是中间的 gate：模型只提出候选动作；harness 根据预先配置的工具白名单、参数 schema、权限与预算决定能否执行。拒绝本身也必须作为 observation 写回轨迹。</p>
+
+  <h3>工具失败不是空白，而是下一轮必须面对的观测</h3>
+  <table class="mrl-error-table">
+    <thead><tr><th>错误观测</th><th>含义</th><th>允许的恢复</th><th>不应自动做什么</th></tr></thead>
+    <tbody>
+      <tr><td><code>schema_error</code></td><td>参数名、类型或必填项不合法</td><td>依据 schema 修正一次参数</td><td>猜测隐藏字段并反复试探</td></tr>
+      <tr><td><code>empty_result</code></td><td>合法查询没有匹配记录</td><td>在任务范围内改写查询</td><td>捏造一条“可能的”结果</td></tr>
+      <tr><td><code>timeout</code></td><td>环境未在预算时间内返回</td><td>有限次数重试或安全终止</td><td>无限重试耗尽资源</td></tr>
+      <tr><td><code>permission_denied</code></td><td>动作超出当前授权</td><td>停止并说明需要哪项授权</td><td>换接口绕过权限边界</td></tr>
+      <tr><td><code>runtime_error</code></td><td>工具执行过程中失败</td><td>读取可见错误后修正或退出</td><td>把失败日志当作成功结果</td></tr>
+    </tbody>
+  </table>
+
+  <p>安全边界不能只写进 prompt。harness 要在策略外部强制执行：限制可调用工具、参数范围、最大轮数、超时、并发和可逆性；把外部 observation 当作不可信数据，而不是新的系统指令；对不可逆动作要求显式授权或人工确认。训练时奖励“越过边界但侥幸成功”的轨迹，会直接把危险行为变成高回报策略。</p>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>安全约束首先是环境动力学的一部分，其次才是语言提醒</h3>
+      <p>prompt 可以告诉模型不要越权，harness 才能让越权动作实际不可执行，并留下明确的拒绝观测。</p>
+      <p class="mrl-insight-key">可靠 Agent 的训练环境必须让“违规失败”真实发生；否则策略只学会复述规则，没有学会在边界前停下。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="credit-lab">
+  <h2 class="mrl-sec-title"><span class="num">08</span>实验：同样最终成功，奖励放在哪里会改变第一步吗？</h2>
+  <p class="mrl-sec-lead">固定两条都能完成任务的四轮轨迹：A 第一轮精确搜索，B 第一轮模糊搜索、后来补救。比较“只看最终成功”与“分出一部分奖励给可验证的精确搜索”。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>两条轨迹最终都成功时，结果奖励能否推动策略更偏好高质量的第一步？把比例 $\lambda$ 的奖励分给第一轮后会怎样？</dd>
+    <dt>Prediction</dt><dd>纯结果奖励下两条轨迹的 $G_0$ 相同，组内 advantage 都为 0；$\lambda&gt;0$ 后，精确搜索获得正 advantage，模糊搜索获得负 advantage。</dd>
+    <dt>Experiment</dt><dd>调节折扣 $\gamma$、早期奖励份额 $\lambda$、最终奖励尺度、第一步当前概率 $p$ 与学习率 $\alpha$，比较两种分配下的回报、优势和一次简化策略更新。</dd>
+    <dt>Observation</dt><dd>默认 $\gamma=0.8,\lambda=0.4,R=1,p=0.5,\alpha=1$ 时，纯结果奖励给两条轨迹相同的 $G_0=0.512$；逐轮分配给出 $A_0^{\text{精确}}=+0.2$、$A_0^{\text{模糊}}=-0.2$，精确搜索概率从 0.500 升到约 0.525。</dd>
+    <dt>Interpretation</dt><dd>过程信号让相同最终结果下的早期动作变得可区分；策略梯度因而能提高精确搜索的概率。折扣只能传播已有奖励，不能凭空区分两个相同 outcome。</dd>
+    <dt>Limitation</dt><dd>实验假设“精确搜索”可被无误验证，并把每轮动作简化成二选一。真实工具调用由多 token 参数组成，过程评分可能有偏差，且还要处理不同长度与不同历史。</dd>
+  </dl>
+
+  <p>为了把 advantage 翻译成“第一步概率怎样动”，实验把第一轮简化为两个动作：精确搜索的概率为 $p=\sigma(z)$，模糊搜索的概率为 $1-p$。二元 softmax 的两个 log-probability 对 logit $z$ 的导数分别是：</p>
+  <div class="mrl-equation">$$\frac{\partial\log p}{\partial z}=1-p,\qquad
+  \frac{\partial\log(1-p)}{\partial z}=-p.$$</div>
+  <p>用同一任务的两条 rollout 做一次平均策略更新：</p>
+  <div class="mrl-equation">$$\Delta z=\frac{\alpha}{2}\left[A_0^{+}(1-p)+A_0^{-}(-p)\right],\qquad
+  p'=\sigma\!\left(\operatorname{logit}(p)+\Delta z\right).$$</div>
+  <p>默认值 $A_0^+=0.2,A_0^-=-0.2,p=0.5,\alpha=1$ 给出 $\Delta z=0.1$，所以 $p'=\sigma(0.1)\approx0.525$。这只是把更新方向做成可手算数值；真实语言模型会对整段动作 token 使用 action mask 和对应轮次 advantage。</p>
+
+  <div class="mrl-credit-lab" aria-label="跨轮信用分配互动实验">
+    <div class="mrl-lab-toolbar">
+      <label><span>折扣 $\gamma$</span><b id="creditGammaValue">0.80</b><input id="creditGamma" type="range" min="0.5" max="1" value="0.8" step="0.05"></label>
+      <label><span>早期份额 $\lambda$</span><b id="creditLambdaValue">0.40</b><input id="creditLambda" type="range" min="0" max="0.8" value="0.4" step="0.05"></label>
+      <label><span>奖励尺度 $R$</span><b id="creditRewardValue">1.00</b><input id="creditReward" type="range" min="0.5" max="2" value="1" step="0.1"></label>
+      <label><span>当前概率 $p$</span><b id="creditProbabilityValue">0.50</b><input id="creditProbability" type="range" min="0.1" max="0.9" value="0.5" step="0.05"></label>
+      <label><span>学习率 $\alpha$</span><b id="creditAlphaValue">1.00</b><input id="creditAlpha" type="range" min="0.1" max="2" value="1" step="0.1"></label>
+      <button class="mrl-btn" id="creditReset" type="button">恢复默认</button>
+    </div>
+
+    <div class="mrl-path-pair">
+      <article>
+        <span>TRAJECTORY A · 精确第一步</span>
+        <ol><li><code>search({sku:"MX-8"})</code></li><li>读取准确记录</li><li>计算总价</li><li>成功提交</li></ol>
+      </article>
+      <article>
+        <span>TRAJECTORY B · 模糊后补救</span>
+        <ol><li><code>search({query:"MX"})</code></li><li>从噪声结果中重查</li><li>计算总价</li><li>成功提交</li></ol>
+      </article>
+    </div>
+
+    <div class="mrl-lab-results">
+      <article>
+        <span>仅最终结果：$[0,0,0,R]$</span>
+        <h3>第一步没有相对信号</h3>
+        <dl>
+          <div><dt>两条 $G_0$</dt><dd id="outcomeReturn">0.512</dd></div>
+          <div><dt>两条 $A_0$</dt><dd id="outcomeAdvantage">0.000</dd></div>
+          <div><dt>更新后精确搜索概率</dt><dd id="outcomeProbability">0.500</dd></div>
+        </dl>
+      </article>
+      <article class="is-shaped">
+        <span>逐轮分配：精确 $[\lambda R,0,0,(1-\lambda)R]$</span>
+        <h3>第一步出现可比较信号</h3>
+        <dl>
+          <div><dt>精确 $G_0$</dt><dd id="shapedGoodReturn">0.707</dd></div>
+          <div><dt>模糊 $G_0$</dt><dd id="shapedBadReturn">0.307</dd></div>
+          <div><dt>精确 / 模糊 $A_0$</dt><dd id="shapedAdvantages">+0.200 / −0.200</dd></div>
+          <div><dt>更新后精确搜索概率</dt><dd id="shapedProbability">0.525</dd></div>
+        </dl>
+      </article>
+    </div>
+
+    <div class="mrl-signal-bars" aria-label="第一步优势对照">
+      <div><span>结果奖励 · 精确动作优势</span><i><b id="outcomeSignalBar"></b></i><strong id="outcomeSignalText">0.000</strong></div>
+      <div><span>逐轮分配 · 精确动作优势</span><i><b class="is-shaped" id="shapedSignalBar"></b></i><strong id="shapedSignalText">+0.200</strong></div>
+    </div>
+    <p class="mrl-lab-observation" id="creditObservation">两条轨迹结果相同，纯结果奖励无法选择更好的第一步；逐轮分配让精确搜索得到正 advantage。</p>
+  </div>
+  <p class="mrl-caption">要观察的不是“稠密奖励总比稀疏奖励好”，而是 $\lambda$ 是否提供了可信的路径区分。把 $\lambda$ 调到 0，两种方案立刻失去对第一步的相对偏好；若评分规则不可信，非零 $\lambda$ 也可能强化错误动作。</p>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>公式落到代码：先保存 turn，再从后往前算回报</h2>
+  <p class="mrl-sec-lead">固定上游实验 <code>multi_turn_rl.py</code> 的核心结构很朴素：每轮保存 action 与 observation，奖励确定后再反向累计。关键不在代码长，而在字段不能混。</p>
+
+  <pre><code>turns = []
+history = [task]
+done = False
+
+while not done:
+    action = policy.act(history)  # a_t：策略产生
+    observation, reward, done, info = harness.step(action)
+    turns.append({
+        "history_before": list(history),
+        "action": action,
+        "observation": observation,
+        "reward": reward,
+        "done": done,
+        "termination_reason": (
+            info["termination_reason"] if done else None
+        ),
+    })
+    history.extend([action, observation])
+
+turns[-1]["reward"] += verifier(turns)
+
+G = 0.0
+for turn in reversed(turns):
+    G = turn["reward"] + gamma * G
+    turn["return"] = G</code></pre>
+
+  <table>
+    <thead><tr><th>数学对象</th><th>代码变量</th><th>容易犯的错</th></tr></thead>
+    <tbody>
+      <tr><td>$h_t$</td><td><code>history_before</code></td><td>保存动作之后的历史，造成信息泄漏</td></tr>
+      <tr><td>$a_t$</td><td><code>action</code></td><td>只存自然语言，不存可执行的结构化参数</td></tr>
+      <tr><td>$o_{t+1}$</td><td><code>observation</code></td><td>把失败改写成看似成功的摘要</td></tr>
+      <tr><td>$r_t$</td><td><code>reward</code></td><td>把最终结果复制成每轮即时奖励却不说明</td></tr>
+      <tr><td>$G_t$</td><td><code>return</code></td><td>从前往后累加，错过 $G_t=r_t+\gamma G_{t+1}$</td></tr>
+      <tr><td>$m_i$</td><td><code>action_mask</code></td><td>让 observation token 也参与策略梯度</td></tr>
+    </tbody>
+  </table>
+
+  <p>上游 <code>generate_synthetic_data.py</code> 负责产生候选过程，<code>multi_turn_rl.py</code> 对比结果与逐步奖励，<code>tool_use_agent.py</code> 展示单步工具选择。它们分别对应“数据从哪里来”“奖励怎样跨轮传播”“动作空间如何定义”，不能把单步工具分类误当成完整 Agentic RL。</p>
+</section>
+
+<section id="boundaries">
+  <h2 class="mrl-sec-title"><span class="num">10</span>本章边界：先学会记录和归因，再进入具体环境</h2>
+  <p class="mrl-sec-lead">Agentic RL 是一层通用训练抽象，但不同环境的状态、动作、验证器和风险并不相同。本章刻意停在共同骨架。</p>
+
+  <div class="mrl-boundary-list">
+    <article><span>本章已经建立</span><p>多轮 trajectory、工具 action/observation、历史条件策略、action mask、跨轮 reward-to-go、轨迹合成、harness 与安全错误边界。</p></article>
+    <article><span>Chapter 13 只作回顾</span><p>多个 Agent 协作时仍有个体 credit assignment；本章不重复联合策略、集中训练与分散执行。</p></article>
+    <article><span>留给 Chapter 21–23</span><p>具体代码修改环境、长程信息检索环境和图形界面操作环境各有专属状态、动作与验证方式，后续逐章展开。</p></article>
+    <article><span>留给 Chapter 27</span><p>对手池、自博弈 curriculum 与共同进化会让环境分布持续变化，不在本章展开。</p></article>
+  </div>
+
+  <div class="mrl-misconception">
+    <b>最后一个容易想错</b>
+    <p><strong>“只要把长对话喂给 PPO 或 GRPO，就是 Agentic RL。”</strong> 不对。训练数据必须来自动作与环境真实交替的 rollout，并正确区分策略 token、观测 token、终止原因和逐轮信用；否则只是对一段伪造日志做单轮优化。</p>
+  </div>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>理解检查：你能把一段工具日志变成训练对象了吗？</h2>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 工具 observation 不参与策略损失，为什么还必须保留在上下文？</summary><div class="inner">因为下一动作以历史 $h_{t+1}$ 为条件，而 observation 是这段历史中新获得的环境证据。$m_i=0$ 只排除该 token 自身的策略梯度，不是让模型看不见它。</div></details>
+    <details><summary>2. 四轮轨迹只有最后奖励 1，$\gamma=0.5$ 时第一轮的 $G_0$ 是多少？</summary><div class="inner">即时奖励为 $[0,0,0,1]$，所以 $G_0=0.5^3\times1=0.125$。折扣传播了最终信号，但没有告诉我们第一轮在两条同样成功的轨迹中哪一个更好。</div></details>
+    <details><summary>3. 两条轨迹最终都成功，为什么纯结果奖励可能无法改进第一步？</summary><div class="inner">若两条从同一历史出发且最终奖励相同，它们的第一轮 reward-to-go 也相同；减去同一基线后没有相对优势，策略看不到“精确搜索”和“模糊后补救”的差别。</div></details>
+    <details><summary>4. 为什么轨迹合成不能只让语言模型编写工具返回？</summary><div class="inner">工具返回应来自环境执行。编写出来的日志可能参数不合法、数据接续不成立或把失败伪装成成功，无法证明这条路径在任务环境中可到达。</div></details>
+    <details><summary>5. 模型收到 <code>permission_denied</code> 后，安全的下一步是什么？</summary><div class="inner">停止受限操作，向用户说明需要的权限或安全终止。不能换一个未授权接口绕过限制；权限检查属于 harness 的强制边界，而不是可被策略谈判掉的提示。</div></details>
+    <details><summary>6. Chapter 13 的多智能体 credit 与本章跨轮 credit 有什么联系和区别？</summary><div class="inner">二者都问“共享结果该归因给谁”。Chapter 13 重点区分多个 Agent 的贡献；本章重点区分工具轨迹中不同轮次动作的贡献。协作工具系统会同时面对角色维度和时间维度。</div></details>
+  </div>
+
+  <div class="mrl-takeaway">
+    <h3>本章带走五件事</h3>
+    <ol>
+      <li>Agentic RL 优化的是与环境交替产生的完整轨迹，不是单段 completion。</li>
+      <li>tool action 由策略产生，tool observation 由环境产生；它们都进入历史，只有前者进入策略梯度。</li>
+      <li>跨轮信用分配用 $G_t$ 和 $A_t$ 把结果传回动作；过程信号能增加区分度，也会传播放大评分偏差。</li>
+      <li>轨迹合成必须经过真实执行与质量控制，成功、效率、错误恢复和安全都属于数据质量。</li>
+      <li>harness 把模型候选动作变成受控交互，并用权限、预算和错误观测守住环境边界。</li>
+    </ol>
+  </div>
+
+  <div class="mrl-next">
+    <h3>下一章：当环境是一整个代码仓库，怎样知道修改真的有效？</h3>
+    <p>本章的 harness、trajectory 和 verifier 仍是抽象接口。下一章把它们放进具体的软件任务：Agent 要读取仓库、提出修改、运行检查，并面对“局部指标通过但真实问题仍未解决”的风险。</p>
+    <a class="mrl-btn primary" href="./chapter21.html">进入 Chapter 21 →</a>
+  </div>
+
+  <p class="mrl-source-note">主要参考：<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter22_agentic" target="_blank" rel="noopener">上游 Agentic RL 文档</a>、<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter10_agentic_rl" target="_blank" rel="noopener">固定 commit 的教学代码</a>。本讲义按“轨迹表示 → 跨轮信用 → 合成与执行边界”的问题链重写，并保留本课程统一的 $a_t\to(r_t,s_{t+1})$ 时间约定。</p>
+
+  <footer class="mrl-footer">
+    <span>Chapter 20 · Agentic RL</span>
+    <span><a href="./chapter19.html">← Chapter 19</a> · <a href="./">课程目录</a> · <a href="./chapter21.html">Chapter 21 →</a></span>
+  </footer>
+</section>

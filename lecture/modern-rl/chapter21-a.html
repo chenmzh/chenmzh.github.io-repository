@@ -1,0 +1,164 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 21 · Reinforcement learning for coding agents</div>
+  <h1>怎样把仓库、补丁与测试组成可验证环境？</h1>
+  <p class="lead">Chapter 20 已经把多轮工具调用写成 RL trajectory（强化学习轨迹）：一次搜索会改变下一轮能看到的信息，一次工具失败也会改变后续决策。代码任务把这种闭环放进更具体的世界——仓库可以恢复，修改可以记录成补丁，结果可以执行测试。但“能自动打分”不等于“分数就是需求本身”。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把一次真实的软件修复变成可重置的环境、可学习的动作序列与可信的验证信号？为什么几个公开测试全绿，仍不一定意味着补丁正确？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 16、20</span>
+    <span class="mrl-pill">数学：轨迹 + 规则奖励</span>
+    <span class="mrl-pill">实验：五种补丁 × 四个测试</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从可恢复仓库到可信 verifier</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#environment"><b>01</b><span>定义环境</span><small>仓库不是一段 prompt</small></a>
+      <a class="mrl-roadmap-step" href="#trajectory"><b>02</b><span>记录动作</span><small>read → edit → test</small></a>
+      <a class="mrl-roadmap-step" href="#swebench"><b>03</b><span>固定任务</span><small>snapshot + issue</small></a>
+      <a class="mrl-roadmap-step" href="#verifier"><b>04</b><span>执行验证</span><small>test → reward</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#patch-lab"><b>05</b><span>寻找漏洞</span><small>公开分数 ≠ 正确性</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#engineering"><b>06</b><span>闭合训练</span><small>重置、隔离、日志</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>最终补丁很短，找到它的过程却可能很长</h2>
+  <p class="mrl-sec-lead">函数补全通常把问题压成“一次输入、一次输出”。真实仓库修复则要求 Agent 先决定看哪里，再根据测试反馈不断改写自己的下一步。</p>
+
+  <p>假设购物车仓库里有：</p>
+  <pre><code>def average_price(prices):
+    return sum(prices) / len(prices)</code></pre>
+  <p>issue 要求：空购物车返回 <code>0.0</code>，非空输入行为不能改变。最终正确改动也许只有两行；但智能体仍要经历“搜索定义 → 阅读调用方 → 编辑实现 → 跑局部测试 → 读失败日志 → 跑回归测试 → 提交”的连续决策。一次错误搜索可能浪费上下文，一次过宽的异常捕获可能让公开样例通过、却破坏未覆盖行为。</p>
+
+  <p><strong>patch（补丁）</strong>是相对基准仓库的一组文件差异；<strong>test（测试）</strong>是执行代码并用断言检查可观察行为的程序。补丁记录“改了什么”，测试只检查它实际覆盖到的行为，二者都不等于完整需求本身。</p>
+
+  <div class="mrl-repo-flow" aria-label="仓库级修复的多步工具轨迹">
+    <div><span>OBSERVE</span><strong>issue + 文件树</strong><small>知道要修什么，但不知道在哪里</small></div>
+    <i>→</i>
+    <div><span>SEARCH</span><strong>定位符号</strong><small>缩小需要读取的上下文</small></div>
+    <i>→</i>
+    <div><span>EDIT</span><strong>产生 patch</strong><small>仓库状态真正发生改变</small></div>
+    <i>→</i>
+    <div><span>TEST</span><strong>获得日志</strong><small>失败信息成为下一轮观察</small></div>
+  </div>
+  <p class="mrl-caption">真正要观察的是闭环：测试不只在终点打分；测试日志还会改变下一步编辑，因此搜索、编辑和验证共同组成策略。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>diff 的长度不等于决策难度</h3>
+      <p>一个两行补丁可能需要十几次工具调用才能定位。只模仿最终 diff，会丢掉“为什么读这个文件、如何利用失败日志、何时停止”的监督。</p>
+      <p class="mrl-insight-key">代码智能体 RL 优化的是产生好补丁的整条决策轨迹，而不是奖励字符更像开发者答案。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="environment">
+  <h2 class="mrl-sec-title"><span class="num">02</span>第一步：把仓库变成真的环境状态</h2>
+  <p class="mrl-sec-lead">repository（代码仓库）不是附在 prompt 后的一长段文本。它是会被编辑动作改变、会被命令执行读取、也必须能回到同一初始版本的环境。</p>
+
+  <p>在第 $t$ 步，可以把完整的 <strong>repository state（仓库状态）</strong>记为：</p>
+  <div class="mrl-equation">$$s_t=(C_t,\Delta_t,E_t)$$</div>
+  <table class="mrl-symbol-table">
+    <thead><tr><th>对象</th><th>含义</th><th>工程里的载体</th></tr></thead>
+    <tbody>
+      <tr><td>$C_t$</td><td>当前 checkout 中所有文件的内容</td><td><code>worktree</code> / container filesystem</td></tr>
+      <tr><td>$\Delta_t$</td><td>相对初始快照累积出的修改</td><td><code>git diff</code> / patch</td></tr>
+      <tr><td>$E_t$</td><td>依赖、进程、缓存与资源限制等执行状态</td><td>container、虚拟环境、timeout</td></tr>
+    </tbody>
+  </table>
+  <p>智能体通常看不到完整 $s_t$，只收到 <strong>observation（观察）</strong> $o_t$：issue 文本、刚读出的文件片段、搜索结果或测试日志。动作则来自有限工具集：</p>
+  <div class="mrl-equation">$$a_t\in\{\texttt{read},\texttt{search},\texttt{edit},\texttt{test},\texttt{submit}\}$$</div>
+  <p>执行器把动作落实到仓库上，产生下一状态与下一份观察：</p>
+  <div class="mrl-equation">$$(s_t,a_t)\xrightarrow{\text{executor}}(s_{t+1},o_{t+1})$$</div>
+
+  <p>这里最容易漏掉的是 $E_t$。如果第一条 rollout 安装了额外依赖、留下缓存或启动后台服务，第二条 rollout 就不再从相同题目出发。训练器会误把环境残留造成的分数差异归因给策略。因此每次采样都应从固定 commit、固定镜像和干净资源状态恢复。</p>
+
+  <div class="mrl-state-stack" aria-label="仓库环境的三层状态">
+    <div><span>CODE</span><strong>文件与版本</strong><small>什么内容将被执行</small></div>
+    <div><span>PATCH</span><strong>相对初始快照的变化</strong><small>什么修改将被提交</small></div>
+    <div><span>EXECUTION</span><strong>依赖、进程与权限</strong><small>测试究竟在什么世界运行</small></div>
+  </div>
+  <p class="mrl-caption">三层必须一起恢复。只把源码 reset、却复用被前一条轨迹污染的依赖或进程，仍不是同一个初始状态。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>环境可重置不是运维细节，而是奖励可比较的前提</h3>
+      <p>同一道题的两条 rollout 若从不同依赖或缓存状态开始，奖励差异就同时混入了策略与环境的影响。</p>
+      <p class="mrl-insight-key">先保证初始状态相同，组内比较、策略梯度和离线复现才有意义。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="trajectory">
+  <h2 class="mrl-sec-title"><span class="num">03</span>第二步：把 edit、test 和返工串成 patch trajectory</h2>
+  <p class="mrl-sec-lead">patch（补丁）是终点处的文件差异；patch trajectory（补丁轨迹）则保留了到达这个终点的观察、动作与反馈顺序。</p>
+
+  <div class="mrl-equation">$$\tau=(o_0,a_0,o_1,a_1,\ldots,o_T),\qquad \Delta_T=\operatorname{diff}(C_0,C_T)$$</div>
+  <p>$\Delta_T$ 只回答“最后改了什么”，$\tau$ 还回答“为什么这样改”。例如下面两条轨迹可能生成同一个正确补丁：</p>
+  <table>
+    <thead><tr><th>轨迹</th><th>动作序列</th><th>学习信号</th></tr></thead>
+    <tbody>
+      <tr><td>A · 有依据</td><td><code>search → read → edit → focused_test → regression → submit</code></td><td>先定位、再做最小改动，验证完整</td></tr>
+      <tr><td>B · 碰运气</td><td><code>edit → edit → edit → full_test → submit</code></td><td>偶然成功，步骤成本高且难迁移</td></tr>
+    </tbody>
+  </table>
+  <p>若奖励只在 submit 后出现，两条成功轨迹都可能得到 1。是否加入步数成本、静态检查或过程评分，是额外的 reward design（奖励设计）选择；每一项也可能带来新的代理漏洞。本章只建立这个局部警告，系统性的奖励投机类型与评测方法留到 Chapter 26。</p>
+
+  <p>下面把独立执行最终检查并生成报告的组件叫作 <strong>verifier（验证器）</strong>。它不接受策略口头宣布“已经修好”，而会在受保护的基准副本上重放补丁；下一节再正式说明测试怎样进入验证合同。</p>
+
+  <p>一条最小环境循环可以写成：</p>
+  <pre><code>state = reset(repo_snapshot)
+trajectory = []
+done = False
+termination_reason = None
+
+while not done:
+    observation = observe(state)
+    action = policy(observation)
+    state, tool_output, done, info = executor.step(state, action)
+    termination_reason = info["termination_reason"] if done else None
+    trajectory.append({
+        "observation": observation,
+        "action": action,
+        "tool_output": tool_output,
+        "done": done,
+        "termination_reason": termination_reason,
+    })
+
+patch = diff(state, repo_snapshot)
+reward, report = verifier.run(
+    patch,
+    termination_reason=termination_reason,
+)</code></pre>
+  <p class="mrl-caption">代码映射的重点是职责分离：policy 选择工具动作，executor 改变工作副本，verifier 在受保护的基准副本上重放最终 patch；不要让策略自己宣布“测试通过”。</p>
+</section>
+
+<section id="swebench">
+  <h2 class="mrl-sec-title"><span class="num">04</span>把真实 issue 固定成可重复比较的题目</h2>
+  <p class="mrl-sec-lead"><strong>SWE-bench（真实仓库软件工程修复基准）</strong>把 GitHub issue、问题发生时的仓库快照和对应验证条件配成任务，让不同代码智能体面对相同起点。</p>
+
+  <div class="mrl-task-contract">
+    <div><span>INPUT A</span><strong>固定仓库快照</strong><small>问题尚未修复时的 commit</small></div>
+    <b>+</b>
+    <div><span>INPUT B</span><strong>自然语言 issue</strong><small>描述错误行为或功能需求</small></div>
+    <b>→</b>
+    <div><span>AGENT OUTPUT</span><strong>可应用的 patch</strong><small>不是完整仓库，也不是口头解释</small></div>
+    <b>→</b>
+    <div><span>EVALUATION</span><strong>受保护测试</strong><small>新需求 + 原行为回归</small></div>
+  </div>
+  <p class="mrl-caption">真正要固定的是整份任务合同：同一 commit、同一 issue、同一执行镜像、同一 verifier 和同一预算。只报一个模型名字或一个百分比，无法隔离脚手架与推理预算的影响。</p>
+
+  <p>从函数补全到仓库修复，难点发生了四次扩展：</p>
+  <div class="mrl-grid2">
+    <article class="mrl-card"><h3>上下文扩展</h3><p>输入不再指出目标函数；智能体必须在文件树与调用链中主动检索。</p></article>
+    <article class="mrl-card"><h3>动作扩展</h3><p>输出不再是一次生成；搜索、编辑、测试与停止时机都成为决策。</p></article>
+    <article class="mrl-card"><h3>约束扩展</h3><p>既要修复 issue 对应行为，也要保护没有被请求改变的旧功能。</p></article>
+    <article class="mrl-card"><h3>失败扩展</h3><p>测试失败、依赖安装失败、容器超时与补丁无法应用，必须分开记录。</p></article>
+  </div>
+
+  <p>开发者的正确补丁可以帮助构造与核验任务，却不应直接交给智能体；受保护的最终测试也不应放在可编辑工作区。否则“解决问题”会退化成复现答案或改写评分器。</p>
+</section>

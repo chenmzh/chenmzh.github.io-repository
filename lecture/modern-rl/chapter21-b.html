@@ -1,0 +1,115 @@
+<section id="verifier">
+  <h2 class="mrl-sec-title"><span class="num">05</span>第三步：让测试验证器把行为变成奖励</h2>
+  <p class="mrl-sec-lead">Chapter 16 已经介绍 outcome verifier（结果验证器）：不评价推理写得像不像，而是检查最终结果能否通过一条明确规则。本章只把这件事迁移到代码执行。</p>
+
+  <p><strong>test verifier（测试验证器）</strong>在受保护环境中应用最终补丁、运行测试，再把每个测试结果记为 $z_i\in\{0,1\}$。若有 $m$ 个测试，最直接的连续奖励是：</p>
+  <div class="mrl-equation">$$R_{\text{test}}(\tau)=\frac{1}{m}\sum_{i=1}^{m}z_i$$</div>
+  <p>如果任务规定“只有全部必要测试都通过才算解决”，则使用：</p>
+  <div class="mrl-equation">$$R_{\text{resolved}}(\tau)=\mathbb{1}\!\left[\sum_{i=1}^{m}z_i=m\right]$$</div>
+
+  <table class="mrl-symbol-table">
+    <thead><tr><th>符号</th><th>人话</th><th>程序变量</th></tr></thead>
+    <tbody>
+      <tr><td>$\tau$</td><td>从读取仓库到提交补丁的完整轨迹</td><td><code>trajectory</code></td></tr>
+      <tr><td>$m$</td><td>验证器实际执行的测试数</td><td><code>len(test_results)</code></td></tr>
+      <tr><td>$z_i$</td><td>第 $i$ 个测试是否通过</td><td><code>test_results[i]</code></td></tr>
+      <tr><td>$R_{\text{test}}$</td><td>测试通过比例，提供部分进展</td><td><code>passed / total</code></td></tr>
+      <tr><td>$R_{\text{resolved}}$</td><td>全部合同是否一次满足</td><td><code>all(test_results)</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>一个四测试数值例</h3>
+  <p>假设补丁通过 2 个公开测试中的 2 个，却只通过 2 个隐藏测试中的 1 个。那么：</p>
+  <div class="mrl-equation">$$R_{\text{visible}}=\frac{2}{2}=1.00,\qquad
+  R_{\text{all}}=\frac{2+1}{2+2}=0.75,\qquad
+  R_{\text{resolved}}=0.$$</div>
+  <p>三个数都算对了，却回答不同问题：公开代理分数认为“满分”，覆盖更完整的通过率认为“只完成四分之三”，严格任务判定认为“尚未解决”。训练和论文必须写明自己优化、选择与报告的是哪一个。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“测试可以执行，所以它就是普适真值。”</strong> 不对。测试只能断言被作者写进用例的行为；未覆盖的兼容性、性能、安全性和真实用户意图不会自动出现。可执行反馈通常比主观评分更硬，但它仍是任务合同的一份有限编码。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>verifiable 不等于 complete</h3>
+      <p>验证器能稳定回答“这些检查是否通过”，不保证这些检查已经穷尽“软件是否正确”。</p>
+      <p class="mrl-insight-key">可信代码 RL 不是取消判断，而是把判断边界写进可执行合同，并公开承认合同没有覆盖什么。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="patch-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>实验：公开测试都通过，哪一个补丁才真的解决 issue？</h2>
+  <p class="mrl-sec-lead">同一个 <code>average_price</code> issue 有五个候选。先只看公开测试选“满分”补丁，再打开受保护测试与验证器完整性，观察排名怎样改变。</p>
+
+  <dl class="mrl-experiment-logic">
+    <dt>Question</dt><dd>只优化公开测试通过率时，代理奖励能否唯一识别满足完整行为合同的补丁？</dd>
+    <dt>Prediction</dt><dd>不能。宽泛捕获、写死样例、篡改测试和精确修复都可能获得公开满分，但隐藏回归或完整性检查会把前三者区分出来。</dd>
+    <dt>Experiment</dt><dd>点击五个候选 patch；固定运行两项公开测试、两项受保护测试，并比较 $R_{visible}$、$R_{all}$ 与严格 resolved。</dd>
+    <dt>Observation</dt><dd id="patchObservation">请选择补丁，观察公开满分是否与隐藏测试和验证器完整性一致。</dd>
+    <dt>Interpretation</dt><dd>奖励只约束被 verifier 看见的行为；同一个代理分数可能对应不同的软件语义。保护测试入口并补足关键回归，才能缩小代理目标与需求之间的缺口。</dd>
+    <dt>Limitation</dt><dd>这是四个确定性测试的教学环境，没有模拟 flaky test、依赖故障、性能回归或恶意代码。完整失败类型学与系统评测留到 Chapter 26。</dd>
+  </dl>
+
+  <div class="mrl-viz mrl-patch-lab" aria-labelledby="patchLabTitle">
+    <div class="mrl-viz-head">
+      <div><h3 id="patchLabTitle">Patch × verifier 对照台</h3><p>同一个 issue、同一初始仓库；只改变最终补丁。</p></div>
+      <button class="mrl-btn" id="patchReset" type="button">重置到原实现</button>
+    </div>
+
+    <div class="mrl-lab-toolbar" role="group" aria-label="选择候选补丁">
+      <button class="mrl-patch-choice is-active" type="button" data-patch="original"><b>P0</b><span>原实现</span><small>没有修复</small></button>
+      <button class="mrl-patch-choice" type="button" data-patch="broad"><b>P1</b><span>捕获所有异常</span><small>吞掉输入错误</small></button>
+      <button class="mrl-patch-choice" type="button" data-patch="hardcode"><b>P2</b><span>写死公开样例</span><small>只会测试答案</small></button>
+      <button class="mrl-patch-choice" type="button" data-patch="tamper"><b>P3</b><span>跳过失败测试</span><small>修改评分入口</small></button>
+      <button class="mrl-patch-choice" type="button" data-patch="precise"><b>P4</b><span>精确边界修复</span><small>保持旧行为</small></button>
+    </div>
+
+    <div class="mrl-patch-detail">
+      <div>
+        <span id="patchLabel">P0 · 原实现</span>
+        <pre><code id="patchCode">def average_price(prices):
+    return sum(prices) / len(prices)</code></pre>
+      </div>
+      <p id="patchExplanation">非空列表行为正确，但空列表仍会除以 0。</p>
+    </div>
+
+    <div class="mrl-test-grid" id="patchTestGrid" aria-label="候选补丁的测试结果">
+      <article data-test="visibleNormal"><span>VISIBLE · V1</span><strong>普通列表求平均</strong><b>PASS</b><small><code>[10, 20] → 15.0</code></small></article>
+      <article data-test="visibleEmpty"><span>VISIBLE · V2</span><strong>空列表返回零</strong><b>FAIL</b><small><code>[] → 0.0</code></small></article>
+      <article data-test="hiddenTuple"><span>PROTECTED · H1</span><strong>空 tuple 同样为空</strong><b>FAIL</b><small><code>() → 0.0</code></small></article>
+      <article data-test="hiddenInvalid"><span>PROTECTED · H2</span><strong>无效输入仍抛 TypeError</strong><b>PASS</b><small><code>None → TypeError</code></small></article>
+    </div>
+    <p class="mrl-caption">真正要比较的不是“绿色格子多不多”，而是哪些行为被哪个测试覆盖。H1 检查修复是否只记住 <code>[]</code>，H2 检查补丁是否吞掉了本应暴露的输入错误。</p>
+
+    <div class="mrl-score-strip">
+      <article><span>公开代理奖励</span><strong id="visibleScore">0.50</strong><div><i id="visibleBar"></i></div><small>$R_{visible}$</small></article>
+      <article><span>全部测试通过率</span><strong id="allScore">0.50</strong><div><i id="allBar"></i></div><small>$R_{all}$</small></article>
+      <article class="resolved"><span>严格任务判定</span><strong id="resolvedScore">0</strong><div><i id="resolvedBar"></i></div><small>all pass + verifier intact</small></article>
+    </div>
+
+    <div class="mrl-lab-verdict" id="patchVerdict" aria-live="polite">
+      <span>当前结论</span>
+      <strong>原实现尚未满足空输入需求。</strong>
+      <p>公开测试已暴露问题，因此代理奖励只有 0.50。</p>
+    </div>
+  </div>
+
+  <h3>把 P1 手算一遍</h3>
+  <p>P1 使用 <code>except Exception: return 0.0</code>。V1、V2、H1 通过，H2 失败，所以：</p>
+  <div class="mrl-equation">$$R_{\text{visible}}=\frac{2}{2}=1.00,\qquad
+  R_{\text{all}}=\frac{3}{4}=0.75,\qquad
+  R_{\text{resolved}}=0.$$</div>
+  <p>如果训练只看到 $R_{visible}$，P1 与正确的 P4 同为最高奖励；优化器没有理由偏爱 P4。问题不在策略“没有理解人类意图”，而在环境给出的可区分信号不足。</p>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>隐藏测试的作用不是神秘，而是阻断“边看答案边调参”</h3>
+      <p>可见测试帮助 Agent 调试；受保护测试检查未暴露的合同。如果两者完全相同，策略可以把“修复需求”压缩成“记住已知样例”。</p>
+      <p class="mrl-insight-key">训练信号可以返回分数，但测试内容、入口与基准副本必须保持受保护。</p>
+    </div>
+  </aside>
+</section>

@@ -1,0 +1,159 @@
+<section id="reward">
+  <h2 class="mrl-sec-title"><span class="num">04</span>一条总分之前，先把格式、答案与视觉定位分开量</h2>
+  <p class="mrl-sec-lead">三种奖励回答三个不同问题。若先混成一个数字，训练曲线变好时，我们反而不知道模型究竟学会了什么。</p>
+
+  <div class="mrl-reward-triptych">
+    <article>
+      <span>FORMAT REWARD</span>
+      <h3>格式奖励 $R_{\mathrm{fmt}}$</h3>
+      <p>输出能否按约定解析：字段齐全、JSON 合法、标签闭合。它保证接口可用，不判断内容真假。</p>
+    </article>
+    <article>
+      <span>ANSWER REWARD</span>
+      <h3>答案奖励 $R_{\mathrm{ans}}$</h3>
+      <p>最终数值或选项是否等于标准答案。它核对 outcome，却不能区分看图、猜测或利用数据偏置。</p>
+    </article>
+    <article>
+      <span>VISUAL EVIDENCE REWARD</span>
+      <h3>视觉定位证据奖励 $R_{\mathrm{grd}}$</h3>
+      <p>输出中的物体、坐标或证据区域是否真的对应图像。它让文字断言与像素证据发生联系。</p>
+    </article>
+  </div>
+
+  <p>Chapter 23 已正式定义 <strong>visual grounding（视觉定位）</strong>：把语言目标映射到图像区域或坐标。本章沿用这个术语，但新增一项职责——把定位结果当作证据送回奖励，核对最终答案是否真的由图像支持。一个常见组合是：</p>
+  <div class="mrl-equation mrl-equation-feature">$$R(\tau)=w_fR_{\mathrm{fmt}}+w_aR_{\mathrm{ans}}+w_gR_{\mathrm{grd}}$$</div>
+
+  <table>
+    <thead><tr><th>符号</th><th>测量对象</th><th>为 1 时能说明什么</th><th>仍不能说明什么</th></tr></thead>
+    <tbody>
+      <tr><td>$R_{\mathrm{fmt}}$</td><td>响应字符串 / schema</td><td>程序可以可靠解析</td><td>答案或证据正确</td></tr>
+      <tr><td>$R_{\mathrm{ans}}$</td><td>最终答案与标签</td><td>这道题的 outcome 正确</td><td>结论来自图像</td></tr>
+      <tr><td>$R_{\mathrm{grd}}$</td><td>图像与证据区域</td><td>指称落在已知视觉目标上</td><td>后续推理必然正确</td></tr>
+    </tbody>
+  </table>
+
+  <p>取 $(w_f,w_a,w_g)=(0.15,0.45,0.40)$。某条响应格式正确、答案正确，只找到了三处证据中的两处，即 $(R_{\mathrm{fmt}},R_{\mathrm{ans}},R_{\mathrm{grd}})=(1,1,2/3)$，那么：</p>
+  <div class="mrl-equation">$$R=0.15(1)+0.45(1)+0.40(2/3)\approx0.867$$</div>
+  <p>这个数值比“答案正确所以得 1”信息更多：它明确指出缺口来自证据覆盖。但调大 $w_g$ 不会自动让一个错误的 grounding 规则变正确；权重只组合测量，不能替测量本身背书。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>答案、格式与证据不是同一能力的三个别名</h3>
+      <p>格式回答“能否解析”，答案回答“结论是否正确”，视觉定位回答“结论指向的图像依据是否成立”。一条响应可以在三轴上形成不同组合。</p>
+      <p class="mrl-insight-key">先保存分项指标，再看总奖励；否则同一条上升曲线可能隐藏完全不同的学习结果。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="verifier">
+  <h2 class="mrl-sec-title"><span class="num">05</span>让评分器核对图像—证据—答案的一致性</h2>
+  <p class="mrl-sec-lead">结果验证器只需读取答案与标签；视觉任务需要一个能跨越至少两种模态或对象的核验接口。</p>
+
+  <p><strong>multimodal verifier（多模态验证器）</strong>是一个同时读取视觉输入与模型输出，并检查跨模态一致性的评分器。对结构化响应 $z=(e,r,a)$——证据区域 $e$、推理字段 $r$、最终答案 $a$——可写成：</p>
+  <div class="mrl-equation">$$V_{\mathrm{mm}}(I,q,z)=\big(v_{\mathrm{fmt}},v_{\mathrm{ans}},v_{\mathrm{grd}}\big)$$</div>
+
+  <div class="mrl-verifier-graph" aria-label="多模态验证器的数据流">
+    <div class="inputs">
+      <span>原图 $I$</span>
+      <span>问题 $q$</span>
+      <span>证据 $e$</span>
+      <span>答案 $a$</span>
+    </div>
+    <i>→</i>
+    <div class="verifier-core"><small>MULTIMODAL VERIFIER</small><strong>跨模态核验</strong><span>解析器 · 标注 · 几何规则</span></div>
+    <i>→</i>
+    <div class="outputs"><span>$v_{\mathrm{fmt}}$</span><span>$v_{\mathrm{ans}}$</span><span>$v_{\mathrm{grd}}$</span></div>
+  </div>
+  <p class="mrl-caption">验证器把原图重新带回评分回路：同样的答案若指向不同区域，就会得到不同的视觉定位分，而不再被压成同一个 outcome。</p>
+
+  <p>有边界框标注时，grounding 可以使用 <strong>Intersection over Union（IoU，交并比）</strong>：</p>
+  <div class="mrl-equation">$$\operatorname{IoU}(B_p,B^*)=\frac{|B_p\cap B^*|}{|B_p\cup B^*|}$$</div>
+  <p>$B_p$ 是模型预测框，$B^*$ 是标准证据框。若两个框面积都是 16，交集面积为 12，则并集面积为 $16+16-12=20$，因此 $\operatorname{IoU}=12/20=0.60$。这比“回答里出现了左上角、蓝色、圆形”等关键词更直接，因为它真的核对空间位置。</p>
+
+  <p><strong>Optical Character Recognition（OCR，光学字符识别）</strong>则把图像中的文字区域转成可比较的字符序列，适合核对票据、图表标签或界面文字。它能验证“读到了哪些字”，但不能单独证明模型理解了对象关系。</p>
+
+  <div class="mrl-verifier-levels">
+    <div><span>RULE</span><strong>格式解析</strong><p>标签是否闭合、字段能否读取。</p></div>
+    <div><span>LABEL</span><strong>答案比对</strong><p>最终答案是否等于 ground truth。</p></div>
+    <div><span>CROSS-MODAL</span><strong>证据比对</strong><p>区域、OCR 文本或对象关系是否来自图像。</p></div>
+  </div>
+
+  <p>不同任务会使用不同的视觉核验信号：边界框 IoU、点标注距离、OCR 字符一致率、已知几何关系，或另一个视觉模型的判断。它们都只是测量工具，也可能因标注缺失、遮挡或 verifier 自身误判而出错。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>Multimodal verifier 是学习系统与视觉世界之间的测量接口</h3>
+      <p>策略看到了像素，并不代表奖励也看到了像素。只有 verifier 能把图像证据与输出主张联系起来，跨模态能力才会成为可优化信号。</p>
+      <p class="mrl-insight-key">验证器定义了训练“看得见”的成功；它遗漏的视觉差异，不会凭空出现在奖励里。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="grounding-lab">
+  <h2 class="mrl-sec-title"><span class="num">06</span>互动实验：同样答“3”，加上视觉定位分会改变谁被强化</h2>
+  <p class="mrl-sec-lead">先选择一条候选响应，再切换奖励方案。观察只核对答案时，可靠证据与幸运猜测为何得分相同。</p>
+
+  <div class="mrl-viz mrl-grounding-lab" id="groundingLab">
+    <div class="mrl-viz-head">
+      <div><h3>Geometry Grounding · Reward Comparator</h3><p>问题：图中有几个蓝色圆形？标准答案为 3；标准证据为 c1、c2、c3。</p></div>
+      <button class="mrl-btn" id="resetGrounding" type="button">重置对照</button>
+    </div>
+
+    <dl class="mrl-experiment-logic">
+      <dt>Question</dt><dd>两条响应最终都回答 3，但一条标对证据、一条没有证据；纯答案奖励能否区分它们？</dd>
+      <dt>Prediction</dt><dd>不能。只要 $R_{\mathrm{ans}}=1$，两条响应都会得到相同总分；加入 $R_{\mathrm{grd}}$ 后，可靠证据才会拉开差距。</dd>
+      <dt>Experiment</dt><dd>在 A–D 中切换候选响应，再选择“仅答案”“格式 + 答案”或“三项多模态”奖励，比较分项分数、总奖励与画布上的证据标记。</dd>
+      <dt>Observation</dt><dd id="labObservation">默认响应 D 猜中答案但没有证据；“仅答案”仍给它 1.000，与响应 A 完全相同。</dd>
+      <dt>Interpretation</dt><dd id="labInterpretation">答案奖励观察 outcome，不观察视觉因果链。只有把证据字段与原图交给 multimodal verifier，A 与 D 的差异才进入优化信号。</dd>
+      <dt>Limitation</dt><dd>本实验拥有完整、无噪声的对象 ID 标注，grounding 分用证据召回率直接给出。真实图片里的目标可能遮挡、标注不全，验证器也会误判，不能把这里的分数当作通用真值。</dd>
+    </dl>
+
+    <div class="mrl-lab-toolbar" aria-label="实验控制">
+      <fieldset>
+        <legend>候选响应</legend>
+        <div class="mrl-segmented" id="candidateButtons">
+          <button type="button" data-candidate="A">A · 答案对 / 证据全</button>
+          <button type="button" data-candidate="B">B · 答案对 / 漏证据</button>
+          <button type="button" data-candidate="C">C · 答案错 / 证据全</button>
+          <button type="button" data-candidate="D" aria-pressed="true">D · 猜中 / 无证据</button>
+        </div>
+      </fieldset>
+      <label>奖励方案
+        <select id="rewardScheme">
+          <option value="answer">仅答案 · (0, 1, 0)</option>
+          <option value="format-answer">格式 + 答案 · (0.2, 0.8, 0)</option>
+          <option value="multimodal">三项多模态 · (0.15, 0.45, 0.40)</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="mrl-lab-stage">
+      <div class="mrl-geometry-pane">
+        <div class="pane-head"><span>VISUAL OBSERVATION</span><strong>$I$</strong></div>
+        <div class="mrl-shape-board" aria-label="包含三个蓝色圆形及其他图形的画布">
+          <div class="shape circle" data-shape-id="c1"><span>c1</span></div>
+          <div class="shape square" data-shape-id="s1"><span>s1</span></div>
+          <div class="shape circle" data-shape-id="c2"><span>c2</span></div>
+          <div class="shape triangle" data-shape-id="t1"><span>t1</span></div>
+          <div class="shape circle" data-shape-id="c3"><span>c3</span></div>
+          <div class="shape square warm" data-shape-id="s2"><span>s2</span></div>
+        </div>
+        <p class="mrl-small">蓝色圆形标准证据：c1、c2、c3。发光轮廓表示当前响应提交的 evidence。</p>
+      </div>
+
+      <div class="mrl-response-pane">
+        <div class="pane-head"><span>STRUCTURED ACTION</span><strong id="candidateLabel">Response D</strong></div>
+        <pre class="mrl-code"><code id="candidateOutput">3</code></pre>
+        <div class="mrl-component-scores">
+          <div><span>格式 $R_{\mathrm{fmt}}$</span><div class="score-track"><i id="formatBar"></i></div><strong id="formatScore">0.00</strong></div>
+          <div><span>答案 $R_{\mathrm{ans}}$</span><div class="score-track"><i id="answerBar"></i></div><strong id="answerScore">1.00</strong></div>
+          <div><span>落地 $R_{\mathrm{grd}}$</span><div class="score-track"><i id="groundBar"></i></div><strong id="groundScore">0.00</strong></div>
+        </div>
+        <div class="mrl-total-score"><span>加权总奖励</span><strong id="totalReward">1.000</strong><small id="weightReadout">$0R_{fmt}+1R_{ans}+0R_{grd}$</small></div>
+      </div>
+    </div>
+  </div>
+  <p class="mrl-caption">固定候选 D、只把奖励方案从“仅答案”切到“三项多模态”，总分从 1.000 降到 0.450；变化不是答案变了，而是验证器终于把“没有视觉证据”纳入了测量。</p>
+</section>

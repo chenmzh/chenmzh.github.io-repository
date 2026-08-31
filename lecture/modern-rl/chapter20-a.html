@@ -1,0 +1,132 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 20 · From completion to interaction trajectory</div>
+  <h1>多轮工具调用怎样写成一条可学习的轨迹？</h1>
+  <p class="lead">上一章把大模型强化学习放进工业流水线：rollout、训练和参数同步必须一起设计。可是一旦模型调用工具，rollout 就不再是“写完一段文本再打分”。它会行动、等待环境返回、依据新证据继续行动；一次早期调用甚至会决定后面还能看见什么。<strong>Agentic Reinforcement Learning（Agentic RL，智能体强化学习）</strong>研究的正是这种在环境反馈中学习整条交互过程的问题。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把“模型输出—工具执行—环境返回—再次决策”保存成一条可训练的 trajectory（轨迹），并让最终成败给真正关键的早期动作提供学习信号？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 75–100 min</span>
+    <span class="mrl-pill">先修：Chapter 13、16、18–19</span>
+    <span class="mrl-pill">数学：轨迹概率 + 从当前轮到结局的回报</span>
+    <span class="mrl-pill">实验：结果奖励与跨轮分配</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>先记录完整互动，再讨论怎样学习</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#trajectory"><b>01</b><span>记录交替链</span><small>action 与 observation</small></a>
+      <a class="mrl-roadmap-step" href="#formalize"><b>02</b><span>形式化多轮</span><small>历史成为决策输入</small></a>
+      <a class="mrl-roadmap-step" href="#mask"><b>03</b><span>划清梯度</span><small>环境文本不是动作</small></a>
+      <a class="mrl-roadmap-step" href="#credit"><b>04</b><span>回传信用</span><small>最终结果归因到轮次</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#credit-lab"><b>05</b><span>比较分配</span><small>同结果，不同早期信号</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#harness"><b>06</b><span>守住边界</span><small>执行、错误与权限</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="start">
+  <h2 class="mrl-sec-title"><span class="num">01</span>一次输出不再够用：动作会改写下一道题</h2>
+  <p class="mrl-sec-lead">单轮回答可以先生成完整 completion，再由奖励函数评分。工具型 Agent 的下一轮输入却要等上一轮动作真正执行以后才知道。</p>
+
+  <p>考虑一个不涉及真实购买的库存核算任务：“查出型号 MX-8 的单价和库存，计算买 3 台的总价，最后提交报价摘要。”一个合理过程可能是：</p>
+
+  <div class="mrl-agent-trace" aria-label="四轮库存核算轨迹">
+    <article class="is-action"><span>TURN 0 · TOOL ACTION</span><code>catalog.search({sku: "MX-8"})</code><small>模型选择工具与参数</small></article>
+    <i aria-hidden="true">↓</i>
+    <article class="is-observation"><span>ENVIRONMENT</span><code>{price: 120, stock: 7}</code><small>工具实际返回的证据</small></article>
+    <i aria-hidden="true">↓</i>
+    <article class="is-action"><span>TURN 1 · TOOL ACTION</span><code>calculator({expr: "120 * 3"})</code><small>下一动作依赖刚才的价格</small></article>
+    <i aria-hidden="true">↓</i>
+    <article class="is-observation"><span>ENVIRONMENT</span><code>{result: 360}</code><small>环境计算结果</small></article>
+    <i aria-hidden="true">↓</i>
+    <article class="is-action"><span>TURN 2 · FINAL ACTION</span><code>answer("有货；3 台共 360 元")</code><small>最终答案引用前两轮证据</small></article>
+  </div>
+  <p class="mrl-caption">真正要观察的是因果方向：第一轮搜索参数决定环境返回哪条记录；返回的价格又进入第二轮计算。后面的 token 不是在一个固定 prompt 上独立长出来的。</p>
+
+  <p>这里有两类必须分开的对象：</p>
+  <div class="mrl-grid2">
+    <article class="mrl-card">
+      <span class="mrl-mini-label">MODEL CHOOSES</span>
+      <h3>tool action（工具动作）</h3>
+      <p>由策略产生的结构化决策，例如工具名、参数和是否结束。它会改变环境或查询环境，因此是强化学习要归因的动作。</p>
+    </article>
+    <article class="mrl-card">
+      <span class="mrl-mini-label">ENVIRONMENT RETURNS</span>
+      <h3>tool observation（工具观测）</h3>
+      <p>环境执行动作后返回的结果、错误或状态变化，例如价格、超时和权限拒绝。它是下一轮决策的证据，不是模型自己采取的动作。</p>
+    </article>
+  </div>
+
+  <p>这就是 <strong>multi-turn reinforcement learning（多轮强化学习）</strong> 的最小变化：一次 episode 中有多次“策略行动—环境反馈”，每一轮都可能改变下一轮的观测分布。它并不是把一段长回答机械切成几段，而是把环境重新放回生成循环。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body">
+      <h3>Agentic rollout 的长度由策略和环境共同决定</h3>
+      <p>模型决定是否继续调用工具；工具可能快速返回、超时、报错或要求补充信息。因此两条相同任务的轨迹不仅文本不同，轮数和等待时间也可能不同。</p>
+      <p class="mrl-insight-key">Chapter 19 的吞吐与 staleness 问题在这里更尖锐：训练系统必须等真实环境反馈，不能预先把整条序列一次生成完。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="trajectory">
+  <h2 class="mrl-sec-title"><span class="num">02</span>轨迹不是聊天记录：它要保留“谁做了什么”</h2>
+  <p class="mrl-sec-lead">纯文本日志把模型输出和工具返回混在一起，读起来方便，却不足以支持可靠的策略更新、错误追踪和安全审计。</p>
+
+  <p>把任务输入记作 $x$，第 $t$ 轮的模型动作记作 $a_t$，动作执行后得到的工具观测记作 $o_{t+1}$。一条 Agentic trajectory 可以写成：</p>
+  <div class="mrl-equation">$$\tau=(x,a_0,o_1,a_1,o_2,\ldots,a_T,o_{T+1}).$$</div>
+  <p>这里最后一个 $o_{T+1}$ 可以是“提交成功”“答案验证失败”或“达到轮次上限”。下标特意写成 $a_t\to o_{t+1}$：先行动，环境随后返回新观测。</p>
+
+  <table>
+    <thead><tr><th>轨迹字段</th><th>必须保存什么</th><th>为什么训练需要它</th></tr></thead>
+    <tbody>
+      <tr><td><code>history_before</code></td><td>动作前可见的任务、旧动作与旧观测</td><td>重建策略当时真正拥有的信息</td></tr>
+      <tr><td><code>action</code></td><td>工具名、结构化参数或最终回答</td><td>计算动作的 log-probability 与策略梯度</td></tr>
+      <tr><td><code>observation</code></td><td>原始返回、错误类型和环境状态摘要</td><td>作为下一轮条件，并支持回放与审计</td></tr>
+      <tr><td><code>reward</code></td><td>本轮即时信号或最终结果信号</td><td>反向计算从该轮到结局的折扣回报</td></tr>
+      <tr><td><code>done</code></td><td>成功、失败、被拒绝或达到预算</td><td>确定 episode 在哪里真正结束</td></tr>
+    </tbody>
+  </table>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“工具返回也是上下文里的 token，所以也应该当作模型动作训练。”</strong> 不对。观测会影响后续动作，但它是环境产生的随机变量；让模型去提高工具返回文本的概率，等于把环境行为误记到策略头上。</p>
+  </div>
+</section>
+
+<section id="formalize">
+  <h2 class="mrl-sec-title"><span class="num">03</span>形式化多轮决策：历史就是 Agent 当前能用的状态</h2>
+  <p class="mrl-sec-lead">真实工具系统通常是部分可观测的。Agent 看不到数据库、权限系统和外部服务的完整内部状态，只能依据任务与交互历史行动。</p>
+
+  <p>令 $h_t$ 表示第 $t$ 轮决策前可见的历史：</p>
+  <div class="mrl-equation">$$h_t=(x,a_0,o_1,\ldots,a_{t-1},o_t),\qquad a_t\sim\pi_\theta(\cdot\mid h_t).$$</div>
+  <p>$x$ 是原始任务，$h_t$ 汇总到目前为止可见的证据，$\pi_\theta$ 是待学习策略。模型不是根据不可见的完整世界状态决策，而是根据 $h_t$ 决策；因此工具任务自然可以看作 <strong>Partially Observable Markov Decision Process（POMDP，部分可观测马尔可夫决策过程）</strong>。历史或记忆的作用，是把缺失的状态信息尽可能补进当前决策条件。</p>
+
+  <h3>轨迹概率为什么有两种来源？</h3>
+  <p>给定任务 $x$，一条具体轨迹出现的概率同时取决于模型选动作的概率，以及环境产生观测的概率：</p>
+  <div class="mrl-equation">$$p_\theta(\tau\mid x)=\prod_{t=0}^{T}\pi_\theta(a_t\mid h_t)\,P(o_{t+1}\mid h_t,a_t).$$</div>
+  <p>逐步展开很直接：在 $h_0$ 选择 $a_0$，环境返回 $o_1$；把新观测加入历史得到 $h_1$，再选择 $a_1$。重复乘上每一轮的条件概率，就得到整条链的概率。$P$ 可以包含工具随机性、服务失败和外部状态变化，但策略参数 $\theta$ 只出现在 $\pi_\theta$ 中。</p>
+
+  <p>多轮训练希望提高高回报轨迹的概率。用逐轮奖励 $r_t$ 表示时，目标仍是熟悉的期望折扣回报：</p>
+  <div class="mrl-equation">$$J(\theta)=\mathbb E_{\tau\sim(\pi_\theta,P)}\!\left[\sum_{t=0}^{T}\gamma^t r_t\right].$$</div>
+  <p>与早期章节相比，数学骨架没有神秘变化；困难来自动作是结构化工具调用、观测由外部系统返回、轨迹长度不一，而且奖励往往只在最后出现。</p>
+
+  <table>
+    <thead><tr><th>公式对象</th><th>库存例中的含义</th><th>实现中的常见字段</th></tr></thead>
+    <tbody>
+      <tr><td>$h_t$</td><td>任务 + 已执行调用 + 已返回结果</td><td><code>history</code> / <code>messages</code></td></tr>
+      <tr><td>$a_t$</td><td>搜索、计算或提交摘要</td><td><code>tool_call</code> / <code>action</code></td></tr>
+      <tr><td>$o_{t+1}$</td><td>价格库存、计算值或执行错误</td><td><code>observation</code> / <code>tool_result</code></td></tr>
+      <tr><td>$r_t$</td><td>过程检查或最终任务得分</td><td><code>reward</code></td></tr>
+      <tr><td>$T$</td><td>提交、拒绝或预算耗尽的轮次</td><td><code>done</code> / <code>max_turns</code></td></tr>
+    </tbody>
+  </table>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body">
+      <h3>环境返回进入条件，却不进入“谁可被优化”</h3>
+      <p>观测 $o_{t+1}$ 会改变下一轮的历史 $h_{t+1}$，所以它当然影响后续动作；但 $P(o_{t+1}\mid h_t,a_t)$ 不受模型参数直接控制。</p>
+      <p class="mrl-insight-key">这一区分同时决定训练掩码和责任边界：策略为自己选择的调用负责，不为工具服务随机返回的文本负责。</p>
+    </div>
+  </aside>
+</section>

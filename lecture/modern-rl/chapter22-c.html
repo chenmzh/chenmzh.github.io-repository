@@ -1,0 +1,125 @@
+<section id="evaluation">
+  <h2 class="mrl-sec-title"><span class="num">07</span>长轨迹评测：答案、证据、过程、成本分四层报告</h2>
+  <p class="mrl-sec-lead">总 reward 适合训练更新，分层指标才适合研究诊断。相同零分可能分别来自模型答错、网页超时、引用错配或预算耗尽。</p>
+
+  <p>短答案可先用规范化后的 <strong>Exact Match（EM，精确匹配）</strong>：</p>
+  <div class="mrl-equation">$$S_{\mathrm{EM}}=\mathbb 1[\operatorname{norm}(\hat y)=\operatorname{norm}(y)].$$</div>
+
+  <table class="mrl-eval-table">
+    <thead><tr><th>层</th><th>核心问题</th><th>最小指标</th><th>典型假高分</th></tr></thead>
+    <tbody>
+      <tr><td>答案</td><td>结论是否正确、完整</td><td>Exact Match、事实覆盖</td><td>靠参数记忆直接猜中</td></tr>
+      <tr><td>证据</td><td>引文是否支持对应论断</td><td>覆盖、归因、可访问性</td><td>URL 真实但实体错误</td></tr>
+      <tr><td>过程</td><td>查询是否带来新信息</td><td>冗余率、冲突核对率</td><td>重复搜索后碰巧答对</td></tr>
+      <tr><td>成本</td><td>固定资源内能否完成</td><td>预算内成功率、时间、token</td><td>用更多并行轨迹换成绩</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">四层沿因果链定位失败：过程产生证据，证据支撑答案，成本限制可用过程；任何一层的高分都不能证明其余三层合格。</p>
+
+  <p>过程冗余可以从重复查询和重复访问开始：</p>
+  <div class="mrl-equation">$$S_{\mathrm{redundancy}}=\frac{N_{\mathrm{repeat\ query}}+N_{\mathrm{repeat\ visit}}}{N_{\mathrm{tool\ calls}}}.$$</div>
+  <p>在预算 $B$ 下的成功率则写成：</p>
+  <div class="mrl-equation">$$S_{\mathrm{budget}}(B)=\frac{\#\{\text{在 }B\text{ 内完成的任务}\}}{\#\{\text{全部任务}\}}.$$</div>
+
+  <p><strong>BrowseComp（持续浏览短答案基准）</strong>更偏多跳检索后的短答案；<strong>General AI Assistants（GAIA，通用人工智能助理基准）</strong>同时引入文件与多种工具；开放式研究报告还要检查事实覆盖和引用。比较系统时必须固定题目版本、搜索后端、最大工具步数、采样条数与网页时间；否则“模型更强”可能只是“浏览次数更多”。</p>
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body"><h3>环境错误必须从模型错误中拆出来</h3><p>搜索服务 500、页面抽取为空、模型找到证据却推理错、模型提交格式错，最终都可能是 reward=0，但修复路径完全不同。</p><p class="mrl-insight-key">长轨迹评测最重要的产物之一，是可以按失败类型切片重放的完整日志。</p></div>
+  </aside>
+</section>
+
+<section id="training">
+  <h2 class="mrl-sec-title"><span class="num">08</span>从研究轨迹到训练：先学会闭环，再优化闭环</h2>
+  <p class="mrl-sec-lead">Chapter 20 已经解释多轮工具 trajectory，Chapter 21 已经解释 verifier。这里不重讲优化算法，只看浏览器环境额外需要哪些训练材料。</p>
+
+  <p>这里的 Supervised Fine-Tuning（SFT，监督微调）先用已有成功轨迹教会动作格式，再让当前策略进入环境采样。</p>
+  <div class="mrl-training-flow">
+    <div><span>01 · HARNESS SMOKE TEST</span><strong>固定规则 agent 跑通 reset / step / timeout</strong><small>先证明环境可靠</small></div>
+    <i>→</i><div><span>02 · TRAJECTORY SFT</span><strong>学习 query、read、cite 的合法格式</strong><small>先获得非零成功率</small></div>
+    <i>→</i><div><span>03 · ON-POLICY ROLLOUT</span><strong>在缓存或真实网页生成新轨迹</strong><small>记录环境 token mask</small></div>
+    <i>→</i><div><span>04 · VERIFIER UPDATE</span><strong>答案 + 证据 + 预算反馈</strong><small>保留分项与失败原因</small></div>
+  </div>
+  <p class="mrl-caption">训练顺序的因果关系是：Harness 不稳定会污染轨迹；没有基本工具格式会让终点奖励长期为零；只有前两步可靠后，在线反馈才主要反映研究策略。</p>
+
+  <p>离线搜索 API 环境速度快、可缓存，适合先研究查询改写；正文抽取加入来源核对；真实浏览器再处理动态页面、点击和下载。环境保真度越高，工具噪声和成本越大。课程学习应逐层增加环境难度，而不是一开始就把验证码、弹窗、页面改版与策略学习同时混进 reward。</p>
+
+  <div class="mrl-misconception"><b>边界提醒</b><p><strong>“只要加入每步奖励，长轨迹就一定更容易学。”</strong> 不成立。过程评分器如果偏爱“多搜、多写、多引用”，策略会优化这些表面行为。过程信号必须能指向可核验的进展，并和独立终态评测一起监控。</p></div>
+</section>
+
+<section id="code">
+  <h2 class="mrl-sec-title"><span class="num">09</span>把公式落到代码：先返回指标字典，再决定是否聚合</h2>
+  <p class="mrl-sec-lead">下面是教学化 evaluator。它刻意不在函数内部生成唯一真相分数，避免调用者失去失败结构。</p>
+
+  <pre class="mrl-code"><code>def evaluate_research(task, run):
+    supported_required = sum(
+        evidence_supports(claim, run.citations)
+        for claim in task.required_claims
+    )
+    supported_citations = sum(
+        citation_supports_neighbor(citation, run.answer)
+        for citation in run.citations
+    )
+
+    coverage = supported_required / len(task.required_claims)
+    attribution = (
+        supported_citations / len(run.citations)
+        if run.citations else 0.0
+    )
+    within_budget = float(run.steps &lt;= task.max_steps)
+
+    return {
+        "answer": exact_match(run.answer, task.answers),
+        "coverage": coverage,
+        "attribution": attribution,
+        "within_budget": within_budget,
+        "status": run.status,  # completed / timeout / tool_error
+    }</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>数学/概念</th><th>程序变量</th><th>必须追溯到</th></tr></thead>
+    <tbody>
+      <tr><td>$\tau$</td><td><code>run.trajectory</code></td><td>逐步观察、动作、错误和时间</td></tr>
+      <tr><td>$E$</td><td><code>run.citations</code></td><td>实际访问过的 URL 与原文片段</td></tr>
+      <tr><td>$S_{\mathrm{coverage}}$</td><td><code>coverage</code></td><td>任务要求的原子事实集合</td></tr>
+      <tr><td>$S_{\mathrm{attribution}}$</td><td><code>attribution</code></td><td>每条引用与相邻论断的支持关系</td></tr>
+      <tr><td>环境失败</td><td><code>run.status</code></td><td>搜索、页面、解析器或模型</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="browser-boundary">
+  <h2 class="mrl-sec-title"><span class="num">10</span>浏览器智能体不等于像素界面智能体：下一章会改变什么？</h2>
+  <p class="mrl-sec-lead">本章的核心对象是证据型研究，即使调用 click，也优先使用 DOM、正文或带语义的链接目标。下一章会拿走这些舒适接口。</p>
+
+  <table>
+    <thead><tr><th>维度</th><th>本章：证据型研究 / 浏览器智能体</th><th>下一章：像素界面操作</th></tr></thead>
+    <tbody>
+      <tr><td>主要观察</td><td>搜索结果、DOM、抽取正文、研究笔记</td><td>屏幕像素与有限历史</td></tr>
+      <tr><td>主要动作</td><td><code>search/open/read/cite</code> 等语义动作</td><td>鼠标坐标、键盘、拖拽、等待</td></tr>
+      <tr><td>成功对象</td><td>答案及其证据链</td><td>软件状态与真实副作用</td></tr>
+      <tr><td>新增风险</td><td>错误来源、信息遗漏、超预算</td><td>误点、不可逆操作、越权与安全中止</td></tr>
+    </tbody>
+  </table>
+  <p class="mrl-caption">真正的边界不是“都能点网页所以一样”，而是动作抽象与任务终点不同：研究轨迹要证明结论，像素界面轨迹要可靠地改变界面和外部状态。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">11</span>检查你的理解：能否从证据缺口定位轨迹问题？</h2>
+  <p class="mrl-sec-lead">先回答，再展开。每题都要求指出“该看哪一层指标”，而不只背工具名称。</p>
+
+  <div class="mrl-quiz">
+    <details><summary>1. 两个 Agent 给出相同正确答案，为什么仍不能只给相同 reward？</summary><div class="inner">因为一个可能有可回放的证据链，另一个可能凭记忆猜中或引用错人。答案正确性只检查终点字符串；研究质量还要检查证据覆盖、来源归因、过程与预算。</div></details>
+    <details><summary>2. <code>read</code> 和 <code>cite</code> 为什么不能合并成“看过网页”？</summary><div class="inner"><code>read</code> 把页面内容变成策略观察；<code>cite</code> 建立某个论断与某段原文之间的可审计绑定。看过正确页面不等于最终引用正确，也不保证引用支持相邻论断。</div></details>
+    <details><summary>3. 覆盖率高、归因分低意味着什么？反过来呢？</summary><div class="inner">覆盖率高而归因低表示许多必需事实似乎都有材料，但报告给出的引用经常错配或不支持论断；归因高而覆盖低表示少数引用很可靠，仍有大量关键事实缺少证据。</div></details>
+    <details><summary>4. 为什么网页超时不能和模型答错都简单归为“失败样本”？</summary><div class="inner">网页超时属于环境或工具故障，模型答错属于策略或推理失败。二者都可得到零终态奖励，但分别需要修 Harness 与修模型；混在一起会让训练和失败分析都失真。</div></details>
+    <details><summary>5. 为什么不能单独最小化工具步数？</summary><div class="inner">交叉验证和实体消歧本来就需要额外步骤。过强步数惩罚会鼓励模型提前停止、直接猜测或省略反证来源。预算要作为约束，与答案和证据分项一起报告。</div></details>
+    <details><summary>6. 本章与 Chapter 23 最关键的环境差异是什么？</summary><div class="inner">本章主要用带语义的搜索、正文和引用动作，目标是形成可信证据链；Chapter 23 主要从像素观察输出鼠标键盘动作，动作会改变真实软件状态，还必须处理误点与不可逆副作用。</div></details>
+  </div>
+
+  <div class="mrl-takeaway"><h3>第二十二章建立起来的闭环</h3><div class="mrl-summary-chain"><div>研究问题</div><i>→</i><div>搜索与阅读轨迹</div><i>→</i><div>论断—证据绑定</div><i>→</i><div>答案 / 证据 / 过程 / 成本</div></div><p>Browser RL Harness 把网页变成可运行环境，动作链把信息缺口逐步缩小，证据指标再区分“答对”和“有依据地答对”。完整轨迹既是训练样本，也是评测与审计的最小单位。</p></div>
+
+  <div class="mrl-next"><span class="mrl-eyebrow">Next chapter</span><h3><a href="./chapter23.html">第 23 章：像素、鼠标与不可逆操作如何训练？</a></h3><p>如果环境不再提供干净正文和语义目标，Agent 只能从截图寻找按钮，并用坐标改变真实软件状态。下一章将把观察换成像素、动作换成鼠标键盘，同时加入确认、中止与不可逆副作用的安全边界。</p></div>
+  <p class="mrl-source-note">本章依据 walkinglabs/hands-on-modern-rl 固定版本中的 Browser RL Harness 与 Deep Research 评测材料重新组织，不是原项目官方译本。论文榜单快照与未经固定设置的性能数字未作为教学结论；实验中的轨迹、指标权重与总分均为讲义构造。</p>
+</section>
+
+<footer class="mrl-footer"><span>Modern RL · Chapter 22</span><span><a href="./chapter21.html">← Chapter 21</a> · <a href="./">课程目录</a> · <a href="./chapter23.html">Chapter 23 →</a> · <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter24_deep_research" target="_blank" rel="noopener">原项目 ↗</a></span></footer>

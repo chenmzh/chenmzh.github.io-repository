@@ -1,0 +1,102 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 22 · Research is a trajectory of evidence</div>
+  <h1>搜索、阅读、引用如何形成长轨迹？</h1>
+  <p class="lead">上一章的代码智能体有一个强验证器：补丁能否通过测试。研究型智能体面对的真值没有那么整齐——一句话可能碰巧正确，引用却指向错误的人；来源可能真实存在，却根本不支持相邻论断。于是研究不能只把答案当终点，还必须保存<strong>从问题走到证据的整条路径</strong>。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把搜索、打开网页、阅读、点击、保存引用与提交答案写成 RL trajectory？又怎样分别测量答案、证据、过程与成本，而不是让一个漂亮总分掩盖归因错误？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 65–85 min</span>
+    <span class="mrl-pill">承接：Chapter 20–21 的 Agent trajectory</span>
+    <span class="mrl-pill">数学：条件策略 + 比率指标</span>
+    <span class="mrl-pill">实验：证据覆盖与预算</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从一次网页调用到可审计的研究轨迹</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#research-gap"><b>01</b><span>发现缺口</span><small>正确不等于有据</small></a>
+      <a class="mrl-roadmap-step" href="#harness"><b>02</b><span>封装环境</span><small>观察、动作、转移</small></a>
+      <a class="mrl-roadmap-step" href="#evidence"><b>03</b><span>绑定证据</span><small>覆盖与归因</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#evidence-lab"><b>04</b><span>比较轨迹</span><small>同答案不同质量</small></a>
+      <a class="mrl-roadmap-step" href="#evaluation"><b>05</b><span>分层评测</span><small>答案、证据、过程、成本</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#browser-boundary"><b>06</b><span>划清边界</span><small>文本浏览器到像素界面</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="research-gap">
+  <h2 class="mrl-sec-title"><span class="num">01</span>答案碰巧正确，为什么仍可能是一条失败轨迹？</h2>
+  <p class="mrl-sec-lead">代码测试主要检查“产物是否满足契约”；研究报告还要检查“每个关键论断是否真的由访问过的来源支持”。</p>
+
+  <p>设问题是“论文第一作者本科毕业于哪所大学？”模型最后都回答 Example University。下面三条轨迹的最后一句一样，研究质量却完全不同：</p>
+  <div class="mrl-research-cases" aria-label="三个相同答案但证据质量不同的研究轨迹">
+    <article><span>MEMORY ONLY</span><h3>直接凭记忆回答</h3><p>答案可能正确，但没有访问记录，也无法证明信息来自哪里。</p><b>answer ✓ · evidence 0/3</b></article>
+    <article><span>WRONG ENTITY</span><h3>引用同名人物主页</h3><p>URL 真实、文字相关，却不是论文作者本人，归因链断裂。</p><b>answer ✓ · attribution ✕</b></article>
+    <article class="good"><span>EVIDENCE CHAIN</span><h3>先消歧，再引用教育经历</h3><p>论文页确认姓名与单位，学校主页再支持教育事实。</p><b>answer ✓ · evidence 3/3</b></article>
+  </div>
+  <p class="mrl-caption">真正要观察的是“正确答案”与“可验证研究”之间的缺口：只有第三条轨迹把身份、结论和引用连接成了同一条证据链。</p>
+
+  <p><strong>Deep Research Agent（深度研究智能体）</strong>不是“多搜索几次”的聊天模型，而是把问题分解、检索、阅读、交叉核对、保存证据与报告写作组织成长轨迹的策略。它的输出不仅是文本 $\hat y$，还包括可以回放的动作历史与证据集合 $E$。</p>
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body"><h3>Research 的最小交付不是答案，而是“答案—论断—证据”的绑定</h3><p>答案正确只说明终点碰对了；来源归因还要证明这条路线确实读到了能够支持结论的材料。</p><p class="mrl-insight-key">验证研究轨迹时，要问“证据是否支持这句话”，而不只是“这个 URL 能不能打开”。</p></div>
+  </aside>
+</section>
+
+<section id="harness">
+  <h2 class="mrl-sec-title"><span class="num">02</span>把会变化的网页封装成可重复实验台</h2>
+  <p class="mrl-sec-lead"><strong>Browser RL Harness（浏览器强化学习实验台）</strong>把模型、搜索服务、网页读取器、轨迹日志与验证器接在一起，使一次研究能够 reset、step、回放和评分。</p>
+
+  <div class="mrl-harness-loop" aria-label="浏览器强化学习实验台闭环">
+    <div><span>QUESTION</span><b>研究问题 + 预算</b></div><i>→</i>
+    <div><span>POLICY</span><b>选择下一动作</b></div><i>→</i>
+    <div><span>WEB ENV</span><b>返回页面观察</b></div><i>→</i>
+    <div><span>VERIFIER</span><b>检查答案与证据</b></div>
+  </div>
+  <p class="mrl-caption">闭环中真正可训练的是策略产生的动作；网页文本属于环境观察，验证器在终点把答案、证据和预算转换成反馈。</p>
+
+  <p>完整浏览器状态 $s_t$ 包含当前 URL、Document Object Model（DOM，文档对象模型）、会话、滚动位置、缓存和网络状态；策略通常只看到抽取正文、搜索结果、页面摘要和研究笔记组成的观察 $o_t$。因此更准确的写法是：</p>
+  <div class="mrl-equation">$$o_t\sim O(\cdot\mid s_t),\qquad a_t\sim\pi_\theta(\cdot\mid q,o_{\le t},a_{&lt;t}),\qquad s_{t+1}\sim P(\cdot\mid s_t,a_t).$$</div>
+  <p>$q$ 是原始研究问题，$O$ 是状态到可见观察的映射，$P$ 则提醒我们真实网页并非确定环境：同一个 URL 可能更新、超时或重定向。只保存最终报告，会把策略失败和网页失败混在一起。</p>
+
+  <table>
+    <thead><tr><th>Harness 对象</th><th>研究任务里的实例</th><th>日志中必须保存</th></tr></thead>
+    <tbody>
+      <tr><td>观察 $o_t$</td><td>搜索结果、正文片段、当前笔记</td><td>内容、抓取时间、工具状态</td></tr>
+      <tr><td>动作 $a_t$</td><td>查询、打开、点击、读取、引用、回答</td><td>原始模型输出与解析动作</td></tr>
+      <tr><td>转移</td><td>新页面、失败提示、重定向</td><td>下一观察与错误类别</td></tr>
+      <tr><td>终止</td><td>提交答案、超预算、不可恢复错误</td><td>终止原因，不能只写 reward=0</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="actions">
+  <h2 class="mrl-sec-title"><span class="num">03</span>从 search 到 cite：每个动作解决不同的信息缺口</h2>
+  <p class="mrl-sec-lead">搜索负责扩大候选集合，阅读负责取得内容，引用负责把内容绑定到论断。把它们压成一个“browse”动作，会失去可解释的信用分配。</p>
+
+  <div class="mrl-action-strip">
+    <div><code>search(query)</code><span>提出可检索的问题</span></div>
+    <div><code>open(url)</code><span>进入候选来源</span></div>
+    <div><code>click(target)</code><span>处理分页或动态页面</span></div>
+    <div><code>read(scope)</code><span>抽取正文、表格或段落</span></div>
+    <div><code>cite(claim, span)</code><span>保存论断—证据边</span></div>
+    <div><code>answer(text)</code><span>提交结论并终止</span></div>
+  </div>
+  <p class="mrl-caption">动作链的因果关系是：search/open/click 改变可见页面，read 把页面变成可用观察，cite 再把观察中的具体片段绑定到报告论断；引用不是事后补 URL。</p>
+
+  <pre class="mrl-code"><code>ACTIONS = {
+    "search": {"query": str},
+    "open":   {"url": str},
+    "click":  {"target": str},
+    "read":   {"scope": str},
+    "cite":   {"claim_id": str, "quote": str, "url": str},
+    "answer": {"text": str},
+}</code></pre>
+
+  <p>一条最小可审计轨迹可以写成：</p>
+  <div class="mrl-equation">$$\tau=(q,o_0,a_0,o_1,a_1,\ldots,o_T,a_T,E,\hat y).$$</div>
+  <p>$E$ 不是散乱链接列表，而是一组 <code>(claim_id, quote, url, visited_at)</code> 记录。这样验证器才能检查某段引文是否来自实际访问页面、是否支持指定论断，以及同名实体是否已经消歧。</p>
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body"><h3>工具动作不只是“做事”，也在改变下一步能知道什么</h3><p>一次查询改写会改变候选来源，一次阅读范围选择会决定哪些证据进入上下文，一次错误引用则会把正确事实绑到错误来源。</p><p class="mrl-insight-key">浏览器策略同时控制环境路径与信息路径，因此过程日志本身就是训练数据的一部分。</p></div>
+  </aside>
+</section>

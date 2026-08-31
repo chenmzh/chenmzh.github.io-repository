@@ -1,0 +1,110 @@
+<section id="mask">
+  <h2 class="mrl-sec-title"><span class="num">04</span>只让策略生成的内容进入损失：工具返回是条件，不是目标</h2>
+  <p class="mrl-sec-lead">轨迹最终会被序列化为 token。此时必须用一个明确掩码告诉损失函数：哪些 token 是策略生成的动作，哪些来自用户或环境。</p>
+
+  <p><strong>action mask（动作掩码）</strong>为每个 token 设一个二值标记 $m_i$：模型生成的思考、工具调用和最终回答取 $m_i=1$；任务 prompt、工具 observation 与 padding 取 $m_i=0$。一个简化的策略损失写成：</p>
+  <div class="mrl-equation">$$\mathcal L_{\text{policy}}=-\sum_i m_i\,A_{\operatorname{turn}(i)}\log\pi_\theta(y_i\mid y_{1:i-1}).$$</div>
+  <p>$y_i$ 是序列中的第 $i$ 个 token，$A_{\operatorname{turn}(i)}$ 是它所属轮次的 advantage（优势）。乘上 $m_i$ 后，工具返回仍留在上下文里帮助预测后续动作，但它自身的 log-probability 不进入策略损失。</p>
+
+  <div class="mrl-mask-strip" aria-label="多轮序列中的动作掩码">
+    <div class="is-context"><span>USER TASK</span><b>$m=0$</b><small>查 MX-8 报价</small></div>
+    <div class="is-policy"><span>TOOL CALL</span><b>$m=1$</b><small>catalog.search(…)</small></div>
+    <div class="is-context"><span>TOOL OBS</span><b>$m=0$</b><small>price=120, stock=7</small></div>
+    <div class="is-policy"><span>TOOL CALL</span><b>$m=1$</b><small>calculator(…)</small></div>
+    <div class="is-context"><span>TOOL OBS</span><b>$m=0$</b><small>result=360</small></div>
+    <div class="is-policy"><span>ANSWER</span><b>$m=1$</b><small>3 台共 360 元</small></div>
+  </div>
+  <p class="mrl-caption">真正要看的是掩码而不是颜色：观测 token 的 $m=0$，但它仍出现在后续动作的前缀 $y_{1:i-1}$ 中。掩码排除梯度目标，不是从上下文删除证据。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“$m=0$ 表示模型看不到工具返回。”</strong> 不对。模型在下一轮必须读到返回结果；$m=0$ 只表示训练时不要求策略去复现那段由环境产生的 token。</p>
+  </div>
+</section>
+
+<section id="credit">
+  <h2 class="mrl-sec-title"><span class="num">05</span>跨轮信用分配：成功了，第一步就一定值得奖励吗？</h2>
+  <p class="mrl-sec-lead">Chapter 18 已经比较结果奖励与过程奖励。本章不重讲评分器，而是追问它们进入一条工具轨迹后，怎样改变每一轮的学习信号。</p>
+
+  <p><strong>credit assignment（信用分配）</strong>是把整条轨迹的成败归因给各轮动作的问题。只在最后给结果奖励时，早期动作通过 <strong>reward-to-go（从当前轮到结尾的折扣回报）</strong>获得信号：</p>
+  <div class="mrl-equation">$$G_t=\sum_{k=t}^{T}\gamma^{k-t}r_k
+  =r_t+\gamma G_{t+1}.$$
+  </div>
+  <p>第二个等号来自把求和的第一项 $r_t$ 拆出来；剩余项都多一个 $\gamma$，恰好组成 $\gamma G_{t+1}$。若四轮轨迹只有最后成功奖励 $r_3=1$，取 $\gamma=0.8$：</p>
+  <div class="mrl-equation">$$G_3=1,\quad G_2=0.8,\quad G_1=0.64,\quad G_0=0.512.$$
+  </div>
+  <p>最终成功确实能传回第一轮，但它会把整条成功路径一起抬高。若“精确搜索”和“模糊搜索后再补救”最后都成功，纯结果奖励给两种第一步完全相同的 $G_0$，无法告诉策略哪一种更高效。</p>
+
+  <h3>从回报到可比较的动作信号</h3>
+  <p>策略更新通常不直接使用 $G_t$，而是减去当前历史下的 baseline（基线）$b(h_t)$：</p>
+  <div class="mrl-equation">$$A_t=G_t-b(h_t).$$</div>
+  <p>若从同一个初始历史 $h_0$ 采样两条轨迹，可以先用两者平均回报作一个教学版基线。设过程评分把总奖励预算中的 $\lambda=0.4$ 分给“第一步使用精确 SKU 搜索”，其余 $0.6$ 留给最终成功：</p>
+
+  <table class="mrl-credit-table">
+    <thead><tr><th>第一步</th><th>逐轮奖励 $[r_0,r_1,r_2,r_3]$</th><th>$G_0$，$\gamma=0.8$</th><th>$A_0$</th></tr></thead>
+    <tbody>
+      <tr><td>精确搜索</td><td>$[0.4,0,0,0.6]$</td><td>$0.4+0.8^3(0.6)=0.7072$</td><td>$+0.2$</td></tr>
+      <tr><td>模糊搜索后补救</td><td>$[0,0,0,0.6]$</td><td>$0.8^3(0.6)=0.3072$</td><td>$-0.2$</td></tr>
+    </tbody>
+  </table>
+  <p>两条回报的平均是 $b(h_0)=0.5072$，所以优势一正一负。这里不是说“早期步骤天然更重要”，而是过程信号提供了纯结果奖励缺失的区分证据。若过程评分器把低效步骤误判成好步骤，它也会更快地把错误教给策略。</p>
+
+  <aside class="mrl-insight" data-insight-id="03">
+    <div class="mrl-insight-index">Insight 03</div>
+    <div class="mrl-insight-body">
+      <h3>稠密奖励提高可辨识性，也扩大评分偏差的作用范围</h3>
+      <p>最终结果通常便宜且客观，却难定位是哪轮导致成功；逐轮信号能区分共享同一结果的不同路径，却要求每一轮都能被可靠评价。</p>
+      <p class="mrl-insight-key">选择 reward 粒度之前，先问“这个中间步骤真的可验证吗？”无法可靠验证时，更多 reward 不等于更多真相。</p>
+    </div>
+  </aside>
+
+  <h3>Chapter 13 的多智能体问题，在这里怎样出现？</h3>
+  <p>Chapter 13 已经正式解释 multi-agent RL（多智能体强化学习）中的联合行为和个体信用。如果一个工具系统把规划、执行和核验交给不同 Agent，最终得分同样要区分“哪个角色的哪轮动作”造成结果。本章只把那条原则迁移到协作工具轨迹，不重新展开联合策略或集中训练；对手与共同进化留到 Chapter 27。</p>
+</section>
+
+<section id="synthesis">
+  <h2 class="mrl-sec-title"><span class="num">06</span>训练以前，先制造能被执行和检查的过程</h2>
+  <p class="mrl-sec-lead">有最终答案的数据，不等于有工具轨迹数据。Agent 要学习何时调用什么、参数怎样接续、错误后如何恢复，因此训练样本必须包含中间互动。</p>
+
+  <p><strong>trajectory synthesis（轨迹合成）</strong>是自动或半自动地产生“任务—动作—观测—后续动作—结果”的候选轨迹，再通过执行与质量控制筛选可学习过程。它解决的是数据稀缺，不是凭空保证数据正确。</p>
+
+  <div class="mrl-synthesis-flow" aria-label="轨迹合成流水线">
+    <article><b>1</b><span>定义任务与工具契约</span><small>参数类型、预算、成功条件</small></article>
+    <i>→</i>
+    <article><b>2</b><span>采样候选轨迹</span><small>不同计划、调用顺序与恢复路径</small></article>
+    <i>→</i>
+    <article><b>3</b><span>在环境中执行</span><small>保存真实 observation，不伪造结果</small></article>
+    <i>→</i>
+    <article><b>4</b><span>验证与过滤</span><small>正确性、效率、安全、完整性</small></article>
+    <i>→</i>
+    <article><b>5</b><span>写入训练集</span><small>保留 action mask 与终止原因</small></article>
+  </div>
+  <p class="mrl-caption">真正要观察的是第 3 步：候选调用必须进入可控环境执行，后续观测来自执行结果。仅让另一个模型“编一段看起来合理的工具日志”，无法验证参数接续和错误恢复是否成立。</p>
+
+  <h3>四种互补的合成思路</h3>
+  <table>
+    <thead><tr><th>方法</th><th>怎样产生轨迹</th><th>主要风险</th></tr></thead>
+    <tbody>
+      <tr><td>rejection sampling（拒绝采样）</td><td>多次 rollout，只保留成功者</td><td>成功率低时浪费大；可能保留绕远路的“侥幸成功”</td></tr>
+      <tr><td>director–actor（导演—演员）</td><td>先生成高层路线，再由执行模型填充每轮调用</td><td>路线本身错误时，整条轨迹会一致地错下去</td></tr>
+      <tr><td>tool graph（工具图）</td><td>按输出字段到输入字段的合法连接生成调用链</td><td>结构合法不代表语义目标正确</td></tr>
+      <tr><td>closed loop（闭环迭代）</td><td>评估当前模型弱点，再定向补充失败类型</td><td>诊断指标偏了，数据分布也会跟着偏</td></tr>
+    </tbody>
+  </table>
+
+  <p>无论候选从哪里来，都至少检查四件事：工具参数是否合法；观察是否来自真实执行；成功路径是否高效且不越权；难度与策略是否足够多样。失败轨迹也不必全部丢掉——只要错误位置和终止原因可靠，它们可以教模型识别无效调用与恢复边界。</p>
+
+  <div class="mrl-misconception">
+    <b>容易想错</b>
+    <p><strong>“最终验证通过的轨迹就一定是好示范。”</strong> 不一定。一条轨迹可能先调用五次无关工具，最后偶然得到正确答案；只按最终成功过滤，会把浪费预算的路径也当作正例。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="04">
+    <div class="mrl-insight-index">Insight 04</div>
+    <div class="mrl-insight-body">
+      <h3>轨迹合成同时在设计数据分布和可到达状态</h3>
+      <p>单轮数据主要决定模型看见哪些问题；多轮轨迹还决定模型会进入哪些中间状态、看见哪些错误、练习哪些恢复动作。</p>
+      <p class="mrl-insight-key">只合成顺利的成功路径，会得到一个不会从超时、空结果和参数错误中恢复的 Agent。</p>
+    </div>
+  </aside>
+</section>

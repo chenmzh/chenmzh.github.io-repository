@@ -1,0 +1,110 @@
+<section class="mrl-chapter-hero" id="hero">
+  <div class="mrl-eyebrow">Chapter 23 · Pixels become actions with consequences</div>
+  <h1>像素、鼠标与不可逆操作如何训练？</h1>
+  <p class="lead">上一章的浏览器实验台还能告诉 Agent“这是搜索结果”“这是正文”“这条引用来自哪个 URL”。直接操作软件界面更接近人在电脑前看到的世界：模型得到一张截图，只能输出鼠标、键盘、滚动或等待。一个坐标偏差可能只是点空，也可能把“保存草稿”变成“立即发送”。</p>
+  <div class="mrl-question"><strong>本章核心问题：</strong>怎样把像素观察与带坐标、文字等参数的界面动作写成可训练轨迹？当动作会发信、删文件或转账时，为什么普通探索奖励不够，还必须加入授权检查、安全中止和高风险确认？</div>
+  <div class="mrl-meta">
+    <span class="mrl-pill">预计阅读 70–90 min</span>
+    <span class="mrl-pill">承接：Chapter 22 的浏览器长轨迹</span>
+    <span class="mrl-pill">数学：部分可观测决策 + 期望损失</span>
+    <span class="mrl-pill">实验：授权与确认门禁</span>
+  </div>
+
+  <nav class="mrl-hero-roadmap" aria-label="本章学习路线">
+    <div class="mrl-roadmap-head"><span>本章学习路线</span><small>从识别按钮到约束真实副作用</small></div>
+    <div class="mrl-roadmap-track">
+      <a class="mrl-roadmap-step" href="#pixel-gap"><b>01</b><span>观察像素</span><small>截图不是结构化状态</small></a>
+      <a class="mrl-roadmap-step" href="#gui-actions"><b>02</b><span>输出动作</span><small>类型 + 坐标 + 参数</small></a>
+      <a class="mrl-roadmap-step" href="#grounding"><b>03</b><span>完成定位</span><small>语言目标落到界面</small></a>
+      <a class="mrl-roadmap-step" href="#irreversible"><b>04</b><span>计算风险</span><small>小概率 × 大损失</small></a>
+      <a class="mrl-roadmap-step is-lab" href="#safety-lab"><b>05</b><span>通过门禁</span><small>执行、暂停或中止</small></a>
+      <a class="mrl-roadmap-step is-goal" href="#training"><b>06</b><span>安全训练</span><small>快照、沙箱、验证器</small></a>
+    </div>
+  </nav>
+</section>
+
+<section id="pixel-gap">
+  <h2 class="mrl-sec-title"><span class="num">01</span>工具名消失以后，Agent 先要从像素里找出“什么能做”</h2>
+  <p class="mrl-sec-lead">Chapter 22 的 <code>open(url)</code> 已经声明动作语义；图形界面里没有 <code>submit_form()</code>，只有一张图和可以注入系统的鼠标键盘事件。</p>
+
+  <p>Graphical User Interface（GUI，图形用户界面）把软件能力放在窗口、按钮、菜单和画布里；策略没有结构化 API 时，只能通过人类也能使用的可视界面行动。</p>
+
+  <div class="mrl-gui-scene" aria-label="从截图到点击再到验证的 GUI 一步闭环">
+    <div class="screen"><span>SCREENSHOT</span><b>邮箱 ✓　验证码 ✓</b><button type="button" tabindex="-1">提交</button></div>
+    <i>→</i><div class="decision"><span>GROUND</span><b>按钮中心 $(935,647)$</b><small>把“提交”映射到像素位置</small></div>
+    <i>→</i><div class="decision"><span>ACT</span><b><code>click(935,647)</code></b><small>坐标事件进入操作系统</small></div>
+    <i>→</i><div class="decision"><span>VERIFY</span><b>读取下一张截图</b><small>成功页、错误框或仍在加载？</small></div>
+  </div>
+  <p class="mrl-caption">真正的闭环不是“看见按钮 → 点击”，而是“识别目标 → 定位 → 执行动作 → 验证界面是否按预期变化”；缺少最后一步会把误点继续传播。</p>
+
+  <p><strong>Computer Use（计算机操作）</strong>把操作系统或应用界面当作 Agent 环境。最基本的视觉观察是一张截图：</p>
+  <div class="mrl-equation">$$o_t\in[0,255]^{H\times W\times 3}.$$</div>
+  <p>$H,W$ 是画面高宽，3 表示红、绿、蓝三个颜色通道。这个矩阵能保留按钮颜色和文字形状，却没有直接告诉策略哪个矩形可以点击、哪个文本来自用户、哪个弹窗遮住了底层控件。Vision-Language Model（VLM，视觉语言模型）必须把视觉理解、任务规划和动作生成接到同一条轨迹里。</p>
+</section>
+
+<section id="partial-observation">
+  <h2 class="mrl-sec-title"><span class="num">02</span>同一张截图，背后可能是两个不同状态</h2>
+  <p class="mrl-sec-lead">截图只记录采样瞬间。网络请求、焦点、剪贴板、后台上传与权限状态可能不可见，因此 GUI 更像 Partially Observable Markov Decision Process（POMDP，部分可观测马尔可夫决策过程）。</p>
+
+  <div class="mrl-hidden-state">
+    <article><span>VISIBLE PIXELS</span><h3>按钮灰色、页面未跳转</h3><p>两张截图肉眼几乎相同。</p></article>
+    <article><span>HIDDEN STATE A</span><h3>请求仍在发送</h3><p>正确动作是 <code>wait</code>；再次点击可能重复提交。</p></article>
+    <article><span>HIDDEN STATE B</span><h3>点击没有命中</h3><p>正确动作可能是重新定位并点击。</p></article>
+  </div>
+  <p class="mrl-caption">相同像素不保证相同系统状态；上一动作、等待时间和后续观察能帮助区分“正在处理”与“根本没点中”。</p>
+
+  <p>策略因而不应只条件化在当前单帧，而要利用有限历史：</p>
+  <div class="mrl-equation">$$a_t\sim\pi_\theta(a_t\mid q,o_{1:t},a_{1:t-1}).$$</div>
+  <p>$q$ 是用户目标，$o_{1:t}$ 与 $a_{1:t-1}$ 共同提供状态线索。工程上可以保留最近几张截图、动作后的预期变化和结构化工作记忆。历史越长并非越好：视觉 token 很快挤满上下文，所以要保留对后续判断真正有用的变化。</p>
+
+  <aside class="mrl-insight" data-insight-id="01">
+    <div class="mrl-insight-index">Insight 01</div>
+    <div class="mrl-insight-body"><h3>截图是 observation，不是完整 state</h3><p>“页面看起来没变”可能对应等待、误点、网络失败或弹窗遮挡。策略要用动作历史和下一帧变化更新自己对隐藏状态的判断。</p><p class="mrl-insight-key">GUI Agent 的记忆首先服务于状态判断，而不只是保存更长的自然语言思考。</p></div>
+  </aside>
+</section>
+
+<section id="gui-actions">
+  <h2 class="mrl-sec-title"><span class="num">03</span>GUI 动作不是一个标签，而是“动作类型 + 参数”</h2>
+  <p class="mrl-sec-lead"><code>click</code> 是离散选择，坐标却是连续或高基数参数；<code>type</code> 还要生成字符串，<code>drag</code> 要同时给出起点和终点。</p>
+
+  <div class="mrl-equation">$$a_t=(k_t,\eta_t),\qquad k_t\in\{\text{click,type,scroll,key,wait,done}\}.$$</div>
+  <p>$k_t$ 是动作类型，$\eta_t$ 是该类型所需参数。不同类型的参数空间不同：点击需要 $(x,y)$，输入需要文本，等待需要时长。最小公共动作空间可以写成：</p>
+  <pre class="mrl-code"><code>ACTIONS = {
+    "click":  {"x": int, "y": int, "button": "left|right"},
+    "drag":   {"start": [x, y], "end": [x, y]},
+    "type":   {"text": str},
+    "key":    {"keys": "cmd+c|enter|tab"},
+    "scroll": {"x": int, "y": int, "dy": int},
+    "wait":   {"ms": int},
+    "done":   {"summary": str},
+}</code></pre>
+
+  <h3>一个坐标换算</h3>
+  <p>模型常输出归一化坐标 $(u,v)\in[0,1]^2$，执行器再按当前截图尺寸换成像素。因为像素下标分别只到 $W-1$ 与 $H-1$，端点必须映射到最后一个有效像素：</p>
+  <div class="mrl-equation">$$x=\operatorname{round}\!\big(u(W-1)\big),\qquad y=\operatorname{round}\!\big(v(H-1)\big).$$</div>
+  <p>若模型预测 $(u,v)=(0.65,0.72)$，截图为 $1440\times900$，那么：</p>
+  <div class="mrl-equation">$$x=\operatorname{round}(0.65\times1439)=935,\qquad y=\operatorname{round}(0.72\times899)=647.$$</div>
+  <p>如果部署时窗口缩放了，却把训练分辨率下的绝对坐标原样执行，动作会系统性偏移。轨迹必须保存原始截图尺寸、归一化坐标与最终执行坐标。</p>
+
+  <aside class="mrl-insight" data-insight-id="02">
+    <div class="mrl-insight-index">Insight 02</div>
+    <div class="mrl-insight-body"><h3>“动作格式正确”与“动作落点正确”是两道验证</h3><p><code>click(935,647)</code> 可以完全合法，却点到错误元素；坐标正确也可能在不该提交的时机执行。</p><p class="mrl-insight-key">定位误差、规划误差和时机误差必须分开记录，否则一个零奖励无法告诉我们该补哪种数据。</p></div>
+  </aside>
+</section>
+
+<section id="grounding">
+  <h2 class="mrl-sec-title"><span class="num">04</span>把“点击提交”落到一个可执行区域</h2>
+  <p class="mrl-sec-lead"><strong>visual grounding（视觉定位）</strong>把语言提到的界面对象映射为区域或坐标。它解决“在哪里”，但不单独解决“现在是否该做”。</p>
+
+  <p><strong>Set-of-Mark（SoM，标记集）</strong>先由检测器给可交互元素编号，再让策略选择编号；<strong>direct coordinate（直接坐标）</strong>则让策略直接预测归一化位置。两者都在回答“目标在哪里”，只是把定位误差放在不同模块。</p>
+
+  <div class="mrl-grounding-compare">
+    <article><span>SET-OF-MARK</span><h3>先给元素编号，再选择编号</h3><p>检测器把输入框、按钮和图标标成 1、2、3；策略输出 <code>click(3)</code>。动作更离散，但检测器漏标后策略无从引用。</p></article>
+    <article><span>DIRECT COORDINATE</span><h3>视觉语言模型直接生成坐标</h3><p>模型联合生成思考、动作类型与 $(u,v)$。接口更统一，却需要大量跨分辨率、遮挡和小元素定位数据。</p></article>
+  </div>
+  <p class="mrl-caption">两条路线真正比较的是误差放在哪里：Set-of-Mark 把一部分定位交给外部检测器；端到端坐标把误差留在策略模型内部。二者都需要任务级反馈判断“该不该点”。</p>
+
+  <p>若标注点为 $p_i$、模型预测为 $\hat p_\theta(o_i)$，最简单的坐标监督损失是：</p>
+  <div class="mrl-equation">$$\mathcal L_{\mathrm{ground}}=\frac1N\sum_{i=1}^N\left\lVert\hat p_\theta(o_i)-p_i\right\rVert_2^2.$$</div>
+  <p>这一步适合 Supervised Fine-Tuning（SFT，监督微调），能建立基本点击能力；完整任务仍要在可重置环境中学习动作怎样改变下一张截图。否则模型可能非常准确地点击一个与当前子目标无关的按钮。</p>
+</section>

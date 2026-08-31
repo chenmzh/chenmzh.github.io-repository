@@ -1,0 +1,148 @@
+<section id="code-rlvr">
+  <h2 class="mrl-sec-title"><span class="num">07</span>代码 RLVR：从执行结果到策略更新的最短线路</h2>
+  <p class="mrl-sec-lead"><strong>Reinforcement Learning with Verifiable Rewards（RLVR，可验证奖励强化学习）</strong>在 Chapter 16 已正式解释过：奖励由规则或程序检查产生。代码场景的关键变化，是 verifier 必须真的运行模型产物。</p>
+
+  <p>固定上游代码给出一个函数级实验：题目是 stdin/stdout 形式的竞赛程序，而不是仓库 patch。数据把输入输出用例保存在 <code>reward_model["ground_truth"]</code> 中；奖励函数依次提取 Python 代码、逐个运行测试、比较标准输出，再返回通过比例：</p>
+
+  <div class="mrl-code-pipeline" aria-label="上游 code_reward.py 的数据流">
+    <div><span>MODEL</span><strong><code>solution_str</code></strong><small>模型完整回答</small></div>
+    <i>→</i>
+    <div><span>PARSE</span><strong><code>extract_code</code></strong><small>提取 Python code block</small></div>
+    <i>→</i>
+    <div><span>EXECUTE</span><strong><code>run_io_tests</code></strong><small>stdin → program → stdout</small></div>
+    <i>→</i>
+    <div><span>REWARD</span><strong><code>score = pass_rate</code></strong><small>交给 PPO 的标量</small></div>
+  </div>
+  <p class="mrl-caption">真正要观察的是最后一条接线：只有返回字典里的 <code>score</code> 进入策略奖励；<code>format</code> 只是独立日志指标，不能误写成“代码块格式也自动加分”。</p>
+
+  <pre><code>def compute_score(data_source, solution_str, ground_truth, extra_info=None):
+    match = _CODE_BLOCK_RE.search(solution_str)
+    format_ok = 1.0 if match else 0.0
+    code = extract_code(solution_str)
+    if not code:
+        return {"score": 0.0, "pass_rate": 0.0, "format": 0.0}
+    pass_rate, detail = run_io_tests(code, ground_truth)
+    return {
+        "score": pass_rate,       # PPO 使用的主奖励
+        "pass_rate": pass_rate,   # 诊断日志
+        "format": format_ok,      # 是否输出了代码块，仅记录
+    }</code></pre>
+
+  <table class="mrl-code-map">
+    <thead><tr><th>上游变量</th><th>函数级 code RLVR</th><th>迁移到仓库级环境</th></tr></thead>
+    <tbody>
+      <tr><td><code>solution_str</code></td><td>一段完整程序回答</td><td>工具轨迹生成的最终 <code>model_patch</code></td></tr>
+      <tr><td><code>ground_truth</code></td><td>stdin/stdout 测试对</td><td>任务测试、回归测试与运行合同</td></tr>
+      <tr><td><code>run_io_tests</code></td><td>在子进程运行单文件程序</td><td>在隔离容器还原仓库、应用 patch、执行测试</td></tr>
+      <tr><td><code>score</code></td><td>测试通过比例</td><td>通过比例或严格 <code>resolved</code></td></tr>
+    </tbody>
+  </table>
+
+  <p>这张映射也揭示了一个边界：把函数级 reward 文件接入训练器，并不会自动得到仓库级 Agent。后者还需要文件工具、持久工作副本、状态重置、patch 应用、依赖镜像、隐藏测试和基础设施错误分类。</p>
+
+  <div class="mrl-safety-note">
+    <b>执行安全边界</b>
+    <p>上游实现明确拒绝把本地 <code>subprocess</code> 当成安全沙箱。子进程仍可能读取当前用户可见文件、网络和凭据。训练生成代码前，应先放进最小权限 <strong>container（容器）</strong>或 <strong>Virtual Machine（VM，虚拟机）</strong>，清理凭据、限制网络与资源，并只读挂载训练数据；超时与内存上限只是附加限制，不能替代隔离。</p>
+  </div>
+
+  <aside class="mrl-insight" data-insight-id="05">
+    <div class="mrl-insight-index">Insight 05</div>
+    <div class="mrl-insight-body">
+      <h3>硬反馈来自执行，不来自文件名叫 reward</h3>
+      <p>训练器只有在数据里的验证条件、执行函数和主奖励字段正确接通时，才真的看见可验证结果。任何一处错接，都会出现“训练在跑、模型却没收到题目或奖励”的假进展。</p>
+      <p class="mrl-insight-key">先用已知正确、已知错误和空回答做 reward sanity check，再花 GPU 预算训练。</p>
+    </div>
+  </aside>
+</section>
+
+<section id="engineering">
+  <h2 class="mrl-sec-title"><span class="num">08</span>一个可训练代码环境，至少要守住五条合同</h2>
+  <p class="mrl-sec-lead">把算法名从 PPO 换成 GRPO，不会修复一个不可靠的执行环境。下面五条是环境向策略承诺的可检查合同。</p>
+
+  <ol class="mrl-contract-list">
+    <li><span>01</span><div><strong>同起点</strong><p>每条 rollout 从同一 commit、同一镜像与干净进程状态开始。</p></div></li>
+    <li><span>02</span><div><strong>动作留痕</strong><p>记录 observation、工具参数、输出、patch、token 与超时，而不只保存最终 diff。</p></div></li>
+    <li><span>03</span><div><strong>验证器隔离</strong><p>在只读基准副本上应用 patch；测试入口与受保护测试不能被 Agent 修改。</p></div></li>
+    <li><span>04</span><div><strong>失败分型</strong><p>断言失败、补丁冲突、依赖失败、容器故障和超时使用不同状态码。</p></div></li>
+    <li><span>05</span><div><strong>预算可比</strong><p>同时报告模型、工具权限、最大步数、采样数、token、时间与 Pass@k 口径。</p></div></li>
+  </ol>
+
+  <p>这些合同决定了 reward 是否能归因给策略。例如容器没启动时返回 0，会把基础设施事故当成一次“坏动作”；若 Agent 能编辑测试入口，reward 又会鼓励它改变计分方式。两种错误方向相反，却都会污染策略更新。</p>
+
+  <div class="mrl-failure-split">
+    <article><span>MODEL FAILURE</span><strong>补丁应用成功，测试断言失败</strong><p>这是可学习的任务反馈：实现没有满足当前合同。</p></article>
+    <article><span>INFRA FAILURE</span><strong>镜像、依赖或 runner 没有启动</strong><p>这是环境数据质量问题：应重试或剔除，不能直接归罪策略。</p></article>
+  </div>
+  <p class="mrl-caption">真正要分开的是“代码被正确执行后失败”与“代码根本没有得到一次有效评测”。把两者都记成零分，会训练模型适应随机基础设施噪声。</p>
+</section>
+
+<section id="analogy">
+  <h2 class="mrl-sec-title"><span class="num">09</span>迁移类比：长轨迹让“预测后果”和“真实执行”同时重要</h2>
+  <p class="mrl-sec-lead">这里只做两次迁移定位，不重新教授 Chapter 10 的 world model，也不把公开工作未声明的组件写成既成训练配方。</p>
+
+  <div class="mrl-analogy-pair">
+    <article>
+      <span>WORLD-MODEL ANALOGY</span>
+      <h3>一次 edit 之后，下一状态会怎样？</h3>
+      <p>Chapter 10 的 world model（学习环境动力学）思想可以类比到代码：根据当前仓库与动作，预测下一份文件状态或测试日志。<strong>Code World Model（CWM，代码世界模型）</strong>一类工作提醒我们，模型可以从解释器与容器轨迹中学习软件执行规律。</p>
+      <p><strong>边界：</strong>预测器会错，依赖和外部服务也难以完整模拟。候选最终仍要回到真实执行环境验证，不能让模型预测替代 ground truth test。</p>
+    </article>
+    <article>
+      <span>LONG-HORIZON ANALOGY</span>
+      <h3>奖励在终点，前面几十步怎样改进？</h3>
+      <p>一类长程代码智能体工作强调稳定环境、长 rollout 与可验证终态奖励。它与本章主线的联系是：补丁成功来自多步工具序列，而不只是一次代码生成。</p>
+      <p><strong>边界：</strong>过程 shaping、value model 或搜索都是要单独消融的选择；不能因为任务很长，就默认某一种额外组件必然有效。</p>
+    </article>
+  </div>
+  <p class="mrl-caption">两栏共同指向同一条因果关系：模拟可以降低探索成本，真实执行负责纠正模拟误差；长轨迹需要更强的信用分配，但环境可靠性先于算法复杂度。</p>
+
+  <p>自生成缺陷与自我修复还可以扩大训练数据，但那会引入“题目是否有效、难度是否平衡、合成缺陷是否像真实 issue”等新问题。本章不展开自生成题目与自我改进的具体配方；它只强化一点：无论题目来自真实 PR 还是合成变异，都必须先证明仓库能运行、缺陷能被测试触发、修复后能回归。</p>
+</section>
+
+<section id="takeaways">
+  <h2 class="mrl-sec-title"><span class="num">10</span>把主线收紧：环境先可信，奖励才可学习</h2>
+  <p class="mrl-sec-lead">代码智能体 RL 的最小闭环不是“模型写代码 → 跑一下 pytest”，而是把任务、状态、动作、执行、验证、重置与日志都写成可复现合同。</p>
+
+  <div class="mrl-summary-chain">
+    <div><span>01 · TASK</span><strong>snapshot + issue</strong><small>固定起点</small></div><i>→</i>
+    <div><span>02 · ROLLOUT</span><strong>read / search / edit / test</strong><small>产生轨迹</small></div><i>→</i>
+    <div><span>03 · PATCH</span><strong>$\Delta_T=\operatorname{diff}(C_0,C_T)$</strong><small>终点产物</small></div><i>→</i>
+    <div><span>04 · VERIFIER</span><strong>保护测试 + 环境日志</strong><small>形成奖励</small></div>
+  </div>
+  <p class="mrl-caption">链条任一环节不可信，最后的标量都无法干净归因给策略；算法只能放大环境给它的信号，不能自动修正缺失的测试合同。</p>
+
+  <div class="mrl-takeaway">
+    <h3>本章四句话</h3>
+    <ul>
+      <li>仓库状态包含源码、累积 patch 与执行环境；每条 rollout 必须从相同快照重置。</li>
+      <li>最终 patch 只是轨迹终点，搜索、阅读、编辑、测试和返工才是代码 Agent 的动作空间。</li>
+      <li>测试能提供规模化的 hard feedback，但测试不是普适真值；公开满分、完整通过率与 resolved 必须分开。</li>
+      <li>函数级 code RLVR 与仓库级修复共享“执行 → reward”，后者还需要隔离容器、patch replay、隐藏回归和失败分型。</li>
+    </ul>
+  </div>
+
+  <h3>理解检查</h3>
+  <div class="mrl-quiz">
+    <details><summary>1. 为什么只收集开发者最终 patch，不足以训练一个多轮代码智能体？</summary><div class="inner">最终 patch 没有告诉模型应搜索哪个文件、怎样利用测试失败、何时回退或停止。多轮 Agent 的策略作用在整条 observation–action 轨迹上，而不仅是终点 diff。</div></details>
+    <details><summary>2. 为什么同一任务的不同 rollout 必须恢复依赖、缓存和进程，而不只 reset 源码？</summary><div class="inner">因为依赖与进程也是执行状态。若它们不同，测试结果差异可能由环境残留造成，奖励便不能只归因给策略动作。</div></details>
+    <details><summary>3. 某补丁公开测试 2/2、隐藏测试 1/2。三个奖励分别是多少？</summary><div class="inner">$R_{visible}=1.00$，四项合并通过率 $R_{all}=3/4=0.75$；只要任务要求全部必要测试通过，$R_{resolved}=0$。</div></details>
+    <details><summary>4. 为什么 P1 的公开奖励与 P4 相同，不能证明策略学会了正确异常边界？</summary><div class="inner">公开测试只检查普通列表和空列表，无法区分“只处理空容器”与“吞掉全部异常”。在相同代理奖励下，优化器没有信号偏爱语义更精确的 P4。</div></details>
+    <details><summary>5. 上游 <code>compute_score</code> 中，<code>format</code> 会直接增加 PPO reward 吗？</summary><div class="inner">不会。返回字典中的 <code>score</code> 被设为 <code>pass_rate</code> 并作为主奖励；<code>format</code> 是独立日志，用于观察模型是否输出了代码块。</div></details>
+    <details><summary>6. 为什么一个带 timeout 的 <code>subprocess</code> 仍不是安全沙箱？</summary><div class="inner">它仍可能访问父用户可见的文件、网络、凭据和其他资源。timeout 只限制运行时间；安全执行还需要最小权限 container/VM、凭据清理、网络和文件挂载限制。</div></details>
+    <details><summary>7. 从代码测试迁移到下一章的浏览器研究 Agent，最先失去的是什么？</summary><div class="inner">“正确性等于测试断言”的清晰接口。搜索与引用任务还要定义证据是否相关、覆盖是否充分、引用是否真的支持结论，因此 verifier 必须处理证据而不只是程序输出。</div></details>
+  </div>
+
+  <div class="mrl-next">
+    <h3>下一章：没有 pytest 时，长轨迹怎样验证？</h3>
+    <p>代码仓库给了我们一份可执行合同；Web 上的 research trajectory 却要搜索、打开页面、筛选证据、组织引用，并面对网页变化与不完整信息。Chapter 22 将把浏览器 harness 写成环境，追问：当最终答案没有单一测试套件时，怎样用证据覆盖率与引用一致性约束一条长轨迹？</p>
+    <a class="mrl-btn primary" href="./chapter22.html">继续 Chapter 22 →</a>
+  </div>
+
+  <p class="mrl-source-note">本章依据固定版本 <a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/docs/chapter23_rl_based_swe" target="_blank" rel="noopener">仓库级代码智能体文档</a>与<a href="https://github.com/walkinglabs/hands-on-modern-rl/tree/78d4e459dcd40844e030a3ce67378b8bcb9735bd/code/chapter18_grpo/verl_code_rlvr" target="_blank" rel="noopener">可验证代码奖励实验</a>进行中文教学重构；软件修复基准、代码世界模型与自生成改进只保留理解本章闭环所需的边界，不把不同工作的配方混为一谈。</p>
+
+  <footer class="mrl-footer">
+    <a href="./chapter20.html">← Chapter 20 · Agentic RL</a>
+    <a href="./">课程目录</a>
+    <a href="./chapter22.html">Chapter 22 · 证据型研究 →</a>
+  </footer>
+</section>
