@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#181b38" />
     <meta
       name="description"
-      content="云朵甜品店是一款原创数字盲盒小游戏：挑一盒、摇出线索、撕开包装，把甜心店员收进自己的橱窗。"
+      content="云朵甜品店是一款原创数字盲盒小游戏：挑一袋福袋、摇出线索、撕开盲盒，把甜心店员收进自己的橱窗。"
     />
-    <title>云朵甜品店 · 今夜开一盒</title>
+    <title>云朵甜品店 · 今夜开一袋</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="styles.css?v=20260831-uncapped" />
   </head>
@@ -48,14 +48,14 @@
       <section class="case-section" id="case" aria-labelledby="caseTitle">
         <div class="case-copy">
           <p class="eyebrow"><span>TONIGHT'S CASE</span> 今夜到货</p>
-          <h1 id="caseTitle">别急着抽。<br /><em>先挑一盒。</em></h1>
+          <h1 id="caseTitle">别急着抽。<br /><em>先挑一袋。</em></h1>
           <p class="case-intro">
-            每一箱的结果在送达时就已经决定。听声音、猜重量，再相信一次你的直觉。
+            每一箱有 12 个福袋，每袋装着 1-5 个盲盒。听声音、猜重量，先把直觉用在这一袋上。
           </p>
           <div class="case-promises" aria-label="整箱规则摘要">
-            <span><i>12</i> 个固定位置</span>
+            <span><i>12</i> 个福袋</span>
             <span><i>25</i> 位系列角色</span>
-            <span><i>0</i> 常规款重复</span>
+            <span><i>1-5</i> 盲盒每袋</span>
             <button id="openOdds" type="button"><i>?</i> 隐藏规则</button>
           </div>
         </div>
@@ -66,18 +66,18 @@
               <div class="display-case__sign">
                 <span>CASE <b id="caseNumber">01</b></span>
                 <strong>云端夜间限定</strong>
-                <span><b id="remainingCount">12</b> BOXES LEFT</span>
+                <span><b id="remainingCount">12</b> BAGS LEFT</span>
               </div>
               <div class="display-case__glass">
                 <div class="case-box-grid" id="boxGrid" data-testid="box-grid"></div>
                 <span class="glass-glow" aria-hidden="true"></span>
               </div>
               <div class="display-case__base">
-                <span>每盒 ☁ <b>120</b></span>
+                <span>每袋 ☁ <b>300</b></span>
                 <div class="case-progress" aria-label="本箱拆盒进度">
                   <i id="caseProgress"></i>
                 </div>
-                <span>已拆 <b id="openedCount">0</b> / 12</span>
+                <span>已开 <b id="openedCount">0</b> / 12</span>
               </div>
               <button class="next-case-button" id="nextCaseButton" type="button" hidden>
                 送来下一整箱 <span>→</span>
@@ -87,8 +87,8 @@
             <div class="case-utility-bar" aria-label="货架与游戏刷新">
               <div>
                 <small>NOT FEELING THIS SHELF?</small>
-                <strong>不喜欢这批盒子，可以换。</strong>
-                <p>只替换未拆位置；空位、收藏和云朵币都会保留。</p>
+                <strong>不喜欢这批福袋，可以换。</strong>
+                <p>只替换未拆位置；已开盲盒、收藏和云朵币都会保留。</p>
               </div>
               <div class="case-utility-actions">
                 <button class="refresh-shelf-button" id="refreshShelfButton" type="button">
@@ -102,12 +102,12 @@
           </div>
 
           <aside class="box-inspector" id="boxInspector" aria-live="polite">
-            <div class="inspector-steps" aria-label="拆盒步骤">
+            <div class="inspector-steps" aria-label="拆袋步骤">
               <span class="is-active" data-step="pick"><b>1</b> 挑</span>
               <i></i>
               <span data-step="shake"><b>2</b> 摇</span>
               <i></i>
-              <span data-step="open"><b>3</b> 拆</span>
+              <span data-step="open"><b>3</b> 开袋</span>
             </div>
 
             <div class="selected-box-stage" id="selectedBoxStage" aria-hidden="true">
@@ -123,9 +123,11 @@
               <span class="selected-box-shadow"></span>
             </div>
 
+            <div class="blind-box-tray" id="blindBoxTray" aria-label="福袋内的盲盒" aria-hidden="true" hidden></div>
+
             <div class="inspector-copy">
               <p class="inspector-kicker" id="inspectorKicker">STEP 01 · PICK</p>
-              <h2 id="inspectorTitle">哪一盒在叫你？</h2>
+              <h2 id="inspectorTitle">哪一袋在叫你？</h2>
               <p id="inspectorText">从陈列箱中挑一个位置。选错也没关系，直觉本来就没有标准答案。</p>
             </div>
 
@@ -146,7 +148,7 @@
                 <span><b>摇一摇</b><small>最多两条模糊线索</small></span>
               </button>
               <button class="action-button action-button--open" id="openBoxButton" type="button" disabled>
-                <span><b>撕开封条</b><small>消耗 ☁ 120</small></span>
+                <span><b>撕开福袋</b><small>消耗 ☁ 300</small></span>
                 <span class="action-arrow" aria-hidden="true">→</span>
               </button>
             </div>
@@ -177,7 +179,7 @@
           </div>
           <div class="speech-bubble" id="speechBubble" aria-live="polite">
             <small>橱窗留言</small>
-            <p>这里还空着。拆开第一盒，就会有人来点亮店里的灯。</p>
+            <p>这里还空着。拆开第一袋，就会有人来点亮店里的灯。</p>
           </div>
           <div class="window-stage" id="shelfCharacters" data-testid="shelf-characters"></div>
           <div class="window-counter" aria-hidden="true">
@@ -198,7 +200,7 @@
       <section class="packing-section" id="packing" aria-labelledby="packingTitle">
         <div class="packing-copy">
           <p class="eyebrow"><span>EARN THE NEXT BOX</span> 今夜值班表</p>
-          <h2 id="packingTitle">七条路线，赚下一盒的钱</h2>
+          <h2 id="packingTitle">七条路线，赚下一袋的钱</h2>
           <p>
             想轻松一点就听单打包，想赚得更多就解题或挑战街机关卡。每条路线都能反复挑战，不扣云朵币，难度越高收益越高。
           </p>
@@ -365,6 +367,11 @@
               <button type="button" data-arcade-action="drop" aria-label="硬降">⇣</button>
             </div>
             <p class="arcade-instructions" id="arcadeLiveInstructions">方向键或 A / D 移动，空格或 ↑ 跳跃。</p>
+            <div class="arcade-skill-buttons" id="arcadeSkillButtons" aria-label="星夜飞行技能" hidden>
+              <button type="button" data-arcade-skill="missile"><span aria-hidden="true">▻</span><b>导弹</b><small>X</small></button>
+              <button type="button" data-arcade-skill="shield"><span aria-hidden="true">◉</span><b>护罩</b><small>Z</small></button>
+              <span class="arcade-skill-hint">击落敌人掉升级，攒满按 1 / 2 / 3 强化</span>
+            </div>
             <button class="arcade-abandon-button" id="arcadeAbandonButton" type="button">放弃本局并返回路线</button>
           </div>
 
@@ -405,7 +412,7 @@
           <div class="reveal-confetti" id="revealConfetti" aria-hidden="true"></div>
         </div>
         <div class="reveal-copy">
-          <p class="reveal-status" id="revealStatus">正在撕开封条…</p>
+          <p class="reveal-status" id="revealStatus">正在揭晓…</p>
           <div class="reveal-details" id="revealDetails" hidden>
             <span class="rarity-badge" id="revealRarity"></span>
             <p class="reveal-english" id="revealEnglish"></p>
@@ -414,7 +421,7 @@
             <blockquote id="revealQuote"></blockquote>
             <div class="unlock-ticket" id="unlockTicket"></div>
             <button class="reveal-continue" id="revealContinue" type="button">
-              继续挑下一盒 <span>→</span>
+              <span class="reveal-continue__label">继续挑下一袋</span> <span>→</span>
             </button>
           </div>
         </div>
@@ -427,11 +434,13 @@
         <p>THE HONEST LITTLE PRINT</p>
         <h2 id="oddsTitle">这一箱是怎么装的？</h2>
         <ul>
-          <li><b>系列更加丰富：</b>从 24 位常规店员中随机挑选 12 位装箱，同一货架内不重复。</li>
-          <li><b>12% 隐藏箱：</b>约每 8.3 箱中有一箱，隐藏店长会随机替换一位常规店员。</li>
-          <li><b>位置预先确定：</b>整箱生成时，每个位置的内容已经锁定；选择以后不会偷偷换结果。</li>
-          <li><b>货架可以刷新：</b>只替换尚未拆开的盒子，重新决定未拆部分的隐藏机会；空位、收藏和余额全部保留。</li>
-          <li><b>线索保持模糊：</b>声音和重量可以帮助猜测，但不会直接告诉你答案。</li>
+          <li><b>每个福袋 1-5 个盲盒：</b>整箱有 12 个福袋，每袋随机装着 1 到 5 个盲盒，具体数量会在撕开后揭晓。</li>
+          <li><b>开袋消耗 300 云朵币：</b>一袋 300 币，袋内的所有盲盒都可以免费逐个拆开。</li>
+          <li><b>盲盒可以单独点开：</b>撕开福袋后，每个盲盒都会单独揭晓，可能开到同款并触发升级。</li>
+          <li><b>12% 隐藏箱：</b>约每 8.3 箱中有一箱，隐藏店长会随机藏在某个盲盒里。</li>
+          <li><b>内容预先确定：</b>整箱生成时，每个福袋的盲盒数量和内容已经锁定；选择以后不会偷偷换结果。</li>
+          <li><b>货架可以刷新：</b>只替换尚未撕开的福袋，重新决定未拆部分的隐藏机会；已开盲盒、收藏和余额全部保留。</li>
+          <li><b>线索保持模糊：</b>声音和重量暗示这一袋可能藏着哪位店员，但不会直接告诉你答案，也不会告诉你装了几个。</li>
         </ul>
         <div class="rarity-key">
           <span class="rarity-common">● 日常 13 位</span>

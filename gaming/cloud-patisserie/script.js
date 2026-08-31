@@ -4,7 +4,7 @@
   const logic = window.CloudCabinetLogic;
   if (!logic) throw new Error("CloudCabinetLogic 未加载");
 
-  const STORAGE_KEY = "cloud-patisserie-case-v3";
+  const STORAGE_KEY = "cloud-patisserie-case-v4";
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const elements = {
@@ -21,6 +21,7 @@
     restartGameButton: document.querySelector("#restartGameButton"),
     boxInspector: document.querySelector("#boxInspector"),
     selectedBoxStage: document.querySelector("#selectedBoxStage"),
+    blindBoxTray: document.querySelector("#blindBoxTray"),
     selectedBoxNumber: document.querySelector("#selectedBoxNumber"),
     inspectorKicker: document.querySelector("#inspectorKicker"),
     inspectorTitle: document.querySelector("#inspectorTitle"),
@@ -95,6 +96,7 @@
     arcadeCanvas: document.querySelector("#arcadeCanvas"),
     arcadeStatus: document.querySelector("#arcadeStatus"),
     arcadeTouchControls: document.querySelector("#arcadeTouchControls"),
+    arcadeSkillButtons: document.querySelector("#arcadeSkillButtons"),
     arcadeLiveInstructions: document.querySelector("#arcadeLiveInstructions"),
     arcadeAbandonButton: document.querySelector("#arcadeAbandonButton"),
     arcadeResult: document.querySelector("#arcadeResult"),
@@ -142,11 +144,11 @@
 
   function isValidState(candidate) {
     return candidate
-      && candidate.version === 3
+      && candidate.version === 4
       && Number.isFinite(candidate.coins)
       && candidate.collection
-      && Array.isArray(candidate.currentCase?.boxes)
-      && candidate.currentCase.boxes.length === logic.CASE_SIZE;
+      && Array.isArray(candidate.currentCase?.bags)
+      && candidate.currentCase.bags.length === logic.CASE_SIZE;
   }
 
   function loadState() {
@@ -154,12 +156,12 @@
     if (!saved) return logic.createInitialState();
     try {
       const parsed = JSON.parse(saved);
-      if (!isValidState(parsed)) throw new Error("存档结构不是版本 3");
+      if (!isValidState(parsed)) throw new Error("存档结构不是版本 4");
       return parsed;
     } catch (error) {
       console.error("无法读取本地存档：", error);
       window.localStorage.removeItem(STORAGE_KEY);
-      startupMessage = "旧存档无法用于新玩法，已为你送来一箱全新的盲盒。";
+      startupMessage = "旧存档无法用于新玩法，已为你送来一箱全新的福袋。";
       return logic.createInitialState();
     }
   }
@@ -311,36 +313,49 @@
     elements.soundToggle.setAttribute("aria-label", state.soundOn ? "关闭声音" : "打开声音");
   }
 
-  function boxMarkup(box) {
-    const selected = state.currentCase.selectedIndex === box.index;
+  function bagMarkup(bag) {
+    const selected = state.currentCase.selectedIndex === bag.index;
+    const unopenedInBag = logic.countUnrevealedBlindBoxes(bag);
+    const fullyOpened = bag.opened && unopenedInBag === 0;
+    const className = [
+      "case-box",
+      selected ? "is-selected" : "",
+      fullyOpened ? "is-opened" : "",
+      bag.opened && unopenedInBag > 0 ? "is-torn" : "",
+    ].filter(Boolean).join(" ");
+    const label = bag.opened
+      ? (unopenedInBag > 0 ? `已经拆开，还剩 ${unopenedInBag} 个盲盒` : "已经拆完")
+      : (selected ? "当前选择" : "可以选择");
     return `
       <button
-        class="case-box ${selected ? "is-selected" : ""} ${box.opened ? "is-opened" : ""}"
+        class="${className}"
         type="button"
-        data-box-index="${box.index}"
-        aria-label="第 ${box.index + 1} 盒，${box.opened ? "已经拆开" : selected ? "当前选择" : "可以选择"}"
+        data-box-index="${bag.index}"
+        aria-label="第 ${bag.index + 1} 袋福袋，${label}"
         aria-pressed="${selected}"
-        style="--box-index:${box.index}"
-        ${box.opened ? "disabled" : ""}
+        style="--box-index:${bag.index}"
+        ${fullyOpened ? "disabled" : ""}
       >
         <span class="case-box__object" aria-hidden="true">
           <span class="case-box__lid"></span>
-          <span class="case-box__front"><b>?</b><small>CLOUD · ${formatCaseNumber(box.index + 1)}</small></span>
-          <span class="case-box__number">${formatCaseNumber(box.index + 1)}</span>
+          <span class="case-box__front"><b>?</b><small>BAG · ${formatCaseNumber(bag.index + 1)}</small></span>
+          <span class="case-box__number">${formatCaseNumber(bag.index + 1)}</span>
         </span>
+        ${bag.opened && unopenedInBag > 0 ? `<span class="case-box__badge">${unopenedInBag} 待开</span>` : ""}
       </button>
     `;
   }
 
   function renderCase() {
-    const opened = logic.getOpenedCount(state.currentCase);
+    const torn = logic.getOpenedCount(state.currentCase);
+    const done = state.currentCase.bags.filter((bag) => bag.blindBoxes.every((box) => box.revealed)).length;
     elements.caseNumber.textContent = formatCaseNumber(state.currentCase.number);
-    elements.remainingCount.textContent = String(logic.CASE_SIZE - opened);
-    elements.openedCount.textContent = String(opened);
-    elements.caseProgress.style.width = `${(opened / logic.CASE_SIZE) * 100}%`;
-    elements.boxGrid.innerHTML = state.currentCase.boxes.map(boxMarkup).join("");
-    elements.nextCaseButton.hidden = opened !== logic.CASE_SIZE;
-    elements.refreshShelfButton.disabled = opened === logic.CASE_SIZE;
+    elements.remainingCount.textContent = String(logic.CASE_SIZE - torn);
+    elements.openedCount.textContent = String(done);
+    elements.caseProgress.style.width = `${(done / logic.CASE_SIZE) * 100}%`;
+    elements.boxGrid.innerHTML = state.currentCase.bags.map(bagMarkup).join("");
+    elements.nextCaseButton.hidden = !logic.isCaseComplete(state.currentCase);
+    elements.refreshShelfButton.disabled = torn === logic.CASE_SIZE;
     renderInspector();
   }
 
@@ -354,10 +369,34 @@
   }
 
   function renderInspector() {
-    const selectedIndex = state.currentCase.selectedIndex;
-    const clueLevel = state.currentCase.clueLevel;
+    const currentCase = state.currentCase;
+    const selectedIndex = currentCase.selectedIndex;
     const hasSelection = selectedIndex !== null;
-    elements.selectedBoxStage.classList.toggle("has-selection", hasSelection);
+    const selectedBag = hasSelection ? currentCase.bags[selectedIndex] : null;
+    const isTorn = !!(selectedBag && selectedBag.opened);
+    const actionsArea = elements.boxInspector.querySelector(".inspector-actions");
+
+    elements.blindBoxTray.hidden = !isTorn;
+    elements.blindBoxTray.setAttribute("aria-hidden", String(!isTorn));
+    elements.clueStack.hidden = isTorn;
+    if (actionsArea) actionsArea.hidden = isTorn;
+    elements.selectedBoxStage.hidden = isTorn;
+    elements.selectedBoxStage.classList.toggle("has-selection", hasSelection && !isTorn);
+
+    if (isTorn) {
+      const remaining = logic.countUnrevealedBlindBoxes(selectedBag);
+      setInspectorStep("open");
+      elements.selectedBoxNumber.textContent = `袋 ${formatCaseNumber(selectedIndex + 1)}`;
+      elements.inspectorKicker.textContent = "TORE OPEN · 开盲盒";
+      elements.inspectorTitle.textContent = `这一袋装了 ${selectedBag.count} 个盲盒`;
+      elements.inspectorText.textContent = remaining > 0
+        ? `点开一只盲盒，看看里面住着谁。还剩 ${remaining} 只。`
+        : "这一袋的盲盒已经全部拆开了。";
+      renderBlindBoxTray(selectedBag, selectedIndex);
+      return;
+    }
+
+    const clueLevel = currentCase.clueLevel;
     elements.shakeButton.disabled = !hasSelection || clueLevel >= 2;
     elements.openBoxButton.disabled = !hasSelection || clueLevel < 1;
 
@@ -365,8 +404,8 @@
       setInspectorStep("pick");
       elements.selectedBoxNumber.textContent = "PICK ONE";
       elements.inspectorKicker.textContent = "STEP 01 · PICK";
-      elements.inspectorTitle.textContent = "哪一盒在叫你？";
-      elements.inspectorText.textContent = "从陈列箱中挑一个位置。选错也没关系，直觉本来就没有标准答案。";
+      elements.inspectorTitle.textContent = "哪一袋在叫你？";
+      elements.inspectorText.textContent = "从陈列箱中挑一个福袋。选错也没关系，直觉本来就没有标准答案。";
       elements.clueStack.innerHTML = `
         <div class="clue-ticket is-locked"><span>01 · 声音</span><p>摇一摇后记录</p></div>
         <div class="clue-ticket is-locked"><span>02 · 重心</span><p>再摇一次后记录</p></div>
@@ -375,24 +414,25 @@
       return;
     }
 
-    const box = state.currentCase.boxes[selectedIndex];
-    const character = logic.getCharacter(box.characterId);
-    elements.selectedBoxNumber.textContent = `BOX ${formatCaseNumber(selectedIndex + 1)}`;
-    elements.inspectorTitle.textContent = `你挑中了第 ${formatCaseNumber(selectedIndex + 1)} 盒`;
+    const bag = selectedBag;
+    const clueCharacter = logic.bagClueCharacter(bag);
+    const clues = clueCharacter.clues;
+    elements.selectedBoxNumber.textContent = `袋 ${formatCaseNumber(selectedIndex + 1)}`;
+    elements.inspectorTitle.textContent = `你挑中了第 ${formatCaseNumber(selectedIndex + 1)} 袋福袋`;
 
     if (clueLevel === 0) {
       setInspectorStep("shake");
       elements.inspectorKicker.textContent = "STEP 02 · SHAKE";
-      elements.inspectorText.textContent = "先别急着拆。拿起来轻轻摇一次，听听它愿意透露什么。";
+      elements.inspectorText.textContent = "先别急着撕。拿起来轻轻摇一次，听听这袋可能藏着谁。";
     } else {
       setInspectorStep("open");
       elements.inspectorKicker.textContent = clueLevel === 1 ? "ONE CLUE FOUND" : "TWO CLUES FOUND";
       elements.inspectorText.textContent = clueLevel === 1
-        ? "已经有第一条线索。你可以相信直觉直接拆，也可以再摇一次。"
+        ? "已经有第一条线索。你可以相信直觉直接撕，也可以再摇一次。"
         : "线索就到这里。现在，决定要不要相信它。";
     }
 
-    elements.clueStack.innerHTML = character.clues.map((clue, index) => {
+    elements.clueStack.innerHTML = clues.map((clue, index) => {
       const revealed = index < clueLevel;
       return `
         <div class="clue-ticket ${revealed ? "is-revealed" : "is-locked"}">
@@ -404,6 +444,38 @@
     elements.shakeButton.querySelector("b").textContent = clueLevel === 0 ? "摇一摇" : clueLevel === 1 ? "再摇一次" : "线索已记下";
   }
 
+  function renderBlindBoxTray(bag, bagIndex) {
+    const remaining = logic.countUnrevealedBlindBoxes(bag);
+    const boxes = bag.blindBoxes.map((box) => {
+      if (box.revealed) {
+        const character = logic.getCharacter(box.characterId);
+        return `
+          <button class="blind-box is-revealed rarity-${character.rarity}" type="button" disabled
+            aria-label="${character.name} 已拆开">
+            ${characterMarkup(character, state.collection[character.id])}
+            <span class="blind-box__name">${character.name}</span>
+          </button>
+        `;
+      }
+      return `
+        <button class="blind-box" type="button" data-blind-box="${box.boxIndex}"
+          aria-label="拆开第 ${box.boxIndex + 1} 个盲盒">
+          <span class="blind-box__lid"></span>
+          <span class="blind-box__front"><b>?</b></span>
+          <span class="blind-box__number">${formatCaseNumber(box.boxIndex + 1)}</span>
+        </button>
+      `;
+    }).join("");
+    elements.blindBoxTray.innerHTML = `
+      <div class="blind-box-tray__head">
+        <span>福袋 ${formatCaseNumber(bagIndex + 1)} · ${bag.count} 个盲盒</span>
+        <span>${remaining ? `还剩 ${remaining} 个未开` : "已全部拆完"}</span>
+      </div>
+      <div class="blind-box-tray__grid">${boxes}</div>
+    `;
+    elements.blindBoxTray.setAttribute("aria-hidden", "false");
+  }
+
   function renderShelf() {
     const stats = logic.getCollectionStats(state);
     const owned = logic.CHARACTERS.filter((character) => state.collection[character.id] > 0);
@@ -413,7 +485,7 @@
 
     if (owned.length === 0) {
       elements.shelfCharacters.innerHTML = `
-        <div class="window-empty"><span>还没开灯</span><p>拆开第一盒，就会有店员来这里等你。</p></div>
+        <div class="window-empty"><span>还没开灯</span><p>拆开第一袋，就会有店员来这里等你。</p></div>
       `;
     } else {
       elements.shelfCharacters.innerHTML = owned.map((character) => {
@@ -455,9 +527,9 @@
     renderShelf();
   }
 
-  function selectBox(index) {
+  function selectBag(index) {
     try {
-      state = logic.selectBox(state, index);
+      state = logic.selectBag(state, index);
       saveState();
       renderCase();
       playNotes([330, 440], 0.08);
@@ -468,7 +540,7 @@
 
   function shakeBox() {
     try {
-      const result = logic.shakeSelectedBox(state);
+      const result = logic.shakeSelectedBag(state);
       state = result.nextState;
       saveState();
       elements.selectedBoxStage.classList.remove("is-shaking");
@@ -543,18 +615,35 @@
     }, 2250);
   }
 
-  function openSelectedBox() {
+  function openSelectedBag() {
     try {
-      const result = logic.openSelectedBox(state);
+      const result = logic.openSelectedBag(state);
       state = result.nextState;
       saveState();
       renderAll();
-      showReveal(result);
+      playNotes([156, 139, 185], 0.13);
+      showToast(`撕开了福袋 ${formatCaseNumber(state.currentCase.selectedIndex + 1)}，里面有 ${result.count} 个盲盒。`);
     } catch (error) {
       showToast(error.message);
       if (/云朵币不足/.test(error.message)) {
         window.setTimeout(() => document.querySelector("#packing").scrollIntoView({ behavior: reducedMotion ? "auto" : "smooth" }), 450);
       }
+    }
+  }
+
+  function revealBlindBox(boxIndex) {
+    try {
+      const bagIndex = state.currentCase.selectedIndex;
+      const result = logic.revealBlindBox(state, bagIndex, boxIndex);
+      state = result.nextState;
+      saveState();
+      renderAll();
+      const remaining = logic.countUnrevealedBlindBoxes(state.currentCase.bags[bagIndex]);
+      const label = remaining > 0 ? "继续开盲盒" : logic.isCaseComplete(state.currentCase) ? "查看整箱" : "继续挑下一袋";
+      elements.revealContinue.querySelector(".reveal-continue__label").textContent = label;
+      showReveal(result);
+    } catch (error) {
+      showToast(error.message);
     }
   }
 
@@ -844,6 +933,7 @@
       elements.arcadeStatus.textContent = "无限时夜班 · 分数越高，入账越多";
       elements.arcadeLiveInstructions.textContent = config.instructions;
       elements.arcadeTouchControls.hidden = mode !== "tetris";
+      elements.arcadeSkillButtons.hidden = mode !== "shooter";
 
       if (mode === "platformer") {
         arcadeController = module.mount(elements.arcadeCanvas, {
@@ -1044,11 +1134,16 @@
   elements.boxGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-box-index]");
     if (!button) return;
-    selectBox(Number(button.dataset.boxIndex));
+    selectBag(Number(button.dataset.boxIndex));
   });
 
   elements.shakeButton.addEventListener("click", shakeBox);
-  elements.openBoxButton.addEventListener("click", openSelectedBox);
+  elements.openBoxButton.addEventListener("click", openSelectedBag);
+  elements.blindBoxTray.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-blind-box]");
+    if (!button) return;
+    revealBlindBox(Number(button.dataset.blindBox));
+  });
   elements.nextCaseButton.addEventListener("click", () => {
     try {
       state = logic.createNextCase(state);
@@ -1070,8 +1165,8 @@
       elements.boxGrid.classList.add("is-refreshing");
       window.setTimeout(() => elements.boxGrid.classList.remove("is-refreshing"), 900);
       showToast(preserved
-        ? `已刷新 ${logic.CASE_SIZE - preserved} 个未拆位置，${preserved} 个空位和全部收藏已保留。`
-        : "12 个位置已经换成新的一批，余额和收藏没有变化。"
+        ? `已刷新 ${logic.CASE_SIZE - preserved} 个未撕福袋，已拆开的 ${preserved} 袋盲盒和全部收藏已保留。`
+        : "12 个福袋已经换成新的一批，余额和收藏没有变化。"
       );
       playNotes([392, 330, 494, 440], 0.08);
     } catch (error) {
@@ -1117,6 +1212,13 @@
     else if (action === "rotate-left") arcadeController.rotate(-1);
     else if (action === "rotate") arcadeController.rotate(1);
     else if (action === "drop") arcadeController.drop();
+    elements.arcadeCanvas.focus({ preventScroll: true });
+  });
+
+  elements.arcadeSkillButtons.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-arcade-skill]");
+    if (!button || selectedEarningMode !== "shooter" || !arcadeRun?.active || !arcadeController?.setSkill) return;
+    arcadeController.setSkill(button.dataset.arcadeSkill);
     elements.arcadeCanvas.focus({ preventScroll: true });
   });
 
@@ -1170,7 +1272,7 @@
     updateEarningModeButtons();
     hideEarningViews();
     elements.packingIdle.hidden = false;
-    elements.speechBubble.innerHTML = "<small>橱窗留言</small><p>这里还空着。拆开第一盒，就会有人来点亮店里的灯。</p>";
+    elements.speechBubble.innerHTML = "<small>橱窗留言</small><p>这里还空着。拆开第一袋，就会有人来点亮店里的灯。</p>";
     saveState();
     renderAll();
     showToast("整场游戏已经刷新。新角色池和第一箱都准备好了。" );

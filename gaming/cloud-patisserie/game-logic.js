@@ -5,7 +5,9 @@
     || (typeof module !== "undefined" && module.exports ? require("./quiz-data.js") : null);
   if (!QUIZ_DATA) throw new Error("CloudQuizData 未加载");
 
-  const BOX_COST = 120;
+  const BAG_COST = 300;
+  const BAG_MIN = 1;
+  const BAG_MAX = 5;
   const CASE_SIZE = 12;
   const SECRET_CASE_RATE = 0.12;
   const PACKING_DURATION_MS = 20_000;
@@ -30,8 +32,8 @@
     shooter: Object.freeze({
       id: "shooter", label: "星夜飞行", english: "STAR PATROL",
       icon: "✦",
-      description: "驾驶糖霜小飞机迎战无限递增波次，每 5 波出现 Boss，贴弹擦过也能加分。",
-      instructions: "方向键或 WASD 移动；飞机自动射击，3 条生命耗尽才返航。",
+      description: "驾驶糖霜小飞机迎战无限递增波次，每 5 波出现 Boss，贴弹擦过也能加分；并配有导弹与护罩技能，击落敌人可攒升级。",
+      instructions: "方向键或 WASD 移动，飞机自动射击；X 发射导弹，Z 释放护罩（均带冷却）；击落敌人有几率掉出升级，攒满后按 1 / 2 / 3 选择强化，3 条生命耗尽才返航。",
     }),
   });
 
@@ -363,30 +365,84 @@
     return result;
   }
 
-  function createCase(random = Math.random, caseNumber = 1) {
+  function pickRegularId(random) {
     const regularIds = CHARACTERS
       .filter((character) => character.rarity !== RARITY.HIDDEN)
       .map((character) => character.id);
-    const shuffledIds = shuffle(regularIds, random).slice(0, CASE_SIZE);
-    const hasSecret = randomUnit(random) < SECRET_CASE_RATE;
-    if (hasSecret) {
-      const replacementIndex = Math.floor(randomUnit(random) * CASE_SIZE);
-      shuffledIds[replacementIndex] = "daydream-manager";
+    return regularIds[Math.floor(randomUnit(random) * regularIds.length)];
+  }
+
+  function createBlindBoxes(random) {
+    const count = BAG_MIN + Math.floor(randomUnit(random) * (BAG_MAX - BAG_MIN + 1));
+    return {
+      count,
+      blindBoxes: Array.from({ length: count }, (_, boxIndex) => ({
+        boxIndex,
+        characterId: pickRegularId(random),
+        revealed: false,
+      })),
+    };
+  }
+
+  function createBag(random, index) {
+    const { count, blindBoxes } = createBlindBoxes(random);
+    return { index, count, opened: false, blindBoxes };
+  }
+
+  function finalizeBagClue(bag, random) {
+    // 固定一只“非隐藏”盲盒作为线索来源：反复摇同一袋会给同一角色的模糊提示，
+    // 也避免把隐藏店长过早泄露出去。
+    const pool = bag.blindBoxes.filter((box) => box.characterId !== "daydream-manager");
+    const candidates = pool.length ? pool : bag.blindBoxes;
+    const chosen = candidates[Math.floor(randomUnit(random) * candidates.length)];
+    bag.clueBoxIndex = bag.blindBoxes.indexOf(chosen);
+    return bag;
+  }
+
+  function bagClueCharacter(bag) {
+    let box = bag.blindBoxes[bag.clueBoxIndex];
+    if (!box || box.characterId === "daydream-manager") {
+      // 兼容旧存档：缺 clueBoxIndex 或恰好指向隐藏店长时，回退到第一只非隐藏盲盒。
+      box = bag.blindBoxes.find((item) => item.characterId !== "daydream-manager") || bag.blindBoxes[0];
+      bag.clueBoxIndex = bag.blindBoxes.indexOf(box);
     }
+    if (!box) throw new Error("福袋缺少线索来源");
+    return getCharacter(box.characterId);
+  }
+
+  function countUnrevealedBlindBoxes(bag) {
+    return bag ? bag.blindBoxes.filter((blindBox) => !blindBox.revealed).length : 0;
+  }
+
+  function isCaseComplete(currentCase) {
+    return currentCase.bags.every((bag) => bag.opened && bag.blindBoxes.every((blindBox) => blindBox.revealed));
+  }
+
+  function createCase(random = Math.random, caseNumber = 1) {
+    const hasSecret = randomUnit(random) < SECRET_CASE_RATE;
+    const bags = Array.from({ length: CASE_SIZE }, (_, index) => createBag(random, index));
+    if (hasSecret) {
+      // 隐藏店长只放进“至少装了 2 个盲盒”的福袋，保证该袋仍留有非隐藏的线索来源。
+      const viable = bags.filter((bag) => bag.count >= 2);
+      const bagIndex = (viable.length ? viable : bags)[Math.floor(randomUnit(random) * (viable.length ? viable.length : bags.length))].index;
+      const blindBoxes = bags[bagIndex].blindBoxes;
+      blindBoxes[Math.floor(randomUnit(random) * blindBoxes.length)].characterId = "daydream-manager";
+    }
+    bags.forEach((bag) => finalizeBagClue(bag, random));
     return {
       number: caseNumber,
       selectedIndex: null,
       clueLevel: 0,
       hasSecret,
       refreshes: 0,
-      boxes: shuffledIds.map((characterId, index) => ({ index, characterId, opened: false })),
+      bags,
     };
   }
 
   function createInitialState(random = Math.random) {
     return {
-      version: 3,
-      coins: 240,
+      version: 4,
+      coins: 600,
       soundOn: true,
       collection: {},
       boxesOpened: 0,
@@ -407,51 +463,76 @@
   }
 
   function getOpenedCount(currentCase) {
-    return currentCase.boxes.filter((box) => box.opened).length;
+    return currentCase.bags.filter((bag) => bag.opened).length;
   }
 
-  function selectBox(state, index) {
-    const box = state.currentCase.boxes[index];
-    if (!box) throw new Error("盒子位置不存在");
-    if (box.opened) throw new Error("这个位置已经拆过了");
+  function selectBag(state, index) {
+    const bag = state.currentCase.bags[index];
+    if (!bag) throw new Error("福袋位置不存在");
     return {
       ...state,
       currentCase: { ...state.currentCase, selectedIndex: index, clueLevel: 0 },
     };
   }
 
-  function shakeSelectedBox(state) {
-    const { selectedIndex, clueLevel, boxes } = state.currentCase;
-    if (selectedIndex === null) throw new Error("请先从陈列箱里挑一盒");
-    if (boxes[selectedIndex].opened) throw new Error("这个位置已经拆过了");
+  function shakeSelectedBag(state) {
+    const { selectedIndex, clueLevel, bags } = state.currentCase;
+    if (selectedIndex === null) throw new Error("请先从陈列箱里挑一个福袋");
+    if (bags[selectedIndex].opened) throw new Error("这个福袋已经拆开了");
     const nextLevel = Math.min(2, clueLevel + 1);
-    const character = getCharacter(boxes[selectedIndex].characterId);
+    const bag = bags[selectedIndex];
+    const clueCharacter = bagClueCharacter(bag);
     return {
       nextState: {
         ...state,
         currentCase: { ...state.currentCase, clueLevel: nextLevel },
       },
-      clue: character.clues[nextLevel - 1],
+      clue: clueCharacter.clues[nextLevel - 1],
       clueLevel: nextLevel,
       isNewClue: nextLevel !== clueLevel,
     };
   }
 
-  function openSelectedBox(state) {
-    const { selectedIndex, clueLevel, boxes } = state.currentCase;
-    if (selectedIndex === null) throw new Error("请先从陈列箱里挑一盒");
-    if (clueLevel < 1) throw new Error("先摇一摇，听听盒子里的线索");
-    if (state.coins < BOX_COST) throw new Error(`云朵币不足，还需要 ${BOX_COST - state.coins} 枚`);
-    const selectedBox = boxes[selectedIndex];
-    if (selectedBox.opened) throw new Error("这个位置已经拆过了");
+  function openSelectedBag(state) {
+    const { selectedIndex, clueLevel, bags } = state.currentCase;
+    if (selectedIndex === null) throw new Error("请先从陈列箱里挑一个福袋");
+    if (clueLevel < 1) throw new Error("先摇一摇，听听福袋里的动静");
+    if (state.coins < BAG_COST) throw new Error(`云朵币不足，还需要 ${BAG_COST - state.coins} 枚`);
+    const bag = bags[selectedIndex];
+    if (bag.opened) throw new Error("这个福袋已经拆开了");
 
-    const character = getCharacter(selectedBox.characterId);
+    const nextBags = bags.map((item, index) => (index === selectedIndex ? { ...item, opened: true } : { ...item }));
+    return {
+      bag: { ...bag, opened: true },
+      count: bag.count,
+      blindBoxes: bag.blindBoxes,
+      nextState: {
+        ...state,
+        coins: state.coins - BAG_COST,
+        currentCase: { ...state.currentCase, selectedIndex, clueLevel, bags: nextBags },
+      },
+    };
+  }
+
+  function revealBlindBox(state, bagIndex, boxIndex) {
+    const bag = state.currentCase.bags[bagIndex];
+    if (!bag) throw new Error("福袋不存在");
+    if (!bag.opened) throw new Error("先撕开这个福袋");
+    const blindBox = bag.blindBoxes[boxIndex];
+    if (!blindBox) throw new Error("盲盒不存在");
+    if (blindBox.revealed) throw new Error("这个盲盒已经开过了");
+
+    const character = getCharacter(blindBox.characterId);
     const copyCount = (state.collection[character.id] || 0) + 1;
     const collection = { ...state.collection, [character.id]: copyCount };
-    const nextBoxes = boxes.map((box, index) =>
-      index === selectedIndex ? { ...box, opened: true } : { ...box },
-    );
-    const openedCount = nextBoxes.filter((box) => box.opened).length;
+    const nextBags = state.currentCase.bags.map((item, index) => index === bagIndex
+      ? {
+        ...item,
+        blindBoxes: item.blindBoxes.map((box, boxIdx) => (boxIdx === boxIndex ? { ...box, revealed: true } : { ...box })),
+      }
+      : { ...item });
+    const nextCase = { ...state.currentCase, bags: nextBags };
+    const completed = isCaseComplete(nextCase);
     const unlock = copyCount === 1
       ? { type: "new", label: "新店员加入橱窗" }
       : copyCount === 2
@@ -464,52 +545,28 @@
       character,
       copyCount,
       unlock,
-      caseCompleted: openedCount === CASE_SIZE,
+      caseCompleted: completed,
       nextState: {
         ...state,
-        coins: state.coins - BOX_COST,
         collection,
         boxesOpened: state.boxesOpened + 1,
-        casesCompleted: state.casesCompleted + (openedCount === CASE_SIZE ? 1 : 0),
-        currentCase: {
-          ...state.currentCase,
-          selectedIndex: null,
-          clueLevel: 0,
-          boxes: nextBoxes,
-        },
+        casesCompleted: state.casesCompleted + (completed ? 1 : 0),
+        currentCase: nextCase,
       },
     };
   }
 
   function createNextCase(state, random = Math.random) {
-    if (getOpenedCount(state.currentCase) !== CASE_SIZE) throw new Error("这一箱还有没有拆开的盒子");
+    if (!isCaseComplete(state.currentCase)) throw new Error("这一箱还有没开完的福袋或盲盒");
     return { ...state, currentCase: createCase(random, state.currentCase.number + 1) };
   }
 
   function refreshShelf(state, random = Math.random) {
-    const openedBoxes = state.currentCase.boxes.filter((box) => box.opened);
-    const unopenedCount = CASE_SIZE - openedBoxes.length;
-    if (unopenedCount === 0) throw new Error("这一箱已经没有未拆开的盒子，请送来下一整箱");
+    const openedBags = state.currentCase.bags.filter((bag) => bag.opened);
+    const unopenedCount = CASE_SIZE - openedBags.length;
+    if (unopenedCount === 0) throw new Error("这一箱已经没有未拆开的福袋，请送来下一整箱");
 
-    const openedIds = new Set(openedBoxes.map((box) => box.characterId));
-    const availableRegularIds = CHARACTERS
-      .filter((character) => character.rarity !== RARITY.HIDDEN && !openedIds.has(character.id))
-      .map((character) => character.id);
-    const replacementIds = shuffle(availableRegularIds, random).slice(0, unopenedCount);
-    const hiddenAlreadyOpened = openedIds.has("daydream-manager");
-    const hasNewSecret = !hiddenAlreadyOpened && randomUnit(random) < SECRET_CASE_RATE;
-    if (hasNewSecret) {
-      const replacementIndex = Math.floor(randomUnit(random) * unopenedCount);
-      replacementIds[replacementIndex] = "daydream-manager";
-    }
-
-    let replacementCursor = 0;
-    const boxes = state.currentCase.boxes.map((box) => {
-      if (box.opened) return { ...box };
-      const characterId = replacementIds[replacementCursor];
-      replacementCursor += 1;
-      return { ...box, characterId, opened: false };
-    });
+    const bags = state.currentCase.bags.map((bag) => (bag.opened ? { ...bag } : finalizeBagClue(createBag(random, bag.index), random)));
 
     return {
       ...state,
@@ -517,9 +574,8 @@
         ...state.currentCase,
         selectedIndex: null,
         clueLevel: 0,
-        hasSecret: hiddenAlreadyOpened || hasNewSecret,
         refreshes: (state.currentCase.refreshes || 0) + 1,
-        boxes,
+        bags,
       },
     };
   }
@@ -732,11 +788,12 @@
   }
 
   const API = Object.freeze({
-    BOX_COST, CASE_SIZE, SECRET_CASE_RATE, PACKING_DURATION_MS,
+    BAG_COST, BAG_MIN, BAG_MAX, CASE_SIZE, SECRET_CASE_RATE, PACKING_DURATION_MS,
     PACKING_MAX_PAYOUT, PACKING_WRONG_PENALTY_MS, QUIZ_LENGTH,
     RARITY, RARITY_META, CHARACTERS, DESSERTS, QUIZ_CONFIG, QUESTION_BANKS, ARCADE_CONFIG,
     createCase, createInitialState, getCharacter, getOpenedCount,
-    selectBox, shakeSelectedBox, openSelectedBox, createNextCase, refreshShelf,
+    bagClueCharacter, countUnrevealedBlindBoxes, isCaseComplete,
+    selectBag, shakeSelectedBag, openSelectedBag, revealBlindBox, createNextCase, refreshShelf,
     getCollectionStats, getPackingStartBonus,
     createPackingRound, answerPackingOrder, finishPackingRound,
     createQuizRound, answerQuizQuestion, advanceQuizQuestion, finishQuizRound,

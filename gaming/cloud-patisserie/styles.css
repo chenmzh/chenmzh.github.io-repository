@@ -2825,3 +2825,201 @@ footer button:hover { color: var(--coral); }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
   .toy__sprite { animation: none !important; background-position: 0 0 !important; }
 }
+
+/* ---- 福袋 × 盲盒 改动补丁 (v4) ---- */
+
+.selected-box-stage[hidden],
+.clue-stack[hidden],
+.inspector-actions[hidden],
+.blind-box-tray[hidden] { display: none !important; }
+
+.case-box.is-torn { opacity: 1; }
+.case-box.is-torn .case-box__object { filter: drop-shadow(7px 9px 6px rgba(0, 0, 0, .36)) brightness(.9); }
+.case-box.is-torn::after { display: none; }
+
+.case-box__badge {
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  transform: translateX(-50%) rotate(-3deg);
+  z-index: 6;
+  padding: 4px 7px;
+  white-space: nowrap;
+  color: var(--night);
+  font: 700 10px/1 var(--body);
+  border-radius: 10px;
+  background: var(--gold);
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, .25);
+}
+
+.blind-box-tray {
+  margin-top: 8px;
+  padding: 14px 14px 16px;
+  border: 2px solid rgba(99, 48, 61, 0.16);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 78% 20%, rgba(242, 186, 75, .12) 0 5px, transparent 6px),
+    linear-gradient(180deg, rgba(255, 255, 255, .05), rgba(0, 0, 0, .14));
+}
+
+.blind-box-tray__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: rgba(37, 36, 57, 0.6);
+  font: 700 10px/1 var(--mono);
+  letter-spacing: 0.06em;
+}
+
+.blind-box-tray__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.blind-box {
+  width: 76px;
+  height: 100px;
+  position: relative;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  background: transparent;
+  filter: drop-shadow(7px 9px 5px rgba(47, 30, 28, 0.22));
+  transition: transform 180ms ease;
+}
+
+.blind-box:hover { transform: translateY(-8px); }
+
+.blind-box__front {
+  position: absolute;
+  inset: 12% 0 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 2px solid #612e3b;
+  border-radius: 3px 3px 8px 8px;
+  background:
+    radial-gradient(circle at 72% 22%, var(--gold) 0 3px, transparent 4px),
+    repeating-linear-gradient(-36deg, transparent 0 14px, rgba(255, 255, 255, .18) 15px 18px),
+    #f3b4bf;
+  box-shadow: inset -7px 0 0 rgba(133, 48, 65, 0.12), inset 0 -8px 0 rgba(133, 48, 65, 0.12);
+}
+
+.blind-box__front b {
+  color: #622f3d;
+  font: 900 24px/1 var(--serif);
+  transform: rotate(7deg);
+}
+
+.blind-box__lid {
+  position: absolute;
+  left: -4%;
+  right: -4%;
+  top: 5%;
+  height: 18%;
+  z-index: 2;
+  border: 2px solid #612e3b;
+  border-radius: 4px 4px 2px 2px;
+  background: #fff0dc;
+  box-shadow: inset 0 -5px 0 #e6c79e;
+}
+
+.blind-box__lid::after {
+  content: "";
+  width: 30%;
+  height: 4px;
+  position: absolute;
+  left: 35%;
+  bottom: 4px;
+  background: var(--coral);
+}
+
+.blind-box__number {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  right: -8px;
+  top: 3px;
+  z-index: 4;
+  display: grid;
+  place-items: center;
+  color: var(--night);
+  font: 700 8px/1 var(--mono);
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 2px 3px 0 rgba(0, 0, 0, .25);
+}
+
+.blind-box.is-revealed {
+  width: 76px;
+  height: 158px;
+  position: relative;
+  padding: 0;
+  border: 0;
+  cursor: default;
+  filter: none;
+  background: transparent;
+}
+
+.blind-box.is-revealed .toy {
+  transform: scale(0.72);
+  transform-origin: 50% 100%;
+  bottom: 14px;
+}
+
+.blind-box__name {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  z-index: 6;
+  padding: 3px 6px;
+  transform: translateX(-50%) rotate(-1deg);
+  color: var(--night);
+  font: 700 8px/1 var(--body);
+  white-space: nowrap;
+  background: var(--paper);
+}
+
+@media (max-width: 1160px) {
+  .blind-box-tray__grid { justify-content: center; }
+}
+
+.arcade-skill-buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.arcade-skill-buttons button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border: 1px solid #a98565;
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--body);
+  background: rgba(255, 240, 220, 0.62);
+  box-shadow: 2px 3px 0 rgba(64, 42, 35, 0.18);
+  cursor: pointer;
+  transition: transform 160ms ease;
+}
+
+.arcade-skill-buttons button:hover { transform: translateY(-2px); }
+
+.arcade-skill-buttons button span { font-size: 15px; }
+.arcade-skill-buttons button b { font-size: 13px; }
+.arcade-skill-buttons button small {
+  font: 700 9px/1 var(--mono);
+  color: rgba(37, 36, 57, 0.5);
+}
+
+.arcade-skill-hint {
+  font: 500 10px/1.35 var(--mono);
+  color: rgba(37, 36, 57, 0.55);
+}
