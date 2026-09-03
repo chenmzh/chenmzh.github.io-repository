@@ -4,8 +4,10 @@
 
 公开页面：
 
-- 中文：`/challenge/virtual-cell/`
-- English：`/challenge/virtual-cell/en/`
+- 项目主页（中文）：`/challenge/virtual-cell/`
+- Project home (English)：`/challenge/virtual-cell/en/`
+- 学习与实验日志（中文）：`/challenge/virtual-cell/learning-log/`
+- Learning & experiment log (English)：`/challenge/virtual-cell/learning-log/en/`
 
 两种语言的学习进度和测试记录共用 `progress.js`，每条记录同时包含中文和英文，避免两个页面出现状态不一致。
 
@@ -23,10 +25,12 @@
 
 Public pages:
 
-- Chinese: `/challenge/virtual-cell/`
-- English: `/challenge/virtual-cell/en/`
+- Project home (Chinese): `/challenge/virtual-cell/`
+- Project home (English): `/challenge/virtual-cell/en/`
+- Learning and experiment log (Chinese): `/challenge/virtual-cell/learning-log/`
+- Learning and experiment log (English): `/challenge/virtual-cell/learning-log/en/`
 
-Both versions share `progress.js`. Every progress and test entry contains Chinese and English text so that the two pages cannot drift apart.
+Both learning-log versions share `progress.js`. Every progress and test entry contains Chinese and English text so that the two pages cannot drift apart.
 
 For each experiment update:
 

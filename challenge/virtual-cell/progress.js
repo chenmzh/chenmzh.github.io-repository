@@ -65,7 +65,7 @@
     {
       name: t('双语项目页面', 'Bilingual project page'),
       status: 'passed',
-      result: t('Challenge 入口、Virtual Cell 子页面和共享进度记录已建立。', 'The Challenge field, Virtual Cell page, and shared progress log are in place.'),
+      result: t('Challenge 入口、Virtual Cell 项目主页、独立学习子页面和共享进度记录已建立。', 'The Challenge field, Virtual Cell project home, dedicated learning subpage, and shared progress log are in place.'),
       next: t('每次实验后更新本记录。', 'Update this log after every experiment.')
     },
     {

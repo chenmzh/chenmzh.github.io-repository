@@ -3,14 +3,15 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Virtual Cell Challenge 2026 learning roadmap, modeling strategy, and experiment progress">
+  <meta name="description" content="Virtual Cell Challenge 2026 project home: task overview, working thesis, and learning and experiment subpage">
   <meta name="theme-color" content="#f4f5f1">
-  <title>Virtual Cell Challenge · Learning and Experiment Log</title>
+  <title>Virtual Cell Challenge · Project Home</title>
   <link rel="stylesheet" href="../../../assets/site-shell.css">
   <link rel="stylesheet" href="../../challenge.css">
 </head>
 <body class="ss-page challenge-page">
   <a class="ss-skip" href="#content">Skip to content</a>
+  <div class="ss-backbar"><div class="ss-backbar-inner"><a class="ss-back" href="../../en/">← Back to Challenge Field</a><span class="ss-crumb">Challenge / Virtual Cell</span></div></div>
   <header class="ss-site-header">
     <nav class="ss-site-nav ss-shell" aria-label="Main navigation">
       <a class="ss-brand" href="../../../" aria-label="Back to Mingzhe Chen home"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
@@ -22,108 +23,51 @@
   <section class="ss-page-hero">
     <div class="ss-shell ss-hero-grid">
       <div>
-        <p class="ss-kicker">Challenge 01 / Zero-shot perturbation prediction</p>
+        <p class="ss-kicker">Challenge 01 / Project home</p>
         <h1 class="ss-page-title">Virtual Cell <em>Challenge.</em></h1>
-        <p class="ss-lede">Starting from Intro to ML and basic statistics, learn to predict single-cell transcriptomic responses to CRISPRi knockdowns in unseen cell lines, while keeping a public record of learning, baselines, experiments, and submissions.</p>
-        <div class="ss-actions"><a class="ss-button" href="#roadmap">View roadmap</a><a class="ss-button ss-button--ghost" href="#progress">View progress</a><a class="ss-button ss-button--ghost" href="https://virtualcellchallenge.org/">Official site ↗</a></div>
+        <p class="ss-lede">A long-running project built around the 2026 Virtual Cell Challenge: understand zero-shot cellular perturbation prediction, establish reliable baselines, learn cross-context transfer, and turn every experiment into a reproducible record.</p>
+        <div class="ss-actions"><a class="ss-button" href="../learning-log/en/">Open learning &amp; experiment log</a><a class="ss-button ss-button--ghost" href="https://virtualcellchallenge.org/">Official site ↗</a></div>
       </div>
       <aside class="ss-signal-panel" aria-label="Project overview">
         <span class="ss-signal-label">Project signal</span>
         <dl class="ss-signal-list">
-          <div><dt>Level</dt><dd>Intro ML + Stats</dd></div>
-          <div><dt>Plan</dt><dd>8 weeks</dd></div>
+          <div><dt>Year</dt><dd>2026</dd></div>
+          <div><dt>Domain</dt><dd>AI × Single-cell</dd></div>
           <div><dt>Task</dt><dd>CRISPRi · zero-shot</dd></div>
-          <div><dt>Status</dt><dd>Research complete</dd></div>
+          <div><dt>Stage</dt><dd>Learning setup</dd></div>
         </dl>
       </aside>
     </div>
   </section>
 
   <main class="ss-shell ss-main" id="content">
-    <section class="ss-section">
-      <div class="challenge-callout"><p><strong>Core strategy:</strong> begin with a statistical cross-context perturbation-signature baseline, then learn context-weighted transfer. Use target control cells as scaffolds to generate heterogeneous raw counts, and only then add MLP, X-Cell, STATE, or other pretrained-model residuals and ensembles.</p></div>
-    </section>
-
-    <section class="ss-section" aria-labelledby="task-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">01 / Understand the task</span><h2 class="ss-section-title" id="task-title">What the challenge asks for</h2></div><p class="ss-section-note">The current site describes the 2026 challenge. The H1 150/50/100 split and three metrics belong to 2025.</p></div>
+    <section class="ss-section" aria-labelledby="overview-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">01 / Project overview</span><h2 class="ss-section-title" id="overview-title">Project overview</h2></div><p class="ss-section-note">This page defines the project. The detailed roadmap and live progress log now live on a dedicated subpage.</p></div>
       <div class="challenge-summary-grid">
-        <article class="challenge-stat"><strong>Input</strong><span>18,400 non-targeting control cells from each anonymous cell line, plus 300 knockdown targets for the current round.</span></article>
-        <article class="challenge-stat"><strong>Output</strong><span>Exactly 400 cells for every context × perturbation, with non-negative integer raw counts over 18,533 genes.</span></article>
-        <article class="challenge-stat"><strong>Generalization</strong><span>Validation uses A/B/C and the final uses new D/E/F contexts; there is no challenge-specific perturbation training set.</span></article>
-      </div>
-      <div class="challenge-prose">
-        <h3>Key implications</h3>
-        <ul>
-          <li>The perturbed gene itself is excluded from all six metrics. PDS also excludes all 300 target genes in the panel, so the model must predict genuine downstream responses.</li>
-          <li>CPM, log1p, and pseudobulk are useful for analysis and training, but the final submission must contain raw integer counts.</li>
-          <li>Repeating one pseudobulk vector 400 times produces unrealistically low variance and damages Wilcoxon tests and significant-DEG calls.</li>
-        </ul>
-      </div>
-      <div class="challenge-metric-grid">
-        <article class="challenge-metric"><strong>PDS cosine</strong><span>Whether each response is distinguishable from other perturbations.</span></article>
-        <article class="challenge-metric"><strong>Expression MSE</strong><span>Sampling-noise-corrected whole-expression error.</span></article>
-        <article class="challenge-metric"><strong>Direction fidelity</strong><span>Correct up/down direction among predicted responding genes.</span></article>
-        <article class="challenge-metric"><strong>Direction reach</strong><span>How deeply high-confidence predictions retain directional accuracy.</span></article>
-        <article class="challenge-metric"><strong>DEG Jaccard</strong><span>Overlap between predicted and measured significant-gene sets.</span></article>
-        <article class="challenge-metric"><strong>LFC NMAE</strong><span>Log2 fold-change magnitude on truly significant genes.</span></article>
+        <article class="challenge-stat"><strong>Scientific question</strong><span>Predict downstream transcriptomic responses to single-gene CRISPRi in unseen cell lines using only their unperturbed state.</span></article>
+        <article class="challenge-stat"><strong>Challenge scale</strong><span>Three anonymous contexts per round, 300 perturbations per context, and 400 generated single cells for every combination.</span></article>
+        <article class="challenge-stat"><strong>Success criteria</strong><span>Balance expression error, perturbation discrimination, DEG sets, response direction, and effect magnitude—not one metric alone.</span></article>
       </div>
     </section>
 
-    <section class="ss-section" id="roadmap" aria-labelledby="roadmap-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">02 / Eight-week roadmap</span><h2 class="ss-section-title" id="roadmap-title">Eight-week project plan</h2></div><p class="ss-section-note">Assumes 10–12 hours per week: 25% reading, 60% coding, and 15% experiment logging.</p></div>
-      <ol class="challenge-roadmap">
-        <li><span class="week">Week 0</span><div><h3>Environment and data structures</h3><p>Set up Python 3.11, Jupyter, AnnData, Scanpy, SciPy, scikit-learn, cell-eval2, and vcc-cli. Read a small .h5ad and identify X, obs, var, layers, raw, and sparse matrices.</p></div></li>
-        <li><span class="week">Week 1</span><div><h3>Minimum viable cell biology</h3><p>Understand DNA→RNA→protein, UMIs, library size, dropout, batch effects, CRISPRi, non-targeting guides, Perturb-seq, and up/down regulation.</p></div></li>
-        <li><span class="week">Week 2</span><div><h3>Pseudobulk and differential expression</h3><p>Compute control/perturbation pseudobulk, log2FC, Wilcoxon rank-sum, BH-FDR, and DEG calls from raw counts. Keep analysis and submission scales separate.</p></div></li>
-        <li><span class="week">Week 3</span><div><h3>Three statistical baselines</h3><p>Implement control bootstrap, global mean response, and same-gene cross-context transfer. Shrink low-expression targets and unstable cross-context responses.</p></div></li>
-        <li><span class="week">Week 4</span><div><h3>Correct validation</h3><p>Build leave-one-cell-line-out and perturbation-holdout protocols. Never randomly split cells. Freeze the splits and compare every model on the same six metrics.</p></div></li>
-        <li><span class="week">Week 5</span><div><h3>Context-weighted transfer</h3><p>Represent target context with control pseudobulk/PCA embeddings and weight source signatures by similarity. Compare Ridge, ElasticNet, and a small residual MLP.</p></div></li>
-        <li><span class="week">Week 6</span><div><h3>Recover single-cell distributions</h3><p>Sample target-control scaffolds, modify means using predicted logFC, and sample with Poisson/Negative Binomial models. Check library size, zeros, variance, and DEG counts.</p></div></li>
-        <li><span class="week">Week 7</span><div><h3>Pretrained models and biological priors</h3><p>Evaluate ESM-2, STRING/GO, STATE, Stack, X-Cell, or PRiMeFlow. Prefer residual or ensemble use over training a huge model from scratch.</p></div></li>
-        <li><span class="week">Week 8</span><div><h3>Competition-grade pipeline</h3><p>Finish configured inference, six-metric reports, sparse integer counts, format validation, .vcc packaging, and reproducible candidate submissions with fixed code, config, seeds, and data versions.</p></div></li>
-      </ol>
-    </section>
-
-    <section class="ss-section" id="progress" aria-labelledby="progress-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">03 / Learning progress</span><h2 class="ss-section-title" id="progress-title">Learning progress</h2></div><p class="ss-section-note">A status changes only after a verifiable artifact is complete.</p></div>
-      <div class="challenge-table-wrap"><table class="challenge-table"><thead><tr><th>Phase</th><th>Status</th><th>Date</th><th>Learning or implementation</th><th>Evidence</th></tr></thead><tbody data-progress></tbody></table></div>
-      <noscript><p class="ss-note">Enable JavaScript to view the shared bilingual progress log.</p></noscript>
-      <p class="challenge-updated" data-progress-updated></p>
-    </section>
-
-    <section class="ss-section" id="tests" aria-labelledby="tests-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">04 / Test log</span><h2 class="ss-section-title" id="tests-title">Tests and validation</h2></div><p class="ss-section-note">Failed and not-started items remain visible instead of showing only the best result.</p></div>
-      <div class="challenge-table-wrap"><table class="challenge-table"><thead><tr><th>Test</th><th>Status</th><th>Result</th><th>Next step</th></tr></thead><tbody data-tests></tbody></table></div>
-    </section>
-
-    <section class="ss-section" aria-labelledby="workflow-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">05 / Working protocol</span><h2 class="ss-section-title" id="workflow-title">Experiment protocol</h2></div></div>
-      <div class="challenge-prose">
-        <ol>
-          <li>Change one major factor per experiment and save the configuration, Git commit, random seed, and data version.</li>
-          <li>Run on fixed cross-context splits before considering leaderboard feedback.</li>
-          <li>Report all six metrics by context, perturbation strength, and data coverage—not only Overall.</li>
-          <li>Before submission, verify three contexts, exact cell counts, full gene set, integral non-negative counts, sparsity, and context labels.</li>
-        </ol>
+    <section class="ss-section" aria-labelledby="pages-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">02 / Project pages</span><h2 class="ss-section-title" id="pages-title">Project subpages</h2></div><p class="ss-section-note">The project home provides navigation while focused pages can grow independently for models, data, and results.</p></div>
+      <div class="ss-card-grid ss-card-grid--two">
+        <a class="ss-card" href="../learning-log/en/" style="--card-accent:#eeeafd">
+          <span class="ss-card-number">SUBPAGE 01 · ACTIVE</span>
+          <span class="ss-card-title">Learning &amp; Experiment Log</span>
+          <span class="ss-card-copy">An eight-week roadmap for an Intro ML and basic statistics background, plus a shared learning-progress log, test log, resources, and experiment protocol.</span>
+          <span class="ss-card-meta">Roadmap · Progress · Test log</span>
+        </a>
       </div>
     </section>
 
-    <section class="ss-section" aria-labelledby="resources-title">
-      <div class="ss-section-head"><div><span class="ss-section-index">06 / Resources</span><h2 class="ss-section-title" id="resources-title">Recommended resources</h2></div></div>
-      <ul class="challenge-resource-list">
-        <li><a href="https://virtualcellchallenge.org/">Virtual Cell Challenge official site ↗</a></li>
-        <li><a href="https://vcc-cli-wiki.virtualcellchallenge.org/">VCC CLI documentation ↗</a></li>
-        <li><a href="https://github.com/ArcInstitute/cell-eval2">Official cell-eval2 implementation ↗</a></li>
-        <li><a href="https://github.com/ArcInstitute/cell-eval2/blob/main/docs/vcc2026_metrics/vcc2026-metrics.pdf">2026 metrics specification PDF ↗</a></li>
-        <li><a href="https://anndata.readthedocs.io/">AnnData documentation ↗</a></li>
-        <li><a href="https://scanpy.readthedocs.io/en/stable/tutorials/">Scanpy tutorials ↗</a></li>
-        <li><a href="https://github.com/Virtual-Cell-Research-Community/scPertEval/blob/main/docs/user-guide/datasets.md">Public Perturb-seq datasets ↗</a></li>
-        <li><a href="https://github.com/altoslabs/primeflow">PRiMeFlow code and data ↗</a></li>
-      </ul>
+    <section class="ss-section" aria-labelledby="strategy-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">03 / Working thesis</span><h2 class="ss-section-title" id="strategy-title">Current working thesis</h2></div></div>
+      <div class="challenge-callout"><p><strong>Statistics first, deep learning second:</strong> establish cross-context perturbation-signature baselines, perform context-weighted transfer from target controls, and generate heterogeneous raw single-cell counts. Use pretrained models mainly for residual correction and conservative ensembling.</p></div>
     </section>
 
-    <footer class="ss-footer"><span>Mingzhe Chen · Virtual Cell Challenge</span><span>Learning and experiment log</span></footer>
+    <footer class="ss-footer"><span>Mingzhe Chen · Virtual Cell Challenge</span><span>Project home</span></footer>
   </main>
-  <script src="../progress.js"></script>
 </body>
 </html>
