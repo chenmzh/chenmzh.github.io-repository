@@ -1,36 +1,36 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="春の線路 地図 — 桜と電車の町を自由に見渡せる体素マップ。ドラッグで回転、ホイールでズーム。" />
-  <title>春の線路 · 地図 | Sakura &amp; Rail Map</title>
+  <meta name="description" content="春日水乡小镇 — 在白墙黛瓦、石桥河埠与田野之间，乘着列车探索有生活气息的江南微缩世界。" />
+  <title>春日水乡 · 江南铁路微缩小镇</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23f5b8c8'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ffdce6'/%3E%3C/svg%3E" />
-  <script type="module" crossorigin src="./assets/map-Do_eGJrw.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/audio-CPA5CR9k.js">
+  <script type="module" crossorigin src="./assets/map-Dz-afo6s.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/audio-DsMXnK9K.js">
   <link rel="stylesheet" crossorigin href="./assets/audio-D4jVwIc3.css">
 </head>
 <body class="map-page">
-  <canvas id="stage" tabindex="0" aria-label="桜と田園を走る列車の体素ジオラマ。ドラッグ、キーボード、タッチで自由に探索できます。"></canvas>
+  <canvas id="stage" tabindex="0" aria-label="列车穿行于江南水乡、学校、医院与田野之间的体素微缩小镇。可用拖拽、键盘和触摸自由探索。"></canvas>
 
   <!-- whisper text, bottom-left. never a UI. -->
-  <div id="whisper" aria-hidden="true">春は、静かに過ぎていく。</div>
+  <div id="whisper" aria-hidden="true">小桥流水，烟火人间。</div>
 
   <!-- operation hint, fades away after a while -->
   <div id="map-hint" role="status">
-    <span class="hint-pc">ドラッグで回転 ・ WASDで移動 ・ ホイールでズーム ・ Q/Eで時間</span>
-    <span class="hint-touch">ドラッグで回転 ・ 2本指で移動 ・ ピンチでズーム</span>
+    <span class="hint-pc">拖拽环顾 · WASD移动 · 滚轮缩放 · Q/E调整时间</span>
+    <span class="hint-touch">单指环顾 · 双指移动 · 捏合缩放</span>
   </div>
 
   <!-- sound only after the visitor chooses it -->
-  <button id="sound" type="button" aria-label="環境音をオンにする" aria-pressed="false">音</button>
-  <button id="reset-view" type="button" aria-label="初期視点に戻す">視点リセット</button>
+  <button id="sound" type="button" aria-label="开启环境音" aria-pressed="false">声音</button>
+  <button id="reset-view" type="button" aria-label="回到初始视点">重置视点</button>
 
   <!-- manual quality tier -->
-  <button id="quality" type="button" aria-label="画質を切り替える">画質</button>
+  <button id="quality" type="button" aria-label="切换画质">画质</button>
 
   <!-- back to the film -->
-  <a id="mode-link" href="./index.html">映画モードへ →</a>
+  <a id="mode-link" href="./index.html">进入电影模式 →</a>
 
 </body>
 </html>
