@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Virtual Cell Challenge 2026 中文学习路线、建模思路与实验进度">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>Virtual Cell Challenge · 中文学习与实验日志</title>
+  <link rel="stylesheet" href="../../assets/site-shell.css">
+  <link rel="stylesheet" href="../challenge.css">
+</head>
+<body class="ss-page challenge-page">
+  <a class="ss-skip" href="#content">跳到正文</a>
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="主导航">
+      <a class="ss-brand" href="../../" aria-label="返回 Mingzhe Chen 首页"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
+      <div class="ss-nav-links"><a href="../../lecture/">Learning</a><a href="../" aria-current="page">Challenge</a><a href="../../tools/">Tools</a></div>
+      <div class="challenge-language" aria-label="语言"><a href="./" aria-current="page">中文</a><a href="./en/" lang="en">EN</a></div>
+    </nav>
+  </header>
+
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div>
+        <p class="ss-kicker">Challenge 01 / Zero-shot perturbation prediction</p>
+        <h1 class="ss-page-title">Virtual Cell <em>Challenge.</em></h1>
+        <p class="ss-lede">从 Intro to ML 和基础统计出发，学习如何预测未见细胞系在 CRISPRi 基因敲低后的单细胞转录组响应，并持续记录学习、基线、实验与提交结果。</p>
+        <div class="ss-actions"><a class="ss-button" href="#roadmap">查看学习路线</a><a class="ss-button ss-button--ghost" href="#progress">查看当前进度</a><a class="ss-button ss-button--ghost" href="https://virtualcellchallenge.org/">比赛官网 ↗</a></div>
+      </div>
+      <aside class="ss-signal-panel" aria-label="项目概况">
+        <span class="ss-signal-label">Project signal</span>
+        <dl class="ss-signal-list">
+          <div><dt>Level</dt><dd>Intro ML + Stats</dd></div>
+          <div><dt>Plan</dt><dd>8 weeks</dd></div>
+          <div><dt>Task</dt><dd>CRISPRi · zero-shot</dd></div>
+          <div><dt>Status</dt><dd>Research complete</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <main class="ss-shell ss-main" id="content">
+    <section class="ss-section">
+      <div class="challenge-callout"><p><strong>主线：</strong>先建立跨细胞系扰动 signature 统计基线，再学习 context-weighted transfer；随后使用目标 control cells 作为 scaffold 生成保留异质性的原始 counts，最后才引入 MLP、X-Cell、STATE 或其他预训练模型做残差修正与集成。</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="task-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">01 / Understand the task</span><h2 class="ss-section-title" id="task-title">比赛到底要求什么</h2></div><p class="ss-section-note">官网当前对应 2026 届；旧版 H1、150/50/100 划分和三指标属于 2025。</p></div>
+      <div class="challenge-summary-grid">
+        <article class="challenge-stat"><strong>输入</strong><span>匿名细胞系的 18,400 个 non-targeting control 细胞，以及当轮 300 个待敲低基因。</span></article>
+        <article class="challenge-stat"><strong>输出</strong><span>每个 context × perturbation 恰好 400 个细胞、18,533 个基因的非负整数原始 counts。</span></article>
+        <article class="challenge-stat"><strong>泛化</strong><span>验证使用 A/B/C，最终使用新的 D/E/F；本届没有挑战专用扰动训练集。</span></article>
+      </div>
+      <div class="challenge-prose">
+        <h3>关键认识</h3>
+        <ul>
+          <li>扰动基因自身从六项评分中排除；PDS 还会排除当轮全部 300 个 target genes，所以必须预测真正的下游响应。</li>
+          <li>分析和训练可使用 CPM、log1p、pseudobulk；最终提交必须恢复为 raw integer counts。</li>
+          <li>不能把一条 pseudobulk 向量复制 400 次，否则方差过低会破坏 Wilcoxon 检验和显著 DEG 集合。</li>
+        </ul>
+      </div>
+      <div class="challenge-metric-grid">
+        <article class="challenge-metric"><strong>PDS cosine</strong><span>扰动响应能否与其他扰动区分。</span></article>
+        <article class="challenge-metric"><strong>Expression MSE</strong><span>采样噪声校正后的总体表达误差。</span></article>
+        <article class="challenge-metric"><strong>Direction fidelity</strong><span>预测响应基因的上调/下调方向。</span></article>
+        <article class="challenge-metric"><strong>Direction reach</strong><span>高置信排序中方向正确性可保持多深。</span></article>
+        <article class="challenge-metric"><strong>DEG Jaccard</strong><span>预测与真实显著响应基因集合的重合。</span></article>
+        <article class="challenge-metric"><strong>LFC NMAE</strong><span>真实显著基因上的 log2 fold-change 幅度。</span></article>
+      </div>
+    </section>
+
+    <section class="ss-section" id="roadmap" aria-labelledby="roadmap-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">02 / Eight-week roadmap</span><h2 class="ss-section-title" id="roadmap-title">八周项目制学习计划</h2></div><p class="ss-section-note">默认每周 10–12 小时：25% 阅读、60% 编程、15% 实验记录。</p></div>
+      <ol class="challenge-roadmap">
+        <li><span class="week">Week 0</span><div><h3>环境与数据结构</h3><p>搭建 Python 3.11、Jupyter、AnnData、Scanpy、SciPy、scikit-learn、cell-eval2 和 vcc-cli；读取一个小型 .h5ad，识别 X、obs、var、layers、raw 和 sparse matrix。</p></div></li>
+        <li><span class="week">Week 1</span><div><h3>最低限度的细胞生物学</h3><p>理解 DNA→RNA→蛋白质、UMI、library size、dropout、batch effect、CRISPRi、non-targeting guide、Perturb-seq，以及上调与下调。</p></div></li>
+        <li><span class="week">Week 2</span><div><h3>Pseudobulk 与差异表达</h3><p>从 raw counts 计算 control/perturbation pseudobulk、log2FC、Wilcoxon rank-sum、BH-FDR 和 DEG；注意分析数据与提交数据的尺度不同。</p></div></li>
+        <li><span class="week">Week 3</span><div><h3>三个统计基线</h3><p>实现 control bootstrap、全局平均扰动响应和同基因跨细胞系迁移；对低表达 target 与跨 context 不稳定响应进行收缩。</p></div></li>
+        <li><span class="week">Week 4</span><div><h3>正确的验证协议</h3><p>建立 leave-one-cell-line-out 和 perturbation holdout；禁止随机按细胞划分。固定 splits，并用相同六指标比较所有实验。</p></div></li>
+        <li><span class="week">Week 5</span><div><h3>Context-weighted transfer</h3><p>从 control pseudobulk/PCA embedding 描述目标 context，按相似度加权 source signatures；比较 Ridge、ElasticNet 和小型 MLP residual。</p></div></li>
+        <li><span class="week">Week 6</span><div><h3>恢复单细胞分布</h3><p>从目标 control 抽取 scaffold，按预测 logFC 调整均值，并使用 Poisson/Negative Binomial 采样；检查 library size、零值、方差和 DEG 数量。</p></div></li>
+        <li><span class="week">Week 7</span><div><h3>预训练模型与生物先验</h3><p>评估 ESM-2、STRING/GO、STATE、Stack、X-Cell 或 PRiMeFlow；优先把其输出作为统计主干的残差或 ensemble 成员，而非从头训练巨型模型。</p></div></li>
+        <li><span class="week">Week 8</span><div><h3>比赛级流水线</h3><p>完成配置化推理、六指标报告、稀疏整数 counts、格式检查、.vcc 打包和可复现候选提交；固定代码、配置、种子与数据版本。</p></div></li>
+      </ol>
+    </section>
+
+    <section class="ss-section" id="progress" aria-labelledby="progress-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">03 / Learning progress</span><h2 class="ss-section-title" id="progress-title">学习进度</h2></div><p class="ss-section-note">完成一个可验证产出后才更新状态。</p></div>
+      <div class="challenge-table-wrap"><table class="challenge-table"><thead><tr><th>阶段</th><th>状态</th><th>日期</th><th>学习或实现</th><th>完成证据</th></tr></thead><tbody data-progress></tbody></table></div>
+      <noscript><p class="ss-note">请启用 JavaScript 查看共享的双语进度记录。</p></noscript>
+      <p class="challenge-updated" data-progress-updated></p>
+    </section>
+
+    <section class="ss-section" id="tests" aria-labelledby="tests-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">04 / Test log</span><h2 class="ss-section-title" id="tests-title">测试与验证记录</h2></div><p class="ss-section-note">同时保留未通过和未开始的项目，避免只展示最佳结果。</p></div>
+      <div class="challenge-table-wrap"><table class="challenge-table"><thead><tr><th>测试</th><th>状态</th><th>结果</th><th>下一步</th></tr></thead><tbody data-tests></tbody></table></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="workflow-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">05 / Working protocol</span><h2 class="ss-section-title" id="workflow-title">实验工作协议</h2></div></div>
+      <div class="challenge-prose">
+        <ol>
+          <li>每次实验只改变一个主要因素，并保存配置、Git commit、随机种子和数据版本。</li>
+          <li>先在固定的跨细胞系 splits 上运行，再考虑使用排行榜反馈。</li>
+          <li>同时报告六项指标、不同 context、强弱扰动和数据覆盖情况，而不是只看 Overall。</li>
+          <li>提交前检查三个 context、精确细胞数、完整基因集、整数性、非负性、稀疏度以及 context 标签。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="resources-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">06 / Resources</span><h2 class="ss-section-title" id="resources-title">推荐资源</h2></div></div>
+      <ul class="challenge-resource-list">
+        <li><a href="https://virtualcellchallenge.org/">Virtual Cell Challenge 官网 ↗</a></li>
+        <li><a href="https://vcc-cli-wiki.virtualcellchallenge.org/">VCC CLI 文档 ↗</a></li>
+        <li><a href="https://github.com/ArcInstitute/cell-eval2">cell-eval2 官方评分实现 ↗</a></li>
+        <li><a href="https://github.com/ArcInstitute/cell-eval2/blob/main/docs/vcc2026_metrics/vcc2026-metrics.pdf">2026 指标说明 PDF ↗</a></li>
+        <li><a href="https://anndata.readthedocs.io/">AnnData 文档 ↗</a></li>
+        <li><a href="https://scanpy.readthedocs.io/en/stable/tutorials/">Scanpy 教程 ↗</a></li>
+        <li><a href="https://github.com/Virtual-Cell-Research-Community/scPertEval/blob/main/docs/user-guide/datasets.md">公开 Perturb-seq 数据集 ↗</a></li>
+        <li><a href="https://github.com/altoslabs/primeflow">PRiMeFlow 代码与数据 ↗</a></li>
+      </ul>
+    </section>
+
+    <footer class="ss-footer"><span>Mingzhe Chen · Virtual Cell Challenge</span><span>中文学习与实验日志</span></footer>
+  </main>
+  <script src="./progress.js"></script>
+</body>
+</html>
