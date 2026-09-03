@@ -184,7 +184,86 @@
 
 .challenge-resource-list a:hover { border-color: var(--ss-accent); background: var(--ss-accent-soft); }
 
+.lesson-days {
+  display: grid;
+  gap: 16px;
+}
+
+.lesson-day {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--ss-line);
+  border-radius: var(--ss-radius);
+}
+
+.lesson-day-label {
+  color: var(--challenge-violet);
+  font: 750 0.72rem/1.5 var(--ss-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lesson-day h3 { margin: 0 0 8px; font-size: 1.08rem; }
+.lesson-day p { margin: 0.45em 0; color: var(--ss-muted); font-size: 0.88rem; }
+.lesson-day ul { margin: 0.7em 0 0; padding-left: 1.25em; color: var(--ss-muted); font-size: 0.86rem; }
+.lesson-day li + li { margin-top: 0.3em; }
+
+.lesson-block {
+  padding: 22px;
+  background: rgba(255, 255, 255, 0.88);
+  border-left: 4px solid var(--challenge-cyan);
+  border-radius: 0 var(--ss-radius) var(--ss-radius) 0;
+}
+
+.lesson-block strong { color: var(--ss-ink); }
+.lesson-block p { margin: 0; color: var(--ss-muted); }
+
+.lesson-code {
+  position: relative;
+  margin: 18px 0;
+  padding: 20px;
+  overflow-x: auto;
+  color: #edf2ff;
+  background: #17202a;
+  border: 1px solid #263543;
+  border-radius: var(--ss-radius);
+  font: 0.82rem/1.7 var(--ss-mono);
+  white-space: pre;
+}
+
+.lesson-code::before {
+  content: attr(data-label);
+  display: block;
+  margin-bottom: 10px;
+  color: #96a8b8;
+  font: 700 0.65rem/1.3 var(--ss-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lesson-rubric {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.lesson-rubric article {
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--ss-line);
+  border-radius: var(--ss-radius);
+}
+
+.lesson-rubric strong { display: block; color: var(--challenge-violet); font-size: 1.4rem; }
+.lesson-rubric span { color: var(--ss-muted); font-size: 0.82rem; }
+
 @media (max-width: 880px) {
+  .lesson-rubric { grid-template-columns: 1fr 1fr; }
+
+
   .challenge-summary-grid,
   .challenge-metric-grid { grid-template-columns: 1fr 1fr; }
 }
@@ -195,5 +274,8 @@
   .challenge-summary-grid,
   .challenge-metric-grid,
   .challenge-resource-list { grid-template-columns: 1fr; }
-  .challenge-roadmap li { grid-template-columns: 1fr; gap: 7px; }
+  .challenge-roadmap li,
+  .lesson-day { grid-template-columns: 1fr; gap: 7px; }
+  .lesson-rubric { grid-template-columns: 1fr; }
+  .lesson-code { margin-inline: -8px; padding: 16px; font-size: 0.76rem; }
 }

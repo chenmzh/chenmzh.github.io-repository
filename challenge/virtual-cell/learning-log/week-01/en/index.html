@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Virtual Cell Challenge Week 1 teaching pack: environment setup, AnnData, single-cell data semantics, QC, and pseudobulk">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>Week 1 · Environment and Single-Cell Data Semantics</title>
+  <link rel="stylesheet" href="../../../../../assets/site-shell.css">
+  <link rel="stylesheet" href="../../../../challenge.css">
+</head>
+<body class="ss-page challenge-page">
+  <a class="ss-skip" href="#content">Skip to content</a>
+  <div class="ss-backbar"><div class="ss-backbar-inner"><a class="ss-back" href="../../en/">← Back to Learning &amp; Experiment Log</a><span class="ss-crumb">Virtual Cell / Learning Log / Week 01</span></div></div>
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="Main navigation">
+      <a class="ss-brand" href="../../../../../" aria-label="Back to Mingzhe Chen home"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
+      <div class="ss-nav-links"><a href="../../../../../lecture/">Learning</a><a href="../../../../en/" aria-current="page">Challenge</a><a href="../../../../../tools/">Tools</a></div>
+      <div class="challenge-language" aria-label="Language"><a href="../" lang="zh-CN">中文</a><a href="./" aria-current="page">EN</a></div>
+    </nav>
+  </header>
+
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div>
+        <p class="ss-kicker">Week 01 / Foundations before models</p>
+        <h1 class="ss-page-title">Environment &amp; <em>Data Semantics.</em></h1>
+        <p class="ss-lede">Week 1 combines environment preparation with minimum viable biology: start from a clean environment, understand AnnData, raw counts, experimental groups, and QC, then finish one sparse-safe pseudobulk analysis.</p>
+        <div class="ss-actions"><a class="ss-button" href="../downloads/virtual-cell-week01-starter.zip" download>Download full teaching pack</a><a class="ss-button ss-button--ghost" href="#schedule">Start the five-day class</a><a class="ss-button ss-button--ghost" href="#assessment">View assessment</a></div>
+      </div>
+      <aside class="ss-signal-panel" aria-label="Course overview">
+        <span class="ss-signal-label">Week signal</span>
+        <dl class="ss-signal-list">
+          <div><dt>Time</dt><dd>5 days · 10 hours</dd></div>
+          <div><dt>Level</dt><dd>Intro ML + Stats</dd></div>
+          <div><dt>Data</dt><dd>2,400 × 500 toy set</dd></div>
+          <div><dt>Output</dt><dd>Notebook + QC + PB</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <main class="ss-shell ss-main" id="content">
+    <section class="ss-section">
+      <div class="challenge-callout"><p><strong>The teacher's first rule:</strong> do not train a model in Week 1. First prove that you understand what the matrix values mean, which cells share an experimental replicate, where raw counts live, and why random cell splitting leaks information.</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="start-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">01 / Setup</span><h2 class="ss-section-title" id="start-title">Start here</h2></div><p class="ss-section-note">Python 3.11 or 3.12 is recommended; uv and pyproject.toml lock the environment.</p></div>
+      <div class="lesson-block"><p><strong>Goal:</strong> start from an empty directory, run one setup command, generate toy Perturb-seq data, produce QC and pseudobulk artifacts, and pass the tests.</p></div>
+      <pre class="lesson-code" data-label="macOS / Linux"><code>unzip virtual-cell-week01-starter.zip
+cd virtual-cell-week01-starter
+bash setup.sh
+uv run jupyter lab</code></pre>
+      <pre class="lesson-code" data-label="Windows PowerShell"><code>Expand-Archive virtual-cell-week01-starter.zip
+cd virtual-cell-week01-starter
+Set-ExecutionPolicy -Scope Process Bypass
+.\setup.ps1
+uv run jupyter lab</code></pre>
+      <div class="challenge-prose"><p>The setup script creates an isolated environment, checks packages, installs <code>vcc-cli</code>, generates data, runs four analysis scripts, and executes pytest. The teaching dataset is synthetic and is not official challenge data.</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="goals-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">02 / Learning objectives</span><h2 class="ss-section-title" id="goals-title">What you should be able to do</h2></div></div>
+      <div class="challenge-summary-grid">
+        <article class="challenge-stat"><strong>Rebuild the environment</strong><span>Report Python, package versions, and the seed, then rerun from a fresh environment.</span></article>
+        <article class="challenge-stat"><strong>Explain the experiment</strong><span>Define cell, gene, RNA, control, CRISPRi, and perturbation.</span></article>
+        <article class="challenge-stat"><strong>Read AnnData</strong><span>Locate X, obs, var, layers, and obsm, and slice safely.</span></article>
+        <article class="challenge-stat"><strong>Audit counts</strong><span>Check non-negativity, integrality, and sparsity without densifying the full matrix.</span></article>
+        <article class="challenge-stat"><strong>Perform QC</strong><span>Compute and interpret library size, detected genes, and mitochondrial fraction.</span></article>
+        <article class="challenge-stat"><strong>Aggregate correctly</strong><span>Sum by donor × cell type × condition and design a group-aware split.</span></article>
+      </div>
+    </section>
+
+    <section class="ss-section" id="schedule" aria-labelledby="schedule-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">03 / Five-day class</span><h2 class="ss-section-title" id="schedule-title">Five-day teaching plan</h2></div><p class="ss-section-note">About two hours per day; each lesson follows question → code → one-sentence interpretation.</p></div>
+      <div class="lesson-days">
+        <article class="lesson-day"><span class="lesson-day-label">Day 1</span><div><h3>Environment, task map, and minimum biology</h3><p><strong>Teach:</strong> DNA→RNA→expression; how CRISPRi changes cell state; why controls matter; challenge input, intervention, and target.</p><ul><li>Practice: run the environment check and generate toy data.</li><li>Deliverable: version report and an experimental unit → observation → target diagram.</li><li>Exit ticket: explain expression, control, and prediction target in three sentences.</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 2</span><div><h3>AnnData, raw counts, and sparse matrices</h3><p><strong>Teach:</strong> <code>X</code> is a location, not guaranteed semantics; <code>adata.raw</code> is not guaranteed raw counts; a sparse zero is not missing.</p><ul><li>Practice: inspect shape, dtype, nnz, layers, obs, and var.</li><li>Deliverable: data-audit table.</li><li>Exit ticket: explain why full-matrix <code>.toarray()</code> is unsafe.</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 3</span><div><h3>Experimental design and basic QC</h3><p><strong>Teach:</strong> cells are observations; donor/replicate usually defines independent inference. QC thresholds need distribution- and task-based justification.</p><ul><li>Practice: compare total counts, detected genes, and pct_mito by perturbation, cell type, and batch.</li><li>Deliverable: QC CSV, three plots, and filtering rationale.</li><li>Exit ticket: explain how over-QC can remove true responses.</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 4</span><div><h3>First pseudobulk analysis</h3><p><strong>Teach:</strong> sum raw counts inside correct experimental groups. Pseudobulk reduces pseudoreplication but loses single-cell heterogeneity.</p><ul><li>Practice: aggregate by donor × cell type × target_gene.</li><li>Deliverable: 24 pseudobulk samples with metadata.</li><li>Exit ticket: prove per-gene count conservation.</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 5</span><div><h3>End-to-end mini-project</h3><p><strong>Teach:</strong> from a fresh kernel, complete reading, audit, QC, pseudobulk, control comparison, and leakage-aware splitting.</p><ul><li>Practice: finish the student notebook, then compare with the teacher version.</li><li>Deliverable: rerunnable notebook, interpretation, and validation split.</li><li>Exit ticket: identify donor_3–batch_2 confounding and its limitation.</li></ul></div></article>
+      </div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="data-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">04 / Teaching dataset</span><h2 class="ss-section-title" id="data-title">Inside the teaching data</h2></div></div>
+      <div class="challenge-prose"><p>The generator creates 2,400 cells × 500 genes with one control, three perturbations, two cell types, three donors, and two batches. Counts use Gamma–Poisson sampling for overdispersion and include cell-type-specific downstream responses.</p><ul><li><code>X</code> and <code>layers["counts"]</code>: CSR sparse, non-negative integer raw counts;</li><li><code>obs</code>: target_gene, guide_id, cell_type, donor, replicate, batch, and QC fields;</li><li><code>var</code>: gene_id, is_mito, is_target_gene, and is_true_response;</li><li><code>uns</code>: fixed seed, data contract, and teaching ground truth.</li></ul><p><strong>Transparent traps:</strong> donor_3 is perfectly confounded with batch_2; about 3% of cells have low library size and elevated mitochondrial fractions. Discover and interpret them—do not silently “clean them away.”</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="files-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">05 / Course files</span><h2 class="ss-section-title" id="files-title">Downloads and learning files</h2></div><p class="ss-section-note">Use the ZIP to begin immediately or inspect individual files online.</p></div>
+      <ul class="challenge-resource-list">
+        <li><a href="../downloads/virtual-cell-week01-starter.zip" download>Complete teaching pack ZIP ↗</a></li>
+        <li><a href="../downloads/virtual-cell-week01-starter.zip.sha256">ZIP SHA-256 ↗</a></li>
+        <li><a href="../files/README.en.md">English quick start ↗</a></li>
+        <li><a href="../files/README.zh-CN.md">中文快速开始 ↗</a></li>
+        <li><a href="../files/teacher-notes.en.md">English instructor notes ↗</a></li>
+        <li><a href="../files/teacher-notes.zh-CN.md">中文教师讲义 ↗</a></li>
+        <li><a href="../files/notebooks/week01_student.ipynb" download>Student lab notebook ↗</a></li>
+        <li><a href="../files/notebooks/week01_teacher.ipynb" download>Teacher walkthrough notebook ↗</a></li>
+        <li><a href="../files/exercises/exercises.en.md">English exercises ↗</a></li>
+        <li><a href="../files/exercises/answers.en.md">English reference answers ↗</a></li>
+        <li><a href="../files/pyproject.toml">Environment pyproject.toml ↗</a></li>
+        <li><a href="../files/scripts/make_toy_perturbseq.py">Toy-data generator ↗</a></li>
+        <li><a href="../files/scripts/inspect_h5ad.py">AnnData inspector ↗</a></li>
+        <li><a href="../files/scripts/pseudobulk.py">Pseudobulk script ↗</a></li>
+      </ul>
+    </section>
+
+    <section class="ss-section" id="assessment" aria-labelledby="assessment-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">06 / Assessment</span><h2 class="ss-section-title" id="assessment-title">Assignments and passing criteria</h2></div><p class="ss-section-note">Suggested total ≥80%, with all five hard requirements satisfied.</p></div>
+      <div class="lesson-rubric">
+        <article><strong>20%</strong><span>Environment and data audit</span></article>
+        <article><strong>30%</strong><span>QC mini-report</span></article>
+        <article><strong>30%</strong><span>Pseudobulk analysis</span></article>
+        <article><strong>20%</strong><span>Concepts and reproducibility</span></article>
+      </div>
+      <div class="challenge-prose"><h3>Hard requirements</h3><ol><li>Do not confuse raw counts with normalized/log data.</li><li>Do not treat cells as independent biological replicates.</li><li>Do not call <code>.toarray()</code> on the complete sparse matrix.</li><li>Run the notebook in order from a fresh kernel.</li><li>Propose donor-, cell-type-, or perturbation-aware validation.</li></ol></div>
+    </section>
+
+    <footer class="ss-footer"><span>Virtual Cell Challenge · Week 01</span><span>Environment · Data semantics · QC · Pseudobulk</span></footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Virtual Cell Challenge 第一周中文教学包：环境配置、AnnData、单细胞数据语义、QC 与 pseudobulk">
+  <meta name="theme-color" content="#f4f5f1">
+  <title>第一周 · 环境与单细胞数据语义</title>
+  <link rel="stylesheet" href="../../../../assets/site-shell.css">
+  <link rel="stylesheet" href="../../../challenge.css">
+</head>
+<body class="ss-page challenge-page">
+  <a class="ss-skip" href="#content">跳到正文</a>
+  <div class="ss-backbar"><div class="ss-backbar-inner"><a class="ss-back" href="../">← 返回学习与实验日志</a><span class="ss-crumb">Virtual Cell / Learning Log / Week 01</span></div></div>
+  <header class="ss-site-header">
+    <nav class="ss-site-nav ss-shell" aria-label="主导航">
+      <a class="ss-brand" href="../../../../" aria-label="返回 Mingzhe Chen 首页"><span class="ss-brand-mark" aria-hidden="true"></span><span>Mingzhe Chen</span></a>
+      <div class="ss-nav-links"><a href="../../../../lecture/">Learning</a><a href="../../../" aria-current="page">Challenge</a><a href="../../../../tools/">Tools</a></div>
+      <div class="challenge-language" aria-label="语言"><a href="./" aria-current="page">中文</a><a href="./en/" lang="en">EN</a></div>
+    </nav>
+  </header>
+
+  <section class="ss-page-hero">
+    <div class="ss-shell ss-hero-grid">
+      <div>
+        <p class="ss-kicker">Week 01 / Foundations before models</p>
+        <h1 class="ss-page-title">环境与<em>数据语义.</em></h1>
+        <p class="ss-lede">第一周把路线图中的环境准备和最低限度生物学合并起来：从干净环境出发，读懂 AnnData、raw counts、实验分组和 QC，最终完成一次稀疏安全的 pseudobulk 分析。</p>
+        <div class="ss-actions"><a class="ss-button" href="./downloads/virtual-cell-week01-starter.zip" download>下载完整教学包</a><a class="ss-button ss-button--ghost" href="#schedule">开始五天课程</a><a class="ss-button ss-button--ghost" href="#assessment">查看验收标准</a></div>
+      </div>
+      <aside class="ss-signal-panel" aria-label="课程概况">
+        <span class="ss-signal-label">Week signal</span>
+        <dl class="ss-signal-list">
+          <div><dt>Time</dt><dd>5 days · 10 hours</dd></div>
+          <div><dt>Level</dt><dd>Intro ML + Stats</dd></div>
+          <div><dt>Data</dt><dd>2,400 × 500 toy set</dd></div>
+          <div><dt>Output</dt><dd>Notebook + QC + PB</dd></div>
+        </dl>
+      </aside>
+    </div>
+  </section>
+
+  <main class="ss-shell ss-main" id="content">
+    <section class="ss-section">
+      <div class="challenge-callout"><p><strong>老师的第一条要求：</strong>第一周不要训练模型。先确保你能解释矩阵中的数字是什么、哪些细胞属于同一实验重复、哪里存的是原始 counts，以及为什么随机按细胞切分会泄漏。</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="start-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">01 / Setup</span><h2 class="ss-section-title" id="start-title">从这里开始</h2></div><p class="ss-section-note">推荐 Python 3.11 或 3.12；依赖由 uv 和 pyproject.toml 固定。</p></div>
+      <div class="lesson-block"><p><strong>目标：</strong>从一个空目录运行一条安装命令，自动生成 toy Perturb-seq 数据、QC 表、pseudobulk 文件，并通过测试。</p></div>
+      <pre class="lesson-code" data-label="macOS / Linux"><code>unzip virtual-cell-week01-starter.zip
+cd virtual-cell-week01-starter
+bash setup.sh
+uv run jupyter lab</code></pre>
+      <pre class="lesson-code" data-label="Windows PowerShell"><code>Expand-Archive virtual-cell-week01-starter.zip
+cd virtual-cell-week01-starter
+Set-ExecutionPolicy -Scope Process Bypass
+.\setup.ps1
+uv run jupyter lab</code></pre>
+      <div class="challenge-prose"><p>安装脚本会创建隔离环境、检查关键包、安装 <code>vcc-cli</code>、生成数据、运行四个分析脚本并执行 pytest。教学数据是合成数据，不是官方比赛数据。</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="goals-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">02 / Learning objectives</span><h2 class="ss-section-title" id="goals-title">学完后你应该能做到</h2></div></div>
+      <div class="challenge-summary-grid">
+        <article class="challenge-stat"><strong>重建环境</strong><span>报告 Python、包版本和随机种子，并从 fresh environment 重跑。</span></article>
+        <article class="challenge-stat"><strong>解释实验</strong><span>说明 cell、gene、RNA、control、CRISPRi、perturbation 的含义。</span></article>
+        <article class="challenge-stat"><strong>读懂 AnnData</strong><span>正确定位 X、obs、var、layers、obsm，并完成安全切片。</span></article>
+        <article class="challenge-stat"><strong>检查 counts</strong><span>判断非负、整数和稀疏属性，不把完整矩阵转 dense。</span></article>
+        <article class="challenge-stat"><strong>完成 QC</strong><span>计算 library size、detected genes、mitochondrial fraction 并解释分布。</span></article>
+        <article class="challenge-stat"><strong>正确聚合</strong><span>按 donor × cell type × condition 求和，并设计 group-aware split。</span></article>
+      </div>
+    </section>
+
+    <section class="ss-section" id="schedule" aria-labelledby="schedule-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">03 / Five-day class</span><h2 class="ss-section-title" id="schedule-title">五天教学安排</h2></div><p class="ss-section-note">每天约 2 小时；每节都按“问题 → 代码 → 一句话解释”推进。</p></div>
+      <div class="lesson-days">
+        <article class="lesson-day"><span class="lesson-day-label">Day 1</span><div><h3>环境、任务地图与最少细胞生物学</h3><p><strong>讲课：</strong>DNA→RNA→表达；CRISPRi 如何改变细胞状态；control 为什么必要；比赛的输入、干预和预测目标。</p><ul><li>实践：运行环境检查并生成 toy 数据。</li><li>产出：版本报告和“实验单位—观测单位—预测目标”示意图。</li><li>Exit ticket：用三句话解释 expression、control 和预测目标。</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 2</span><div><h3>AnnData、raw counts 与 sparse matrix</h3><p><strong>讲课：</strong><code>X</code> 只是位置，不保证语义；<code>adata.raw</code> 也不必然是 raw counts；稀疏 0 不是缺失值。</p><ul><li>实践：检查 shape、dtype、nnz、layers、obs 和 var。</li><li>产出：数据审计表。</li><li>Exit ticket：解释为什么不能对比赛矩阵直接 <code>.toarray()</code>。</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 3</span><div><h3>实验设计与基础 QC</h3><p><strong>讲课：</strong>细胞是观测单位，donor/replicate 才通常是独立推断单位；QC 阈值必须由分布和任务支持。</p><ul><li>实践：按 perturbation、cell type、batch 比较 total counts、detected genes 和 pct_mito。</li><li>产出：QC CSV、三幅分布图和过滤理由。</li><li>Exit ticket：解释过度 QC 如何删除真实扰动响应。</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 4</span><div><h3>Pseudobulk 初步体验</h3><p><strong>讲课：</strong>在正确实验分组内对 raw counts 求和；pseudobulk 缓解伪重复，但会损失单细胞异质性。</p><ul><li>实践：按 donor × cell type × target_gene 聚合。</li><li>产出：24 个 pseudobulk 样本及 metadata。</li><li>Exit ticket：证明聚合前后每个基因总 counts 守恒。</li></ul></div></article>
+        <article class="lesson-day"><span class="lesson-day-label">Day 5</span><div><h3>端到端小项目与验收</h3><p><strong>讲课：</strong>从 fresh kernel 顺序完成数据读取、审计、QC、pseudobulk、control 对比和防泄漏划分。</p><ul><li>实践：独立完成学生 notebook，再对照教师版。</li><li>产出：可重跑 notebook、结果摘要和 validation split。</li><li>Exit ticket：指出 donor_3 与 batch_2 的混杂及其限制。</li></ul></div></article>
+      </div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="data-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">04 / Teaching dataset</span><h2 class="ss-section-title" id="data-title">教学数据里有什么</h2></div></div>
+      <div class="challenge-prose"><p>生成脚本创建 2,400 cells × 500 genes：1 个 control、3 个 perturbations、2 个 cell types、3 个 donors 和 2 个 batches。Counts 使用 Gamma–Poisson 产生过度离散，并包含 cell-type-specific 下游响应。</p><ul><li><code>X</code> 和 <code>layers["counts"]</code>：CSR 稀疏、非负整数 raw counts；</li><li><code>obs</code>：target_gene、guide_id、cell_type、donor、replicate、batch 和 QC 字段；</li><li><code>var</code>：gene_id、is_mito、is_target_gene、is_true_response；</li><li><code>uns</code>：固定 seed、数据契约和教学 ground truth。</li></ul><p><strong>透明陷阱：</strong>donor_3 与 batch_2 完全混杂；约 3% 细胞具有低 library size 和升高的线粒体比例。你的任务是发现并正确解释，而不是默默“清洗掉”。</p></div>
+    </section>
+
+    <section class="ss-section" aria-labelledby="files-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">05 / Course files</span><h2 class="ss-section-title" id="files-title">下载与学习文件</h2></div><p class="ss-section-note">完整 ZIP 适合直接开始；单文件链接适合在线查看。</p></div>
+      <ul class="challenge-resource-list">
+        <li><a href="./downloads/virtual-cell-week01-starter.zip" download>完整教学包 ZIP ↗</a></li>
+        <li><a href="./downloads/virtual-cell-week01-starter.zip.sha256">ZIP SHA-256 ↗</a></li>
+        <li><a href="./files/README.zh-CN.md">中文快速开始 ↗</a></li>
+        <li><a href="./files/README.en.md">English quick start ↗</a></li>
+        <li><a href="./files/teacher-notes.zh-CN.md">中文教师讲义 ↗</a></li>
+        <li><a href="./files/teacher-notes.en.md">English instructor notes ↗</a></li>
+        <li><a href="./files/notebooks/week01_student.ipynb" download>学生实验 Notebook ↗</a></li>
+        <li><a href="./files/notebooks/week01_teacher.ipynb" download>教师示范 Notebook ↗</a></li>
+        <li><a href="./files/exercises/exercises.zh-CN.md">中文练习 ↗</a></li>
+        <li><a href="./files/exercises/answers.zh-CN.md">中文参考答案 ↗</a></li>
+        <li><a href="./files/pyproject.toml">环境配置 pyproject.toml ↗</a></li>
+        <li><a href="./files/scripts/make_toy_perturbseq.py">Toy 数据生成脚本 ↗</a></li>
+        <li><a href="./files/scripts/inspect_h5ad.py">AnnData 检查脚本 ↗</a></li>
+        <li><a href="./files/scripts/pseudobulk.py">Pseudobulk 脚本 ↗</a></li>
+      </ul>
+    </section>
+
+    <section class="ss-section" id="assessment" aria-labelledby="assessment-title">
+      <div class="ss-section-head"><div><span class="ss-section-index">06 / Assessment</span><h2 class="ss-section-title" id="assessment-title">作业与通过标准</h2></div><p class="ss-section-note">建议总分 ≥80%，且五条硬性要求全部通过。</p></div>
+      <div class="lesson-rubric">
+        <article><strong>20%</strong><span>环境与数据审计</span></article>
+        <article><strong>30%</strong><span>QC 小报告</span></article>
+        <article><strong>30%</strong><span>Pseudobulk 分析</span></article>
+        <article><strong>20%</strong><span>概念与复现</span></article>
+      </div>
+      <div class="challenge-prose"><h3>硬性要求</h3><ol><li>不混淆 raw counts 与 normalized/log 数据；</li><li>不把细胞当作独立生物重复；</li><li>不对完整稀疏矩阵调用 <code>.toarray()</code>；</li><li>notebook 能从 fresh kernel 顺序运行；</li><li>能够提出 donor、cell type 或 perturbation aware 的验证划分。</li></ol></div>
+    </section>
+
+    <footer class="ss-footer"><span>Virtual Cell Challenge · Week 01</span><span>环境 · 数据语义 · QC · Pseudobulk</span></footer>
+  </main>
+</body>
+</html>

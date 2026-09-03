@@ -8,6 +8,10 @@
 - Project home (English)：`/challenge/virtual-cell/en/`
 - 学习与实验日志（中文）：`/challenge/virtual-cell/learning-log/`
 - Learning & experiment log (English)：`/challenge/virtual-cell/learning-log/en/`
+- 第一周课程（中文）：`/challenge/virtual-cell/learning-log/week-01/`
+- Week 1 course (English)：`/challenge/virtual-cell/learning-log/week-01/en/`
+
+第一周课程的可运行源文件位于 `learning-log/week-01/files/`，下载 ZIP 位于 `learning-log/week-01/downloads/`。修改源文件后必须重新执行测试、重建 ZIP 和 SHA-256。
 
 两种语言的学习进度和测试记录共用 `progress.js`，每条记录同时包含中文和英文，避免两个页面出现状态不一致。
 
@@ -29,6 +33,10 @@ Public pages:
 - Project home (English): `/challenge/virtual-cell/en/`
 - Learning and experiment log (Chinese): `/challenge/virtual-cell/learning-log/`
 - Learning and experiment log (English): `/challenge/virtual-cell/learning-log/en/`
+- Week 1 course (Chinese): `/challenge/virtual-cell/learning-log/week-01/`
+- Week 1 course (English): `/challenge/virtual-cell/learning-log/week-01/en/`
+
+Runnable Week 1 source files live in `learning-log/week-01/files/`, while the downloadable archive lives in `learning-log/week-01/downloads/`. After changing source files, rerun tests and rebuild both the ZIP and SHA-256.
 
 Both learning-log versions share `progress.js`. Every progress and test entry contains Chinese and English text so that the two pages cannot drift apart.
 

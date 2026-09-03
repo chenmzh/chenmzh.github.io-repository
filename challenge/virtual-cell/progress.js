@@ -1,7 +1,7 @@
 (() => {
   const isZh = document.documentElement.lang.toLowerCase().startsWith('zh');
   const t = (zh, en) => isZh ? zh : en;
-  const updated = '2026-09-03';
+  const updated = '2026-09-04';
 
   const milestones = [
     {
@@ -67,6 +67,12 @@
       status: 'passed',
       result: t('Challenge 入口、Virtual Cell 项目主页、独立学习子页面和共享进度记录已建立。', 'The Challenge field, Virtual Cell project home, dedicated learning subpage, and shared progress log are in place.'),
       next: t('每次实验后更新本记录。', 'Update this log after every experiment.')
+    },
+    {
+      name: t('第一周双语教学包', 'Bilingual Week 1 teaching pack'),
+      status: 'passed',
+      result: t('环境、toy 数据、QC、pseudobulk、学生/教师 notebook 与 5 项自动测试已就绪。', 'Environment, toy data, QC, pseudobulk, student/teacher notebooks, and five automated tests are ready.'),
+      next: t('完成第一周作业后，把个人学习状态更新为已完成。', 'Mark personal learning complete after finishing the Week 1 assignments.')
     },
     {
       name: t('官方数据下载', 'Official data download'),
