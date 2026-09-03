@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="春の線路 地図 — 桜と電車の町を自由に見渡せる体素マップ。ドラッグで回転、ホイールでズーム。" />
+  <title>春の線路 · 地図 | Sakura &amp; Rail Map</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23f5b8c8'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23ffdce6'/%3E%3C/svg%3E" />
+  <script type="module" crossorigin src="./assets/map-CE6JKOUA.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/audio-DDRsixHJ.js">
+  <link rel="stylesheet" crossorigin href="./assets/audio-DrtIKzQ2.css">
+</head>
+<body class="map-page">
+  <canvas id="stage"></canvas>
+
+  <!-- whisper text, bottom-left. never a UI. -->
+  <div id="whisper" aria-hidden="true">春は、静かに過ぎていく。</div>
+
+  <!-- operation hint, fades away after a while -->
+  <div id="map-hint" aria-hidden="true">
+    <span class="hint-pc">ドラッグで回転 ・ ホイールでズーム ・ 右ドラッグで移動</span>
+    <span class="hint-touch">ドラッグで回転 ・ ピンチでズーム ・ 2本指で移動</span>
+  </div>
+
+  <!-- sound only after the visitor chooses it -->
+  <button id="sound" type="button" aria-label="sound toggle">音</button>
+  <button id="reset-view" type="button" aria-label="reset view">視点リセット</button>
+
+  <!-- back to the film -->
+  <a id="mode-link" href="./index.html">映画モードへ →</a>
+
+</body>
+</html>
