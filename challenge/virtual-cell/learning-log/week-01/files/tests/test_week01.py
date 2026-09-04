@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 from scipy import sparse
 
 from scripts.make_toy_perturbseq import build_dataset
@@ -54,4 +55,22 @@ def test_qc_report_has_all_conditions() -> None:
     assert len(report) == 4
     assert report["n_cells"].sum() == adata.n_obs
     assert report["median_library_size"].gt(0).all()
+    assert report["library_size_q25"].le(report["median_library_size"]).all()
+    assert report["library_size_q75"].ge(report["median_library_size"]).all()
     assert report["median_pct_mito"].ge(0).all()
+
+
+def test_pseudobulk_rejects_missing_group_keys() -> None:
+    adata = build_dataset(cells_per_group=3, n_genes=120, seed=29)
+    adata.obs.loc[adata.obs_names[0], "donor"] = None
+    with pytest.raises(ValueError, match="Missing group keys"):
+        aggregate_pseudobulk(adata, ["donor", "cell_type", "target_gene"], "counts")
+
+
+def test_pseudobulk_rejects_fractional_counts() -> None:
+    adata = build_dataset(cells_per_group=3, n_genes=120, seed=31)
+    fractional = adata.layers["counts"].astype(np.float64)
+    fractional.data[0] += 0.5
+    adata.layers["counts"] = fractional
+    with pytest.raises(ValueError, match="not integer-like"):
+        aggregate_pseudobulk(adata, ["donor", "cell_type", "target_gene"], "counts")

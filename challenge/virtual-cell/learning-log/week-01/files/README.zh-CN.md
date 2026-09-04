@@ -66,14 +66,14 @@ uv run jupyter lab
 
 ## 文件说明
 
-- `scripts/check_environment.py`：检查 Python、依赖、AnnData 写入读取和 vcc CLI；
-- `scripts/make_toy_perturbseq.py`：生成可复现教学数据；
-- `scripts/inspect_h5ad.py`：不 densify 地审计 `.h5ad`；
-- `scripts/qc_report.py`：输出按扰动分组的 QC 表；
-- `scripts/pseudobulk.py`：按独立重复求和，并验证 counts 守恒；
+- `scripts/check_environment.py`：检查 Python、依赖、AnnData 稀疏读写和 vcc CLI；
+- `scripts/make_toy_perturbseq.py`：生成可复现教学数据，并逐步注释统计假设；
+- `scripts/inspect_h5ad.py`：不 densify 地审计 `.h5ad` 与 counts 证据；
+- `scripts/qc_report.py`：从指定 counts layer 输出分组 QC 与 IQR；
+- `scripts/pseudobulk.py`：验证 raw counts 后按独立重复求和，并检查逐基因守恒；
 - `notebooks/week01_student.ipynb`：学生版实验；
 - `notebooks/week01_teacher.ipynb`：教师版完整示范；
-- `exercises/`：中英文练习与答案；
+- `exercises/practice.zh-CN.md` 与 `practice.en.md`：练习和可折叠参考答案合并版；
 - `tests/test_week01.py`：自动验收。
 
 ## 通过标准

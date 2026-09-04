@@ -71,7 +71,7 @@
     {
       name: t('第一周双语教学包', 'Bilingual Week 1 teaching pack'),
       status: 'passed',
-      result: t('环境、toy 数据、QC、pseudobulk、学生/教师 notebook 与 5 项自动测试已就绪。', 'Environment, toy data, QC, pseudobulk, student/teacher notebooks, and five automated tests are ready.'),
+      result: t('详细概念讲义、折叠式练习答案、充分注释的 toy/QC/pseudobulk 脚本、学生/教师 notebook 与 7 项自动测试已就绪。', 'Detailed concept lessons, expandable exercises and answers, fully commented toy/QC/pseudobulk scripts, student/teacher notebooks, and seven automated tests are ready.'),
       next: t('完成第一周作业后，把个人学习状态更新为已完成。', 'Mark personal learning complete after finishing the Week 1 assignments.')
     },
     {

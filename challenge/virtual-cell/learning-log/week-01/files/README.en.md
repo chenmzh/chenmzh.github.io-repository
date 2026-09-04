@@ -66,14 +66,14 @@ The dataset contains two explicit teaching traps: `donor_3` is confounded with `
 
 ## Files
 
-- `scripts/check_environment.py`: checks Python, dependencies, AnnData round-trip, and the vcc CLI;
-- `scripts/make_toy_perturbseq.py`: generates reproducible teaching data;
-- `scripts/inspect_h5ad.py`: audits `.h5ad` without densifying;
-- `scripts/qc_report.py`: writes per-perturbation QC summaries;
-- `scripts/pseudobulk.py`: sums at the replicate level and checks count conservation;
+- `scripts/check_environment.py`: checks Python, packages, AnnData sparse round-trip, and the vcc CLI;
+- `scripts/make_toy_perturbseq.py`: generates reproducible teaching data with step-by-step statistical comments;
+- `scripts/inspect_h5ad.py`: audits `.h5ad` and count evidence without densifying;
+- `scripts/qc_report.py`: reports grouped QC and IQR from a selected count layer;
+- `scripts/pseudobulk.py`: validates raw counts, sums at the replicate level, and checks per-gene conservation;
 - `notebooks/week01_student.ipynb`: student lab;
 - `notebooks/week01_teacher.ipynb`: complete instructor walkthrough;
-- `exercises/`: bilingual exercises and solutions;
+- `exercises/practice.zh-CN.md` and `practice.en.md`: combined exercises with expandable reference answers;
 - `tests/test_week01.py`: automated acceptance tests.
 
 ## Passing criteria

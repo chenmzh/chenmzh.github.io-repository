@@ -350,10 +350,41 @@
 .material-content pre code { padding: 0; color: inherit; background: transparent; white-space: pre; }
 .material-loading { color: var(--ss-muted); }
 
+.material-answer {
+  margin: 1em 0 1.35em;
+  background: #faf9ff;
+  border: 1px solid color-mix(in srgb, var(--challenge-violet) 24%, var(--ss-line));
+  border-radius: var(--ss-radius);
+  overflow: hidden;
+}
+
+.material-answer summary {
+  position: relative;
+  padding: 15px 48px 15px 18px;
+  color: #4c3fa0;
+  background: var(--challenge-violet-soft);
+  cursor: pointer;
+  font-weight: 730;
+  list-style: none;
+}
+
+.material-answer summary::-webkit-details-marker { display: none; }
+.material-answer summary::after {
+  content: "+";
+  position: absolute;
+  top: 50%;
+  right: 18px;
+  transform: translateY(-50%);
+  font: 700 1.2rem/1 var(--ss-mono);
+}
+.material-answer[open] summary::after { content: "−"; }
+.material-answer-body { padding: 6px 18px 16px; }
+.material-answer-body > :last-child { margin-bottom: 0; }
+
 @media (max-width: 880px) {
   .material-layout { grid-template-columns: 1fr; }
   .material-sidebar { position: static; }
-  .material-nav { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .material-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .material-nav a { text-align: center; }
   .lesson-rubric { grid-template-columns: 1fr 1fr; }
 
@@ -379,7 +410,7 @@
   .material-hero .ss-actions { align-items: stretch; }
   .material-hero .ss-actions a { justify-content: center; }
   .material-layout { gap: 18px; padding-top: 24px; }
-  .material-nav { grid-template-columns: 1fr 1fr; }
+  .material-nav { grid-template-columns: 1fr; }
   .material-content { padding: 22px 18px; border-radius: var(--ss-radius); }
   .material-content pre { margin-inline: -6px; padding: 15px; font-size: 0.78rem; }
 }
