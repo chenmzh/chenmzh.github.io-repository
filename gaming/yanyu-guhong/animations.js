@@ -1,0 +1,20 @@
+import {SpriteAtlas,heroFrame} from './sprites.js';
+const canvas=document.getElementById('preview'),c=canvas.getContext('2d'),atlas=new SpriteAtlas();
+let mode='idle',paused=false,time=0,last=performance.now();
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;time=0;document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('active',x===b));});
+document.getElementById('pause').onclick=()=>{paused=!paused;document.getElementById('pause').textContent=paused?'继续动画':'暂停动画';};
+function tick(now){const dt=Math.max(0,Math.min(.05,(now-last)/1000));last=now;if(!paused)time+=dt;c.clearRect(0,0,1120,560);
+ const facing=Number(document.getElementById('direction').value),cycle=time%1.15,action=mode==='attack'||mode==='skill';
+ const p={x:230,y:390,facing,moving:mode==='walk',dash:mode==='dash'?.1:0,action:mode,actionDuration:.65,actionTime:action&&cycle<.65?.65-cycle:0};
+ c.strokeStyle='#cbbb8740';c.beginPath();c.moveTo(55,410);c.lineTo(1065,410);c.stroke();
+ if(mode==='dash')for(let i=4;i>0;i--){c.globalAlpha=.09*(5-i);atlas.draw(c,'hero',{...p,x:p.x-i*22*(Math.cos(facing)<0?-1:1)},time,{previewScale:2.6,ghost:true});}c.globalAlpha=1;
+ atlas.draw(c,'hero',p,time,{previewScale:2.6});
+ atlas.draw(c,'npc',{x:510,y:390},time,{previewScale:2});
+ atlas.draw(c,'bandit',{x:730,y:390,moving:mode==='walk',attackAnim:action&&cycle<.65?.2:0,facing},time,{previewScale:2});
+ atlas.draw(c,'boss',{x:940,y:390,moving:mode==='walk',attackAnim:action&&cycle<.65?.2:0,facing},time,{previewScale:2});
+ if(mode==='skill'&&cycle>.3&&cycle<.9){c.save();c.translate(230+(cycle-.3)*450*(Math.cos(facing)<0?-1:1),295);if(Math.cos(facing)<0)c.scale(-1,1);c.strokeStyle='#c5f5d7';c.shadowColor='#9fe9d1';c.shadowBlur=18;c.lineWidth=5;c.beginPath();c.arc(0,0,40,-1,1);c.stroke();c.restore();}
+ c.textAlign='center';c.font='20px serif';c.fillStyle='#e2c994';for(const [x,name]of[[230,'无名剑客'],[510,'老渡夫'],[730,'山匪'],[940,'黑风寨主']])c.fillText(name,x,465);
+ c.font='12px sans-serif';c.fillStyle='#94aaa3';c.fillText('16 帧 · 四向行走 / 出剑',230,493);c.fillText('4 帧 · 待机',510,493);c.fillText('4 帧 · 待机 / 行走 / 攻击',730,493);c.fillText('4 帧 · 待机 / 行走 / 攻击',940,493);
+ const f=heroFrame(p,time);document.getElementById('state').textContent=`${paused?'已暂停':'播放中'} · 主角帧 ${f.index+1} / 16 · ${f.flip?'镜像朝左':'原始朝向'} · 游戏内行走 9 帧/秒`;
+ requestAnimationFrame(tick);
+}requestAnimationFrame(tick);

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#111d1d"><title>烟雨 · 孤鸿 — 武侠 RPG</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div class="app">
+<header><a class="brand" href="./"><span class="seal">江湖</span><span>烟雨<span class="dot">·</span>孤鸿<small>一剑入江湖</small></span></a><div class="chapter"><span>第一回</span> 青溪风起 <i></i> <span>可玩序章</span></div><div class="header-actions"><a class="animation-link" href="animations.html">精灵演武</a><button id="helpBtn" aria-label="操作说明">操作说明 <kbd>?</kbd></button><button id="pauseBtn">暂停 <kbd>ESC</kbd></button><button id="soundBtn" aria-pressed="false">音效 · 开</button></div></header>
+<main>
+<section class="playfield" aria-label="青溪渡游戏区域"><canvas id="game" width="1440" height="900" tabindex="0" aria-label="武侠游戏画面，WASD移动，J攻击，E交互"></canvas><div class="vignette"></div>
+<div class="location"><span class="location-mark">渡</span><div><h2>青溪渡</h2><p>江南 · 薄暮 · 微雨</p></div></div>
+<div id="mobileHud" class="mobile-hud">气血 100 · 真气 100 · 药 ×3</div><div class="area-note">山雨欲来，故人未归。</div>
+<div id="toast" class="toast" role="status"></div>
+<div id="startPanel" class="screen"><div class="start-card"><div class="eyebrow">江湖行记 / 序章</div><h1>烟雨<span>孤鸿</span></h1><div class="red-line"></div><p>一封未送达的信，一座风雨中的渡口。<br>你携剑而来，恰逢江湖生变。</p><button id="startBtn" class="primary">踏入江湖 <span>→</span></button><small>约 5–10 分钟 · 2D 武侠探索与战斗</small></div></div>
+<div id="dialogPanel" class="screen hidden"><section class="dialog" role="dialog" aria-modal="true" aria-labelledby="speaker"><span class="eyebrow">江湖相逢</span><h2 id="speaker"></h2><p id="dialogText"></p><div id="choices"></div></section></div>
+<div id="pausePanel" class="screen hidden"><section class="modal" role="dialog" aria-modal="true"><span class="eyebrow">歇剑片刻</span><h2>江湖稍候</h2><p>雨声未歇，前路仍在。</p><button id="resumeBtn" class="primary">继续行走</button><button class="secondary" id="restartBtn">重启序章</button></section></div>
+<div id="endPanel" class="screen hidden"><section class="modal" role="dialog" aria-modal="true"><span class="eyebrow">第一回 · 终</span><h2 id="endTitle"></h2><p id="endText"></p><button id="againBtn" class="primary">再入江湖</button></section></div>
+<div class="world-footer"><span>◈ <span id="worldStatus">青溪渡 · 静候来客</span></span><span>W A S D 行走 <b>·</b> E 交互</span></div>
+</section>
+<aside>
+<div class="aside-top"><span>行走江湖</span><span class="edition">壹</span></div>
+<section class="character"><div class="portrait">侠</div><div><h2>无名剑客</h2><p>初入江湖 <span>·</span> 游侠</p></div></section>
+<div class="stat"><div><span>气血</span><strong id="hpLabel">100 / 100</strong></div><div class="meter"><i id="hpBar"></i></div></div>
+<div class="stat qi"><div><span>真气</span><strong id="qiLabel">100 / 100</strong></div><div class="meter"><i id="qiBar"></i></div></div>
+<section class="quest"><div class="section-label">当前章回 <span>01</span></div><h3>渡口疑云</h3><p id="objective">前往渡口，与老渡夫交谈。</p><div class="quest-step" id="stepTalk"><i></i>问询渡口旧事</div><div class="quest-step" id="stepHerbs"><i></i>寻回药草 <b id="herbs">0 / 3</b></div><div class="quest-step" id="stepKills"><i></i>击退山匪 <b id="kills">0 / 3</b></div><div class="quest-step" id="stepBoss"><i></i>迎战山匪头目</div><div class="quest-step" id="stepReturn"><i></i>归渡复命</div></section>
+<section class="inventory"><div class="section-label">随身行囊</div><div class="item"><span class="item-icon">药</span><div>金疮药<small>恢复气血 · 按 H 使用</small></div><strong id="potions">× 3</strong></div><div class="item"><span class="item-icon sword">剑</span><div>旧铁剑<small>故人所赠，刃尚未钝</small></div><span class="equipped">已装备</span></div></section>
+<div class="aside-quote">“江湖不远，就在脚下。”<span>— 青溪渡记</span></div>
+</aside>
+</main>
+<footer><div class="combat-label"><span>武学</span><small>以剑问道</small></div><div class="skills"><button data-action="attack"><kbd>J</kbd><span>流云剑<small>近身斩击</small></span><em id="cdAttack">普攻</em></button><button data-action="dash"><kbd>K</kbd><span>燕回步<small>闪避突进</small></span><em id="cdDash">身法</em></button><button data-action="skill"><kbd>L</kbd><span>破空式<small>剑气退敌</small></span><em id="cdSkill">绝技</em></button><button data-action="interact"><kbd>E</kbd><span>交互<small>交谈 / 采集</small></span></button><button data-action="heal"><kbd>H</kbd><span>服药<small>恢复气血</small></span></button></div><div class="footer-note"><span class="live-dot"></span>单人历练<small>HD 精灵 · v0.2</small></div></footer>
+<div class="touch-move" aria-label="触屏方向控制"><button data-move="w">↑</button><div><button data-move="a">←</button><button data-move="s">↓</button><button data-move="d">→</button></div></div>
+<div id="helpPanel" class="help-backdrop hidden"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle"><span class="eyebrow">行走指南</span><h2 id="helpTitle">初入江湖</h2><p>WASD / 方向键移动，靠近人物或药草后按 E。<br>J 挥剑 · K 闪避 · L 剑气 · H 服药。<br>敌人出手前会出现红色预警，及时闪避。<br>剑气消耗真气，真气会随时间恢复。<br>完成委托后，记得回到老渡夫身边。</p><button class="primary" id="closeHelp">记下了</button></section></div>
+</div><script type="module" src="main.js"></script>
+</body></html>
