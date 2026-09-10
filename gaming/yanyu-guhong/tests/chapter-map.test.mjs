@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import {ChapterMap,MAP_POINTS,MAP_PORTRAITS,findPath,isWalkable} from '../chapter-map.js';
+import {ChapterMap,MAP_POINTS,findPath,isWalkable} from '../chapter-map.js';
 
 const anchor=point=>point.approach??point;
 test('all eight interactions are mutually reachable on collision-safe paths',()=>{
@@ -23,14 +22,6 @@ test('painted water, buildings, crates and flower beds block movement while dock
  for(const point of [{x:470,y:520},{x:1000,y:625},{x:1000,y:665},{x:1000,y:710},{x:650,y:535}])assert.equal(isWalkable(point),true,JSON.stringify(point));
  assert.equal(isWalkable(NaN,500),false);
  assert.deepEqual(findPath({x:NaN,y:0},{x:470,y:520}),[]);
-});
-test('tea keeper and herbalist portrait crops are distinct and inside the real loaded PNG',()=>{
- const png=readFileSync(new URL('../assets/chapter-portraits.png',import.meta.url));
- assert.equal(png.subarray(1,4).toString(),'PNG');
- const width=png.readUInt32BE(16),height=png.readUInt32BE(20);
- assert.equal(width,1536);assert.equal(height,1024);
- assert.notDeepEqual(MAP_PORTRAITS.tea,MAP_PORTRAITS.herbalist);
- for(const f of Object.values(MAP_PORTRAITS)){assert.ok(f.x>=0&&f.y>=0&&f.x+f.w<=width&&f.y+f.h<=height);}
 });
 function simulatedMap(x=750,y=520){
  const map=Object.create(ChapterMap.prototype);

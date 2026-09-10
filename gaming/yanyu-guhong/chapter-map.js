@@ -1,4 +1,5 @@
 import {SpriteAtlas} from './sprites.js';
+import {ChapterNPCs,NPC_FRAMES} from './chapter-npcs.js';
 
 export const MAP_POINTS = Object.freeze([
  {id:'tea',name:'茶摊 · 消息',x:330,y:490,type:'npc',icon:'谈'},
@@ -10,11 +11,6 @@ export const MAP_POINTS = Object.freeze([
  {id:'chest',name:'旧木箱 · 搜寻',x:420,y:575,approach:{x:460,y:560},type:'chest',icon:'物'},
  {id:'rest',name:'驿亭 · 歇脚',x:230,y:620,type:'rest',icon:'憩'},
 ]);
-// Original ImageGen portrait atlas, top row: hero / tea keeper / herbalist.
-export const MAP_PORTRAITS=Object.freeze({
- tea:Object.freeze({x:512,y:0,w:512,h:512}),
- herbalist:Object.freeze({x:1024,y:0,w:512,h:512}),
-});
 const WORLD_W=1600,WORLD_H=1000,CELL=20,RADIUS=10;
 // These connected paths deliberately keep every story location reachable.
 const WALKS=[{x:275,y:480,w:1205,h:160},{x:475,y:445,w:510,h:100},{x:170,y:590,w:330,h:60},{x:820,y:610,w:260,h:115},{x:840,y:685,w:400,h:75}];
@@ -80,7 +76,7 @@ export class ChapterMap {
   this.keys=new Set();this.stick={x:0,y:0};this.path=[];this.paused=true;this.near=null;this.pending=null;this.started=false;this.destroyed=false;
   this.time=0;this.last=0;this.savedAt=0;this.savedPosition={x:470,y:520};this.listeners=[];
   this.reduced=typeof matchMedia!=='undefined'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-  this.atlas=new SpriteAtlas();this.background=new Image();this.background.src='./assets/qingxi-explore.png';
+  this.atlas=new SpriteAtlas();this.npcs=new ChapterNPCs();this.background=new Image();this.background.src='./assets/qingxi-explore.png';
   this.portraits=new Image();this.portraits.src='./assets/chapter-portraits.png';
   this.bind(window,'keydown',e=>this.keyDown(e));
   this.bind(window,'keyup',e=>this.keys.delete(e.key.toLowerCase()));
@@ -91,7 +87,7 @@ export class ChapterMap {
   this.tick=this.tick.bind(this);
  }
  bind(target,type,callback){target.addEventListener(type,callback);this.listeners.push(()=>target.removeEventListener(type,callback));}
- async load(){await Promise.all([this.background,this.atlas.hero,this.atlas.cast,this.portraits].map(imageReady));this.draw();}
+ async load(){await Promise.all([this.background,this.atlas.hero,this.atlas.cast,this.portraits,this.npcs.image].map(imageReady));this.npcs.prepare();this.draw();}
  start(position={x:470,y:520}){
   if(this.destroyed)return;
   const safe=isWalkable(position)?position:{x:470,y:520};Object.assign(this.hero,safe,{moving:false});this.savedPosition={...safe};
@@ -172,14 +168,14 @@ export class ChapterMap {
   // Warm practical lighting belongs to lamps in the painted scene, not the HUD.
   for(const lamp of [{x:480,y:240},{x:805,y:300},{x:1230,y:655}]){const g=c.createRadialGradient(lamp.x,lamp.y,0,lamp.x,lamp.y,90);g.addColorStop(0,'#ffd89818');g.addColorStop(1,'#ffd89800');c.fillStyle=g;c.fillRect(lamp.x-90,lamp.y-90,180,180);}
   if(this.path.length&&!this.paused){const dest=this.path.at(-1);c.save();c.strokeStyle='#cbece9aa';c.lineWidth=3;c.beginPath();c.ellipse(dest.x,dest.y,20+Math.sin(t*4)*3,8,0,0,Math.PI*2);c.stroke();c.restore();}
-  const actors=MAP_POINTS.filter(p=>['npc','battle'].includes(p.type)).map(p=>({...p,kind:MAP_PORTRAITS[p.id]?'portrait':p.id==='bridge'?'boss':'npc'}));
+  const actors=MAP_POINTS.filter(p=>['npc','battle'].includes(p.type)).map(p=>({...p,kind:NPC_FRAMES[p.id]?'villager':p.id==='bridge'?'boss':'npc'}));
   actors.push({...this.hero,id:'hero',kind:'hero'});actors.sort((a,b)=>a.y-b.y);
   for(const actor of actors){
-   if(actor.kind==='portrait')this.drawPortrait(actor);
+   if(actor.kind==='villager')this.npcs.draw(c,actor,t,{near:this.near?.id===actor.id,faceLeft:this.hero.x<actor.x-30});
    else this.atlas.draw(c,actor.kind,{...actor,y:actor.y-18,facing:actor.id==='hero'?this.hero.facing:Math.PI},t,{previewScale:actor.id==='hero'?1.24:1.17});
   }
   for(const point of MAP_POINTS){
-   const used=this.taken(point,flags),near=this.near?.id===point.id,actor=['npc','battle'].includes(point.type),height=MAP_PORTRAITS[point.id]?140:actor?130:50;
+   const used=this.taken(point,flags),near=this.near?.id===point.id,actor=['npc','battle'].includes(point.type),height=actor?140:50;
    c.save();c.translate(point.x,point.y-height);c.font='600 22px "Noto Serif SC", serif';c.textAlign='center';c.textBaseline='middle';
    const name=used?`${point.name.split(' · ')[0]} · 已取`:point.name,w=c.measureText(name).width+30;
    c.fillStyle=near?'#173738f5':'#10282be5';c.strokeStyle=near?'#f6d090':'#b6bd9870';c.lineWidth=near?2:1;
@@ -190,15 +186,6 @@ export class ChapterMap {
   }
   if(!this.reduced){c.save();c.strokeStyle='#c2dfeb25';c.lineWidth=1.4;for(let i=0;i<45;i++){const x=(i*137+t*24)%WORLD_W,y=(i*91+t*280)%WORLD_H;c.beginPath();c.moveTo(x,y);c.lineTo(x-5,y+16);c.stroke();}c.restore();}
   const shade=c.createLinearGradient(0,0,0,WORLD_H);shade.addColorStop(0,'#05191b18');shade.addColorStop(.65,'#05191b00');shade.addColorStop(1,'#05191b55');c.fillStyle=shade;c.fillRect(0,0,WORLD_W,WORLD_H);
- }
- drawPortrait(point){
-  const c=this.ctx,frame=MAP_PORTRAITS[point.id],near=this.near?.id===point.id,radius=48,cy=point.y-67;
-  c.save();c.fillStyle='#0a2129a0';c.beginPath();c.ellipse(point.x,point.y,23,8,0,0,Math.PI*2);c.fill();
-  c.strokeStyle=near?'#ffe1a8':'#c9b889';c.lineWidth=2;c.beginPath();c.ellipse(point.x,point.y,23,8,0,0,Math.PI*2);c.stroke();
-  c.beginPath();c.moveTo(point.x,point.y-9);c.lineTo(point.x,cy+radius);c.stroke();
-  c.save();c.beginPath();c.arc(point.x,cy,radius,0,Math.PI*2);c.clip();c.fillStyle='#102522';c.fillRect(point.x-radius,cy-radius,radius*2,radius*2);
-  if(this.portraits.complete&&this.portraits.naturalWidth){c.imageSmoothingEnabled=false;c.drawImage(this.portraits,frame.x,frame.y,frame.w,frame.h,point.x-radius,cy-radius,radius*2,radius*2);}
-  c.restore();c.lineWidth=near?4:2;c.beginPath();c.arc(point.x,cy,radius,0,Math.PI*2);c.stroke();c.restore();
  }
  destroy(){this.destroyed=true;cancelAnimationFrame(this.raf);this.listeners.forEach(remove=>remove());this.listeners=[];this.keys.clear();this.path=[];this.pending=null;}
 }

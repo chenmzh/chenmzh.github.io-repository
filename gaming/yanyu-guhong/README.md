@@ -27,16 +27,16 @@ npm test
 ## 代码
 
 - `chapter-game.js` / `index.html` / `chapter-style.css`：章节主控与响应界面。
-- `chapter-map.js`：可行走区域、碰撞、A*寻路、角色与人物标记、摇杆接入。
+- `chapter-map.js`：可行走区域、碰撞、A*寻路、角色与 NPC 精灵、摇杆接入。
 - `chapter-model.js`：任务、奖励、成长、存档校验、战斗资源结算。
 - `chapter-content.js`：第一章对白、人物、札记、双结局。
 - `battle.html` / `turn-game.js` / `turn-model.js`：独立与章节嵌入两种模式的回合战斗。
-- `sprites.js`：原始ImageGen图集帧选择与绘制。
+- `sprites.js` / `chapter-npcs.js`：ImageGen图集、待机帧、脚底锚点与颜色键合成。
 - `tests/`：路径可达、碰撞、成长/存档、完整探索到战斗结局的模型集成，以及原有原型回归。
 
 ## 美术与边界
 
-ImageGen探索地图与六个人物肖像：`assets/qingxi-explore.png`、`assets/chapter-portraits.png`。提示词保存在 `assets/CHAPTER-PROMPTS.md`。茶摊与药师在地图上用各自肖像标记；主角、渡夫、裴照使用动画精灵。战斗沿用既有精灵与六姿势大招。
+ImageGen探索地图与六个人物肖像：`assets/qingxi-explore.png`、`assets/chapter-portraits.png`。提示词保存在 `assets/CHAPTER-PROMPTS.md`。地图人物均为全身精灵：阿蘅端茶、顾药师抚须使用新四帧待机循环，渡夫与裴照沿用既有精灵。对话框同时显示陆行舟与当前 NPC 肖像，金色边框标出说话者；手机双肖像位于文字上方。新图集为 `assets/chapter-npcs-keyed.png`，内置 ImageGen 生成后保留原文件，运行时一次性进行颜色键合成，提示词见 `assets/NPC-PROMPTS.md`。战斗沿用既有精灵与六姿势大招。
 
 这是Canvas 2D预绘箱庭；不是实时三维场景。当前为一个小章节，尚无室内地图、多地图长篇、商店经济、队伍系统或云端存档。Blender简模工程仍保留于 `blender/`，作为后续3D制作参考。
 
