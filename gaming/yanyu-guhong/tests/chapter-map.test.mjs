@@ -55,3 +55,13 @@ test('goTo walks toward a distant NPC and only triggers after arriving in intera
  for(let i=0;i<1000&&!interacted;i++)map.move(1/60);
  assert.equal(interacted,'ferryman');assert.ok(Math.hypot(map.hero.x-1000,map.hero.y-710)<95);
 });
+
+test('returning from the herbalist reaches the exact street corner before walking to tea',()=>{
+ for(const y of [480,485,489]){
+  const map=simulatedMap(600,y);let interacted=null;
+  map.handlers.onInteract=id=>{interacted=id;map.setPaused(true);};
+  assert.equal(map.goTo('tea'),true);
+  for(let i=0;i<240&&!interacted;i++){map.move(1/60);assert.ok(isWalkable(map.position));}
+  assert.equal(interacted,'tea',`return from y=${y} must finish within four seconds`);
+ }
+});

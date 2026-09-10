@@ -147,10 +147,11 @@ export class ChapterMap {
   let dy=this.stick.y+(this.keys.has('s')||this.keys.has('arrowdown')?1:0)-(this.keys.has('w')||this.keys.has('arrowup')?1:0);
   let length=Math.hypot(dx,dy),step=225*dt;
   if(length<.12&&this.path.length){
-   while(this.path.length&&distance(this.hero,this.path[0])<4)this.path.shift();
+   // Reach each corner before turning; skipping it early can enter a blocked edge.
+   while(this.path.length&&distance(this.hero,this.path[0])<.001){const point=this.path.shift();this.hero.x=point.x;this.hero.y=point.y;}
    if(this.path.length){dx=this.path[0].x-this.hero.x;dy=this.path[0].y-this.hero.y;length=Math.hypot(dx,dy);step=Math.min(step,length);}
   }
-  this.hero.moving=length>.12;
+  this.hero.moving=length>(this.path.length?.001:.12);
   if(this.hero.moving){dx=dx/length*step;dy=dy/length*step;this.hero.facing=Math.atan2(dy,dx);
    if(isWalkable(this.hero.x+dx,this.hero.y+dy)){this.hero.x+=dx;this.hero.y+=dy;}
    else{if(isWalkable(this.hero.x+dx,this.hero.y))this.hero.x+=dx;if(isWalkable(this.hero.x,this.hero.y+dy))this.hero.y+=dy;}
