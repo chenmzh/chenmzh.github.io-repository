@@ -1,7 +1,11 @@
 export class TurnBattle {
- constructor(){
+ constructor(config={}){
   this.round=1;this.phase='player';
   this.hero={name:'陆行舟',hp:160,maxHp:160,qi:60,maxQi:60,bp:1,potions:3,ultimate:20,maxUltimate:100};
+  const n=(key,fallback,min,max)=>Number.isFinite(config[key])?Math.max(min,Math.min(max,Math.floor(config[key]))):fallback;
+  this.hero.maxHp=n('maxHp',160,160,400);this.hero.hp=n('hp',this.hero.maxHp,1,this.hero.maxHp);
+  this.hero.maxQi=n('maxQi',60,60,150);this.hero.qi=n('qi',this.hero.maxQi,0,this.hero.maxQi);
+  this.hero.potions=n('potions',3,0,9);this.hero.attackBonus=n('attackBonus',0,0,30);
   this.enemies=[
    {id:'guard',name:'守桥刀客',hp:100,maxHp:100,shield:2,maxShield:2,weak:'sword',broken:0},
    {id:'chief',name:'裴照',hp:230,maxHp:230,shield:3,maxShield:3,weak:'qi',broken:0}
@@ -32,7 +36,7 @@ export class TurnBattle {
    h.bp-=cost;if(action==='qi')h.qi-=12;
    for(let i=0;i<=cost;i++){
     if(e.hp<=0)break;
-    const damage=Math.round((action==='sword'?22:30)*(e.broken>0?1.65:1));
+    const damage=Math.round((action==='sword'?22+h.attackBonus:30)*(e.broken>0?1.65:1));
     e.hp=Math.max(0,e.hp-damage);
     const weakness=e.weak===action,breaking=weakness&&breakShield(e,1);
     if(weakness)gain(12);if(breaking)gain(20);
