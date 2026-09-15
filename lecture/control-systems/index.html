@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="ETH 227-0103-00L Control Systems 中文学习讲义：从动力系统建模、PID、频域设计到状态反馈、观测器、LQR 与 Kalman filter。">
+  <meta name="description" content="ETH 227-0103-00L Control Systems 中文学习讲义，按 HS2023 14 次正式课程顺序整理，含推导、例题与练习。">
   <meta name="theme-color" content="#f7f7f3">
   <title>ETH Control Systems · 227-0103-00L</title>
   <link rel="stylesheet" href="./control-systems.css?v=2">
@@ -11,39 +11,41 @@
 <body>
   <header class="cs-header"><div class="cs-header-inner">
     <a class="cs-brand" href="./"><small>ETH 227-0103-00L</small>Control Systems</a>
-    <nav class="cs-nav" aria-label="课程导航"><a href="../">Lecture</a><a href="https://people.ee.ethz.ch/~floriand/CSI.html" target="_blank" rel="noopener">ETH course ↗</a><a href="https://video.ethz.ch/lectures/d-itet" target="_blank" rel="noopener">Lecture videos ↗</a></nav>
+    <nav class="cs-nav" aria-label="课程导航"><a href="../">Lecture</a><a href="https://people.ee.ethz.ch/~floriand/CSI.html" target="_blank" rel="noopener">ETH course ↗</a><a href="https://video.ethz.ch/lectures/d-itet/2023/autumn/227-0103-00L.html" target="_blank" rel="noopener">HS2023 videos ↗</a></nav>
   </div></header>
   <main>
     <section class="cs-hero"><div class="cs-shell">
-      <p class="cs-kicker">Study notes · Autumn 2026</p>
-      <h1>Control Systems,<br><em>learn it by designing the loop.</em></h1>
-      <p class="cs-lede">这一版不再把课程做成“知识点目录”，而是按真正学习一门 6 ECTS 控制课的方式来写：每个子课程都有学习目标、概念推导、公式解释、完整例题、设计判断、常见坑、练习题与答案提示。主线跟随 ETH 227-0103-00L 的公开 syllabus，并用 ETH 历年公开录像与 Åström–Murray《Feedback Systems》补足推导与例子。</p>
-      <div class="cs-meta"><span class="cs-pill">12 个深度子课程</span><span class="cs-pill">建议 30–60 min / unit</span><span class="cs-pill">SISO → MIMO</span><span class="cs-pill">Classical → State space</span><span class="cs-pill">例题 + 自测</span></div>
+      <p class="cs-kicker">ETH HS2023-aligned study notes</p>
+      <h1>Control Systems,<br><em>lecture by lecture.</em></h1>
+      <p class="cs-lede">按 ETH Zürich 227-0103-00L 的 HS2023 Moodle 资料重新组织：严格对应 14 次 lecture。每一讲综合 slides、annotated slides、board notes 和配套 exercise 的知识结构，用中文重新解释定义、推导、设计判断与典型题型。目标是可以直接跟着学，而不是只做课程索引。</p>
+      <div class="cs-meta"><span class="cs-pill">14 Lectures</span><span class="cs-pill">Slides + Board Notes</span><span class="cs-pill">Exercises + Hints</span><span class="cs-pill">Continuous + Digital</span><span class="cs-pill">Classical + State Space</span></div>
     </div></section>
     <section class="cs-section"><div class="cs-shell">
-      <div class="cs-section-head"><div><p class="cs-kicker">Learning path</p><h2>从“系统为什么这样动”一路学到 LQG</h2></div><p class="cs-section-note">建议顺序学习。01–03 建立模型与反馈语言；04–08 是 ETH 课程的经典控制设计核心；09 进入多变量；10–12 转入状态空间、observer、LQR 与 Kalman filter。</p></div>
+      <div class="cs-section-head"><div><p class="cs-kicker">HS2023 sequence</p><h2>跟着 ETH 的实际讲授顺序学</h2></div><p class="cs-section-note">建议顺序学习。L01 建立 feedback 直觉；L02–L04 构建 LTI 表示、解与输入输出响应；L05–L08 完成经典反馈设计；L09–L11 进入状态空间控制与估计；L12 是数字控制；L13–L14 是 LQR 与 Kalman filter。</p></div>
       <div class="cs-grid">
-        <a class="cs-card" href="./unit01.html"><span class="cs-num">01</span><span><h3>建模、状态与线性化</h3><p>从物理守恒律写 ODE；状态的含义；平衡点；Jacobian 线性化；状态空间解与模型边界。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit02.html"><span class="cs-num">02</span><span><h3>传递函数、极点与零点</h3><p>Laplace、state-space → transfer function、一阶/二阶响应、主导极点、RHP zero 与 pole-zero cancellation。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit03.html"><span class="cs-num">03</span><span><h3>反馈、灵敏度与稳态误差</h3><p>把 reference、disturbance、noise 分成不同通道；S/T；system type；反馈为什么能鲁棒，也为什么会付出代价。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit04.html"><span class="cs-num">04</span><span><h3>PID：从作用机理到可实现控制器</h3><p>P/PI/PD/PID、Ziegler–Nichols、filtered derivative、set-point kick、anti-windup 与数字实现。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit05.html"><span class="cs-num">05</span><span><h3>稳定性、Routh–Hurwitz 与 Root Locus</h3><p>闭环极点、内部稳定、Routh 表、根轨迹规则，以及怎样从极点位置读出速度和阻尼。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit06.html"><span class="cs-num">06</span><span><h3>Bode、Nyquist 与 Stability Margins</h3><p>频率响应的物理意义、渐近 Bode、gain/phase margin、Nyquist 判据、延迟为何危险。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit07.html"><span class="cs-num">07</span><span><h3>Loop Shaping 与鲁棒性能</h3><p>把时间域要求翻译成频域约束；lead/lag；crossover；S/T/KS；模型不确定性与带宽权衡。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit08.html"><span class="cs-num">08</span><span><h3>2-DOF、Feedforward、Cascade 与 IMC</h3><p>一个反馈环解决不了所有目标：前馈、预滤波、串级控制、internal model control 与饱和处理。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit09.html"><span class="cs-num">09</span><span><h3>MIMO、耦合、RGA 与 Decoupling</h3><p>为什么多个 SISO 环会互相打架；transfer matrix、pairing、relative gain array、解耦与鲁棒性。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit10.html"><span class="cs-num">10</span><span><h3>Controllability 与 State Feedback</h3><p>可控性矩阵、PBH test、pole placement、Ackermann、积分状态扩展，以及“极点放多快”这个工程问题。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit11.html"><span class="cs-num">11</span><span><h3>Observability、Observer 与 Separation</h3><p>看不见状态时如何重建；Luenberger observer；误差动力学；对偶性；observer-based control。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit12.html"><span class="cs-num">12</span><span><h3>LQR、Kalman Filter 与 LQG</h3><p>从 cost function 而不是“猜极点”开始设计；Riccati；Q/R；噪声协方差；Kalman gain 与 LQG。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit01.html"><span class="cs-num">L01</span><span><h3>Introduction · Why Feedback?</h3><p>cruise control、feedforward vs feedback、扰动与模型不确定性；控制系统的基本架构与设计流程。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit02.html"><span class="cs-num">L02</span><span><h3>Representations of Dynamical Systems</h3><p>ODE、state space、transfer function、连续/离散系统、非线性平衡点与局部线性化。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit03.html"><span class="cs-num">L03</span><span><h3>Solutions to LTI Systems & Internal Stability</h3><p>modal decomposition、matrix exponential、Jordan block、连续/离散内部稳定性。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit04.html"><span class="cs-num">L04</span><span><h3>Responses to LTI Systems & BIBO Stability</h3><p>convolution、impulse/step/frequency response、DC gain、poles/zeros、internal vs BIBO stability。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit05.html"><span class="cs-num">L05</span><span><h3>The Concept of Feedback & PID</h3><p>root locus 直觉、P/PI/PD/PID 的角色、tracking error、disturbance rejection 与可实现微分器。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit06.html"><span class="cs-num">L06</span><span><h3>Closed-Loop Stability & Robustness Criteria</h3><p>Nyquist、gain/phase margin、small-gain、Bode criterion、S/T 与闭环性能指标。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit07.html"><span class="cs-num">L07</span><span><h3>Frequency-Domain Control Design</h3><p>从闭环指标到 open-loop shape；PI/PD loop shaping、crossover、inversion-based design。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit08.html"><span class="cs-num">L08</span><span><h3>Augmented Feedback Control Architectures</h3><p>稳定/因果近似逆、2-DOF、Smith predictor、feedforward 与 multivariable decoupling。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit09.html"><span class="cs-num">L09</span><span><h3>State-Space Control Systems</h3><p>reachability/controllability、controllability matrix、Gramian 与 minimum-energy control。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit10.html"><span class="cs-num">L10</span><span><h3>State-Space Control Design</h3><p>controllable canonical form、state feedback、pole placement、Ackermann 与极点区域设计。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit11.html"><span class="cs-num">L11</span><span><h3>State Estimation & Output Feedback</h3><p>observability、observer design、noise trade-off、separation principle、stabilizability/detectability。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit12.html"><span class="cs-num">L12</span><span><h3>Sampled-Data / Digital Control</h3><p>sampling & aliasing、Nyquist frequency、Tustin、zero-order hold、连续极点到离散极点。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit13.html"><span class="cs-num">L13</span><span><h3>Optimal Control · LQR</h3><p>pole placement 的局限、quadratic cost、Riccati equation、Q/R trade-off 与鲁棒性。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit14.html"><span class="cs-num">L14</span><span><h3>Optimal Estimation · Kalman Filter</h3><p>sensor fusion、observer–controller duality、process/measurement noise、Kalman gain 与 LQG。</p></span><span class="cs-arrow">↗</span></a>
       </div>
     </div></section>
     <section class="cs-sources"><div class="cs-shell">
-      <p class="cs-kicker">Source hierarchy</p>
-      <p><strong>第一层：ETH 官方范围与公开录像。</strong>课程主题以 Florian Dörfler 的 <a href="https://people.ee.ethz.ch/~floriand/CSI.html" target="_blank" rel="noopener">Control Systems course page</a> 与 2026 course catalogue 为准。官方说明这门课主要黑板授课，slides、supplementary notes、cheat sheets 与 exercises 放在 Moodle；历年 lectures 有公开录像。</p>
-      <p><strong>第二层：公开教材。</strong>推导与补充例子主要参考 Åström &amp; Murray 的 <a href="https://fbsbook.org" target="_blank" rel="noopener">Feedback Systems</a>，尤其是 Linear Systems、State/Output Feedback、Transfer Functions、Frequency Domain Analysis、PID、Frequency Domain Design、Robust Performance 等章节。</p>
-      <p><strong>Moodle 同步状态。</strong>当前版本不复制也无法读取登录后的 ETH Moodle 课件。如果你提供本学期 slides/exercise PDF，可以继续把每个 unit 调整到与 2026 课堂的顺序、符号习惯、例题和考试重点一致。</p>
+      <p class="cs-kicker">Material basis</p>
+      <p><strong>ETH 课程资料：</strong>内容结构依据你 Drive 中保存的 <code>Moodle_HS2023</code>：14 份 lecture slides、13 份 annotated slides、13 份 board notes，以及逐讲对应的 exercise summary / problem / solution。正文是重新组织的学习讲义，不直接发布 Moodle PDF。</p>
+      <p><strong>每讲如何使用：</strong>先读本站正文建立概念与推导，再回看对应 ETH slides/board notes；最后做该讲对应 exercise。L01 没有正式 exercise，L02 对应 Exercise 1，之后依次推进，L14 对应 Exercise 13。</p>
+      <p><strong>版本说明：</strong>当前按 HS2023 课程资料对齐。课程代码与核心理论和 2026 课程一致，但如果后续拿到 HS2026 的 slides / exercises，可以继续做逐讲差异校正。</p>
     </div></section>
   </main>
-  <footer class="cs-footer"><div class="cs-shell">ETH Control Systems Learning Notes · independent learning companion, not official ETH course material.</div></footer>
+  <footer class="cs-footer"><div class="cs-shell">ETH Control Systems Learning Notes · HS2023-aligned independent study companion.</div></footer>
 </body>
 </html>
