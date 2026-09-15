@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="ETH 227-0103-00L Control Systems 中文学习讲义，按 HS2023 14 次正式课程顺序整理，含推导、例题与练习。">
+  <meta name="description" content="ETH 227-0103-00L Control Systems 中文小节级教材，按 HS2023 课程资料逐讲逐节整理。">
   <meta name="theme-color" content="#f7f7f3">
   <title>ETH Control Systems · 227-0103-00L</title>
-  <link rel="stylesheet" href="./control-systems.css?v=2">
+  <link rel="stylesheet" href="./control-systems.css?v=3">
 </head>
 <body>
   <header class="cs-header"><div class="cs-header-inner">
@@ -15,37 +15,64 @@
   </div></header>
   <main>
     <section class="cs-hero"><div class="cs-shell">
-      <p class="cs-kicker">ETH HS2023-aligned study notes</p>
-      <h1>Control Systems,<br><em>lecture by lecture.</em></h1>
-      <p class="cs-lede">按 ETH Zürich 227-0103-00L 的 HS2023 Moodle 资料重新组织：严格对应 14 次 lecture。每一讲综合 slides、annotated slides、board notes 和配套 exercise 的知识结构，用中文重新解释定义、推导、设计判断与典型题型。目标是可以直接跟着学，而不是只做课程索引。</p>
-      <div class="cs-meta"><span class="cs-pill">14 Lectures</span><span class="cs-pill">Slides + Board Notes</span><span class="cs-pill">Exercises + Hints</span><span class="cs-pill">Continuous + Digital</span><span class="cs-pill">Classical + State Space</span></div>
+      <p class="cs-kicker">Section-level textbook · HS2023 aligned</p>
+      <h1>Control Systems,<br><em>from lecture notes to a textbook.</em></h1>
+      <p class="cs-lede">不再把每次 lecture 当成一篇大纲，而是拆到真正能逐节学习的颗粒度：L00 线性代数预备课 + ETH 正式 L01–L14，共 110+ 个小节。每节围绕一个明确问题展开，包含定义、推导、工程直觉、worked example、理解检查与配套练习路线；结构综合你 Drive 里的 slides、annotated slides、board notes、exercise summaries 和对应题目体系。</p>
+      <div class="cs-meta"><span class="cs-pill">L00 + 14 Lectures</span><span class="cs-pill">110+ Sections</span><span class="cs-pill">Derivations</span><span class="cs-pill">Worked Examples</span><span class="cs-pill">Exercises</span><span class="cs-pill">Python Control</span></div>
     </div></section>
+
     <section class="cs-section"><div class="cs-shell">
-      <div class="cs-section-head"><div><p class="cs-kicker">HS2023 sequence</p><h2>跟着 ETH 的实际讲授顺序学</h2></div><p class="cs-section-note">建议顺序学习。L01 建立 feedback 直觉；L02–L04 构建 LTI 表示、解与输入输出响应；L05–L08 完成经典反馈设计；L09–L11 进入状态空间控制与估计；L12 是数字控制；L13–L14 是 LQR 与 Kalman filter。</p></div>
+      <div class="cs-section-head"><div><p class="cs-kicker">Before L01</p><h2>先补控制理论真正会用到的线性代数</h2></div><p class="cs-section-note">ETH 的 HS2023 学习目录本身建议先做 Linear Algebra Review。这里单独做成 L00，不计入官方 14 讲。</p></div>
       <div class="cs-grid">
-        <a class="cs-card" href="./unit01.html"><span class="cs-num">L01</span><span><h3>Introduction · Why Feedback?</h3><p>cruise control、feedforward vs feedback、扰动与模型不确定性；控制系统的基本架构与设计流程。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit02.html"><span class="cs-num">L02</span><span><h3>Representations of Dynamical Systems</h3><p>ODE、state space、transfer function、连续/离散系统、非线性平衡点与局部线性化。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit03.html"><span class="cs-num">L03</span><span><h3>Solutions to LTI Systems & Internal Stability</h3><p>modal decomposition、matrix exponential、Jordan block、连续/离散内部稳定性。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit04.html"><span class="cs-num">L04</span><span><h3>Responses to LTI Systems & BIBO Stability</h3><p>convolution、impulse/step/frequency response、DC gain、poles/zeros、internal vs BIBO stability。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit05.html"><span class="cs-num">L05</span><span><h3>The Concept of Feedback & PID</h3><p>root locus 直觉、P/PI/PD/PID 的角色、tracking error、disturbance rejection 与可实现微分器。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit06.html"><span class="cs-num">L06</span><span><h3>Closed-Loop Stability & Robustness Criteria</h3><p>Nyquist、gain/phase margin、small-gain、Bode criterion、S/T 与闭环性能指标。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit07.html"><span class="cs-num">L07</span><span><h3>Frequency-Domain Control Design</h3><p>从闭环指标到 open-loop shape；PI/PD loop shaping、crossover、inversion-based design。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit08.html"><span class="cs-num">L08</span><span><h3>Augmented Feedback Control Architectures</h3><p>稳定/因果近似逆、2-DOF、Smith predictor、feedforward 与 multivariable decoupling。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit09.html"><span class="cs-num">L09</span><span><h3>State-Space Control Systems</h3><p>reachability/controllability、controllability matrix、Gramian 与 minimum-energy control。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit10.html"><span class="cs-num">L10</span><span><h3>State-Space Control Design</h3><p>controllable canonical form、state feedback、pole placement、Ackermann 与极点区域设计。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit11.html"><span class="cs-num">L11</span><span><h3>State Estimation & Output Feedback</h3><p>observability、observer design、noise trade-off、separation principle、stabilizability/detectability。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit12.html"><span class="cs-num">L12</span><span><h3>Sampled-Data / Digital Control</h3><p>sampling & aliasing、Nyquist frequency、Tustin、zero-order hold、连续极点到离散极点。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit13.html"><span class="cs-num">L13</span><span><h3>Optimal Control · LQR</h3><p>pole placement 的局限、quadratic cost、Riccati equation、Q/R trade-off 与鲁棒性。</p></span><span class="cs-arrow">↗</span></a>
-        <a class="cs-card" href="./unit14.html"><span class="cs-num">L14</span><span><h3>Optimal Estimation · Kalman Filter</h3><p>sensor fusion、observer–controller duality、process/measurement noise、Kalman gain 与 LQG。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card cs-prereq" href="./unit00.html"><span class="cs-num">L00</span><span><h3>Linear Algebra Review · 控制课版</h3><p>rank / kernel / image、线性方程、左右 eigenvectors、diagonalization、quadratic forms、Cayley–Hamilton。</p><div class="cs-card-meta"><span>6 sections</span><span>R00_algebra</span><span>recommended first</span></div></span><span class="cs-arrow">↗</span></a>
       </div>
     </div></section>
+
+    <section class="cs-section"><div class="cs-shell">
+      <div class="cs-section-head"><div><p class="cs-kicker">Part I · foundations</p><h2>L01–L04 · 从 feedback 直觉到完整 LTI 语言</h2></div><p class="cs-section-note">先解决“系统是什么、怎么表示、怎么演化、输入输出怎么看”四个基础问题。</p></div>
+      <div class="cs-grid">
+        <a class="cs-card" href="./unit01.html"><span class="cs-num">L01</span><span><h3>Introduction · Why Feedback?</h3><p>plant / sensor / actuator；feedforward vs feedback；cruise-control 鲁棒性；2-DOF；digital loop。</p><div class="cs-card-meta"><span>7 sections</span><span>conceptual foundation</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit02.html"><span class="cs-num">L02</span><span><h3>Representations of Dynamical Systems</h3><p>ODE ↔ state space ↔ transfer function；equilibrium；input derivatives；Jacobian linearization；coordinate transforms。</p><div class="cs-card-meta"><span>7 sections</span><span>Exercise 1</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit03.html"><span class="cs-num">L03</span><span><h3>Solutions to LTI Systems & Internal Stability</h3><p>matrix exponential、modal/Jordan decomposition、forced solution、CT/DT stability、Lyapunov 与 LaSalle。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 2</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit04.html"><span class="cs-num">L04</span><span><h3>Responses to LTI Systems & BIBO Stability</h3><p>convolution、impulse/step/frequency response、DC gain、Bode、poles/zeros、internal vs BIBO。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 3</span></div></span><span class="cs-arrow">↗</span></a>
+      </div>
+    </div></section>
+
+    <section class="cs-section"><div class="cs-shell">
+      <div class="cs-section-head"><div><p class="cs-kicker">Part II · classical feedback</p><h2>L05–L08 · PID、鲁棒性、loop shaping 与增强架构</h2></div><p class="cs-section-note">这一部分是经典控制设计主干：先改变 poles，再学会从 frequency domain 看 robustness，最后组合更复杂的 architecture。</p></div>
+      <div class="cs-grid">
+        <a class="cs-card" href="./unit05.html"><span class="cs-num">L05</span><span><h3>The Concept of Feedback & PID</h3><p>closed-loop characteristic equation、root locus、P/I/D 机理、PID pole-zero shaping、filtered derivative。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 4</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit06.html"><span class="cs-num">L06</span><span><h3>Closed-Loop Stability & Robustness</h3><p>argument principle、Nyquist、small-gain/Bode criterion、GM/PM、S/T、bandwidth 与 fundamental dilemma。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 5</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit07.html"><span class="cs-num">L07</span><span><h3>Frequency-Domain Control Design</h3><p>open-loop target、PI/lag、PD/lead、loop-shaping workflow、inversion-based design、IMC。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 6</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit08.html"><span class="cs-num">L08</span><span><h3>Augmented Feedback Architectures</h3><p>disturbance decoupling、stable inverse、2-DOF、cascade、anti-windup、Smith predictor。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 7</span></div></span><span class="cs-arrow">↗</span></a>
+      </div>
+    </div></section>
+
+    <section class="cs-section"><div class="cs-shell">
+      <div class="cs-section-head"><div><p class="cs-kicker">Part III · state space</p><h2>L09–L11 · MIMO、state feedback 与 observer</h2></div><p class="cs-section-note">把“输入输出的 loop”提升到“内部状态的可控/可观结构”，并构造动态 output-feedback controller。</p></div>
+      <div class="cs-grid">
+        <a class="cs-card" href="./unit09.html"><span class="cs-num">L09</span><span><h3>State-Space Control Systems</h3><p>MIMO/RGA、decoupling、reachability、controllability matrix、PBH、Gramian、stabilizability。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 8</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit10.html"><span class="cs-num">L10</span><span><h3>State-Space Control Design</h3><p>CCF、full-state feedback、pole placement、performance regions、tracking prefilter、integral augmentation。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 9</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit11.html"><span class="cs-num">L11</span><span><h3>State Estimation & Output Feedback</h3><p>observability/constructibility、PBH/Gramian、Kalman decomposition、Luenberger observer、separation principle。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 10</span></div></span><span class="cs-arrow">↗</span></a>
+      </div>
+    </div></section>
+
+    <section class="cs-section"><div class="cs-shell">
+      <div class="cs-section-head"><div><p class="cs-kicker">Part IV · digital & optimal</p><h2>L12–L14 · 从数字实现到 LQG</h2></div><p class="cs-section-note">最后把控制器放进真实计算机，再用 Riccati 方程统一 optimal control 与 optimal estimation。</p></div>
+      <div class="cs-grid">
+        <a class="cs-card" href="./unit12.html"><span class="cs-num">L12</span><span><h3>Sampled-Data / Digital Control</h3><p>aliasing、s→z、Euler/Tustin、controller emulation、ZOH、step invariance、deadbeat 与差分实现。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 11</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit13.html"><span class="cs-num">L13</span><span><h3>Optimal Control · LQR</h3><p>pole-placement fallacy、quadratic cost、finite/infinite-horizon Riccati、Q/R tuning、CT/DT LQR。</p><div class="cs-card-meta"><span>8 sections</span><span>Exercise 12</span></div></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit14.html"><span class="cs-num">L14</span><span><h3>Optimal Estimation · Kalman Filter</h3><p>sensor fusion、Kalman–Bucy、covariance、innovation、discrete predict/correct、LQG 与 robustness caveat。</p><div class="cs-card-meta"><span>9 sections</span><span>Exercise 13</span></div></span><span class="cs-arrow">↗</span></a>
+      </div>
+    </div></section>
+
     <section class="cs-sources"><div class="cs-shell">
-      <p class="cs-kicker">Material basis</p>
-      <p><strong>ETH 课程资料：</strong>内容结构依据你 Drive 中保存的 <code>Moodle_HS2023</code>：14 份 lecture slides、13 份 annotated slides、13 份 board notes，以及逐讲对应的 exercise summary / problem / solution。正文是重新组织的学习讲义，不直接发布 Moodle PDF。</p>
-      <p><strong>每讲如何使用：</strong>先读本站正文建立概念与推导，再回看对应 ETH slides/board notes；最后做该讲对应 exercise。L01 没有正式 exercise，L02 对应 Exercise 1，之后依次推进，L14 对应 Exercise 13。</p>
-      <p><strong>版本说明：</strong>当前按 HS2023 课程资料对齐。课程代码与核心理论和 2026 课程一致，但如果后续拿到 HS2026 的 slides / exercises，可以继续做逐讲差异校正。</p>
+      <p class="cs-kicker">How this textbook is built</p>
+      <p><strong>主结构来自 ETH HS2023：</strong>你 Drive 中的 14 份 lecture slides、13 份 annotated slides、13 份 board notes、exercise summaries、problems 和 solutions。尤其是 exercise summary 的 R1.x–R13.x 结构被用来决定本版“小节”的颗粒度。</p>
+      <p><strong>版权边界：</strong>本站不镜像 Moodle 原始 PDF，也不逐字搬运 exercise / solution；定义、推导、例子和练习均重新组织或自编，用来帮助你学习原课件。</p>
+      <p><strong>推荐用法：</strong>先读本站对应小节 → 自己推一遍公式 → 做本站检查题 → 再做 ETH 对应 Exercise → 最后用 solution 对答案。这样比先读 solution 更接近真正学习。</p>
     </div></section>
   </main>
-  <footer class="cs-footer"><div class="cs-shell">ETH Control Systems Learning Notes · HS2023-aligned independent study companion.</div></footer>
+  <footer class="cs-footer"><div class="cs-shell">ETH Control Systems Learning Notes · section-level HS2023-aligned independent study textbook.</div></footer>
 </body>
 </html>
