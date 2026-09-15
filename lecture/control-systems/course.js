@@ -1,188 +1,80 @@
-const courseUnits = [
-{
-id:'01',title:'Introduction · Why Feedback?',question:'为什么现代工程系统几乎离不开 feedback，而“模型算准一点再开环控制”通常不够？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>区分 plant、actuator、sensor、controller、reference、disturbance。</li><li>真正理解 feedforward 与 feedback 的优缺点。</li><li>用 cruise-control 数字例子看见 feedback 如何降低模型误差和扰动敏感度。</li><li>理解 2-DOF 与 digital feedback loop 为什么会贯穿整门课。</li></ul></div>
-<h2 id="loop">1. 控制系统的最小闭环</h2><p>控制不是“给系统一个输入”，而是根据目标与测量不断修正输入。ETH 第一讲把 plant 定义为物理系统连同 actuator 与 sensor。对 SISO 系统，输入 $u(t)$ 与输出 $y(t)$ 是标量；MIMO 中它们是向量。</p><p>开环 / feedforward 只根据参考 $r$ 计算 $u_{ff}$；闭环 / feedback 则先形成误差 $e=r-y$，再让 controller 根据当前误差生成 $u_{fb}$。两者可以组合成 2-degree-of-freedom 架构：</p><p class="cs-equation">$$u=u_{ff}+u_{fb},\qquad u_{fb}=K(r-y).$$</p>
-<h2 id="cruise">2. ETH 的 cruise-control 例子：为什么反馈差这么多</h2><p>把汽车静态模型简化为增益 $G=10+\Delta$，其中 $\Delta$ 表示 plant uncertainty；坡度等外部影响写成输入扰动 $w$。如果 nominal model 认为增益是 10，feedforward 选择 $u_{ff}=r/10$，则</p><p class="cs-equation">$$y_{ol}=(10+\Delta)\left(\frac r{10}+w\right)=\left(1+\frac{\Delta}{10}\right)r+(10+\Delta)w.$$</p><p>这说明 nominal 情况 $\Delta=0,w=0$ 可以完美；但只要坡度或模型误差出现，误差直接进入输出。</p><div class="cs-example"><span class="cs-label">Worked example · HS2023 L01</span><strong>同一个 plant，闭环发生了什么？</strong><p>令 feedback gain $K=100$，$u=K(r-y)+w$。解代数方程得到</p><p class="cs-equation">$$y_{cl}=\frac{100(10+\Delta)}{1+100(10+\Delta)}r+\frac{10+\Delta}{1+100(10+\Delta)}w.$$</p><p>当 $\Delta=0$ 时，reference 通道系数约为 $1000/1001\approx0.999$；扰动通道系数约为 $10/1001\approx0.01$。反馈没有让模型更准确，而是让闭环对模型误差与扰动更不敏感。</p></div>
-<h2 id="why">3. Feedback 的四个核心作用</h2><p>第一讲给出的主线会在后面逐个数学化：</p><ul><li><strong>disturbance rejection：</strong>减弱未知扰动对输出的影响；</li><li><strong>robustness：</strong>降低 plant uncertainty 对性能的影响；</li><li><strong>performance：</strong>通过闭环重新塑造动态响应；</li><li><strong>stabilization：</strong>把原本不稳定的 plant 变成稳定闭环。</li></ul><p>feedforward 的优势是 nominal 条件下可以非常准确；它的弱点是依赖可逆、准确的模型，而且看不到“系统现在实际发生了什么”。因此工程上常见策略是 feedforward 负责“应该怎么做”，feedback 负责“现实偏离模型时把它拉回来”。</p>
-<h2 id="digital">4. 现代 feedback loop 实际上是数字的</h2><p>真实物理过程通常连续演化，而 controller 运行在计算机上。sensor 经 A/D 采样，软件离散计算，D/A 或数字接口驱动 actuator。于是整门课最终必须把 continuous-time plant 与 discrete-time controller 接起来，这也是为什么 L12 的 sampled-data control 不是附录，而是课程主线的一部分。</p>
-<div class="cs-formulas"><span class="cs-label">Mental model</span><strong>以后每遇到一个控制问题，先问这五件事</strong><p>plant 是什么？$u$ 能操纵什么？$y$ 能测到什么？扰动 $d$ 从哪里进入？参考 $r$ 要求输出做到什么？之后才谈 controller。</p></div>
-<div class="cs-practice"><strong>练习</strong><ol><li>用上面的 cruise-control 模型，取 $r=55,\Delta=1,w=0$，比较开环与闭环误差。</li><li>如果 sensor 有恒定 bias，feedback 一定能消除吗？画出 bias 进入闭环的位置再判断。</li><li>举一个适合 feedforward + feedback 的现实系统，并分别说明两个通道负责什么。</li></ol><details><summary>答案提示</summary><p>第 1 题：开环约 10% 偏差，闭环系数仍接近 0.999。第 2 题：不一定；sensor bias 会被 controller 当成真实输出偏差，需要估计、校准或额外结构处理。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L01_Introduction.pdf · L01 annotated · B01 Introduction · 课程首页的 cruise-control board derivation。L01 是整门课的“为什么”。</div>`
-},
-{
-id:'02',title:'Representations of Dynamical Systems',question:'同一个 dynamical system 为什么需要 ODE、state-space、transfer function 多种表示，而且要能互相转换？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>从高阶 ODE 构造 state-space model。</li><li>从 state space 推导 transfer function。</li><li>掌握 continuous / discrete LTI 的统一写法。</li><li>会找 nonlinear equilibrium 并做 Jacobian local linearization。</li></ul></div>
-<h2 id="state">1. State-space 是课程的底层语言</h2><p>一般连续系统写成 $\dot x=f(t,x,u),\;y=h(t,x,u)$；离散系统写成 $x^+=f(t,x,u)$。LTI 情况则变为</p><p class="cs-equation">$$\dot x=Ax+Bu,\qquad y=Cx+Du,$$</p><p>其中 $x\in\mathbb R^n,u\in\mathbb R^p,y\in\mathbb R^q$。矩阵维度不是死记：$A:n\times n$，$B:n\times p$，$C:q\times n$，$D:q\times p$，直接由输入输出维数决定。</p>
-<h2 id="ode">2. 高阶 ODE → state space</h2><div class="cs-example"><span class="cs-label">ETH board example</span><strong>三阶 ODE</strong><p>考虑</p><p class="cs-equation">$$y^{(3)}+3\ddot y-2\dot y+y=u.$$</p><p>选自然状态 $x_1=y,x_2=\dot y,x_3=\ddot y$，得到</p><p class="cs-equation">$$\dot x=\begin{bmatrix}0&1&0\\0&0&1\\-1&2&-3\end{bmatrix}x+\begin{bmatrix}0\\0\\1\end{bmatrix}u,\qquad y=\begin{bmatrix}1&0&0\end{bmatrix}x.$$</p><p>这就是 companion-like realization。不同 state choice 可以得到不同 $A,B,C,D$，但只要是可逆坐标变换，它们描述的是同一个物理系统。</p></div>
-<h2 id="tf">3. State space → transfer function</h2><p>零初值下做 Laplace transform：</p><p class="cs-equation">$$sX=AX+BU\Rightarrow X=(sI-A)^{-1}BU,$$</p><p class="cs-equation">$$G(s)=\frac{Y}{U}=C(sI-A)^{-1}B+D.$$</p><p>对上面的三阶例子可得 $G(s)=1/(s^3+3s^2-2s+1)$。transfer function 隐藏内部坐标，只保留 input-output map；state space 则保留内部 dynamical state。后面 internal stability 与 BIBO stability 的差别正是从这里出现。</p>
-<h2 id="inputderiv">4. 右侧出现 $\dot u$ 怎么办？</h2><p>如果 ODE 为 $y^{(3)}+3\ddot y-2\dot y+y=\dot u-2u$，直接把 $u$ 的导数塞进 state equation 会很别扭。课件的技巧是在 Laplace domain 先定义中间变量 $V$：</p><p class="cs-equation">$$Y=(s-2)V,\qquad (s^3+3s^2-2s+1)V=U.$$</p><p>再对 $v$ 构造状态，最后让 output 取 $y=\dot v-2v$。这个技巧展示了 realization 并不唯一。</p>
-<h2 id="linearize">5. Nonlinear equilibrium 与 local linearization</h2><p>对 autonomous nonlinear model $\dot x=f(x,u)$，连续时间 equilibrium 满足 $f(x^*,u^*)=0$；离散时间则满足 $f(x^*,u^*)=x^*$。令 deviation variables $\delta x=x-x^*,\delta u=u-u^*$，一阶 Taylor 展开得到</p><p class="cs-equation">$$\delta\dot x=A\delta x+B\delta u,\qquad \delta y=C\delta x+D\delta u,$$</p><p class="cs-equation">$$A=\left.\frac{\partial f}{\partial x}\right|_*,\;B=\left.\frac{\partial f}{\partial u}\right|_*,\;C=\left.\frac{\partial h}{\partial x}\right|_*,\;D=\left.\frac{\partial h}{\partial u}\right|_*.$$</p><div class="cs-callout"><strong>很重要：</strong>controller 若在 deviation coordinates 里设计为 $\delta u=-K\delta y$，落到原系统里实际是 $u=u^*-K(y-y^*)$。这里天然出现 feedforward equilibrium input $u^*$ + feedback correction。</div>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 1</strong><ol><li>把 $y_{k+3}+3y_{k+2}-2y_{k+1}+y_k=u_k$ 写成离散 state space。</li><li>对 $\dot x=x-x^3+u$ 找出 $u^*=0$ 下的 equilibrium 并分别线性化。</li><li>证明可逆坐标变换 $z=Tx$ 不改变 input-output transfer function。</li></ol><details><summary>答案提示</summary><p>第 2 题 equilibrium 为 $x^*=0,\pm1$，线性化 $A=1-3(x^*)^2$。第 3 题代入 $\tilde A=TAT^{-1},\tilde B=TB,\tilde C=CT^{-1}$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L02_Representations.pdf · L02 annotated · B02 Representations.pdf · R01 / E01 / S01 representations。</div>`
-},
-{
-id:'03',title:'Solutions to LTI Systems & Internal Stability',question:'知道 $A,B,C,D$ 以后，状态究竟怎样随时间演化？“稳定”为什么先从 eigenvalue 和 mode 开始？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 modal decomposition 与 invariant eigenspaces。</li><li>会使用 matrix exponential $e^{At}$。</li><li>知道 Jordan block 为什么让边界稳定情况变复杂。</li><li>掌握 continuous / discrete internal stability 的谱条件。</li></ul></div>
-<h2 id="modes">1. 先看 homogeneous system</h2><p>从 $\dot x=Ax$ 开始。如果 $A$ 可对角化，写成 $A=V\Lambda V^{-1}$。令 $z=V^{-1}x$，则</p><p class="cs-equation">$$\dot z=\Lambda z,\qquad z_i(t)=e^{\lambda_i t}z_i(0).$$</p><p>回到原坐标：</p><p class="cs-equation">$$x(t)=\sum_{i=1}^n (w_i^Tx_0)e^{\lambda_i t}v_i.$$</p><p>这就是 modal expansion。$v_i$ 给出 mode 的方向，$e^{\lambda_i t}$ 给出随时间放大/衰减，$w_i^Tx_0$ 决定初始条件激发这个 mode 的程度。</p>
-<h2 id="exp">2. Matrix exponential 是统一解</h2><p>不要求 $A$ 可对角化，解仍是</p><p class="cs-equation">$$x(t)=e^{At}x_0,\qquad e^{At}=I+At+\frac{A^2t^2}{2!}+\cdots.$$</p><p>离散时间 $x[k+1]=Ax[k]$ 则是 $x[k]=A^kx[0]$。连续系统里 exponential 把 eigenvalue $\lambda$ 变成 $e^{\lambda t}$；离散系统直接由 $\lambda^k$ 决定增长或衰减。</p>
-<div class="cs-example"><span class="cs-label">Worked example · feedback moves a mode</span><strong>ETH L03 的 2-state 例子</strong><p>系统</p><p class="cs-equation">$$\dot x=\begin{bmatrix}-1&2\\0&4\end{bmatrix}x+\begin{bmatrix}0\\1\end{bmatrix}u,\qquad y=[0\;1]x,$$</p><p>用 $u=-ky$ 后</p><p class="cs-equation">$$A_{cl}=\begin{bmatrix}-1&2\\0&4-k\end{bmatrix},\qquad \sigma(A_{cl})=\{-1,4-k\}.$$</p><p>所以 $k>4$ 才 asymptotically stable。$k=5$ 时两个 eigenvalue 都为 $-1$，但矩阵 defective，Jordan block 会产生 $te^{-t}$ 项：仍然收敛，却提醒我们“只知道重复 eigenvalue”还不足以知道 transient shape。</p></div>
-<h2 id="stability">3. Continuous-time internal stability</h2><p>对 $\dot x=Ax$：</p><ul><li>所有 $\Re(\lambda_i)<0$：globally asymptotically stable，$A$ 称 Hurwitz；</li><li>所有 $\Re(\lambda_i)\le0$，且虚轴 eigenvalue 对应 Jordan block 都是 $1\times1$：Lyapunov stable 但不一定渐近；</li><li>存在 $\Re(\lambda)>0$，或虚轴 eigenvalue 带更大 Jordan block：unstable。</li></ul><p>离散时间对应条件是 eigenvalues 是否位于 unit disk：$|\lambda_i|<1$ 才 asymptotically stable。</p>
-<h2 id="jordan">4. 为什么 Jordan block 不能忽略</h2><p>Jordan block $J=\lambda I+N$ 的 exponential 里不仅有 $e^{\lambda t}$，还会出现 $t,t^2/2!,\dots$ 的 polynomial factors。若 $\Re\lambda<0$，指数衰减最终压过 polynomial；若 $\Re\lambda=0$，polynomial 会持续增长，所以系统可能不稳定。</p>
-<div class="cs-formulas"><span class="cs-label">Core formulas</span><strong>这一讲的三条主线</strong><p>$x(t)=e^{At}x_0$；可对角化时 $e^{At}=V\operatorname{diag}(e^{\lambda_i t})V^{-1}$；CT 稳定看 left half-plane，DT 稳定看 unit disk。</p></div>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 2</strong><ol><li>对 $A=\operatorname{diag}(-1,2)$ 描述 phase portrait，并说明哪些初始条件仍然收敛。</li><li>矩阵 $A=\begin{bmatrix}0&1\\0&0\end{bmatrix}$ 的 eigenvalues 都是 0。它稳定吗？直接算 $e^{At}$。</li><li>把 CT 谱条件完整翻译成 DT 谱条件。</li></ol><details><summary>答案提示</summary><p>第 2 题 $e^{At}=I+At$，存在线性增长，所以不稳定。第 3 题 asymptotic stability 需要所有 $|\lambda|<1$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L03_Solutions_to_LTI_Systems.pdf · annotated · B03 Solutions to LTI Systems.pdf · R02 / E02 / S02 LTI。</div>`
-},
-{
-id:'04',title:'Responses to LTI Systems & BIBO Stability',question:'一个输入进入 LTI 系统后，为什么 convolution、impulse response、step response 和 frequency response 其实是同一件事的不同视角？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>推导 forced LTI solution 与 convolution。</li><li>理解 impulse / step / frequency response 的联系。</li><li>会从 transfer function poles 判断 BIBO stability。</li><li>区分 internal stability 与 BIBO stability，并理解 hidden unstable modes。</li></ul></div>
-<h2 id="convolution">1. Forced response：自由响应 + 输入卷积</h2><p>对</p><p class="cs-equation">$$\dot x=Ax+Bu,\qquad y=Cx+Du,$$</p><p>唯一解为</p><p class="cs-equation">$$x(t)=e^{At}x_0+\int_0^t e^{A(t-\tau)}Bu(\tau)d\tau,$$</p><p class="cs-equation">$$y(t)=Ce^{At}x_0+\int_0^t Ce^{A(t-\tau)}Bu(\tau)d\tau+Du(t).$$</p><p>第一项由 initial condition 决定；第二项是 input history 通过 system dynamics 的叠加。线性系统的“所有输入响应”都藏在这个 convolution 里。</p>
-<h2 id="impulse">2. Impulse response 是系统的指纹</h2><p>零初值、SISO 情况下，输入 $u=\delta(t)$ 得</p><p class="cs-equation">$$g(t)=Ce^{At}B+D\delta(t).$$</p><p>任意输入都可写为 shifted impulses 的叠加，因此</p><p class="cs-equation">$$y(t)=(g*u)(t)=\int_0^t g(t-\tau)u(\tau)d\tau.$$</p><p>对 $g$ 做 Laplace transform 正好得到 $G(s)=C(sI-A)^{-1}B+D$。所以 state-space、impulse response、transfer function 是同一个 LTI operator 的三种表示。</p>
-<h2 id="step">3. Step response 与 DC gain</h2><p>稳定且 $A$ 可逆时，对 unit step：</p><p class="cs-equation">$$y(t)=CA^{-1}e^{At}B-CA^{-1}B+D.$$</p><p>当 $t\to\infty$，transient 消失，steady-state value 为</p><p class="cs-equation">$$G(0)=-CA^{-1}B+D,$$</p><p>即 DC gain。final value theorem 给出同样结果：$\lim_{t\to\infty}y(t)=\lim_{s\to0}sY(s)$，前提是相关稳定性条件成立。</p>
-<h2 id="frequency">4. Frequency response：正弦进去，稳态还是同频正弦</h2><p>若输入 $u(t)=e^{j\omega t}$ 且系统能达到 steady state，则</p><p class="cs-equation">$$y_{ss}(t)=G(j\omega)e^{j\omega t}=|G(j\omega)|e^{j(\omega t+\angle G(j\omega))}.$$</p><p>因此 $|G(j\omega)|$ 是 amplitude ratio，$\angle G(j\omega)$ 是 phase shift。Bode plot 就是在扫频率后记录这两个量。</p>
-<h2 id="bibo">5. BIBO stability 与 internal stability 不完全相同</h2><p>对有理 transfer function，若所有 poles 在 open left half-plane，则 impulse response 绝对可积，bounded input 产生 bounded output，即 BIBO stable。</p><p>internal stability 看 $A$ 的所有 eigenmodes；BIBO 只看 input-output map 可见的 poles。若存在 exact pole-zero cancellation，一个内部不稳定 mode 可能既不可控又/或不可观，从 transfer function 里消失。</p><div class="cs-example"><span class="cs-label">Concept example</span><strong>“输出看起来稳定”不代表内部状态安全</strong><p>如果 realization 中有一个 $+1$ eigenmode，但它完全不被 $B$ 激发或完全不被 $C$ 看到，$G(s)$ 可能没有 $s-1$ pole。此时 transfer function 可以 BIBO stable，而某些 nonzero initial state 仍指数发散。</p></div>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 3</strong><ol><li>由 convolution 证明 step response 的导数等于 impulse response（用 generalized derivative 理解 $\delta$）。</li><li>求 $G(s)=1/((s+1)(s+2))$ 的 impulse response 与 DC gain。</li><li>构造一个 state-space realization：$A$ 有不稳定 eigenvalue，但 transfer function 因不可观模式而稳定。</li></ol><details><summary>答案提示</summary><p>第 2 题 partial fractions 后逆 Laplace。第 3 题可让 $A=\operatorname{diag}(-1,+1)$，而 $B,C$ 只连接第一维。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L04_Responses to LTI Systems.pdf · annotated · B04 Responses to LTI Systems.pdf · R03 / E03 / S03 IO maps。</div>`
-},
-{
-id:'05',title:'The Concept of Feedback & PID Control',question:'P、I、D 三个最简单的动作，为什么分别对应 stabilization、steady-state regulation 和 dynamic performance？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 root locus 的起点/终点逻辑。</li><li>从 tracking-error dynamics 推出 P、D、I 的角色。</li><li>知道 ideal derivative 为什么不可实现且放大噪声。</li><li>会从 closed-loop characteristic polynomial 反推 controller gains。</li></ul></div>
-<h2 id="rootlocus">1. Feedback 首先改变 closed-loop poles</h2><p>若 open-loop $G(s)K(s)=kz(s)/p(s)$，闭环 characteristic equation 是</p><p class="cs-equation">$$1+G(s)K(s)=0\iff p(s)+kz(s)=0.$$</p><p>当 $k=0$，closed-loop poles 从 open-loop poles 出发；当 $k\to\infty$，其中 $n_z$ 个分支趋向 open-loop zeros，其余走向 infinity。一个重要后果：如果 open-loop 有 RHP zero，高 gain feedback 可能把 pole 拉向不稳定区域。</p>
-<h2 id="p">2. P：先把 error dynamics 稳定下来</h2><p>HS2023 用汽车 position tracking：$\ddot p=-\dot p+u$。设 reference $r=p_{ref}$，加入 nominal feedforward $\ddot r+\dot r$，再用 proportional error feedback：</p><p class="cs-equation">$$u=\ddot r+\dot r-k_P(p-r).$$</p><p>error $e_p=p-r$ 的二阶 characteristic polynomial 为 $s^2+s+k_P$。只要 $k_P>0$ 就稳定，但 pole location 不能任意指定。</p>
-<h2 id="d">3. D：增加自由度，改变 damping / pole placement</h2><p>再反馈 velocity error：</p><p class="cs-equation">$$u=\ddot r+\dot r-k_Pe_p-k_D\dot e_p,$$</p><p>闭环 polynomial 变成</p><p class="cs-equation">$$s^2+(1+k_D)s+k_P.$$</p><p>现在两个 coefficients 可独立调，二阶 poles 可以按需要布置。这就是“D 改善 dynamic performance”的本质，而不仅是口号“D 预测趋势”。</p>
-<h2 id="i">4. I：把 persistent error 变成 controller state</h2><p>若系统受未知 constant disturbance $w$，单纯 P control 通常会留下 steady-state offset。定义 integral state</p><p class="cs-equation">$$q(t)=\int_0^t e_p(\tau)d\tau,\qquad \dot q=e_p,$$</p><p>并使用 $u=\text{feedforward}-k_Pe_p-k_Iq$。若 augmented closed loop stable，则 steady state 必须满足 $\dot q=e_p=0$，因此 constant error 被消除。</p><div class="cs-callout"><strong>这比“积分会消静差”更重要：</strong>integral action 本质是往 controller 里增加一个 dynamical state，再去稳定 augmented system。</div>
-<h2 id="realizable">5. Ideal derivative 为什么工程上必须过滤</h2><p>$K_D(s)=k(1+T_Ds)$ 不是 proper；$s$ 在高频增益无限大，会把 measurement noise 强烈放大。实际常用</p><p class="cs-equation">$$K_D(s)=k\frac{1+T_Ds}{1+T_fs},\qquad 0<T_f\ll T_D.$$</p><p>额外 low-pass pole 让 controller causal/proper，并限制高频增益。后面 L07 会用 Bode plot 重新解释这个选择。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 4</strong><ol><li>对 $s^2+s+k_P$ 画出 $k_P$ 从 0 增大时的 poles，并找 critical damping 对应值。</li><li>未知 constant disturbance 为什么 P control 产生 offset，而 PI 能消除？用 steady-state equations 回答。</li><li>给定目标 poles $-2\pm2j$，对 $s^2+(1+k_D)s+k_P$ 求 $k_P,k_D$。</li></ol><details><summary>答案提示</summary><p>目标 polynomial 为 $(s+2-2j)(s+2+2j)=s^2+4s+8$，所以 $k_D=3,k_P=8$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L05_PID_control.pdf · annotated · B05 The Concept of Feedback & PID Control.pdf · R04 / E04 / S04 PID。</div>`
-},
-{
-id:'06',title:'Closed-Loop Stability & Robustness Criteria',question:'closed-loop poles 很难直接算时，怎样从 open-loop frequency response 判断稳定性，还能顺便量化“离不稳定还有多远”？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 Nyquist criterion 来自 argument principle。</li><li>会读 gain margin、phase margin 与 crossover frequency。</li><li>理解 small-gain / Bode criterion 的适用条件。</li><li>能写出 $S,T$ 并把 tracking、disturbance、noise 分到不同通道。</li></ul></div>
-<h2 id="nyquist">1. Nyquist：从 open loop 数 closed-loop unstable poles</h2><p>令 $L=GK$，闭环 denominator 为 $F(s)=1+L(s)$。argument principle 告诉我们：把包围 RHP 的 contour 经 $F$ 映射后，绕原点的次数等于 $F$ 的 RHP zeros 减 RHP poles。等价地看 $L$ 的 Nyquist plot 围绕 $-1$ 的次数，就能判断 $1+L$ 是否有 RHP roots。</p><p>常用记法是把 open-loop unstable poles 数记为 $P$，Nyquist 对 $-1$ 的有向 encirclements 记为 $N$，closed-loop unstable poles 数 $Z$ 满足相应 argument-principle 关系。做题时最重要的是<strong>固定课程采用的 contour orientation 与符号 convention</strong>，不要机械背某个版本的 $N=Z-P$。</p>
-<h2 id="margins">2. Gain / phase margin 是到 $-1$ 的工程化距离</h2><p>对 open-loop stable 且形状普通的系统：</p><ul><li><strong>gain margin：</strong>phase 到 $-180^\circ$ 时，gain 还能乘多少才碰到 $|L|=1$；</li><li><strong>phase margin：</strong>$|L(j\omega_c)|=1$ 的 crossover 处，phase 距 $-180^\circ$ 还有多少。</li></ul><p>phase margin 与 time-delay robustness 密切相关：delay $e^{-s\tau}$ 不改变 magnitude，但增加 phase lag $-\omega\tau$。</p>
-<h2 id="criteria">3. Small gain 与 Bode criterion</h2><p>如果稳定 open-loop $L$ 满足 $|L(j\omega)|<1$ 对所有频率成立，则 Nyquist 曲线一直在 unit disk 内，不可能包围 $-1$；这是简单但保守的 small-gain sufficient condition。</p><p>Bode criterion 则要求 open-loop stable 且 magnitude/phase 具有合适单调性；这时可直接从 phase crossing 与 magnitude 判断稳定。若曲线复杂、多次 crossing、或有 RHP poles，回到完整 Nyquist。</p>
-<h2 id="sensitivity">4. $S$ 与 $T$ 把所有性能要求放进一张图</h2><p>定义</p><p class="cs-equation">$$S=\frac{1}{1+GK},\qquad T=\frac{GK}{1+GK},\qquad S+T=1.$$</p><p>标准闭环中，reference tracking 主要希望低频 $T\approx1$；output disturbance rejection 希望低频 $S\approx0$；measurement noise rejection 希望高频 $T\approx0$。这就是 fundamental dilemma：$S+T=1$，不可能同一频率两者都很小。</p>
-<h2 id="bandwidth">5. Bandwidth 是性能与代价的交界</h2><p>有效控制需要足够大的 bandwidth，但 bandwidth 过高会要求 actuator 快速、大幅动作，并把未建模 high-frequency dynamics 与 noise 带进闭环。实际设计因此不是“越快越好”，而是在性能、鲁棒性、actuator limitation 之间找折中。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 5</strong><ol><li>一个 open-loop stable 系统在 $|L|=1$ 时 phase 为 $-135^\circ$，phase margin 是多少？</li><li>若在 crossover $\omega_c=5$ rad/s 处 phase margin 为 $45^\circ$，粗略能容忍多大的纯 delay 才吃完这部分 margin？</li><li>解释为什么提高 $|L|$ 的低频增益可以改善 disturbance rejection，却可能损失 robustness。</li></ol><details><summary>答案提示</summary><p>第 1 题 $45^\circ$。第 2 题用 $\omega_c\tau\approx45^\circ=\pi/4$，得 $\tau\approx\pi/(20)$ s。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L06_Closed_Loop_Stability_Criteria.pdf · annotated · B06 Closed-Loop Stability Criteria.pdf · R05 / E05 / S05 Stability & Robustness。</div>`
-},
-{
-id:'07',title:'Frequency-Domain Control Design',question:'知道想要的 $S,T$ 形状以后，怎样真正选择 $K(s)$，把 closed-loop specification 翻译成 open-loop loop shape？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>把 tracking/noise/robustness 需求转成 $L=GK$ 的 frequency-domain constraints。</li><li>理解 P、PI、PD 在 Bode plot 上分别怎样塑形。</li><li>会选择 crossover frequency 并使用 phase lead。</li><li>理解 inversion-based design 为什么受 RHP zero、delay、properness 限制。</li></ul></div>
-<h2 id="shape">1. 为什么先 shape open loop 而不是直接 shape $S,T$</h2><p>$S=1/(1+GK)$ 与 $T=GK/(1+GK)$ 对 $K$ 是非线性的，直接设计很麻烦。令 $L=GK$ 后，controller 直接乘在 plant 上，所以目标可翻译为：</p><ul><li>低频：$|L|\gg1$ → $S\approx0,T\approx1$，用于 tracking / disturbance rejection；</li><li>高频：$|L|\ll1$ → $T\approx0$，避免 noise amplification；</li><li>crossover 附近：保证足够 phase/gain margin；</li><li>step zero-error：通常要求 $L(0)=\infty$，即 plant 或 controller 含 integrator。</li></ul>
-<h2 id="pidbode">2. PID 元素在 Bode 图里的真正角色</h2><p><strong>P</strong>：$K=k$，整体抬高/降低 magnitude，phase 不变，因此会移动 crossover。</p><p><strong>PI</strong>：</p><p class="cs-equation">$$K_{PI}=k\left(1+\frac{1}{T_Is}\right).$$</p><p>在低频提供 integrator；把 zero $1/T_I$ 放在明显低于 $\omega_c$ 的位置，可让 crossover 附近看起来接近纯 P，不严重损害 margin。</p><p><strong>PD / lead</strong>：</p><p class="cs-equation">$$K_{PD}=k\frac{1+T_Ds}{1+T_fs},\quad T_f\ll T_D.$$</p><p>在 crossover 附近提供 phase lead，常用于增加 phase margin，同时通过高频 pole 限制噪声增益。</p>
-<div class="cs-example"><span class="cs-label">Design workflow</span><strong>从 specification 到 controller</strong><ol><li>选目标 bandwidth / crossover，先确保不接近 plant 的未建模高频 dynamics。</li><li>用 gain 把 $|GK|=1$ 移到目标 $\omega_c$。</li><li>若 phase margin 不够，加入 lead / filtered D。</li><li>若低频 steady-state error 不够小，加入 PI / integrator，并让其 break frequency 低于 crossover。</li><li>最后检查 Nyquist、$S/T$ peaks、control effort 与 saturation。</li></ol></div>
-<h2 id="inverse">3. Inversion-based loop shaping</h2><p>若先指定理想 open-loop $L_d(s)$，形式上可以选</p><p class="cs-equation">$$K(s)=L_d(s)G^{-1}(s).$$</p><p>这很直观，却有三类硬限制：plant 的 RHP zeros 会变成 unstable controller poles；plant inverse 可能 non-proper；delay 的 inverse 是 time advance，不 causal。L08 将专门处理“只能近似逆”的现实。</p>
-<h2 id="limitations">4. 为什么不要盲目 pole-zero cancellation</h2><p>即使被 cancel 的 plant pole stable，model mismatch 也会留下 residual dynamics；若 pole unstable，则 cancellation 极度脆弱。更稳妥的设计通常保留关键 plant dynamics，并让 desired loop shape 尊重这些限制。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 6</strong><ol><li>plant 在目标 crossover 处 phase 为 $-160^\circ$，你希望 PM≈$50^\circ$。需要 controller 大约提供多少 phase lead？</li><li>解释为什么 PI zero 通常放在 crossover 以下，而 lead zero/pole 放在 crossover 附近。</li><li>对 $G(s)=1/(s+1)$ 与 $L_d(s)=10/[s(0.1s+1)]$ 写出形式上的 $K=L_d/G$，检查 properness。</li></ol><details><summary>答案提示</summary><p>第 1 题需要约 $30^\circ$ 额外 phase lead，再留一定安全余量。第 3 题先代数化，再比较 numerator/denominator degrees。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L07_Frequency-Domain_Control_Design.pdf · annotated · B07 Frequency-Domain Control Design.pdf · sum6 / ex6 / ExSol6。</div>`
-},
-{
-id:'08',title:'Augmented Feedback Control Architectures',question:'一个标准 feedback loop 做不到的事情，怎样用 stable inverse、2-DOF、Smith predictor 与 decoupling 扩展架构？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 causal/stable approximate inverse。</li><li>理解 2-DOF 为什么把 tracking 与 stabilization 分开设计。</li><li>理解 Smith predictor 对 pure delay 的补偿逻辑。</li><li>知道 multivariable decoupling 在做什么，以及为什么不总能完美。</li></ul></div>
-<h2 id="inverse">1. Plant inverse 往往不能直接实现</h2><p>很多方法都想用 $G^{-1}$：feedforward、perfect tracking、IMC、disturbance decoupling。但 inverse 可能有三类问题：</p><ul><li><strong>non-proper：</strong>inverse 的 numerator degree 太高，不 causal；</li><li><strong>delay：</strong>$e^{-s\tau}$ 的 inverse 是 $e^{+s\tau}$，需要未来信息；</li><li><strong>RHP zero：</strong>inverse 会产生 unstable pole。</li></ul><p>课件做法是只逆 stable/causal 部分，并把剩余部分视为 all-pass / delay-like dynamics。</p><div class="cs-example"><span class="cs-label">Approximate inverse</span><strong>用 low-pass filter 修复 non-proper inverse</strong><p>若 $G=(s+1)/[(s+2)(s+3)]$，$G^{-1}$ non-proper。可选</p><p class="cs-equation">$$G^{-1}_{approx}=G^{-1}\frac{1}{Ts+1},$$</p><p>于是 $G^{-1}_{approx}G=1/(Ts+1)$：不再追求瞬时完美逆，而是“带一点 delay / filtering 地逆”。</p></div>
-<h2 id="2dof">2. 2-DOF：tracking 与 feedback 各司其职</h2><p>对 $G(s)=1/(s^2+3s)$，若目标是跟踪 smooth $r(t)$，可以让 feedforward 负责 nominal inverse：</p><p class="cs-equation">$$u_{ff}=\ddot r+3\dot r,$$</p><p>再用 feedback PD 让 error dynamics $\ddot e+k_1\dot e+k_2e=0$。频域写成</p><p class="cs-equation">$$K_{ff}=G^{-1},\qquad u=K_{ff}r+K_{fb}(r-y).$$</p><p>这样 nominal tracking 与 disturbance/model-uncertainty rejection 分开调，比把全部任务压给一个 error feedback 更自然。</p>
-<h2 id="smith">3. Smith predictor：delay 不能消除，但可以从设计模型里“拿出去”</h2><p>plant 若为 $G(s)e^{-\lambda s}$，pure delay 带来的 phase lag 会严重限制 bandwidth。Smith predictor 利用内部 nominal model，让 characteristic design 近似按 delay-free $G$ 来做，最终 closed-loop response 是 nominal closed loop 后面再接不可避免的 $e^{-\lambda s}$。</p><p class="cs-equation">$$T_{Smith}(s)\approx \frac{GK}{1+GK}e^{-\lambda s}.$$</p><p>它没有违反 causality：输出仍然迟到，只是 controller 不再把 delay 本身当作需要被反馈“追赶”的 dynamics。</p>
-<h2 id="mimo">4. Multivariable decoupling</h2><p>对 2×2 transfer matrix $G$，若 $y_1=G_{11}u_1+G_{12}u_2$、$y_2=G_{21}u_1+G_{22}u_2$，可在输入前放 precompensator $L$，试图让 $GL$ 接近 diagonal。理想上让 cross terms 为零，例如</p><p class="cs-equation">$$G_{11}L_{12}+G_{12}L_{22}=0.$$</p><p>之后再对 diagonal channels 关多个 SISO loops。现实里 decoupler 同样受 model uncertainty、inverse instability、causality 约束。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 7</strong><ol><li>为什么 RHP zero 不能被 stable controller 精确 inverse？</li><li>写出一个 2-DOF controller 的 block relation，并说明 reference tracking 与 disturbance rejection 分别主要由哪部分负责。</li><li>解释 Smith predictor 为什么不能让 delayed plant 的真实输出提前出现。</li></ol><details><summary>答案提示</summary><p>第 1 题：inverse 会把 RHP zero 变成 RHP pole。第 3 题：因果系统无法知道未来；predictor 改的是内部设计结构，不是物理传播延迟。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L08_Augmented_Feedback_Control_Architectures.pdf · annotated · B08 Augmented Feedback Control Architectures.pdf · sum7 / ex7 / exSol7。</div>`
-},
-{
-id:'09',title:'State-Space Control Systems',question:'什么时候我们真的“能把系统推到想去的状态”？controllability 为什么是 state-feedback 设计前必须先检查的结构条件？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 reachability / controllability 的定义与连续时间等价性。</li><li>会计算 controllability matrix 并解释其 column span。</li><li>理解 controllability Gramian 与 minimum-energy control。</li><li>知道 coordinate transform 与 feedback 不会凭空创造 controllability。</li></ul></div>
-<h2 id="definition">1. Reachable 与 controllable</h2><p>对 $\dot x=Ax+Bu$，给定 horizon $T$，从 $x(0)=0$ 能通过某个 input 到达的 $x(T)$ 称 reachable；从某个 $x(0)=x_0$ 能在 $T$ 时刻驱动到 0 称 controllable。连续时间里由于 $e^{AT}$ 永远可逆，两者等价，reachable set 与 controllable set 相同。</p>
-<h2 id="matrix">2. Controllability matrix</h2><p>定义</p><p class="cs-equation">$$W_c=[B\;AB\;A^2B\;\cdots\;A^{n-1}B].$$</p><p>核心定理：</p><p class="cs-equation">$$\operatorname{Im}(W_c)=\text{reachable subspace},\qquad (A,B)\text{ controllable}\iff\operatorname{rank}W_c=n.$$</p><p>为什么只到 $A^{n-1}B$？Cayley-Hamilton 保证更高 powers 都可由前 $n$ 个 powers 线性组合。</p>
-<div class="cs-example"><span class="cs-label">Quick example</span><strong>Double integrator 只有一个 actuator 仍然 controllable</strong><p>$A=\begin{bmatrix}0&1\\0&0\end{bmatrix},B=\begin{bmatrix}0\\1\end{bmatrix}$，则</p><p class="cs-equation">$$W_c=[B\;AB]=\begin{bmatrix}0&1\\1&0\end{bmatrix},$$</p><p>rank=2。虽然 force 只直接作用 acceleration，却能通过 dynamics 间接改变 position。</p></div>
-<h2 id="invariance">3. 结构性质</h2><ul><li>可逆 coordinate transform 不改变 controllability；</li><li>state feedback $u=-Kx+v$ 不能把 uncontrollable mode 变 controllable；</li><li>若存在 conservation law $c^Tx=$ constant 对所有 $u$ 都成立，则沿该方向无法任意移动，因此不 controllable。</li></ul>
-<h2 id="gramian">4. Gramian 与 minimum-energy control</h2><p>连续时间 controllability Gramian</p><p class="cs-equation">$$W_c(T)=\int_0^T e^{A\tau}BB^Te^{A^T\tau}d\tau.$$</p><p>若 $W_c(T)$ positive definite，则系统在该 horizon controllable。它不仅告诉你“能不能到”，还告诉你“某个方向有多难到”：Gramian 很小的 eigen-direction 需要更大 input energy。</p><p>从 0 驱动到 $x_T$ 的 minimum-energy input 可写成</p><p class="cs-equation">$$u^*(t)=B^Te^{A^T(T-t)}W_c(T)^{-1}x_T.$$</p><p>这条公式把几何结构和实际 actuator effort 连起来，也为后面的 optimal control 铺路。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 8</strong><ol><li>检查 $A=\operatorname{diag}(-1,-2),B=[1\;0]^T$ 的 controllability，并解释不可控 mode。</li><li>证明 $z=Tx$ 后 $\tilde W_c=T W_c$（列空间因此只做可逆变换）。</li><li>为什么 full actuation $\operatorname{rank}B=n$ 一定 controllable，但 controllable 不要求 full actuation？</li></ol><details><summary>答案提示</summary><p>第 1 题第二维从不受 input 影响。第 3 题 double integrator 就是反例：一个 input 也可以控制两个 states。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L09 State-Space Control Systems.pdf · annotated · B09 State-Space Control Systems.pdf · sum8 / ex8 / exSol8。</div>`
-},
-{
-id:'10',title:'State-Space Control Design',question:'只要系统 controllable，就真的可以把 closed-loop poles 随意放置吗？怎样从 canonical form 构造 state feedback？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>认识 controllable canonical form。</li><li>理解 state feedback 如何直接修改 characteristic polynomial。</li><li>会做 pole placement / Ackermann 思路。</li><li>知道“能任意放 poles”不等于“应该放得无限快”。</li></ul></div>
-<h2 id="canonical">1. Controllable canonical form</h2><p>对 SISO controllable system，可以换坐标到 companion / controllable canonical form：</p><p class="cs-equation">$$\dot z=\begin{bmatrix}0&1&\cdots&0\\\vdots&&\ddots&\vdots\\0&0&\cdots&1\\-a_0&-a_1&\cdots&-a_{n-1}\end{bmatrix}z+\begin{bmatrix}0\\\vdots\\0\\1\end{bmatrix}u.$$</p><p>其 characteristic polynomial 正好是 $s^n+a_{n-1}s^{n-1}+\cdots+a_0$，而 controllability matrix 自动 full rank。</p>
-<h2 id="feedback">2. State feedback 就是在最后一行改 coefficients</h2><p>令 $u=-\tilde Kz$，$\tilde K=[k_1,\dots,k_n]$。closed-loop 最后一行变成 $-(a_0+k_1),\dots,-(a_{n-1}+k_n)$，所以 characteristic polynomial coefficients 可以直接指定。</p><p>若目标 polynomial 为</p><p class="cs-equation">$$q(s)=\prod_{i=1}^n(s-p_i)=s^n+q_{n-1}s^{n-1}+\cdots+q_0,$$</p><p>canonical coordinates 下只需 $k_i=q_{i-1}-a_{i-1}$。</p>
-<h2 id="transform">3. 回到原坐标</h2><p>若 $z=Tx$，canonical system 的 controllability matrix 为 $\tilde W_c$，原系统为 $W_c$，有 $\tilde W_c=T W_c$，因此</p><p class="cs-equation">$$T=\tilde W_cW_c^{-1},\qquad K=\tilde K T.$$</p><p>这给出 Ackermann-style pole-placement construction。实际软件不会直接用这些显式 inverses，因为高阶系统数值条件可能很差，但理论意义非常清楚。</p>
-<div class="cs-example"><span class="cs-label">Worked example</span><strong>二阶 pole placement</strong><p>对 double integrator $A=\begin{bmatrix}0&1\\0&0\end{bmatrix},B=[0\;1]^T$，用 $u=-[k_1\;k_2]x$：</p><p class="cs-equation">$$A-BK=\begin{bmatrix}0&1\\-k_1&-k_2\end{bmatrix},$$</p><p>characteristic polynomial $s^2+k_2s+k_1$。目标 poles $-2\pm2j$ 给 $s^2+4s+8$，所以 $K=[8\;4]$。</p></div>
-<h2 id="where">4. 极点到底应该放在哪里？</h2><p>理论说 controllable → 任意 pole assignment；工程上却有约束：</p><ul><li>太靠右：slow / unstable；</li><li>太靠左：control effort 大、sensor noise 与 neglected fast dynamics 更容易被激发；</li><li>complex poles 太接近 imaginary axis：poor damping。</li></ul><p>课件用 truncated cone / vertical strip 表达“稳定、足够快、但别快到不现实”的 pole region。下一讲 observer poles 也有完全类似 trade-off。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 9</strong><ol><li>对 double integrator 把 poles 放在 $-1,-3$，求 $K$。</li><li>证明 uncontrollable system 不可能用 state feedback 任意 assignment 全部 eigenvalues。</li><li>为什么把 poles 乘 100 往左移通常不是“更好的 controller”？列出至少三个代价。</li></ol><details><summary>答案提示</summary><p>第 1 题目标 polynomial $(s+1)(s+3)=s^2+4s+3$，所以 $K=[3\;4]$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L10_State-Space_Control_Design.pdf · annotated · B10 State-Space Control Design.pdf · sum9 / ex9 / exSol9。</div>`
-},
-{
-id:'11',title:'State Estimation & Output Feedback',question:'现实里通常测不到完整 state，怎样用 model + measurement correction 重建 $x$，再把 state feedback 真的用起来？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 observability 与 controllability 的 duality。</li><li>会计算 observability matrix。</li><li>推导 Luenberger observer error dynamics。</li><li>理解 separation principle 与 observer pole 的 noise trade-off。</li></ul></div>
-<h2 id="observable">1. Observability：输出是否包含足够 state 信息</h2><p>对 autonomous $\dot x=Ax,y=Cx$，连续求导可得到</p><p class="cs-equation">$$\begin{bmatrix}y\\\dot y\\\vdots\\y^{(n-1)}\end{bmatrix}=\underbrace{\begin{bmatrix}C\\CA\\\vdots\\CA^{n-1}\end{bmatrix}}_{W_o}x.$$</p><p>因此</p><p class="cs-equation">$$(A,C)\text{ observable}\iff\operatorname{rank}W_o=n.$$</p><p>$\ker W_o$ 是 unobservable subspace。实际不会真的去对 noisy $y$ 做 $n-1$ 次微分；这个推导用于揭示结构，真正估计由 dynamical observer 完成。</p>
-<h2 id="observer">2. Luenberger observer = simulator + correction</h2><p>构造</p><p class="cs-equation">$$\dot{\hat x}=A\hat x+Bu+L(y-C\hat x).$$</p><p>定义 estimation error $e=x-\hat x$：</p><p class="cs-equation">$$\dot e=(A-LC)e.$$</p><p>因此 observer design 变成“选 $L$ 让 $A-LC$ stable / 足够快”。和 state feedback 完全对偶：</p><p class="cs-equation">$$(A,B,K)\longleftrightarrow(A^T,C^T,L^T).$$</p>
-<h2 id="poles">3. Observer poles 不能无限往左</h2><p>pole placement 会鼓励“observer 越快越好”，但 correction term 是 $Ly$。$L$ 很大时 sensor noise 同样被放大。实务上 observer 通常比 controller dynamics 快一些，但不会无限快。L14 的 Kalman filter 将把这个 trade-off 从“手调 poles”升级为 noise covariance 下的 optimal estimator。</p>
-<h2 id="separation">4. Separation principle</h2><p>用 estimated state feedback $u=-K\hat x$，在 coordinates $(x,e)$ 下 closed-loop dynamics 是 block triangular：</p><p class="cs-equation">$$\frac d{dt}\begin{bmatrix}x\\e\end{bmatrix}=\begin{bmatrix}A-BK&BK\\0&A-LC\end{bmatrix}\begin{bmatrix}x\\e\end{bmatrix}.$$</p><p>所以 eigenvalues 是 $A-BK$ 与 $A-LC$ eigenvalues 的 union。controller 与 observer 可以独立设计，然后组合。这就是 separation principle。</p>
-<h2 id="weak">5. Stabilizable / detectable 比 full controllable / observable 更精确</h2><p>如果 uncontrollable modes 本来就是 stable，它们不需要被 controller 移动；这叫 stabilizable。类似地，如果 unobservable modes 本来 stable，observer 不需要估出它们才能保证误差收敛；这叫 detectable。稳定 dynamic output-feedback 存在的核心条件是 $(A,B)$ stabilizable 且 $(A,C)$ detectable。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 10</strong><ol><li>对 $A=\begin{bmatrix}0&1\\0&0\end{bmatrix},C=[1\;0]$ 检查 observability。</li><li>写出 observer error dynamics，解释为什么 known input $u$ 在相减后消失。</li><li>为什么把 observer poles 放在 $-1000$ 附近可能让实际 estimate 变差？</li></ol><details><summary>答案提示</summary><p>第 1 题 $W_o=\begin{bmatrix}1&0\\0&1\end{bmatrix}$，observable。第 3 题 correction gain 大，measurement noise 被强烈放大，还会放大 discretization/model mismatch。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L11_State-Estimation-and-Output-Feedback.pdf · annotated · B11 State-Space-Observer-Design.pdf · sum10 / ex10 / exSol10。</div>`
-},
-{
-id:'12',title:'Sampled-Data / Digital Control',question:'controller 在 CPU 上离散运行，而 plant 连续变化：sampling、hold 和 discretization 会对稳定性与可实现性能造成什么影响？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 aliasing 与 Nyquist sampling frequency。</li><li>会使用 $z=e^{sT}$ 理解 CT/DT pole mapping。</li><li>区分 Tustin controller discretization 与 ZOH plant discretization。</li><li>会计算 $A_d=e^{AT}$、$B_d=\int_0^T e^{A\tau}B\,d\tau$。</li></ul></div>
-<h2 id="sampling">1. Sampling 不只是“每隔 T 秒读一次”</h2><p>以 sampling period $T$ 采样，angular sampling frequency $\omega_s=2\pi/T$。连续 sinusoid $\cos(\omega t)$ 在 sample times 变成 $\cos(2\pi(\omega/\omega_s)k)$。频率 $\omega+n\omega_s$ 会产生同样 samples，这就是 aliasing。</p><p>对 band-limited signal，要能唯一重建，最高频率必须低于</p><p class="cs-equation">$$\omega_{Nyq}=\frac{\omega_s}{2}.$$</p><p>control 里的危险是 high-frequency sensor noise alias 到低频，controller 会把虚假的低频 oscillation 当成真实 dynamics 去反制，所以 sampling 前常要 anti-alias low-pass filter。</p>
-<h2 id="mapping">2. $z=e^{sT}$ 把 left half-plane 映到 unit disk</h2><p>若 CT mode 是 $e^{st}$，采样后是 $(e^{sT})^k$，所以</p><p class="cs-equation">$$z=e^{sT}.$$</p><p>$s=\alpha+j\beta$ 映成 $|z|=e^{\alpha T}$：$\alpha<0\iff|z|<1$。因此 continuous stable poles 经 exact sampling 映到 unit disk 内。</p>
-<h2 id="tustin">3. Tustin：把 continuous controller 变成 discrete controller</h2><p>对 $z=e^{sT}$ 做 bilinear approximation：</p><p class="cs-equation">$$z\approx\frac{1+sT/2}{1-sT/2}\iff s\approx\frac{2}{T}\frac{z-1}{z+1}.$$</p><p>把这个 $s$ 代进 $C(s)$ 得 $C_d(z)$。Tustin 的重要性质是把 open left half-plane 映进 unit disk，所以 preserves stability。它也可以从 trapezoidal integration 推出。</p>
-<h2 id="zoh">4. Zero-order hold：离散 plant 的 exact sampled model</h2><p>数字 controller 的 command 通常在两个 sample 之间保持常值。于是 continuous state model 在 sample instants 的 exact discrete equivalent 是</p><p class="cs-equation">$$x[k+1]=A_dx[k]+B_du[k],$$</p><p class="cs-equation">$$A_d=e^{AT},\qquad B_d=\int_0^T e^{A\tau}B\,d\tau,\qquad C_d=C,\;D_d=D.$$</p><p>若 $A$ invertible，$B_d=A^{-1}(e^{AT}-I)B$。这不是 Euler approximation，而是在 ZOH assumption 下 sample instants 的 exact state transition。</p>
-<div class="cs-example"><span class="cs-label">Worked example · first-order plant</span><strong>$\dot x=-ax+bu$ 的 ZOH discretization</strong><p>$A=-a$，所以 $A_d=e^{-aT}$，</p><p class="cs-equation">$$B_d=\int_0^T e^{-a\tau}b\,d\tau=\frac{b}{a}(1-e^{-aT}).$$</p><p>因此 $x[k+1]=e^{-aT}x[k]+\frac{b}{a}(1-e^{-aT})u[k]$。当 $T\to0$，展开 exponential 就回到 familiar Euler limit。</p></div>
-<h2 id="chooseT">5. Sampling period 是 control-design parameter</h2><p>采样过慢会 alias、增加 effective delay、限制 bandwidth；采样过快则增加 computation、quantization 与 communication burden。常见经验是 sampling frequency 明显高于 closed-loop bandwidth，但真正标准仍是：离散模型准确、delay 可接受、CPU/actuator 能按时完成。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 11</strong><ol><li>$s=-2\pm3j,T=0.1$ 时，把 poles 映到 z-plane，并检查 magnitude。</li><li>一个 100 Hz sinusoid 用 150 Hz sampling 采样，会 alias 成多低的频率？</li><li>推导 scalar first-order plant 的 $A_d,B_d$，比较 forward Euler 的近似误差。</li></ol><details><summary>答案提示</summary><p>第 2 题 100 Hz 与 $150-100=50$ Hz samples 不可区分，因此 alias 到 50 Hz。第 1 题 $|z|=e^{-0.2}<1$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L12_DigitalControl.pdf · annotated · B12 Digital Control.pdf · sum11 / e11 / exSol11。这个 lecture 在旧版网站中缺失，现在单独恢复。</div>`
-},
-{
-id:'13',title:'Optimal Control · Linear-Quadratic Regulator',question:'pole placement 可以稳定系统，但怎样系统地权衡 state deviation 与 control effort，而不是凭感觉选 poles？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 pole placement 为什么可能忽略 transient amplification。</li><li>写出 infinite-horizon LQR cost。</li><li>理解 algebraic Riccati equation 与 optimal gain。</li><li>会解释 $Q,R$ 对 behavior / effort 的影响以及 LQR feasibility 条件。</li></ul></div>
-<h2 id="fallacy">1. Pole location 不能完整描述 transient</h2><p>课件用 non-normal system 说明：矩阵</p><p class="cs-equation">$$A=\begin{bmatrix}-1&-100\\0&-1\end{bmatrix}$$</p><p>无论 off-diagonal 多大，eigenvalues 都是 $-1,-1$，但 $x_2$ 会通过巨大 coupling 在 transient 中把 $x_1$ 放大很多。系统 asymptotically stable 不代表 peak response、disturbance amplification 或 robustness 好。</p>
-<h2 id="cost">2. LQR：把“好控制”写成 optimization</h2><p>对</p><p class="cs-equation">$$\dot x=Ax+Bu,$$</p><p>定义 infinite-horizon quadratic cost</p><p class="cs-equation">$$J=\int_0^\infty (x^TQx+u^TRu)dt,$$</p><p>其中 $Q\succeq0$ penalizes state deviation，$R\succ0$ penalizes control effort。LQR 不再直接问“poles 应放哪里”，而是问“哪一个 stabilizing input law 在这个权衡下 cost 最小”。</p>
-<h2 id="riccati">3. Optimal law 与 Riccati equation</h2><p>在 $(A,B)$ stabilizable 且 $(A,Q^{1/2})$ detectable 等条件下，optimal control 是 linear state feedback</p><p class="cs-equation">$$u^*=-Kx,\qquad K=R^{-1}B^TP,$$</p><p>其中 $P\succeq0$ 解 continuous algebraic Riccati equation (CARE)</p><p class="cs-equation">$$A^TP+PA+Q-PBR^{-1}B^TP=0.$$</p><p>optimal cost 还能写成 $J^*(x_0)=x_0^TPx_0$。因此 $P$ 同时编码“从每个初始状态出发未来最低成本有多大”。</p>
-<div class="cs-example"><span class="cs-label">Interpretation · double integrator</span><strong>为什么 $Q/R$ 比“pole 猜测”更直观</strong><p>对 position/velocity double integrator，如果增大 position weight $q_p$，controller 更愿意用大力气快速压 position error；增大 $R$ 则让 input 变贵，gain 下降、closed loop 更慢。只有 relative scaling 重要：把 $Q,R$ 同时乘相同正数不改变 optimal $K$。</p></div>
-<h2 id="tradeoff">4. $Q$ 与 $R$ 的设计语言</h2><ul><li>$Q$ 某方向大：不希望 state 在该方向偏离；</li><li>$R$ 某 input channel 大：该 actuator 昂贵、能量有限或不希望频繁动作；</li><li>$R$ 太小：会得到 aggressive control，现实中可能 saturation / excite neglected dynamics；</li><li>$Q$ 对 unstable/unwanted mode 完全不“看见”时，detectability 条件会失败，optimal law 未必 stabilizing。</li></ul>
-<h2 id="robust">5. LQR 不是 magic，但给了结构化基准</h2><p>LQR 的价值不仅是方便求 $K$，更重要是把 transient performance、state priorities 与 control effort 放进一个统一 objective。它经常比纯 pole placement 给出更自然的 gains，并有经典 robustness properties；但 model mismatch、constraints、saturation 等仍需要额外检查。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 12</strong><ol><li>为什么把 $Q,R$ 同时乘 $10$ 不改变 $K$？从 CARE 解释。</li><li>若 $R$ 增大 100 倍，你预计 controller gain 与 transient 会朝什么方向变化？</li><li>对 scalar system $\dot x=ax+bu$ 写出 scalar Riccati equation，并求 stabilizing $P$ 的正根。</li></ol><details><summary>答案提示</summary><p>第 3 题 $2aP+q-(b^2/r)P^2=0$，选能使 $a-bK<0$ 的非负解。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L13_Optimal_Control.pdf · annotated · B13 Optimal Control.pdf · summary12 / ex12 / sol12 / CS_LQR_summary。</div>`
-},
-{
-id:'14',title:'Optimal Estimation · Kalman Filter',question:'observer gain $L$ 到底该多大？当 process disturbance 与 sensor noise 都存在时，怎样用概率与 covariance 得到“最优”状态估计？',
-body:String.raw`<div class="cs-goals"><strong>学习目标</strong><ul><li>理解 Kalman filter 是 observer design 的 optimal version。</li><li>掌握 process noise 与 measurement noise 的模型。</li><li>理解 covariance Riccati equation 与 Kalman gain。</li><li>会写离散 predict/update equations，并理解 LQG separation。</li></ul></div>
-<h2 id="fusion">1. 从 sensor fusion 开始</h2><p>HS2023 最后一讲用 autonomous car：position / velocity dynamics 同时受 unknown disturbance acceleration，车辆又有 GPS、odometry、radar、LiDAR 等多个 noisy sensors。问题不再只是“系统 observable 吗”，而是：<strong>每个 measurement 都带不确定性时，应该信 model 多一点还是信 sensor 多一点？</strong></p>
-<h2 id="stochastic">2. 随机模型</h2><p>连续时间常写成</p><p class="cs-equation">$$\dot x=Ax+Bu+Gw,\qquad y=Cx+v,$$</p><p>其中 $w$ 是 process noise / disturbance，$v$ 是 measurement noise。设它们零均值，covariance intensity 分别为 $Q_w\succeq0,R_v\succ0$。$Q_w$ 大意味着“不太信 dynamics model”；$R_v$ 大意味着“不太信 sensor”。</p>
-<h2 id="kalman">3. Steady-state Kalman filter 仍然是 observer</h2><p>估计器结构与 Luenberger observer 一样：</p><p class="cs-equation">$$\dot{\hat x}=A\hat x+Bu+L(y-C\hat x).$$</p><p>区别是 $L$ 不再靠“把 observer poles 放快一点”手调，而由 estimation error covariance optimization 决定。steady-state error covariance $P$ 解</p><p class="cs-equation">$$AP+PA^T+GQ_wG^T-PC^TR_v^{-1}CP=0,$$</p><p>Kalman gain 为</p><p class="cs-equation">$$L=PC^TR_v^{-1}.$$</p><p>这与 LQR CARE 完全对偶：LQR 在 control energy 与 state penalty 之间权衡；Kalman filter 在 process uncertainty 与 measurement uncertainty 之间权衡。</p>
-<div class="cs-example"><span class="cs-label">Intuition</span><strong>什么时候更信 measurement？</strong><p>若 $R_v$ 变小，sensor 更精确，$R_v^{-1}$ 变大，Kalman correction 倾向更强；若 $Q_w$ 变大，model 被 disturbance 破坏得更厉害，也会促使 filter 更快依据 measurement 修正。反过来，sensor 很 noisy 时 filter 更平滑、更依赖 prediction。</p></div>
-<h2 id="discrete">4. 离散 Kalman filter：predict → update</h2><p>对</p><p class="cs-equation">$$x_{k+1}=Ax_k+Bu_k+w_k,\qquad y_k=Cx_k+v_k,$$</p><p>标准 recursion：</p><p><strong>Predict</strong></p><p class="cs-equation">$$\hat x^-_k=A\hat x^+_{k-1}+Bu_{k-1},\qquad P^-_k=AP^+_{k-1}A^T+Q.$$</p><p><strong>Innovation / update</strong></p><p class="cs-equation">$$K_k=P^-_kC^T(CP^-_kC^T+R)^{-1},$$</p><p class="cs-equation">$$\hat x^+_k=\hat x^-_k+K_k(y_k-C\hat x^-_k),$$</p><p class="cs-equation">$$P^+_k=(I-K_kC)P^-_k.$$</p><p>$y_k-C\hat x^-_k$ 叫 innovation：它是“sensor 告诉你模型预测错了多少”。</p>
-<h2 id="lqg">5. LQG：LQR + Kalman filter</h2><p>当 state 不可直接测量，用 Kalman estimate 做 LQR：</p><p class="cs-equation">$$u=-K_{LQR}\hat x.$$</p><p>在线性高斯 setting 下，optimal control 与 optimal estimation 可以分开设计，形成 Linear-Quadratic-Gaussian (LQG) controller。结构上延续 L11 separation principle：controller 处理 performance，filter 处理 information uncertainty。</p>
-<h2 id="limits">6. Kalman filter 的假设与诊断</h2><p>Kalman filter 强大，但 covariance 不是装饰参数。若 $Q,R$ 与真实 noise scale 相差太大，filter 会过度信 model 或 sensor。实际调试应检查 innovation 是否近似零均值、covariance 是否合理，以及 model bias / nonlinearity 是否需要扩展到 EKF/UKF 或其他 estimator。</p>
-<div class="cs-practice"><strong>练习 · 对应 Exercise 13</strong><ol><li>如果 GPS noise variance 突然变成原来的 100 倍，Kalman gain 应总体变大还是变小？</li><li>解释 $Q\to0$ 与 $R\to0$ 两个极限分别意味着什么。</li><li>写出 LQG 的两个独立 Riccati equations，并标出 control gain 与 estimation gain。</li></ol><details><summary>答案提示</summary><p>第 1 题 measurement 更不可信，gain 倾向变小。第 3 题一个 CARE 来自 $(A,B,Q_x,R_u)$，另一个 covariance ARE 来自 $(A,C,GQ_wG^T,R_v)$。</p></details></div>
-<div class="cs-reading"><strong>HS2023 对应材料</strong>L14_Optimal-Estimation-Kalman-Filter.pdf（该讲 Moodle 没有单独 B14 board notes）· summary13 / ex13 / solution。slides 还包含 deterministic viewpoint、stochastic viewpoint、time-varying/discrete Kalman 与 LQG outlook。</div>`
-}
-];
+(function(){
+  const units = window.courseUnits || [];
+  const layout = document.querySelector('[data-unit]');
+  const article = document.getElementById('unitArticle');
+  const toc = document.getElementById('unitToc');
+  if (!layout || !article || !toc) return;
 
-const commonRefs = String.raw`<div class="cs-reading"><strong>学习方式</strong>本站正文是根据用户保存的 ETH HS2023 Moodle 课程材料重新组织的中文学习讲义，不直接转载受限 PDF。建议：本站先学概念与推导 → 回看对应 slides / annotated slides / board notes → 独立完成 exercise → 最后看 solution。</div>`;
+  const id = String(layout.dataset.unit || '01').padStart(2,'0');
+  const idx = units.findIndex(u => u.id === id);
+  const unit = units[idx];
+  if (!unit) {
+    article.innerHTML = '<h1>Lecture not found</h1><p>这个学习单元还没有内容。</p>';
+    return;
+  }
 
-function renderCourseUnit(){
-  const root=document.querySelector('[data-unit]');
-  if(!root) return;
-  const id=root.dataset.unit;
-  const index=courseUnits.findIndex(u=>u.id===id);
-  const unit=courseUnits[index];
-  if(!unit) return;
-  document.title=`L${unit.id} · ${unit.title} | ETH Control Systems`;
-  const temp=document.createElement('div');
-  temp.innerHTML=unit.body;
-  const toc=[...temp.querySelectorAll('h2')].map(h=>({id:h.id,label:h.textContent.replace(/^\d+\.\s*/, '')}));
-  const tocNode=document.getElementById('unitToc');
-  tocNode.innerHTML=`<p class="cs-toc-label">Lecture ${unit.id}</p>${toc.map(t=>`<a href="#${t.id}">${t.label}</a>`).join('')}`;
-  const prev=index>0?`<a href="./unit${courseUnits[index-1].id}.html">← L${courseUnits[index-1].id} · ${courseUnits[index-1].title}</a>`:'<a href="./">← 返回课程目录</a>';
-  const next=index<courseUnits.length-1?`<a href="./unit${courseUnits[index+1].id}.html">L${courseUnits[index+1].id} · ${courseUnits[index+1].title} →</a>`:'<a href="./">完成 14 Lectures · 返回目录 →</a>';
-  document.getElementById('unitArticle').innerHTML=`<div class="cs-eyebrow">ETH 227-0103-00L · HS2023 Lecture ${unit.id} / ${courseUnits.length}</div><h1>${unit.title}</h1><p class="cs-question">${unit.question}</p>${unit.body}${commonRefs}<nav class="cs-pager">${prev}${next}</nav>`;
-  if(window.renderMathInElement){
-    renderMathInElement(document.getElementById('unitArticle'),{
-      delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}],
-      throwOnError:false
+  const lectureLabel = unit.id === '00' ? 'Prerequisite · L00' : `ETH HS2023 · L${unit.id}`;
+  const sectionCards = unit.sections.map((s,i)=>{
+    const sid = `s${unit.id}-${i+1}`;
+    return `<a class="cs-map-card" href="#${sid}"><span>${unit.id === '00' ? '0' : Number(unit.id)}.${i+1}</span><strong>${s.title}</strong></a>`;
+  }).join('');
+
+  const sections = unit.sections.map((s,i)=>{
+    const sid = `s${unit.id}-${i+1}`;
+    const num = `${unit.id === '00' ? '0' : Number(unit.id)}.${i+1}`;
+    return `<section class="cs-textbook-section"><h2 id="${sid}"><span class="cs-section-number">${num}</span>${s.title}</h2>${s.html}</section>`;
+  }).join('');
+
+  const prev = idx > 0 ? units[idx-1] : null;
+  const next = idx < units.length-1 ? units[idx+1] : null;
+  const pager = `<nav class="cs-pager" aria-label="Lecture navigation">
+    ${prev ? `<a href="./unit${prev.id}.html"><small>← Previous</small><strong>${prev.id === '00' ? 'L00' : 'L'+prev.id} · ${prev.title}</strong></a>` : '<span></span>'}
+    ${next ? `<a href="./unit${next.id}.html"><small>Next →</small><strong>${next.id === '00' ? 'L00' : 'L'+next.id} · ${next.title}</strong></a>` : '<span></span>'}
+  </nav>`;
+
+  article.innerHTML = `
+    <p class="cs-eyebrow">${lectureLabel} · ${unit.sections.length} sections</p>
+    <h1>${unit.title}</h1>
+    <p class="cs-question">${unit.question}</p>
+    <div class="cs-goals"><strong>学完这一讲，你应该能：</strong><ul>${unit.goals.map(g=>`<li>${g}</li>`).join('')}</ul></div>
+    <div class="cs-lesson-map"><div class="cs-map-head"><span>Section map</span><strong>按小节学习，不要一次扫完整页</strong></div><div class="cs-map-grid">${sectionCards}</div></div>
+    ${sections}
+    <section class="cs-textbook-section cs-exercise-section"><h2 id="practice"><span class="cs-section-number">✓</span>本讲练习</h2><div class="cs-practice">${unit.practice}</div></section>
+    <div class="cs-source-note"><strong>对应 ETH 材料</strong><span>${unit.source}</span><small>本站正文为独立重写的学习讲义；不公开或镜像 Moodle 原始 PDF / solutions。</small></div>
+    ${pager}`;
+
+  toc.innerHTML = `<div class="cs-toc-label">On this lecture</div>
+    <a href="#top" class="cs-toc-top">${unit.id === '00' ? 'L00' : 'L'+unit.id} · ${unit.title}</a>
+    ${unit.sections.map((s,i)=>`<a href="#s${unit.id}-${i+1}">${unit.id === '00' ? '0' : Number(unit.id)}.${i+1} ${s.title}</a>`).join('')}
+    <a href="#practice">✓ 本讲练习</a>`;
+
+  article.id = 'unitArticle';
+  article.setAttribute('tabindex','-1');
+  layout.id = 'top';
+
+  if (window.renderMathInElement) {
+    renderMathInElement(article, {
+      delimiters: [
+        {left:'$$', right:'$$', display:true},
+        {left:'$', right:'$', display:false}
+      ],
+      throwOnError:false,
+      ignoredTags:['script','noscript','style','textarea','pre','code']
     });
   }
-}
 
-document.addEventListener('DOMContentLoaded',renderCourseUnit);
+  const links = [...toc.querySelectorAll('a[href^="#"]')];
+  const targets = links.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  if ('IntersectionObserver' in window && targets.length) {
+    const obs = new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){
+          links.forEach(a=>a.classList.remove('is-active'));
+          const hit = links.find(a=>a.getAttribute('href') === '#'+entry.target.id);
+          if(hit) hit.classList.add('is-active');
+        }
+      });
+    },{rootMargin:'-20% 0px -70% 0px'});
+    targets.forEach(t=>obs.observe(t));
+  }
+})();
