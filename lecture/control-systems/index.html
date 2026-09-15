@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ETH 227-0103-00L Control Systems 中文学习笔记：从动力系统建模、PID、频域设计到状态反馈、观测器、LQR 与 Kalman filter。">
+  <meta name="theme-color" content="#f7f7f3">
+  <title>ETH Control Systems · 227-0103-00L</title>
+  <link rel="stylesheet" href="./control-systems.css?v=1">
+</head>
+<body>
+  <header class="cs-header"><div class="cs-header-inner">
+    <a class="cs-brand" href="./"><small>ETH 227-0103-00L</small>Control Systems</a>
+    <nav class="cs-nav" aria-label="课程导航"><a href="../">Lecture</a><a href="https://people.ee.ethz.ch/~floriand/CSI.html" target="_blank" rel="noopener">ETH course ↗</a><a href="https://www.vvz.ethz.ch/Vorlesungsverzeichnis/sucheLehrangebot.view?abschnittId=122815&amp;ansicht=2&amp;lang=en&amp;seite=0&amp;semkez=2026W" target="_blank" rel="noopener">Catalogue ↗</a></nav>
+  </div></header>
+  <main>
+    <section class="cs-hero"><div class="cs-shell">
+      <p class="cs-kicker">Independent learning companion · Autumn 2026</p>
+      <h1>Control Systems,<br><em>from models to feedback.</em></h1>
+      <p class="cs-lede">这是一套围绕 ETH Zürich 227-0103-00L Control Systems 主线重新组织的中文学习笔记。目标不是把控制理论变成公式清单，而是一直追问：系统为什么需要反馈？怎样把“稳定、快速、鲁棒”变成可以计算和设计的对象？</p>
+      <div class="cs-meta"><span class="cs-pill">12 个子课程</span><span class="cs-pill">SISO → MIMO</span><span class="cs-pill">Frequency → State space</span><span class="cs-pill">PID · Loop shaping · LQR · Kalman</span></div>
+    </div></section>
+    <section class="cs-section"><div class="cs-shell">
+      <div class="cs-section-head"><div><p class="cs-kicker">Learning path</p><h2>从“系统会怎样动”到“闭环应该怎样设计”</h2></div><p class="cs-section-note">每一小节都是独立子课程：先从工程问题出发，再给数学表示、设计判断和理解检查。内容依据 ETH 公开课程说明与公开教材重写，不复制 Moodle 受限材料。</p></div>
+      <div class="cs-grid">
+        <a class="cs-card" href="./unit01.html"><span class="cs-num">01</span><span><h3>为什么控制问题从模型开始？</h3><p>动力系统、状态、输入输出、平衡点与线性化；把真实过程压缩成可设计模型。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit02.html"><span class="cs-num">02</span><span><h3>同一个系统，为什么要换一种表示？</h3><p>Laplace 变换、传递函数、极点零点，以及一二阶系统的瞬态直觉。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit03.html"><span class="cs-num">03</span><span><h3>反馈究竟改变了什么？</h3><p>闭环、跟踪、扰动抑制、灵敏度函数与稳态误差。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit04.html"><span class="cs-num">04</span><span><h3>PID 为什么如此常用？</h3><p>P/I/D 三种作用、积分抗偏差、微分塑形、Ziegler–Nichols 与 anti-windup。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit05.html"><span class="cs-num">05</span><span><h3>怎样判断闭环会不会发散？</h3><p>特征方程、Routh–Hurwitz、根轨迹，以及稳定裕度背后的几何图景。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit06.html"><span class="cs-num">06</span><span><h3>为什么频率响应能指导设计？</h3><p>Bode 图、Nyquist 判据、增益/相位裕度与 bandwidth。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit07.html"><span class="cs-num">07</span><span><h3>Loop shaping 到底在“塑”什么？</h3><p>灵敏度、互补灵敏度、低频跟踪、高频噪声与鲁棒性的权衡。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit08.html"><span class="cs-num">08</span><span><h3>一个反馈环不够时怎么办？</h3><p>前馈、两自由度、cascade、IMC 与执行器饱和。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit09.html"><span class="cs-num">09</span><span><h3>多个输入输出为什么会互相“打架”？</h3><p>MIMO、传递矩阵、耦合、Relative Gain Array 与 decoupling。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit10.html"><span class="cs-num">10</span><span><h3>能直接安排闭环极点吗？</h3><p>可控性、状态反馈、canonical form 与 pole placement。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit11.html"><span class="cs-num">11</span><span><h3>看不到全部状态时怎么办？</h3><p>可观性、Luenberger observer、对偶性与 separation principle。</p></span><span class="cs-arrow">↗</span></a>
+        <a class="cs-card" href="./unit12.html"><span class="cs-num">12</span><span><h3>“最优控制”和“最优估计”如何相遇？</h3><p>LQR、Riccati 方程、Kalman filter，以及从代价与噪声模型得到控制器。</p></span><span class="cs-arrow">↗</span></a>
+      </div>
+    </div></section>
+    <section class="cs-sources"><div class="cs-shell">
+      <p class="cs-kicker">Public sources</p>
+      <p>课程范围以 Florian Dörfler 的 <a href="https://people.ee.ethz.ch/~floriand/CSI.html" target="_blank" rel="noopener">ETH Control Systems course page</a> 和 <a href="https://www.vvz.ethz.ch/Vorlesungsverzeichnis/sucheLehrangebot.view?abschnittId=122815&amp;ansicht=2&amp;lang=en&amp;seite=0&amp;semkez=2026W" target="_blank" rel="noopener">ETH 2026 course catalogue</a> 为准；补充解释参考 Åström &amp; Murray 的 <a href="https://fbsbook.org" target="_blank" rel="noopener">Feedback Systems</a> 公开电子版与 ETH 公共视频入口。Moodle slides、exercise sheets 等受限材料未转载。</p>
+    </div></section>
+  </main>
+  <footer class="cs-footer"><div class="cs-shell">ETH Control Systems Learning Notes · independent learning companion, not official ETH course material.</div></footer>
+</body>
+</html>
