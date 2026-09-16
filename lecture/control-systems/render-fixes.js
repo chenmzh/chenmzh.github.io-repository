@@ -1,5 +1,13 @@
 (function(){
-  function moveBefore(sectionSelector, nodeSelector, targetSelector){
+  function ensureCss(){
+    if(document.querySelector('link[href*="render-fixes.css"]')) return;
+    const link=document.createElement('link');
+    link.rel='stylesheet';
+    link.href='./render-fixes.css?v=1';
+    document.head.appendChild(link);
+  }
+
+  function moveBefore(sectionSelector,nodeSelector,targetSelector){
     const from=document.querySelector(sectionSelector);
     const target=document.querySelector(targetSelector);
     if(!from||!target)return;
@@ -13,12 +21,11 @@
     const layout=document.querySelector('[data-unit]');
     if(!layout||String(layout.dataset.unit).padStart(2,'0')!=='02')return;
 
-    // The teaching layer was authored before L02 gained the current 7-section order.
-    // Keep the explanatory assets, but attach them to the concepts they actually explain.
+    // L02 gained/reordered sections after the first teaching layer was authored.
+    // Move the already-rendered teaching assets to the concepts they actually explain.
     moveBefore('#s02-3','.cs-step-box','#s02-4');
     moveBefore('#s02-4','.cs-visual','#s02-6');
 
-    // Make labels explicit after moving content so readers are not confused by historical numbering.
     const ssTf=document.querySelector('#s02-4 .cs-step-box .cs-label');
     if(ssTf) ssTf.textContent='一步一步：State space → transfer function';
 
@@ -30,11 +37,11 @@
     document.querySelectorAll('.katex-display').forEach(el=>{
       el.style.overflowX='auto';
       el.style.overflowY='hidden';
-      el.style.paddingBottom='0.2rem';
     });
   }
 
   function run(){
+    ensureCss();
     fixUnit02();
     addOverflowGuards();
   }
@@ -42,11 +49,11 @@
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(run),{once:true});
   else requestAnimationFrame(run);
 
-  // source-render may append KaTeX after the main lecture render; guard again once it lands.
+  // source-render appends an extra KaTeX-rendered coverage layer after the main lecture.
   const article=document.getElementById('unitArticle');
   if(article){
     const obs=new MutationObserver(()=>requestAnimationFrame(run));
     obs.observe(article,{childList:true,subtree:true});
-    setTimeout(()=>obs.disconnect(),2500);
+    setTimeout(()=>{run();obs.disconnect();},3000);
   }
 })();
