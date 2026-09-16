@@ -10,11 +10,12 @@
   function moveBefore(fromSelector,nodeSelector,targetSelector){
     const from=document.querySelector(fromSelector);
     const target=document.querySelector(targetSelector);
-    if(!from||!target)return;
+    if(!from||!target)return false;
     const node=from.querySelector(nodeSelector);
-    if(!node)return;
+    if(!node)return false;
     const heading=target.querySelector('h2');
     if(heading&&heading.nextSibling) target.insertBefore(node,heading.nextSibling); else target.appendChild(node);
+    return true;
   }
 
   function fixLegacyMappings(){
@@ -76,14 +77,14 @@
     };
     Object.entries(labels).forEach(([selector,text])=>{
       const el=document.querySelector(selector);
-      if(el)el.textContent=text;
+      if(el&&el.textContent!==text)el.textContent=text;
     });
   }
 
   function addOverflowGuards(){
     document.querySelectorAll('.katex-display').forEach(el=>{
-      el.style.overflowX='auto';
-      el.style.overflowY='hidden';
+      if(el.style.overflowX!=='auto')el.style.overflowX='auto';
+      if(el.style.overflowY!=='hidden')el.style.overflowY='hidden';
     });
   }
 
@@ -98,8 +99,13 @@
 
   const article=document.getElementById('unitArticle');
   if(article){
-    const obs=new MutationObserver(()=>requestAnimationFrame(run));
+    let scheduled=false;
+    const obs=new MutationObserver(()=>{
+      if(scheduled)return;
+      scheduled=true;
+      requestAnimationFrame(()=>{scheduled=false;run();});
+    });
     obs.observe(article,{childList:true,subtree:true});
-    setTimeout(()=>{run();obs.disconnect();},3000);
+    setTimeout(()=>{run();obs.disconnect();},1800);
   }
 })();
