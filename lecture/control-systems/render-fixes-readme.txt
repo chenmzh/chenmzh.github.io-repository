@@ -1,0 +1,1 @@
+Shared rendering fix layer loaded by Control Systems unit pages. Keeps long KaTeX, matrices, tables and code blocks within the article width; render-fixes.js also repairs legacy L02 teaching-asset section mappings.
