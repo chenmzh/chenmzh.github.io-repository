@@ -32,7 +32,10 @@
       const section=article.querySelector(`#s${id}-${num}`);
       if(!section||section.querySelector(':scope > .cs-depth-added'))return;
       const node=htmlNode(html,'cs-depth-added');
-      section.appendChild(node);
+      // L01 is now a full textbook pass: explanation should come before the worked example.
+      // Existing deep passes keep their historical append-at-end behavior.
+      const worked=id==='01'?section.querySelector(':scope > .cs-worked'):null;
+      if(worked)section.insertBefore(node,worked);else section.appendChild(node);
       renderMath(node);
     });
 
