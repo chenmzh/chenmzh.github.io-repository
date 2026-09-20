@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#faf7f2">
+  <meta name="description" content="打开一份小小惊喜。原创潮玩抽赏小游戏，虚拟积分体验，无充值、无实物兑换。">
+  <title>魔力小屋 · 把小幸运带回家</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23bd6849'/%3E%3Cpath d='M8 20 20 9 32 20M12 19v13h16V19M18 32v-8h5v8' fill='none' stroke='%23fff5e7' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="collection.css">
+  <link rel="stylesheet" href="experience.css">
+  <link rel="stylesheet" href="room.css">
+  <link rel="stylesheet" href="scenes.css">
+  <link rel="stylesheet" href="market.css">
+  <link rel="stylesheet" href="market-terminal.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#draw" aria-label="魔力小屋首页"><span class="brand-icon">⌂</span><span>魔力小屋<small>MAGIC HOUSE</small></span></a>
+    <nav class="main-nav" aria-label="主导航">
+      <button class="nav-item active" data-view="draw">探索小屋</button>
+      <button class="nav-item" data-view="room">布置小屋</button>
+      <button class="nav-item" data-view="collection">我的收藏 <span id="collection-count">0</span></button>
+      <button class="nav-item" data-view="history">抽赏记录</button>
+      <button class="nav-item" data-view="market">小屋市集</button>
+    </nav>
+    <button class="wallet" id="wallet-button" title="领取免费的体验积分"><span class="coin">✦</span><span id="balance">6,900</span><span class="wallet-plus">＋</span></button>
+  </header>
+  <main>
+    <div class="topline"><span><span class="live-dot"></span> 一间只收藏快乐的小屋</span><span class="demo-label">原创模拟 · 非官方 · 仅虚拟积分</span></div>
+    <section id="view-draw" class="view">
+      <section class="hero flagship-hero">
+        <div class="hero-copy">
+          <span class="flagship-label"><b>A</b> 赏 · 旗舰大娃 <i>STAR PILOT / 款式示例</i></span>
+          <h1>把星河，<br>交给<span>领航员。<svg viewBox="0 0 230 12" aria-hidden="true"><path d="M3 8Q111-3 225 6" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span></h1>
+          <p class="flagship-name">星际领航 <span>机械宇航员大娃</span></p>
+          <p>琥珀色面罩里，藏着下一站的星光。<br>经典宇航员与新伙伴月球漫步者，都在 A 赏等你。</p>
+          <div class="hero-meta"><span>镜面装甲</span><i></i><span>推进背包</span><i></i><span>星轨展台</span></div>
+          <div class="flagship-actions"><button class="gold-button" data-prize="A">查看 A 赏全品种 <span>↗</span></button><button class="text-button" id="go-draw">去选一张签 →</button></div>
+          <div class="featured-availability"><span id="featured-stock">本场剩余 1 / 1 份</span><span id="featured-probability">当前概率 1.00%</span><button class="text-button" id="hero-rules">规则说明 ↗</button></div>
+        </div>
+        <button class="hero-visual flagship-visual" id="hero-art" data-prize="A" aria-label="查看A赏星际领航大娃细节"></button>
+        <span class="hero-edition">ORIGINAL VIRTUAL COLLECTIBLE / 原创虚拟藏品</span>
+      </section>
+      <section class="collection-journey" aria-label="收藏进度">
+        <div class="journey-copy"><span class="section-kicker">YOUR LITTLE EXHIBITION</span><h2>慢慢填满，你的收藏展柜。</h2><p id="journey-caption">第一份藏品，等你亲手打开。</p></div>
+        <div id="journey-slots" class="journey-slots"></div>
+        <button class="journey-total" data-view="collection"><strong id="journey-count">0 <small>/ 50</small></strong><span>不同款式入藏 ↗</span><span class="journey-track"><i id="journey-progress"></i></span></button>
+      </section>
+      <section class="room-entry"><div><strong>惊喜不止在拆开的那一刻。</strong><p>让小狗住进来，挂好围裙，点亮台灯。抽到的每一件，都能摆进你的小屋。</p></div><button class="primary-button" data-view="room">去布置小屋 →</button></section>
+      <div class="section-heading"><div><span class="section-kicker">THE COLLECTION</span><h2>六档奖赏，六种心动 <span>A–F 全档多品种 · 跨场慢慢收集</span></h2></div><button class="text-button" id="probability-button">奖池与概率 <span>↗</span></button></div>
+      <p id="pool-migration-note" class="rules-callout pool-migration-note" hidden>这场保留旧奖池及全部绑定签。抽完进入下一场，启用 A–F 多品种奖池，猫咪、动物园及旧辑藏品都可抽；各款不保证每场出现，可跨多场收集。无需重置，收藏和场景布置始终保留。</p>
+      <div class="prize-grid" id="prize-grid"></div>
+      <section class="draw-section" aria-labelledby="draw-title">
+        <div class="ticket-panel">
+          <div class="ticket-heading"><div><span class="section-kicker">PICK YOUR LUCKY NUMBER</span><h2 id="draw-title">选一张，开启惊喜 <span id="round-number">第 001 场</span></h2></div><span class="pool-status" id="pool-status">进行中</span></div>
+          <div class="pool-progress"><div class="progress-track"><div id="progress-fill"></div></div><span>剩余 <strong id="remaining-count">100</strong> / 100 签</span></div>
+          <div class="ticket-tools"><div class="ticket-legend"><span><i></i>可选</span><span><i class="selected"></i>已选</span><span><i class="sold"></i>已揭晓</span></div><div><button id="random-pick" class="text-button">⤨ 随机选 1 签</button><button id="clear-selection" class="text-button">清空</button></div></div>
+          <div class="ticket-grid" id="ticket-grid" aria-label="选择签号，每次最多十签"></div>
+          <p class="ticket-hint">✧ 签号只是一份仪式感，所有未抽签的机会相同。每次最多选择 10 签。</p>
+        </div>
+        <aside class="checkout-panel">
+          <span class="section-kicker">YOUR LITTLE MOMENT</span><h3>准备好接收快乐了吗？</h3><p class="checkout-subtitle">未知的惊喜，正在等你拆开。</p>
+          <div class="price"><span class="coin">✦</span><strong>69</strong><span>积分 / 签</span></div>
+          <div class="selection-summary"><span>已选签数</span><strong><span id="selected-count">0</span> 签</strong></div>
+          <div class="selection-summary"><span>本次合计</span><strong><span id="total-cost">0</span> 积分</strong></div>
+          <button class="primary-button" id="draw-selected" disabled>选择你的幸运签</button>
+          <div class="quick-actions"><button id="draw-one">随心一抽 <small>69 积分</small></button><button id="draw-ten">惊喜十连 <small>690 积分</small></button></div>
+          <p class="last-note" id="last-note"></p>
+          <button class="text-button gift-button" id="gift-button">🎁 领取 690 免费体验积分</button>
+          <div class="next-round-box" id="next-round-box" hidden><h4>这一场的惊喜已全部揭晓</h4><label><input id="last-prize-toggle" type="checkbox"> 下一场启用模拟「最后赏」</label><button class="primary-button" id="next-round">开启下一场</button></div>
+          <p class="checkout-disclaimer">仅供娱乐，无充值、无实物兑换。<br>奖池配置为模拟设定，非官方当前规则。</p>
+        </aside>
+      </section>
+      <section class="bottom-note"><span class="note-icon">♡</span><div><h3>收藏快乐，不必追逐每一份惊喜。</h3><p>每签都有奖品，但不保证稀有款。慢慢来，喜欢比集齐更重要。</p></div><button class="text-button" id="bottom-rules">规则与资料来源 ↗</button></section>
+    </section>
+    <section id="view-room" class="view" hidden aria-label="布置我的小屋">
+      <div class="room-heading"><div class="page-heading"><span class="section-kicker">A PLACE FOR YOUR LITTLE JOYS</span><h1>把喜欢，摆进生活。</h1><p>没有分数，也不用赶时间。这间小屋，听你的。</p></div><button class="text-button" id="room-sound" aria-pressed="false">音乐盒音效：关</button></div>
+      <p class="room-zoo-entry">小河马、小猪、水豚、小象、企鹅、小熊猫来做客了。摆出相应物品，试试浅池踩水、泥点脚印、象鼻喷泉、企鹅节拍和抱枕捉迷藏。<button class="text-button" data-view="market">去市集认识新伙伴 ↗</button></p>
+      <div id="scene-picker" class="scene-picker" role="group" aria-label="选择布置场景"></div>
+      <div class="scene-caption"><strong id="scene-title">原木小屋</strong><button id="scene-ambient" aria-pressed="true">环境动效：开</button></div>
+      <p class="scene-save-note">新场景从空布置开始，不沿用上一场景。切换回来自动恢复该场景的位置、大小和灯光。同一收藏可用于不同场景，不增加拥有数量。</p>
+      <div id="scene-actions" class="scene-actions" role="group" aria-label="场景联动"></div>
+      <div class="room-mode-bar" role="group" aria-label="小屋操作模式"><button data-room-mode="edit" aria-pressed="true">布置模式</button><button data-room-mode="play" aria-pressed="false">陪玩模式 🐾</button><span>真实差分动作 · 不改写布置位置</span></div>
+      <div class="room-layout"><div><div class="room-house"><div class="room-scene"><div id="room-stage" class="room-stage" role="group" aria-label="小屋布置区域"></div><canvas id="scene-effects" class="scene-effects" aria-hidden="true"></canvas><p id="room-empty" class="room-empty">第一件小物，会放在哪里？<small>从收藏篮选一件，轻点摆入小屋。</small></p></div><div class="room-toolbar"><strong id="room-selected">选中一件物品，开始布置</strong><div><button id="room-smaller" aria-label="缩小选中物品" disabled>缩小 −</button><button id="room-larger" aria-label="放大选中物品" disabled>放大 ＋</button><button id="room-play" disabled>互动</button><button id="room-remove" disabled>收回</button></div></div><div id="room-pet-actions" class="room-pet-actions" role="group" aria-label="动物专属动作" hidden></div><div id="room-figure-actions" class="room-figure-actions" role="group" aria-label="角色专属动作" hidden></div><p id="room-status" class="room-status" role="status" aria-live="polite">把喜欢的物品，摆成自己的小世界。</p></div><p class="room-help">布置：拖动、缩放、自动保存。陪玩：自由走跑、鼠标跟随、点击地板召唤、摸头与动作回应。<br>全部藏品使用透明背景；A/B/C 六位角色各有两种专属动作：科技星轨、绒绒抱抱、花叶魔法；选中后点击动作按钮。动物按钮随物种切换：猫扑跃、小猪拱地、水豚伏卧、小象卷鼻、企鹅挥鳍、小熊猫摆尾；仅猫狗追球。<br>键盘：Tab 选物品，布置时方向键移动（Shift 精调），Enter 互动，Delete 收回。陪玩位置不存档；减少动态效果时关闭走跑、用静态姿态回应。</p></div><aside class="room-inventory-panel"><span class="section-kicker">YOUR TREASURE BASKET</span><h2>我的收藏篮</h2><label class="series-select">按系列挑选 <select id="room-series-filter" aria-label="收藏篮系列"></select></label><p><span id="room-count">0 / 60 件已摆出</span> · 收回不消耗收藏</p><div id="room-inventory" class="room-inventory"></div></aside></div>
+    </section>
+    <section id="view-collection" class="view" hidden><div class="page-heading"><span class="section-kicker">MY LITTLE TREASURES</span><h1>我的收藏册</h1><p>每一次相遇，都替你认真收好了。</p></div><div id="collection-summary" class="stats-row"></div><div class="collection-heading"><h2>每个系列，都有自己的小世界。</h2><p>A–F 都有不同品种。未入藏的款式也会展示，慢慢收集，不保证一场集齐。</p></div><div class="collection-controls"><label>展示方式 <select id="collection-grouping"><option value="series">按系列展示</option><option value="tier">按 A–F 档位展示</option></select></label><label>筛选系列 <select id="collection-filter"><option value="all">全部系列</option></select></label></div><div id="collection-grid" class="prize-grid collection-grid"></div><div id="collection-series"></div><div class="empty-state" id="collection-empty"><span>✧</span><h3>第一份惊喜，还在小屋等你</h3><p>抽到的奖品会自动加入这里，重复款也会保留。</p><button class="primary-button" data-view="draw">去探索小屋</button></div></section>
+    <section id="view-market" class="view" hidden aria-label="藏品商店与虚拟证券市场">
+      <div class="market-heading"><div class="page-heading"><span class="section-kicker">THE LITTLE EXCHANGE / VIRTUAL ONLY</span><h1>喜欢可以收藏，价值值得理解。</h1><p>以每款藏品为标的，查看 K 线、交易模拟股票与期权。</p></div><span id="market-day" class="market-day">模拟日 D0</span></div>
+      <p class="market-risk">纯虚拟教学：无真钱、无充值提现、无真实行情，不承诺收益。藏品商店使用体验积分；证券市场一次性配置 10,000 模拟元，与积分完全隔离。</p>
+      <div id="market-account" class="market-account"></div>
+      <div class="market-nav"><div role="group" aria-label="选择市场栏目"><button data-market-tab="shop" aria-pressed="true">藏品商店</button><button data-market-tab="stocks" aria-pressed="false">藏品股票</button><button data-market-tab="options" aria-pressed="false">藏品期权</button><button data-market-tab="records" aria-pressed="false">交易流水</button></div><button id="market-advance">推进 1 个模拟日 →</button></div>
+      <p class="market-clock-note">主动推进才会改变股价并结算到期期权。没有离线倒计时；仅逛商店无需推进。新股价会立即保存，不可撤销。</p>
+      <div id="market-content"></div>
+      <details class="market-model"><summary>模型假设、资金约束与风险边界</summary><p>物品商店是娱乐经济：有限库存、买卖价差、1% 手续费、有限回收预算。积分可免费领取，所以不能把这里当作稀缺货币体系；它绝不与证券资金互通。卖出只能使用所有场景之外的闲置份数。</p><p>证券标的是 51 款具体藏品，每款有独立代码、行情与对应期权；股票为该藏品的虚拟行情份额，不是公司股份，不交付或增减收藏。每款固定 10,000 股，初始由做市商持有。旧版公司持仓单独保留，只可减仓，旧期权仍按原规则到期结算。做市资金初始 1,000,000 模拟元；每笔资金在玩家、做市商和手续费账户间守恒，不凭空发放利润。没有企业经营现金流、股息、利息或真实订单簿。</p><p>每天各标的独立等概率选择一次上涨或下跌，幅度采用 exp(±年化波动率/√252)，取整到分。期权使用同一波动参数的 CRR 风险中性定价，利率和股息率为零；交易模拟的涨跌概率不是风险中性概率。整数报价有舍入误差，定价是简化教学模型，不是完整真实经济或预测工具。</p><p>期权为欧式现金结算，一张仅对应一股。买方不需追加保证金，最多损失已付权利金与开仓费；只能买入或卖出已有持仓，不支持裸卖空。做市商锁定足以覆盖本模型所有分支的资金，资金不足即拒单；这个有界保障不适用于真实无限上行风险。到期看涨支付 max(股价−行权价,0)，看跌支付 max(行权价−股价,0)，无到期费。</p><p>市场只在主动推进时变化，刷新、抽奖、补给和小屋动画不影响行情。交易前确认数量、方向、总额；旧报价在其他标签页成交或推进后作废。证券最多 4,000 条操作、商店最多 10,000 笔，达到上限后保留账本但不再操作；不是无限期交易平台。所有逻辑和存档都在浏览器，可被开发工具修改，不具备真实金融安全性。</p><p>基础概念参考 <a href="https://www.optionseducation.org/optionsoverview/options-basics" target="_blank" rel="noopener noreferrer">OIC / Options Basics ↗</a>。本作数值、手续费、资金、藏品行情和交易规格均为自设，不能当作投资建议。</p></details>
+    </section>
+    <section id="view-history" class="view" hidden><div class="page-heading"><span class="section-kicker">MOMENTS TO REMEMBER</span><h1>每一次心动，都有迹可循</h1><p>真实记录你的签号、积分与每一份惊喜。</p></div><div id="history-summary" class="stats-row"></div><div id="history-list"></div></section>
+    <footer><a href="../" aria-label="返回 Gaming Lab 游戏列表">← Gaming Lab</a><a class="footer-brand" href="#draw">⌂ 魔力小屋 <span>MAGIC HOUSE</span></a><p>用一点点好奇，交换日常里的小美好。</p><span>原创插画 · 本地存档 · 非官方模拟</span><button id="reset-game" class="text-button">重置游戏 ↺</button></footer>
+  </main>
+  <dialog id="trade-dialog" aria-labelledby="trade-title" aria-describedby="trade-details"><div class="dialog-header"><h2 id="trade-title">确认交易</h2><button class="close-button" data-close="trade-dialog" aria-label="取消交易">×</button></div><div id="trade-details" class="trade-details"></div><p id="trade-error" class="reset-error" role="alert" hidden></p><div class="result-actions"><button id="trade-cancel" class="secondary-button" data-close="trade-dialog">暂不交易</button><button id="trade-confirm" class="primary-button">确认成交并保存</button></div></dialog>
+  <dialog id="reset-dialog" aria-labelledby="reset-title" aria-describedby="reset-description">
+    <div class="dialog-header"><h2 id="reset-title">重新开始这间小屋？</h2><button class="close-button" data-close="reset-dialog" aria-label="取消重置">×</button></div>
+    <div class="rules-copy" id="reset-description"><p>将清空当前收藏、所有场景布局、抽取历史、商店与证券账本（含持仓）、积分记录与场次进度，重新生成第 1 场的 100 张签，关闭最后赏。</p><p class="rules-callout">重新获得 <strong id="reset-initial-balance">6,900</strong> 免费体验积分。此操作不能在游戏内撤销，同一浏览器的其他游戏标签页也会同步重置。</p></div>
+    <p id="reset-error" class="reset-error" role="alert" hidden></p>
+    <div class="result-actions"><button class="secondary-button" data-close="reset-dialog" id="cancel-reset" autofocus>保留进度</button><button class="primary-button" id="confirm-reset">确认清空并重新开始</button></div>
+  </dialog>
+  <dialog id="info-dialog" aria-labelledby="info-title"><div class="dialog-header"><div><span class="section-kicker">GOOD TO KNOW</span><h2 id="info-title">抽赏说明</h2></div><button class="close-button" data-close="info-dialog" aria-label="关闭说明">×</button></div><div id="info-content"></div><button class="primary-button dialog-ok" data-close="info-dialog">知道啦</button></dialog>
+  <dialog id="result-dialog" aria-labelledby="result-title"><button class="close-button result-close" data-close="result-dialog" aria-label="关闭结果">×</button><div id="reveal-cover"><span class="section-kicker">A SURPRISE JUST FOR YOU</span><h2 id="result-title">你的惊喜，已经抵达</h2><p>奖品已抽取并存入收藏，点击礼盒揭晓。</p><button id="reveal-button" class="gift-box" aria-label="拆开礼盒揭晓奖品"><span class="gift-lid"></span><span class="gift-body"></span><span class="gift-bow">୨୧</span><span class="gift-star">✦</span></button><span class="reveal-instruction">轻轻点一下 · 亲手揭晓每一份</span></div><div id="revealed-results" hidden><span class="section-kicker" id="result-eyebrow">HELLO, LITTLE HAPPINESS</span><h2 id="result-headline">是属于你的那一份惊喜！</h2><div id="a-celebration" hidden><span>A</span><p>旗舰大娃 · 星际领航</p></div><p id="result-description"></p><div class="reveal-controls" id="reveal-controls"><span id="reveal-status" role="status" aria-live="polite">等待揭晓</span><div><button class="secondary-button" id="reveal-next">揭晓下一张</button><button class="text-button" id="reveal-all">全部揭晓 →</button></div></div><div class="result-grid" id="result-grid"></div><div id="result-summary" class="result-summary" hidden></div><p class="saved-note">✓ 已自动放入收藏册 · 关闭或刷新不会丢失</p><div class="result-actions"><button class="secondary-button" id="see-collection">看看我的收藏</button><button class="secondary-button" id="decorate-result" data-close="result-dialog" data-view="room">摆进小屋</button><button class="primary-button" data-close="result-dialog">继续探索</button></div></div></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <noscript><p>请启用 JavaScript 以运行抽赏小游戏。</p></noscript>
+</body>
+</html>
