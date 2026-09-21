@@ -3,6 +3,12 @@ Time Exchange — third-party runtime notices
 The following licenses apply to the respective bundled dependencies.
 They do not license the game or historical market data.
 
+Bundled fonts: Inter (Copyright 2016 The Inter Project Authors) and
+Time Exchange Sans SC, modified UI subsets of Noto Sans CJK SC
+(Copyright 2014–2021 Adobe). These fonts use the SIL Open Font License 1.1.
+Full licenses and attribution: fonts/Inter-OFL.txt, fonts/Noto-OFL.txt,
+and fonts/README.md. Font copyright metadata is also retained in WOFF2 files.
+
 
 ========================================================================
 react 19.3.0
