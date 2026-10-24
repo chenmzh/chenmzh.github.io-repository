@@ -1,0 +1,13 @@
+{
+  "rows": 12,
+  "train": 9,
+  "validation": 3,
+  "labels": {
+    "yes": 4,
+    "no": 4,
+    "maybe": 4
+  },
+  "purpose": "原创虚构流程测试样例；只验证读取、标签掩码与输出格式。不是 PubMedQA 原始数据，不用于生物学评测或能力结论。",
+  "full_public_datasets_included": false,
+  "gpu_training_executed": false
+}

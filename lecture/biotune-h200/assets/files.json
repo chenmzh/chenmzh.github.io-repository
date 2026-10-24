@@ -1,0 +1,146 @@
+[
+  {
+    "url": "source/gitignore.txt",
+    "path": "bio_finetune_h200/.gitignore",
+    "bytes": 106,
+    "sha256": "389e9c950b65f543ccb752e262f30d82382d4aec79594cdb579578eade7d58e7"
+  },
+  {
+    "url": "source/README_ZH.md",
+    "path": "bio_finetune_h200/README_ZH.md",
+    "bytes": 10255,
+    "sha256": "72852a4d9e2cb9badd758cefd07bd51bc95a2ca1196106ef75365213392522d9"
+  },
+  {
+    "url": "source/SHA256SUMS.txt",
+    "path": "bio_finetune_h200/SHA256SUMS.txt",
+    "bytes": 2028,
+    "sha256": "16472686fddec5cac02b4be870d2c75603d2e2ecb23637fdc6ad2e65eda61751"
+  },
+  {
+    "url": "source/VALIDATION.md",
+    "path": "bio_finetune_h200/VALIDATION.md",
+    "bytes": 1772,
+    "sha256": "2fc3494852c7335522caea5d767b959689faa728cae34c2602c371df3dc8f51e"
+  },
+  {
+    "url": "source/data/SMOKE_MANIFEST.json",
+    "path": "bio_finetune_h200/data/SMOKE_MANIFEST.json",
+    "bytes": 358,
+    "sha256": "557c61b20c4da90818360217d7117159f129c33117e1f602feb0ca5495a6759d"
+  },
+  {
+    "url": "source/data/smoke_train.jsonl",
+    "path": "bio_finetune_h200/data/smoke_train.jsonl",
+    "bytes": 9392,
+    "sha256": "4f0b4f16c841d11827d74f4b0fe4213b8b0429f757741878c8e2dde5894979ae"
+  },
+  {
+    "url": "source/data/smoke_validation.jsonl",
+    "path": "bio_finetune_h200/data/smoke_validation.jsonl",
+    "bytes": 3051,
+    "sha256": "e16392c8f19e2ce8dfcc09c19f3f6d094d152020ec2ac0d67c22361193533950"
+  },
+  {
+    "url": "source/docs/COURSE_ZH.md",
+    "path": "bio_finetune_h200/docs/COURSE_ZH.md",
+    "bytes": 18939,
+    "sha256": "818cc61879ee7839406411ea48e495ce23e0a04abec9a40455f373767ca5be78"
+  },
+  {
+    "url": "source/docs/DATASETS_ZH.md",
+    "path": "bio_finetune_h200/docs/DATASETS_ZH.md",
+    "bytes": 7651,
+    "sha256": "d0583471ea6a6df5287c2b3b17fc9daf6aad5de1a399098f448d98d7a20a0616"
+  },
+  {
+    "url": "source/docs/RESOURCES_ZH.md",
+    "path": "bio_finetune_h200/docs/RESOURCES_ZH.md",
+    "bytes": 5197,
+    "sha256": "d8184271fcc207b9b050417fc626bc6e4591aa0293318871f17809e05648bd7c"
+  },
+  {
+    "url": "source/licenses/THIRD_PARTY.md",
+    "path": "bio_finetune_h200/licenses/THIRD_PARTY.md",
+    "bytes": 1092,
+    "sha256": "2de75e348296eed8e59b160292b4fc0a840366821a055c8697c0efc8be11d7a2"
+  },
+  {
+    "url": "source/requirements-qlora.txt",
+    "path": "bio_finetune_h200/requirements-qlora.txt",
+    "bytes": 45,
+    "sha256": "3b3f14de9a8fa304cff65ba2ec63e0eafb54cac74f8b344ef9ad5248454312d4"
+  },
+  {
+    "url": "source/requirements.txt",
+    "path": "bio_finetune_h200/requirements.txt",
+    "bytes": 288,
+    "sha256": "457dd69b388fa997ed971c0f5a6b4031b0b0268281c11b1c0f956862fa73a3d0"
+  },
+  {
+    "url": "source/scripts/check_environment.py",
+    "path": "bio_finetune_h200/scripts/check_environment.py",
+    "bytes": 1529,
+    "sha256": "41c35fd8e7281be4a94f78aff4b3b9f05fa56e870cdd2555fe2eff71cf53d754"
+  },
+  {
+    "url": "source/scripts/common.py",
+    "path": "bio_finetune_h200/scripts/common.py",
+    "bytes": 7856,
+    "sha256": "7353403ae1e4b58cf213df54739fb953cea31bd07edea58b8a5f3740091a49bf"
+  },
+  {
+    "url": "source/scripts/compare_runs.py",
+    "path": "bio_finetune_h200/scripts/compare_runs.py",
+    "bytes": 1676,
+    "sha256": "b130f89cf4278d1b324b3a2037e32d7b8521ea0a6bfc95b743ca5b95317adb37"
+  },
+  {
+    "url": "source/scripts/evaluate_llm.py",
+    "path": "bio_finetune_h200/scripts/evaluate_llm.py",
+    "bytes": 5669,
+    "sha256": "f15a70e9fbc7c8433403300bb0989916fff0c66a47453c5981ea3f6cf45b14f3"
+  },
+  {
+    "url": "source/scripts/majority_baseline.py",
+    "path": "bio_finetune_h200/scripts/majority_baseline.py",
+    "bytes": 1414,
+    "sha256": "e894cd3c23ae6ff6db7b2a2636b54751cc596d63d2b45dab93338fb9d1b7910c"
+  },
+  {
+    "url": "source/scripts/prepare_fluorescence.py",
+    "path": "bio_finetune_h200/scripts/prepare_fluorescence.py",
+    "bytes": 4112,
+    "sha256": "1f408b8ce2fb8d004a4d9d65d309a31afc2d80dcd1bc01e72ffd174c010efda3"
+  },
+  {
+    "url": "source/scripts/prepare_pubmedqa.py",
+    "path": "bio_finetune_h200/scripts/prepare_pubmedqa.py",
+    "bytes": 5632,
+    "sha256": "1d0fa2df5fef1a61d224ad1da566e95a87f52ca1e19202575e7138874e48a79c"
+  },
+  {
+    "url": "source/scripts/train_lora.py",
+    "path": "bio_finetune_h200/scripts/train_lora.py",
+    "bytes": 6899,
+    "sha256": "87b96775522eb01bbc947c031793e7baf23d8f7de3b87066d802a3a6aaa3a3d9"
+  },
+  {
+    "url": "source/scripts/train_protein.py",
+    "path": "bio_finetune_h200/scripts/train_protein.py",
+    "bytes": 6556,
+    "sha256": "0a31928479ecf3f5f987ef8874f7acf4a5657d33d058039241975ca7898f3e85"
+  },
+  {
+    "url": "source/tests/test_core.py",
+    "path": "bio_finetune_h200/tests/test_core.py",
+    "bytes": 2632,
+    "sha256": "53172a7615409d33ff8b7230682d9d7e712eb58157f7dff92b4196f709fadd71"
+  },
+  {
+    "url": "source/tests/test_results.txt",
+    "path": "bio_finetune_h200/tests/test_results.txt",
+    "bytes": 98,
+    "sha256": "3247c50c34e782db19f552455bce1f096e033aae5010deec64401bb0f5ec19c7"
+  }
+]
